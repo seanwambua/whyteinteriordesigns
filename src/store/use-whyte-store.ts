@@ -13,6 +13,20 @@ export interface Project {
   size: 'small' | 'large';
 }
 
+export interface Milestone {
+  label: string;
+  date: string;
+  isCompleted: boolean;
+  description: string;
+}
+
+export interface Installment {
+  label: string;
+  percentage: number;
+  amount: number;
+  status: 'Pending' | 'Paid';
+}
+
 export interface ClientProject {
   id: string;
   name: string;
@@ -28,6 +42,9 @@ export interface ClientProject {
   initialDepositPaid: boolean;
   depositCode?: string;
   totalBudget: number;
+  milestones: Milestone[];
+  installments: Installment[];
+  description?: string;
 }
 
 export interface Inquiry {
@@ -126,48 +143,16 @@ const initialClientProjects: ClientProject[] = [
     isActivated: true,
     initialDepositPaid: true,
     depositCode: "AUTH-8821",
-    totalBudget: 15000000
-  },
-  {
-    id: "WP-0091",
-    name: "Victoria Wambui",
-    email: "v.wambui@karen.co.ke",
-    project: "Karen Villa Phase II",
-    tier: "Deluxe",
-    status: "Planning",
-    progress: 32,
-    startDate: "Feb 10, 2024",
-    lastActivity: "1 day ago",
-    financialReportStatus: 'Awaiting Steward',
-    isActivated: false,
-    initialDepositPaid: false,
-    totalBudget: 8500000
-  }
-];
-
-const initialInquiries: Inquiry[] = [
-  {
-    id: "INQ-9901",
-    name: "Victoria W.",
-    email: "v.w@example.com",
-    type: "new_business",
-    serviceType: "bundle",
-    message: "Looking for a full architectural and decor transformation for a 6,000 sq ft villa in Karen.",
-    date: "2 hours ago",
-    status: "new",
-    urgency: "normal"
-  }
-];
-
-const initialCollaborators: Collaborator[] = [
-  {
-    id: "COL-001",
-    name: "Architectural Stone Specialists",
-    specialty: "Galana Stone Masonry",
-    contact: "+254 700 000000",
-    rating: 4.9,
-    status: "active",
-    type: "Trade Partner"
+    totalBudget: 15000000,
+    milestones: [
+      { label: "Concept Approval", date: "Jan 12", isCompleted: true, description: "Bespoke mood boards finalized." },
+      { label: "Technical Drawings", date: "Feb 05", isCompleted: true, description: "Architectural blueprints signed off." },
+      { label: "Site Installation", date: "Ongoing", isCompleted: false, description: "Current phase of architectural layering." }
+    ],
+    installments: [
+      { label: "Initial Deposit (70%)", percentage: 70, amount: 10500000, status: 'Paid' },
+      { label: "Final Reconciliation (30%)", percentage: 30, amount: 4500000, status: 'Pending' }
+    ]
   }
 ];
 
@@ -176,9 +161,9 @@ export const useWhyteStore = create<WhyteState>()(
     (set) => ({
       projects: initialProjects,
       clientProjects: initialClientProjects,
-      inquiries: initialInquiries,
+      inquiries: [],
       feedback: [],
-      collaborators: initialCollaborators,
+      collaborators: [],
       financialSteward: "Imani Financial Services (IFS-KE)",
 
       addProject: (project) => set((state) => ({ projects: [...state.projects, project] })),

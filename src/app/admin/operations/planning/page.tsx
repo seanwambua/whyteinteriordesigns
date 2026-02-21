@@ -33,8 +33,8 @@ export default function ProjectPlanningPage() {
   const pendingPlanning = clientProjects.filter(p => p.status === 'Planning');
 
   const getDepositRequired = (project: ClientProject) => {
-    const percentages = { Premium: 0.5, Deluxe: 0.6, Golden: 0.7 };
-    return (project.totalBudget * percentages[project.tier]).toLocaleString();
+    const deposit = project.installments.find(ins => ins.label.includes('Deposit'));
+    return deposit ? deposit.amount.toLocaleString() : "N/A";
   };
 
   const handleActivateJourney = () => {
@@ -42,12 +42,18 @@ export default function ProjectPlanningPage() {
     
     setIsActivating(true);
     setTimeout(() => {
+      // Mark deposit as paid in the installments array
+      const updatedInstallments = activationProject.installments.map(ins => 
+        ins.label.includes('Deposit') ? { ...ins, status: 'Paid' as const } : ins
+      );
+
       updateClientProject(activationProject.id, {
         isActivated: true,
         initialDepositPaid: true,
         depositCode: depositCode,
-        status: 'Procurement', // Move to next logical phase after deposit
-        lastActivity: "Journey Activated - Deposit Verified"
+        status: 'Procurement',
+        lastActivity: "Journey Activated - Deposit Verified",
+        installments: updatedInstallments
       });
       
       toast({
@@ -181,7 +187,7 @@ export default function ProjectPlanningPage() {
                 <span className="text-accent">{activationProject?.tier}</span>
               </div>
               <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-bold">
-                <span className="text-accent/40">Deposit Required ({activationProject?.tier === 'Premium' ? '50%' : activationProject?.tier === 'Deluxe' ? '60%' : '70%'})</span>
+                <span className="text-accent/40">Initial Deposit Required</span>
                 <span className="text-orange-600">KES {activationProject ? getDepositRequired(activationProject) : 0}</span>
               </div>
             </div>
