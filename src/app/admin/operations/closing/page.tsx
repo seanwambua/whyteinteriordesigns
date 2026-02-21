@@ -16,7 +16,9 @@ import {
   ShieldAlert,
   Building2,
   Trash2,
-  Info
+  Info,
+  Archive,
+  Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -41,6 +43,7 @@ export default function ProjectClosingPage() {
   const [isEditingSteward, setIsEditingSteward] = useState(false);
   const [newStewardName, setNewStewardName] = useState(financialSteward);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -49,9 +52,9 @@ export default function ProjectClosingPage() {
 
   if (!isMounted) return null;
 
-  // RECONCILIATION: Only activated projects in active/late phases can be reconciled
+  // RECONCILIATION: Only activated, non-archived projects in active/late phases can be reconciled
   const relevantProjects = clientProjects.filter(p => 
-    p.isActivated && (p.status === 'Execution' || p.status === 'Completion')
+    !p.isArchived && p.isActivated && (p.status === 'Execution' || p.status === 'Completion')
   );
 
   const handleUpdateSteward = () => {
@@ -87,6 +90,21 @@ export default function ProjectClosingPage() {
       title: "Report Synchronized",
       description: `Financial audit for ${projectId} has been cross-referenced with ${financialSteward || 'Internal Systems'}.`,
     });
+  };
+
+  const handleArchiveProject = (projectId: string) => {
+    setArchivingId(projectId);
+    setTimeout(() => {
+      updateClientProject(projectId, { 
+        isArchived: true,
+        lastActivity: "Commission Transferred to Studio Archives"
+      });
+      toast({
+        title: "Commission Archived",
+        description: `Project ${projectId} has been moved to the permanent architectural archives.`,
+      });
+      setArchivingId(null);
+    }, 1500);
   };
 
   return (
@@ -129,7 +147,7 @@ export default function ProjectClosingPage() {
         <Info className="h-4 w-4 text-accent" />
         <AlertTitle className="text-[10px] font-bold uppercase tracking-widest text-accent">Lifecycle Enforcement</AlertTitle>
         <AlertDescription className="text-xs font-light italic text-muted-foreground">
-          Reconciliation protocols are exclusively available for **Active Journeys** currently in the Execution or Completion phases.
+          Reconciliation protocols are exclusively available for **Active Journeys** currently in the Execution or Completion phases. Successfully reconciled projects can be retired to the archives.
         </AlertDescription>
       </Alert>
 
@@ -176,21 +194,35 @@ export default function ProjectClosingPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-8 min-w-[200px] justify-end">
+                      <div className="flex items-center gap-6 min-w-[250px] justify-end">
                         <div className="text-right">
                           <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Execution Velocity</span>
                           <span className="text-lg font-headline italic">{project.progress}%</span>
                         </div>
-                        <Button 
-                          onClick={() => handleVerifyReport(project.id)}
-                          disabled={project.financialReportStatus === 'Verified'}
-                          variant="outline" 
-                          className={`h-14 w-14 rounded-full border border-accent/10 transition-all p-0 ${
-                            project.financialReportStatus === 'Verified' ? 'bg-green-600 text-white border-green-600' : 'hover:bg-accent hover:text-white'
-                          }`}
-                        >
-                          <FileCheck className="h-5 w-5" />
-                        </Button>
+                        
+                        <div className="flex gap-3">
+                          <Button 
+                            onClick={() => handleVerifyReport(project.id)}
+                            disabled={project.financialReportStatus === 'Verified'}
+                            variant="outline" 
+                            className={`h-14 w-14 rounded-full border border-accent/10 transition-all p-0 ${
+                              project.financialReportStatus === 'Verified' ? 'bg-green-600 text-white border-green-600' : 'hover:bg-accent hover:text-white'
+                            }`}
+                          >
+                            <FileCheck className="h-5 w-5" />
+                          </Button>
+
+                          {project.financialReportStatus === 'Verified' && (
+                            <Button 
+                              onClick={() => handleArchiveProject(project.id)}
+                              disabled={archivingId === project.id}
+                              variant="outline"
+                              className="h-14 w-14 rounded-full border border-accent/10 hover:bg-black hover:text-white transition-all p-0"
+                            >
+                              {archivingId === project.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Archive className="h-5 w-5" />}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </div>

@@ -29,8 +29,8 @@ export default function ProjectPlanningPage() {
 
   if (!isMounted) return null;
 
-  // Show all projects that are in Planning phase
-  const pendingPlanning = clientProjects.filter(p => p.status === 'Planning');
+  // Show all projects that are in Planning phase and not archived
+  const pendingPlanning = clientProjects.filter(p => p.status === 'Planning' && !p.isArchived);
 
   const getDepositRequired = (project: ClientProject) => {
     const deposit = project.installments.find(ins => ins.label.includes('Deposit'));
@@ -51,14 +51,14 @@ export default function ProjectPlanningPage() {
         isActivated: true,
         initialDepositPaid: true,
         depositCode: depositCode,
-        status: 'Procurement',
+        status: 'Execution',
         lastActivity: "Journey Activated - Deposit Verified",
         installments: updatedInstallments
       });
       
       toast({
         title: "Journey Activated",
-        description: `Financial synchronization complete for ${activationProject.id}. Project transitioned to Procurement.`,
+        description: `Financial synchronization complete for ${activationProject.id}. Project transitioned to Execution.`,
       });
       
       setIsActivating(false);
@@ -163,7 +163,7 @@ export default function ProjectPlanningPage() {
       <Card className="rounded-none border-dashed border-accent/20 bg-accent/5 p-12 text-center">
         <h4 className="text-xl font-headline italic mb-4">Planning Archives</h4>
         <p className="text-xs text-accent/60 uppercase tracking-widest font-light">
-          {clientProjects.filter(p => p.isActivated).length} journeys activated via deposit verification this cycle.
+          {clientProjects.filter(p => p.isActivated && !p.isArchived).length} journeys activated via deposit verification this cycle.
         </p>
       </Card>
 

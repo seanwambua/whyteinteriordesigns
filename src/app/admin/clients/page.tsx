@@ -15,7 +15,8 @@ import {
   Activity,
   UserPlus,
   Users,
-  Info
+  Info,
+  Archive
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -44,8 +45,11 @@ export default function ClientDirectoryPage() {
   );
 
   // STRICT LIFECYCLE: Active means activated via deposit. Pending means planned but awaiting funds.
-  const activeProjects = filteredProjects.filter(p => p.isActivated);
-  const pendingProjects = filteredProjects.filter(p => !p.isActivated);
+  // We exclude archived projects from these primary tabs.
+  const activeProjects = filteredProjects.filter(p => p.isActivated && !p.isArchived);
+  const pendingProjects = filteredProjects.filter(p => !p.isActivated && !p.isArchived);
+  const archivedProjects = filteredProjects.filter(p => p.isArchived);
+  const totalActiveRegistry = filteredProjects.filter(p => !p.isArchived);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -64,9 +68,10 @@ export default function ClientDirectoryPage() {
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
     >
-      <Card className="rounded-none border-accent/5 shadow-xl hover:shadow-2xl transition-all bg-white group overflow-hidden">
+      <Card className={`rounded-none border-accent/5 shadow-xl hover:shadow-2xl transition-all bg-white group overflow-hidden ${client.isArchived ? 'opacity-70 grayscale-[0.5]' : ''}`}>
         <div className="flex flex-col lg:flex-row min-h-[200px]">
           <div className={`w-1.5 shrink-0 transition-colors ${
+            client.isArchived ? 'bg-black' :
             client.tier === 'Golden' ? 'bg-accent' : 
             client.tier === 'Deluxe' ? 'bg-accent/60' : 'bg-accent/20'
           }`} />
@@ -83,6 +88,11 @@ export default function ClientDirectoryPage() {
                     <Badge variant="outline" className={`rounded-none uppercase tracking-[0.2em] text-[8px] font-bold px-3 py-1 ${getStatusColor(client.status)}`}>
                       {client.status}
                     </Badge>
+                    {client.isArchived && (
+                      <Badge className="bg-black text-white rounded-none uppercase tracking-widest text-[8px] font-bold px-2 py-1 flex gap-1.5">
+                        <Archive className="h-2.5 w-2.5" /> Archived
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-4 text-[9px] text-muted-foreground uppercase tracking-widest font-bold">
                     <span className="flex items-center gap-1.5"><Mail className="h-3 w-3 opacity-40" /> {client.email}</span>
@@ -134,7 +144,9 @@ export default function ClientDirectoryPage() {
               </div>
 
               <div className="text-right">
-                 {!client.isActivated ? (
+                 {client.isArchived ? (
+                   <span className="text-[8px] uppercase tracking-[0.3em] font-bold text-black/40">Commission Retired</span>
+                 ) : !client.isActivated ? (
                    <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 rounded-none text-[8px] uppercase tracking-widest px-3 py-1">
                      Briefing Awaiting Funds
                    </Badge>
@@ -185,25 +197,28 @@ export default function ClientDirectoryPage() {
         <Info className="h-4 w-4 text-accent" />
         <AlertTitle className="text-[10px] font-bold uppercase tracking-widest text-accent">Registration Intelligence</AlertTitle>
         <AlertDescription className="text-xs font-light italic text-muted-foreground">
-          All journeys originate from client registrations. **Pending Briefings** represent planned commissions awaiting financial activation.
+          Showing active commissions and project briefings. Successfully reconciled projects are transitioned to the **Master Archives**.
         </AlertDescription>
       </Alert>
 
       <Tabs defaultValue="all" className="space-y-8">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-8">
-          <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0">Total Registry ({filteredProjects.length})</TabsTrigger>
+          <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0">Active Registry ({totalActiveRegistry.length})</TabsTrigger>
           <TabsTrigger value="active" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0">Active Journeys ({activeProjects.length})</TabsTrigger>
           <TabsTrigger value="pending" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0">Pending Briefings ({pendingProjects.length})</TabsTrigger>
+          <TabsTrigger value="archives" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
+            <Archive className="h-3 w-3" /> Project Archives ({archivedProjects.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-6">
           <div className="grid grid-cols-1 gap-6">
-            {filteredProjects.map((client) => (
+            {totalActiveRegistry.map((client) => (
               <ClientCard key={client.id} client={client} />
             ))}
-            {filteredProjects.length === 0 && (
+            {totalActiveRegistry.length === 0 && (
               <div className="text-center py-20 border border-dashed border-accent/10">
-                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No studio registrations found</p>
+                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No active studio registrations found</p>
               </div>
             )}
           </div>
@@ -230,6 +245,19 @@ export default function ClientDirectoryPage() {
             {pendingProjects.length === 0 && (
               <div className="text-center py-20 border border-dashed border-accent/10">
                 <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">All project briefings have transitioned to active states</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="archives" className="space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            {archivedProjects.map((client) => (
+              <ClientCard key={client.id} client={client} />
+            ))}
+            {archivedProjects.length === 0 && (
+              <div className="text-center py-20 border border-dashed border-accent/10">
+                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No commissions have been transitioned to the master archives</p>
               </div>
             )}
           </div>

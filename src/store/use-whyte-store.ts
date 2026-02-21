@@ -73,6 +73,7 @@ export interface ClientProject {
   startDate: string;
   endDate: string;
   isExtended?: boolean;
+  isArchived?: boolean;
   lastActivity: string;
   financialReportStatus?: 'Verified' | 'Pending' | 'Awaiting Steward';
   isActivated: boolean;
