@@ -56,6 +56,8 @@ export default function OnboardingPage() {
       setLoading(true);
       // Simulate verification and finalization
       setTimeout(() => {
+        // Persist verified status
+        localStorage.setItem("whyte_onboarded", "true");
         setLoading(false);
         setShowSuccess(true);
         // Redirect after showing the animation
@@ -160,7 +162,7 @@ export default function OnboardingPage() {
             <AlertDialogFooter className="pt-6">
               <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[10px] font-bold h-12">Return to Process</AlertDialogCancel>
               <AlertDialogAction 
-                onClick={() => router.push("/dashboard")}
+                onClick={() => router.push("/pricing")}
                 className="bg-accent text-white rounded-none uppercase tracking-widest text-[10px] font-bold h-12 hover:bg-accent/90"
               >
                 Exit Session

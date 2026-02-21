@@ -7,8 +7,17 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Check, Sparkles, Lock } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function PricingPage() {
+  const [isExistingClient, setIsExistingClient] = useState(false);
+
+  useEffect(() => {
+    // Check if user is already onboarded/verified
+    const status = localStorage.getItem("whyte_onboarded") === "true";
+    setIsExistingClient(status);
+  }, []);
+
   const tiers = [
     {
       name: "Premium",
@@ -23,8 +32,7 @@ export default function PricingPage() {
         "Final project handover",
         "3D spatial visualization"
       ],
-      cta: "Request Premium Quote",
-      href: "/#contact",
+      cta: isExistingClient ? "View Active Project" : "Verify Studio ID",
       highlight: false
     },
     {
@@ -41,8 +49,7 @@ export default function PricingPage() {
         "Dedicated project architect",
         "Custom textile layering"
       ],
-      cta: "Request Deluxe Proposal",
-      href: "/#contact",
+      cta: isExistingClient ? "Access Studio Archive" : "Verify Studio ID",
       highlight: true
     },
     {
@@ -59,11 +66,15 @@ export default function PricingPage() {
         "Lifetime styling maintenance",
         "Priority project timeline"
       ],
-      cta: "Enter The Golden Circle",
-      href: "/#contact",
+      cta: isExistingClient ? "Welcome Back" : "Enter The Golden Circle",
       highlight: false
     }
   ];
+
+  const getDestination = (isRestricted: boolean) => {
+    if (isExistingClient) return "/dashboard";
+    return "/dashboard/onboarding";
+  };
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -97,7 +108,10 @@ export default function PricingPage() {
               transition={{ duration: 1, delay: 0.5 }}
               className="text-xl text-muted-foreground font-light leading-relaxed max-w-2xl mx-auto italic"
             >
-              Our tiered commission structure ensures uncompromising precision. Please note that Premium and Deluxe tiers are reserved for returning clients of the Whyte Studio.
+              {isExistingClient 
+                ? "Your active project archives are synchronized. View your tier details below."
+                : "Our tiered commission structure ensures uncompromising precision. Please note that Premium and Deluxe tiers are reserved for returning clients of the Whyte Studio."
+              }
             </motion.p>
           </div>
 
@@ -116,7 +130,7 @@ export default function PricingPage() {
                   </div>
                 )}
                 
-                {tier.isRestricted && (
+                {tier.isRestricted && !isExistingClient && (
                   <div className="absolute top-6 right-6 flex items-center gap-2 opacity-40">
                     <Lock className="h-3 w-3" />
                     <span className="text-[8px] uppercase tracking-widest font-bold">Returning Only</span>
@@ -150,19 +164,18 @@ export default function PricingPage() {
                 <Button 
                   asChild 
                   size="lg" 
-                  disabled={tier.isRestricted}
                   className={`w-full h-14 rounded-none text-[10px] font-bold uppercase tracking-[0.3em] transition-all hover:tracking-[0.4em] ${
                     tier.highlight 
                     ? 'bg-white text-accent hover:bg-white/90' 
                     : 'bg-accent text-white hover:bg-accent/90'
                   }`}
                 >
-                  <Link href={tier.href}>{tier.cta}</Link>
+                  <Link href={getDestination(tier.isRestricted)}>{tier.cta}</Link>
                 </Button>
                 
-                {tier.isRestricted && (
+                {tier.isRestricted && !isExistingClient && (
                   <p className={`text-[9px] mt-4 text-center uppercase tracking-widest opacity-40 italic ${tier.highlight ? 'text-white' : 'text-accent'}`}>
-                    Exclusive to existing studio projects
+                    Verification required for restricted access
                   </p>
                 )}
               </motion.div>
