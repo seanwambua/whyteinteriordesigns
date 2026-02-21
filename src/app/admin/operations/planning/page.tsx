@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -118,13 +119,13 @@ export default function ProjectPlanningPage() {
         initialDepositPaid: true,
         depositCode: depositCode,
         status: 'Execution',
-        lastActivity: "Journey Activated - Deposit Verified",
+        lastActivity: "Journey Activated - Initial Transaction Verified",
         installments: updatedInstallments
       });
       
       toast({
         title: "Journey Activated",
-        description: `Financial synchronization complete for ${activationProject.id}. Project transitioned to Execution.`,
+        description: `Financial synchronization complete for ${activationProject.id}. Transaction ${depositCode} has been logged.`,
       });
       
       setIsActivating(false);
@@ -403,7 +404,7 @@ export default function ProjectPlanningPage() {
             </div>
             <DialogTitle className="text-3xl font-headline italic">Activate {activationProject?.id}</DialogTitle>
             <DialogDescription className="font-light italic text-muted-foreground">
-              Confirm the initial deposit to move this commission into the active implementation deck.
+              Confirm the initial deposit transaction to move this commission into the active implementation deck.
             </DialogDescription>
           </DialogHeader>
           <div className="py-8 space-y-8">
@@ -419,11 +420,11 @@ export default function ProjectPlanningPage() {
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Verification Deposit Code</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Initial Installment Transaction Code</Label>
               <Input 
                 value={depositCode}
                 onChange={(e) => setDepositCode(e.target.value)}
-                placeholder="E.g., DEP-XXXX-2024"
+                placeholder="E.g., TRX-8821-WHYTE"
                 className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent uppercase tracking-widest"
               />
             </div>
