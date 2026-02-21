@@ -1,0 +1,63 @@
+
+{
+  "entities": {
+    "Project": {
+      "title": "Portfolio Project",
+      "description": "A high-end design project showcase",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string", "enum": ["Residential", "Commercial"] },
+        "location": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "size": { "type": "string", "enum": ["small", "large"] },
+        "order": { "type": "number" }
+      },
+      "required": ["title", "category", "location", "imageUrl"]
+    },
+    "Inquiry": {
+      "title": "Client Inquiry",
+      "description": "A lead from the service inquiry form",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "serviceType": { "type": "string", "enum": ["design", "decor", "bundle"] },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["new", "contacted", "closed"], "default": "new" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Feedback": {
+      "title": "Client Feedback",
+      "description": "Public testimonial from the feedback page",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "isApproved": { "type": "boolean", "default": false },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Collection of portfolio projects"
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": "Inquiry",
+      "description": "Client leads and inquiries"
+    },
+    "/feedback/{feedbackId}": {
+      "schema": "Feedback",
+      "description": "Client testimonials"
+    }
+  }
+}
