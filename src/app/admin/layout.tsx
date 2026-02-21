@@ -1,6 +1,6 @@
 "use client";
 
-import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { LayoutDashboard, Briefcase, MessageSquare, Star, Settings, User, ClipboardList, PlayCircle, CheckCircle2, UserPlus, Users, HardHat, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -38,9 +38,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const NavItem = ({ item }: { item: { title: string, icon: any, href: string } }) => {
     const active = isNavActive(item.href);
+    const { setOpen, isMobile, setOpenMobile } = useSidebar();
+
+    const handleClick = () => {
+      if (isMobile) {
+        setOpenMobile(false);
+      } else {
+        setOpen(false);
+      }
+    };
+
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={active} className="px-6 h-12 hover:bg-accent/5 rounded-none" tooltip={item.title}>
+        <SidebarMenuButton 
+          asChild 
+          isActive={active} 
+          className="px-6 h-12 hover:bg-accent/5 rounded-none" 
+          tooltip={item.title}
+          onClick={handleClick}
+        >
           <Link href={item.href} className="flex items-center gap-4">
             <item.icon className={`h-5 w-5 shrink-0 ${active ? 'text-accent' : 'text-muted-foreground'}`} />
             <span className={`text-xs uppercase tracking-widest font-bold truncate group-data-[collapsible=icon]:hidden ${active ? 'text-accent' : 'text-muted-foreground'}`}>
