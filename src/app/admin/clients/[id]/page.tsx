@@ -3,7 +3,7 @@
 
 import { use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +33,10 @@ import {
   Calendar as CalendarIcon,
   Timer,
   AlertTriangle,
-  RefreshCcw
+  RefreshCcw,
+  Trash2,
+  CheckCircle2,
+  Circle
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -71,7 +74,9 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   }
 
   // --- TEMPORAL LOGIC ---
-  const deadline = parse(project.endDate, "MMM dd, yyyy", new Date());
+  // Safety check for endDate to prevent 'match' error on undefined
+  const deadlineStr = project.endDate || format(new Date(), "MMM dd, yyyy");
+  const deadline = parse(deadlineStr, "MMM dd, yyyy", new Date());
   const today = new Date();
   const daysRemaining = differenceInDays(deadline, today);
   const isOverdue = isAfter(today, deadline);
@@ -144,6 +149,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     const total = updatedTasks.length;
     const velocity = total > 0 ? Math.round((done / total) * 100) : project.progress;
 
+    // Automated Phase Transition Logic
     let newStatus: ClientProject['status'] = project.status;
     if (project.status !== 'Termination') {
       if (total > 0 && done === total) {
@@ -193,6 +199,30 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     setExpandedTasks(prev => 
       prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
     );
+  };
+
+  // Milestone Handlers
+  const handleAddMilestone = () => {
+    const newM: Milestone = {
+      id: `M-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      label: "New Project Milestone",
+      date: format(new Date(), "MMM dd, yyyy"),
+      isCompleted: false,
+      description: "Define milestone objective..."
+    };
+    updateClientProject(project.id, { milestones: [...(project.milestones || []), newM] });
+  };
+
+  const handleToggleMilestone = (mId: string) => {
+    const updated = (project.milestones || []).map(m => 
+      m.id === mId ? { ...m, isCompleted: !m.isCompleted } : m
+    );
+    updateClientProject(project.id, { milestones: updated });
+  };
+
+  const handleRemoveMilestone = (mId: string) => {
+    const updated = (project.milestones || []).filter(m => m.id !== mId);
+    updateClientProject(project.id, { milestones: updated });
   };
 
   const KanbanCol = ({ status, title, color }: { status: ProjectTask['status'], title: string, color: string }) => {
@@ -368,6 +398,9 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
             <PlayCircle className="h-3.5 w-3.5" /> Site Workflow
           </TabsTrigger>
+          <TabsTrigger value="milestones" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
+            <ClipboardList className="h-3.5 w-3.5" /> Milestones
+          </TabsTrigger>
           <TabsTrigger value="network" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
             <Users className="h-3.5 w-3.5" /> Network
           </TabsTrigger>
@@ -511,6 +544,56 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               </div>
             </div>
           )}
+        </TabsContent>
+
+        {/* --- MILESTONES TAB --- */}
+        <TabsContent value="milestones" className="m-0 space-y-12">
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-headline italic">Architectural Roadmap</h2>
+              <Button onClick={handleAddMilestone} variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[9px] flex gap-2 border-accent/20">
+                <Plus className="h-4 w-4" /> New Milestone
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {(project.milestones || []).map((m) => (
+                <Card key={m.id} className="rounded-none border-accent/5 shadow-xl bg-white p-8 group hover:border-accent/30 transition-all">
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="flex items-center gap-6 flex-1">
+                      <div className={cn("h-12 w-12 rounded-full border flex items-center justify-center transition-colors", m.isCompleted ? "bg-green-600 border-green-600 text-white" : "border-accent/10 text-accent/20")}>
+                        {m.isCompleted ? <CheckCircle2 className="h-6 w-6" /> : <Circle className="h-6 w-6" />}
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className={cn("text-xl font-headline italic", m.isCompleted && "line-through opacity-40")}>{m.label}</h4>
+                        <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                          <CalendarIcon className="h-3 w-3" /> Target: {m.date}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleToggleMilestone(m.id)} className="h-10 w-10 text-accent/40 hover:text-green-600">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleRemoveMilestone(m.id)} className="h-10 w-10 text-accent/40 hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  {m.description && (
+                    <p className="mt-6 text-xs font-light italic text-accent/60 leading-relaxed pl-18">
+                      {m.description}
+                    </p>
+                  )}
+                </Card>
+              ))}
+              {(project.milestones || []).length === 0 && (
+                <div className="col-span-full py-20 text-center border border-dashed border-accent/10">
+                  <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No target milestones established for this roadmap</p>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
 
         {/* --- NETWORK TAB --- */}

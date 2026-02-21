@@ -29,7 +29,7 @@ import { useState, useEffect } from "react";
 import { ClientSupportDialog } from "@/components/dashboard/client-support-dialog";
 import { useWhyteStore, ClientProject, ProjectTask } from "@/store/use-whyte-store";
 import { Badge } from "@/components/ui/badge";
-import { parse, differenceInDays, isAfter } from "date-fns";
+import { parse, differenceInDays, isAfter, format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 export default function ClientDashboardPage() {
@@ -75,7 +75,10 @@ export default function ClientDashboardPage() {
   const completedTasksCount = (activeProject.tasks || []).filter(t => t.status === 'Done').length;
 
   // Temporal Logic for Client View
-  const deadline = parse(activeProject.endDate, "MMM dd, yyyy", new Date());
+  // Safety check for endDate to avoid runtime errors on undefined values
+  const hasEndDate = !!activeProject.endDate;
+  const deadlineStr = activeProject.endDate || format(new Date(), "MMM dd, yyyy");
+  const deadline = parse(deadlineStr, "MMM dd, yyyy", new Date());
   const today = new Date();
   const daysRemaining = differenceInDays(deadline, today);
   const isOverdue = isAfter(today, deadline);
@@ -152,7 +155,7 @@ export default function ClientDashboardPage() {
                     <div className="space-y-2">
                       <p className="text-xs font-bold uppercase tracking-widest opacity-60">Estimated Handover</p>
                       <p className={cn("text-2xl font-headline font-bold", isOverdue ? "text-destructive" : "text-accent")}>
-                        {activeProject.endDate}
+                        {activeProject.endDate || "Pending Schedule"}
                       </p>
                       <p className="text-[10px] uppercase tracking-widest opacity-40">
                         {isOverdue ? "Authorized timeline extension pending" : `${daysRemaining} days until scheduled completion`}
@@ -167,113 +170,54 @@ export default function ClientDashboardPage() {
           {/* Operational Workflow (Tasks) */}
           <div className="space-y-8">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Activity className="h-4 w-4 text-accent" />
-                <h2 className="text-2xl font-headline italic">Live Site Workflow</h2>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">
-                {completedTasksCount} Tasks Completed
-              </span>
+              <div className="flex items-center gap-4"><Activity className="h-4 w-4 text-accent" /><h2 className="text-2xl font-headline italic">Live Site Workflow</h2></div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">{completedTasksCount} Tasks Completed</span>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {(activeProject.tasks || []).slice(0, 4).map((task) => (
                 <div key={task.id} className="p-6 border border-accent/5 bg-white shadow-sm flex flex-col justify-between min-h-[140px] group hover:border-accent/20 transition-all">
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <span className="text-[8px] font-bold text-accent/30 uppercase tracking-widest">{task.id}</span>
-                      <Badge variant="ghost" className={`text-[8px] uppercase tracking-widest p-0 h-auto ${
-                        task.status === 'Done' ? 'text-green-600' : 
-                        task.status === 'In Progress' ? 'text-accent' : 'text-orange-500'
-                      }`}>
-                        {task.status}
-                      </Badge>
+                      <Badge variant="ghost" className={`text-[8px] uppercase tracking-widest p-0 h-auto ${task.status === 'Done' ? 'text-green-600' : task.status === 'In Progress' ? 'text-accent' : 'text-orange-500'}`}>{task.status}</Badge>
                     </div>
-                    <h4 className="text-sm font-bold uppercase tracking-widest leading-tight group-hover:text-accent transition-colors">
-                      {task.title}
-                    </h4>
+                    <h4 className="text-sm font-bold uppercase tracking-widest leading-tight group-hover:text-accent transition-colors">{task.title}</h4>
                   </div>
-                  
-                  {task.assignedVendor && (
-                    <div className="flex items-center gap-2 text-[9px] text-muted-foreground uppercase tracking-widest pt-4 border-t border-accent/5 mt-4">
-                      <Truck className="h-3 w-3 opacity-40" /> {task.assignedVendor}
-                    </div>
-                  )}
+                  {task.assignedVendor && (<div className="flex items-center gap-2 text-[9px] text-muted-foreground uppercase tracking-widest pt-4 border-t border-accent/5 mt-4"><Truck className="h-3 w-3 opacity-40" /> {task.assignedVendor}</div>)}
                 </div>
               ))}
-              {(activeProject.tasks || []).length === 0 && (
-                <div className="col-span-2 p-12 border border-dashed border-accent/10 text-center italic text-muted-foreground text-sm">
-                  Operational workflow is currently being synchronized by the site architect.
-                </div>
-              )}
             </div>
           </div>
         </div>
 
         <div className="lg:col-span-4 space-y-8">
-          {/* Financials */}
           <Card className="rounded-none border-accent/5 shadow-xl bg-white p-8 space-y-8">
-            <div className="text-center space-y-2">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Financial Ledger</h3>
-              <p className="text-xs font-light italic text-muted-foreground">Commission Tier: {activeProject.tier}</p>
-            </div>
-            
+            <div className="text-center space-y-2"><h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Financial Ledger</h3><p className="text-xs font-light italic text-muted-foreground">Commission Tier: {activeProject.tier}</p></div>
             <div className="space-y-4">
               {activeProject.installments.map((ins, i) => (
                 <div key={i} className={`p-4 border ${ins.status === 'Paid' ? 'border-green-600/20 bg-green-600/5' : 'border-accent/10 bg-secondary/10'}`}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{ins.label}</span>
-                    <span className={`text-[8px] font-bold uppercase tracking-widest ${ins.status === 'Paid' ? 'text-green-600' : 'text-accent/40'}`}>
-                      {ins.status}
-                    </span>
-                  </div>
+                  <div className="flex justify-between items-center mb-1"><span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{ins.label}</span><span className={`text-[8px] font-bold uppercase tracking-widest ${ins.status === 'Paid' ? 'text-green-600' : 'text-accent/40'}`}>{ins.status}</span></div>
                   <p className="text-sm font-bold tracking-widest text-accent">KES {ins.amount.toLocaleString()}</p>
                 </div>
               ))}
             </div>
-            
-            <div className="pt-6 border-t border-accent/5">
-              <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[9px] font-bold">
-                Raise Studio Inquiry
-              </Button>
-            </div>
+            <div className="pt-6 border-t border-accent/5"><Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[9px] font-bold">Raise Studio Inquiry</Button></div>
           </Card>
-
-          {/* Site Resources Card */}
           <Card className="rounded-none border-accent/5 bg-secondary/30 p-8 space-y-6">
-            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2">
-              <HardHat className="h-3 w-3" /> Allocated Network
-            </h4>
+            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><HardHat className="h-3 w-3" /> Allocated Network</h4>
             <div className="space-y-4">
               {(activeProject.vendorAllocations || []).map((vendor, vIdx) => (
                 <div key={vIdx} className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-accent/80">{vendor.vendorName}</p>
-                    <p className="text-[9px] text-muted-foreground italic">{vendor.role}</p>
-                  </div>
+                  <div className="space-y-0.5"><p className="text-[10px] font-bold uppercase tracking-widest text-accent/80">{vendor.vendorName}</p><p className="text-[9px] text-muted-foreground italic">{vendor.role}</p></div>
                   <Badge variant="ghost" className="text-[8px] uppercase tracking-widest opacity-40 p-0 h-auto">{vendor.category}</Badge>
                 </div>
               ))}
-              {(activeProject.vendorAllocations || []).length === 0 && (
-                <p className="text-[10px] text-accent/30 italic uppercase tracking-widest text-center py-2">Vendor matrix initialization in progress</p>
-              )}
             </div>
           </Card>
-
-          <div className="p-8 border border-destructive/10 space-y-4 text-center">
-             <Button onClick={() => openSupport("termination_request")} variant="ghost" className="text-destructive/40 hover:text-destructive text-[9px] uppercase tracking-widest font-bold h-auto p-0">
-                Initiate Contract Dissolution
-             </Button>
-          </div>
         </div>
       </div>
 
-      <ClientSupportDialog 
-        isOpen={isSupportOpen} 
-        onClose={() => setIsSupportOpen(false)} 
-        projectId={activeProject.id}
-        defaultType={supportType}
-      />
+      <ClientSupportDialog isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} projectId={activeProject.id} defaultType={supportType} />
     </div>
   );
 }

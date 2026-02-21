@@ -18,11 +18,12 @@ import {
   Trash2,
   Activity,
   ClipboardList,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Flag
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone } from "@/store/use-whyte-store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
@@ -47,6 +48,9 @@ export default function AddClientPage() {
     totalBudget: "",
     startDate: new Date(),
     endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+    milestones: [
+      { id: 'M-1', label: "Initial Site Appraisal", date: new Date(), isCompleted: false, description: "Baseline site metrics verified." }
+    ] as (Omit<Milestone, 'date'> & { date: Date })[],
     tasks: [
       { 
         title: "Site Measurement Verification", 
@@ -57,11 +61,29 @@ export default function AddClientPage() {
     ] as (Omit<ProjectTask, 'id'>)[]
   });
 
-  const totalSteps = 4;
+  const totalSteps = 5;
   const progress = (step / totalSteps) * 100;
 
   const handleNext = () => setStep(prev => prev + 1);
   const handleBack = () => setStep(prev => prev - 1);
+
+  // Milestone Handlers
+  const addMilestone = () => {
+    setFormData({
+      ...formData,
+      milestones: [...formData.milestones, { id: `M-${Math.random().toString(36).substr(2, 4)}`, label: "", date: new Date(), isCompleted: false, description: "" }]
+    });
+  };
+
+  const updateMilestone = (index: number, field: string, value: any) => {
+    const updated = [...formData.milestones];
+    (updated[index] as any)[field] = value;
+    setFormData({ ...formData, milestones: updated });
+  };
+
+  const removeMilestone = (index: number) => {
+    setFormData({ ...formData, milestones: formData.milestones.filter((_, i) => i !== index) });
+  };
 
   // Task Handlers
   const addTask = () => {
@@ -120,7 +142,7 @@ export default function AddClientPage() {
       { label: "Final Handover (20%)", percentage: 20, amount: budget * 0.2, status: 'Pending' as const },
     ];
     return [
-      { label: "Initial Deposit (70%)", percentage: 70, amount: budget * 0.7, status: 'Pending' as const },
+      { label: "Initial Deposit (70%)", percentage: 70, amount: budget * 0.7, status: 'Paid' as const },
       { label: "Final Handover (30%)", percentage: 30, amount: budget * 0.3, status: 'Pending' as const },
     ];
   };
@@ -135,6 +157,11 @@ export default function AddClientPage() {
     const tasksWithIds: ProjectTask[] = formData.tasks.map((t, idx) => ({
       ...t,
       id: `T-${id}-${idx + 1}`
+    }));
+
+    const milestonesWithFormattedDates: Milestone[] = formData.milestones.map(m => ({
+      ...m,
+      date: format(m.date, "MMM dd, yyyy")
     }));
 
     const newProject: ClientProject = {
@@ -152,7 +179,7 @@ export default function AddClientPage() {
       isActivated: false,
       initialDepositPaid: false,
       totalBudget: budget,
-      milestones: [],
+      milestones: milestonesWithFormattedDates,
       tasks: tasksWithIds,
       installments: getInstallmentPlan(formData.tier, budget),
       description: formData.description
@@ -173,17 +200,14 @@ export default function AddClientPage() {
     if (step === 1) return formData.name && formData.email;
     if (step === 2) return formData.project && formData.description && formData.startDate && formData.endDate;
     if (step === 3) return formData.totalBudget && Number(formData.totalBudget) > 0;
-    if (step === 4) return formData.tasks.every(t => t.title);
+    if (step === 4) return formData.milestones.every(m => m.label);
+    if (step === 5) return formData.tasks.every(t => t.title);
     return true;
   };
 
   return (
     <div className="max-w-5xl mx-auto space-y-12 font-body">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-4"
-      >
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <Button asChild variant="ghost" className="text-accent/40 hover:text-accent p-0 font-bold uppercase tracking-widest text-[9px] h-auto flex items-center gap-2 mb-4">
           <Link href="/admin/clients"><ArrowLeft className="h-3 w-3" /> Back to Registry</Link>
         </Button>
@@ -209,10 +233,7 @@ export default function AddClientPage() {
             <AnimatePresence mode="wait">
               {step === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                  <div className="flex items-center gap-4 mb-8">
-                    <User className="h-5 w-5 text-accent/40" />
-                    <h3 className="text-xl font-headline italic">Client Identity</h3>
-                  </div>
+                  <div className="flex items-center gap-4 mb-8"><User className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Client Identity</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-3">
                       <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label>
@@ -228,15 +249,11 @@ export default function AddClientPage() {
 
               {step === 2 && (
                 <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                  <div className="flex items-center gap-4 mb-8">
-                    <Briefcase className="h-5 w-5 text-accent/40" />
-                    <h3 className="text-xl font-headline italic">Project Scope & Timeline</h3>
-                  </div>
+                  <div className="flex items-center gap-4 mb-8"><Briefcase className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Project Scope & Timeline</h3></div>
                   <div className="space-y-3">
                     <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Project Title</Label>
                     <Input placeholder="E.g., Runda Residency - Master Suite" className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent" required value={formData.project} onChange={(e) => setFormData({...formData, project: e.target.value})} />
                   </div>
-                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-3">
                       <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Commencement Date</Label>
@@ -247,9 +264,7 @@ export default function AddClientPage() {
                             {formData.startDate ? format(formData.startDate, "PPP") : "Select Start Date"}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 rounded-none border-accent/20">
-                          <Calendar mode="single" selected={formData.startDate} onSelect={(d) => d && setFormData({...formData, startDate: d})} initialFocus />
-                        </PopoverContent>
+                        <PopoverContent className="w-auto p-0 rounded-none border-accent/20"><Calendar mode="single" selected={formData.startDate} onSelect={(d) => d && setFormData({...formData, startDate: d})} initialFocus /></PopoverContent>
                       </Popover>
                     </div>
                     <div className="space-y-3">
@@ -261,13 +276,10 @@ export default function AddClientPage() {
                             {formData.endDate ? format(formData.endDate, "PPP") : "Select End Date"}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 rounded-none border-accent/20">
-                          <Calendar mode="single" selected={formData.endDate} onSelect={(d) => d && setFormData({...formData, endDate: d})} initialFocus />
-                        </PopoverContent>
+                        <PopoverContent className="w-auto p-0 rounded-none border-accent/20"><Calendar mode="single" selected={formData.endDate} onSelect={(d) => d && setFormData({...formData, endDate: d})} initialFocus /></PopoverContent>
                       </Popover>
                     </div>
                   </div>
-
                   <div className="space-y-3">
                     <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Architectural Brief</Label>
                     <Textarea placeholder="Describe the spatial goals..." className="min-h-[150px] rounded-none border-accent/20 focus:ring-accent resize-none p-6 text-lg" required value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
@@ -277,17 +289,12 @@ export default function AddClientPage() {
 
               {step === 3 && (
                 <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                  <div className="flex items-center gap-4 mb-8">
-                    <Calculator className="h-5 w-5 text-accent/40" />
-                    <h3 className="text-xl font-headline italic">Financial Framework</h3>
-                  </div>
+                  <div className="flex items-center gap-4 mb-8"><Calculator className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Financial Framework</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-3">
                       <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
                       <Select onValueChange={(v: ClientProject['tier']) => setFormData({...formData, tier: v})} defaultValue={formData.tier}>
-                        <SelectTrigger className="rounded-none border-accent/20 h-14 text-lg">
-                          <SelectValue placeholder="Select Tier" />
-                        </SelectTrigger>
+                        <SelectTrigger className="rounded-none border-accent/20 h-14 text-lg"><SelectValue placeholder="Select Tier" /></SelectTrigger>
                         <SelectContent className="rounded-none border-accent/20">
                           <SelectItem value="Premium" className="py-3">Premium (50/30/20 Plan)</SelectItem>
                           <SelectItem value="Deluxe" className="py-3">Deluxe (60/20/20 Plan)</SelectItem>
@@ -300,15 +307,11 @@ export default function AddClientPage() {
                       <Input type="number" placeholder="10,000,000" className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent" required value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} />
                     </div>
                   </div>
-                  
                   <div className="p-6 bg-secondary/30 border border-accent/5 space-y-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Payment Schedule Expectations</p>
                     <div className="space-y-2">
                       {getInstallmentPlan(formData.tier, Number(formData.totalBudget) || 0).map((ins, i) => (
-                        <div key={i} className="flex justify-between text-[11px] font-light italic">
-                          <span>{ins.label}</span>
-                          <span className="font-bold">KES {ins.amount.toLocaleString()}</span>
-                        </div>
+                        <div key={i} className="flex justify-between text-[11px] font-light italic"><span>{ins.label}</span><span className="font-bold">KES {ins.amount.toLocaleString()}</span></div>
                       ))}
                     </div>
                   </div>
@@ -318,25 +321,44 @@ export default function AddClientPage() {
               {step === 4 && (
                 <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-4">
-                      <Activity className="h-5 w-5 text-accent/40" />
-                      <h3 className="text-xl font-headline italic">Operational Workflow</h3>
-                    </div>
-                    <Button type="button" onClick={addTask} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[9px] flex gap-2">
-                      <Plus className="h-3.5 w-3.5" /> Add Primary Task
-                    </Button>
+                    <div className="flex items-center gap-4"><Flag className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Target Milestones</h3></div>
+                    <Button type="button" onClick={addMilestone} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[9px] flex gap-2"><Plus className="h-3.5 w-3.5" /> Append Target</Button>
                   </div>
-                  
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest italic mb-4">
-                    Define primary site tasks and decompose them into granular sub-task protocols.
-                  </p>
+                  <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                    {formData.milestones.map((m, idx) => (
+                      <div key={idx} className="p-6 border border-accent/10 bg-white relative space-y-4 shadow-sm group">
+                        <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive/40 hover:text-destructive" onClick={() => removeMilestone(idx)} disabled={formData.milestones.length === 1}><Trash2 className="h-4 w-4" /></Button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Milestone Title</Label>
+                            <Input placeholder="E.g., Structural Handover" className="rounded-none h-12 text-sm font-bold uppercase tracking-widest" value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Target Date</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full h-12 rounded-none border-accent/10 text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4 opacity-40" />{format(m.date, "PPP")}</Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={m.date} onSelect={(d) => d && updateMilestone(idx, 'date', d)} initialFocus /></PopoverContent>
+                            </Popover>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
+              {step === 5 && (
+                <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4"><Activity className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Operational Workflow</h3></div>
+                    <Button type="button" onClick={addTask} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[9px] flex gap-2"><Plus className="h-3.5 w-3.5" /> Add Primary Task</Button>
+                  </div>
                   <div className="space-y-8 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
                     {formData.tasks.map((task, idx) => (
                       <div key={idx} className="p-8 border border-accent/10 bg-white relative space-y-6 shadow-sm group">
-                        <Button type="button" variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive" onClick={() => removeTask(idx)} disabled={formData.tasks.length === 1}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <Button type="button" variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive" onClick={() => removeTask(idx)} disabled={formData.tasks.length === 1}><Trash2 className="h-4 w-4" /></Button>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
                             <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Primary Task Identity</Label>
@@ -345,9 +367,7 @@ export default function AddClientPage() {
                           <div className="space-y-2">
                             <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Urgency Protocol</Label>
                             <Select value={task.priority} onValueChange={(v: any) => updateTask(idx, 'priority', v)}>
-                              <SelectTrigger className="rounded-none h-12 text-xs border-accent/10 font-bold uppercase tracking-widest">
-                                <SelectValue placeholder="Priority" />
-                              </SelectTrigger>
+                              <SelectTrigger className="rounded-none h-12 text-xs border-accent/10 font-bold uppercase tracking-widest"><SelectValue placeholder="Priority" /></SelectTrigger>
                               <SelectContent className="rounded-none">
                                 <SelectItem value="Low">Low Priority</SelectItem>
                                 <SelectItem value="Medium">Medium Priority</SelectItem>
@@ -356,33 +376,15 @@ export default function AddClientPage() {
                             </Select>
                           </div>
                         </div>
-
                         <div className="space-y-4 pt-4 border-t border-accent/5">
-                          <div className="flex justify-between items-center">
-                            <Label className="text-[8px] uppercase tracking-[0.3em] opacity-40 font-bold">Sub-task Protocol</Label>
-                            <Button type="button" variant="ghost" size="sm" onClick={() => addSubtask(idx)} className="h-6 text-[8px] uppercase tracking-widest font-bold text-accent hover:bg-accent/5 p-0">
-                              <Plus className="h-2.5 w-2.5 mr-1" /> Append Sub-task
-                            </Button>
-                          </div>
-                          
+                          <div className="flex justify-between items-center"><Label className="text-[8px] uppercase tracking-[0.3em] opacity-40 font-bold">Sub-task Protocol</Label><Button type="button" variant="ghost" size="sm" onClick={() => addSubtask(idx)} className="h-6 text-[8px] uppercase tracking-widest font-bold text-accent hover:bg-accent/5 p-0"><Plus className="h-2.5 w-2.5 mr-1" /> Append Sub-task</Button></div>
                           <div className="space-y-2">
                             {task.subtasks?.map((sub, sIdx) => (
                               <div key={sub.id} className="flex gap-3 items-center group/sub">
-                                <div className="h-1.5 w-1.5 rounded-full bg-accent/20" />
-                                <Input 
-                                  placeholder="Sub-task objective..." 
-                                  value={sub.title} 
-                                  onChange={(e) => updateSubtask(idx, sIdx, e.target.value)}
-                                  className="h-8 rounded-none border-none text-xs italic focus:ring-0 p-0"
-                                />
-                                <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(idx, sIdx)} className="h-6 w-6 text-destructive/20 hover:text-destructive opacity-0 group-hover/sub:opacity-100 transition-opacity">
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
+                                <div className="h-1.5 w-1.5 rounded-full bg-accent/20" /><Input placeholder="Sub-task objective..." value={sub.title} onChange={(e) => updateSubtask(idx, sIdx, e.target.value)} className="h-8 rounded-none border-none text-xs italic focus:ring-0 p-0" />
+                                <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(idx, sIdx)} className="h-6 w-6 text-destructive/20 hover:text-destructive opacity-0 group-hover/sub:opacity-100 transition-opacity"><Trash2 className="h-3 w-3" /></Button>
                               </div>
                             ))}
-                            {(!task.subtasks || task.subtasks.length === 0) && (
-                              <p className="text-[9px] italic text-muted-foreground opacity-40">No granular sub-tasks defined.</p>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -393,18 +395,11 @@ export default function AddClientPage() {
             </AnimatePresence>
 
             <div className="pt-10 flex items-center justify-between border-t border-accent/5">
-              {step > 1 ? (
-                <Button type="button" variant="ghost" onClick={handleBack} className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[10px]">Previous Phase</Button>
-              ) : <div />}
-              
+              {step > 1 ? <Button type="button" variant="ghost" onClick={handleBack} className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[10px]">Previous Phase</Button> : <div />}
               {step < totalSteps ? (
-                <Button type="button" onClick={handleNext} disabled={!isStepValid()} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.2em] text-[10px] font-bold flex gap-3 hover:bg-accent/90 transition-all">
-                  Continue <ChevronRight className="h-4 w-4" />
-                </Button>
+                <Button type="button" onClick={handleNext} disabled={!isStepValid()} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.2em] text-[10px] font-bold flex gap-3 hover:bg-accent/90 transition-all">Continue <ChevronRight className="h-4 w-4" /></Button>
               ) : (
-                <Button type="submit" disabled={loading} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.3em] text-[10px] font-bold flex gap-4 hover:bg-accent/90 transition-all shadow-2xl disabled:opacity-50">
-                  {loading ? "Initializing Journey..." : <><ClipboardList className="h-5 w-5" /> Authorize Commission</>}
-                </Button>
+                <Button type="submit" disabled={loading} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.3em] text-[10px] font-bold flex gap-4 hover:bg-accent/90 transition-all shadow-2xl disabled:opacity-50">{loading ? "Initializing Journey..." : <><ClipboardList className="h-5 w-5" /> Authorize Commission</>}</Button>
               )}
             </div>
           </form>

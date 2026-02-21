@@ -14,6 +14,7 @@ export interface Project {
 }
 
 export interface Milestone {
+  id: string;
   label: string;
   date: string;
   isCompleted: boolean;
@@ -183,7 +184,7 @@ const initialClientProjects: ClientProject[] = [
     progress: 78,
     startDate: "Jan 15, 2024",
     endDate: "Jun 30, 2024",
-    lastActivity: "2 hours ago",
+    lastActivity: "Architectural synchronization established.",
     financialReportStatus: 'Pending',
     isActivated: true,
     initialDepositPaid: true,
@@ -192,7 +193,9 @@ const initialClientProjects: ClientProject[] = [
     roomsCount: 8,
     workScope: "Full architectural renovation of primary and secondary wings including sustainable material integration.",
     operationalBudget: 2500000,
-    milestones: [],
+    milestones: [
+      { id: "M-1", label: "Structural Completion", date: "Apr 15, 2024", isCompleted: true, description: "Foundation and framing verified." }
+    ],
     installments: [
       { label: "Initial Deposit (70%)", percentage: 70, amount: 10500000, status: 'Paid' },
       { label: "Final Reconciliation (30%)", percentage: 30, amount: 4500000, status: 'Pending' }
