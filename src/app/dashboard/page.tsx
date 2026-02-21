@@ -179,28 +179,28 @@ export default function ClientDashboardPage() {
           </div>
 
           {/* Roadmap */}
-          <div className="space-y-8 pt-8">
+          <div className="space-y-12 pt-8">
             <div className="flex items-center gap-4">
               <Flag className="h-4 w-4 text-accent" />
               <h2 className="text-2xl font-headline italic">Architectural Roadmap</h2>
             </div>
             
-            <div className="relative pl-8 space-y-12 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-px before:bg-accent/10">
+            <div className="relative ml-4 space-y-16 before:absolute before:left-[11.5px] before:top-2 before:bottom-2 before:w-px before:bg-accent/10">
               {activeProject.milestones.map((milestone, idx) => (
-                <div key={idx} className="relative group">
-                  <div className={`absolute -left-10 top-1 h-6 w-6 rounded-full border-2 flex items-center justify-center bg-white z-10 transition-colors ${
-                    milestone.isCompleted ? 'border-accent bg-accent text-white' : 'border-accent/20 text-accent/20'
+                <div key={idx} className="relative pl-12 group">
+                  <div className={`absolute left-0 top-0.5 h-6 w-6 rounded-full border-2 flex items-center justify-center bg-white z-10 transition-all duration-500 ${
+                    milestone.isCompleted ? 'border-accent bg-accent text-white scale-110' : 'border-accent/20 text-accent/20'
                   }`}>
-                    {milestone.isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4 fill-current" />}
+                    {milestone.isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" /> : <div className="h-1.5 w-1.5 rounded-full bg-current" />}
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <div className="flex justify-between items-start">
-                      <h4 className={`text-sm font-bold uppercase tracking-widest ${milestone.isCompleted ? 'text-accent' : 'text-accent/40'}`}>
+                      <h4 className={`text-sm font-bold uppercase tracking-[0.2em] ${milestone.isCompleted ? 'text-accent' : 'text-accent/40'}`}>
                         {milestone.label}
                       </h4>
-                      <span className="text-[10px] font-bold text-accent/30">{milestone.date}</span>
+                      <span className="text-[10px] font-bold text-accent/20 uppercase tracking-widest">{milestone.date}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground font-light leading-relaxed max-w-lg italic">
+                    <p className="text-xs text-muted-foreground font-light leading-relaxed max-w-xl italic">
                       {milestone.description}
                     </p>
                   </div>

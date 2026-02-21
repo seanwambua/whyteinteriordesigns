@@ -2,8 +2,8 @@
 "use client";
 
 import { use } from "react";
-import { motion } from "framer-motion";
-import { useWhyteStore, ClientProject, VendorAllocation } from "@/store/use-whyte-store";
+import { motion, AnimatePresence } from "framer-motion";
+import { useWhyteStore, ClientProject, VendorAllocation, Milestone } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,9 @@ import {
   Layout,
   HardHat,
   Clock,
-  Users
+  Users,
+  Settings2,
+  XCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +39,7 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isEditingRoadmap, setIsEditingRoadmap] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -69,12 +72,43 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
     updateClientProject(project.id, { 
       milestones: updatedMilestones,
       progress: newProgress,
-      lastActivity: `Milestone "${updatedMilestones[index].label}" synchronized.`
+      lastActivity: `Milestone "${updatedMilestones[index].label}" status synchronized.`
     });
 
     toast({
       title: "Roadmap Updated",
       description: `Milestone "${updatedMilestones[index].label}" status verified.`,
+    });
+  };
+
+  const handleUpdateMilestone = (index: number, field: keyof Milestone, value: any) => {
+    const updated = [...project.milestones];
+    updated[index] = { ...updated[index], [field]: value };
+    updateClientProject(project.id, { milestones: updated });
+  };
+
+  const handleAddMilestone = () => {
+    const newMilestone: Milestone = {
+      label: "New Milestone",
+      date: "TBD",
+      isCompleted: false,
+      description: "Define the specific spatial or structural goals for this phase."
+    };
+    updateClientProject(project.id, {
+      milestones: [...project.milestones, newMilestone]
+    });
+    toast({
+      title: "Milestone Appended",
+      description: "A new phase has been added to the architectural roadmap.",
+    });
+  };
+
+  const handleRemoveMilestone = (index: number) => {
+    const updated = project.milestones.filter((_, i) => i !== index);
+    updateClientProject(project.id, { milestones: updated });
+    toast({
+      title: "Milestone Excised",
+      description: "The phase has been removed from the studio archives.",
     });
   };
 
@@ -203,9 +237,25 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
               </Card>
 
               <div className="space-y-8">
-                <div className="flex items-center gap-4">
-                  <Activity className="h-5 w-5 text-accent" />
-                  <h2 className="text-2xl font-headline italic">Architectural Roadmap</h2>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Activity className="h-5 w-5 text-accent" />
+                    <h2 className="text-2xl font-headline italic">Architectural Roadmap</h2>
+                  </div>
+                  <div className="flex gap-4">
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => setIsEditingRoadmap(!isEditingRoadmap)}
+                      className="text-[9px] uppercase tracking-[0.3em] font-bold text-accent/60 hover:text-accent hover:bg-transparent"
+                    >
+                      {isEditingRoadmap ? "Finalize Curation" : "Curate Roadmap"}
+                    </Button>
+                    {isEditingRoadmap && (
+                      <Button onClick={handleAddMilestone} variant="outline" className="rounded-none h-10 border-accent/20 uppercase tracking-widest text-[9px] flex gap-2">
+                        <Plus className="h-3.5 w-3.5" /> Append Phase
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -214,30 +264,76 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
                       key={idx}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className={`p-8 border flex items-center justify-between group transition-all ${
+                      className={`p-8 border flex flex-col group transition-all ${
                         milestone.isCompleted ? 'border-green-600/20 bg-green-600/[0.02]' : 'border-accent/5 bg-white'
                       }`}
                     >
-                      <div className="flex gap-8 items-start">
-                        <button 
-                          onClick={() => handleToggleMilestone(idx)}
-                          className={`h-12 w-12 rounded-full border flex items-center justify-center shrink-0 transition-all ${
-                            milestone.isCompleted ? 'bg-green-600 border-green-600 text-white' : 'border-accent/10 text-accent/10 hover:border-accent hover:text-accent'
-                          }`}
-                        >
-                          {milestone.isCompleted ? <CheckCircle2 className="h-6 w-6" /> : <Circle className="h-6 w-6" />}
-                        </button>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-4">
-                            <h4 className={`text-lg font-headline ${milestone.isCompleted ? 'text-foreground' : 'text-accent/60'}`}>
-                              {milestone.label}
-                            </h4>
-                            <span className="text-[9px] font-bold text-accent/30 uppercase tracking-widest">{milestone.date}</span>
+                      <div className="flex items-start justify-between gap-8">
+                        <div className="flex gap-8 items-start flex-1">
+                          <button 
+                            onClick={() => !isEditingRoadmap && handleToggleMilestone(idx)}
+                            disabled={isEditingRoadmap}
+                            className={`h-12 w-12 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                              milestone.isCompleted ? 'bg-green-600 border-green-600 text-white' : 'border-accent/10 text-accent/10 hover:border-accent hover:text-accent'
+                            } ${isEditingRoadmap ? 'cursor-not-allowed opacity-40' : ''}`}
+                          >
+                            {milestone.isCompleted ? <CheckCircle2 className="h-6 w-6" /> : <Circle className="h-6 w-6" />}
+                          </button>
+                          
+                          <div className="space-y-4 flex-1">
+                            {isEditingRoadmap ? (
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="md:col-span-3 space-y-2">
+                                  <Label className="text-[9px] uppercase tracking-widest opacity-40">Phase Title</Label>
+                                  <Input 
+                                    value={milestone.label} 
+                                    onChange={(e) => handleUpdateMilestone(idx, 'label', e.target.value)}
+                                    className="rounded-none h-10 text-sm font-bold uppercase tracking-widest"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-[9px] uppercase tracking-widest opacity-40">Timeline</Label>
+                                  <Input 
+                                    value={milestone.date} 
+                                    onChange={(e) => handleUpdateMilestone(idx, 'date', e.target.value)}
+                                    className="rounded-none h-10 text-sm"
+                                  />
+                                </div>
+                                <div className="md:col-span-4 space-y-2">
+                                  <Label className="text-[9px] uppercase tracking-widest opacity-40">Objective Description</Label>
+                                  <Textarea 
+                                    value={milestone.description} 
+                                    onChange={(e) => handleUpdateMilestone(idx, 'description', e.target.value)}
+                                    className="rounded-none min-h-[80px] resize-none text-sm font-light italic"
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-4">
+                                  <h4 className={`text-lg font-headline ${milestone.isCompleted ? 'text-foreground' : 'text-accent/60'}`}>
+                                    {milestone.label}
+                                  </h4>
+                                  <span className="text-[9px] font-bold text-accent/30 uppercase tracking-widest">{milestone.date}</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground font-light italic max-w-xl leading-relaxed">
+                                  {milestone.description}
+                                </p>
+                              </>
+                            )}
                           </div>
-                          <p className="text-sm text-muted-foreground font-light italic max-w-xl leading-relaxed">
-                            {milestone.description}
-                          </p>
                         </div>
+                        
+                        {isEditingRoadmap && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleRemoveMilestone(idx)}
+                            className="text-destructive/40 hover:text-destructive hover:bg-destructive/5 shrink-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </motion.div>
                   ))}
@@ -500,25 +596,4 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
       </Tabs>
     </div>
   );
-}
-
-function XCircle(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="m15 9-6 6" />
-      <path d="m9 9 6 6" />
-    </svg>
-  )
 }
