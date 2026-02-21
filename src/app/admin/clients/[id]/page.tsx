@@ -1,3 +1,4 @@
+
 "use client";
 
 import { use } from "react";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -39,7 +41,10 @@ import {
   Zap,
   BookOpen,
   Archive,
-  Banknote
+  Banknote,
+  XCircle,
+  ShieldAlert,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +64,11 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const [isExtending, setIsExtending] = useState(false);
   const [newDeadline, setNewDeadline] = useState<Date | undefined>(new Date());
 
+  // Termination Agreement State
+  const [resTerms, setResTerms] = useState("");
+  const [finSum, setFinSum] = useState("");
+  const [projSum, setProjSum] = useState("");
+
   // Payment Verification State
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [verifyingIdx, setVerifyingIdx] = useState<number | null>(null);
@@ -69,6 +79,14 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   }, []);
 
   const project = clientProjects.find((p) => p.id === id);
+
+  useEffect(() => {
+    if (project?.termination) {
+      setResTerms(project.termination.resolutionTerms || "");
+      setFinSum(project.termination.financialSummary || "");
+      setProjSum(project.termination.projectSummary || "");
+    }
+  }, [project]);
 
   if (!isMounted) return null;
   if (!project) {
@@ -93,35 +111,76 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const totalDuration = differenceInDays(deadline, startDate);
   const isOverdue = isAfter(today, deadline);
 
-  const efficiencyRating = project.isArchived 
+  const efficiencyRating = (project.isArchived || project.status === 'Terminated')
     ? (project.isExtended ? 88 : 96) 
     : 0;
-
-  const handleApplyExtension = () => {
-    if (!newDeadline) return;
-    const formattedDate = format(newDeadline, "MMM dd, yyyy");
-    updateClientProject(project.id, {
-      endDate: formattedDate,
-      isExtended: true,
-      lastActivity: `Timeline extension authorized until ${formattedDate}.`
-    });
-    toast({
-      title: "Extension Authorized",
-      description: `Project deadline synchronized to ${formattedDate}.`,
-    });
-    setIsExtending(false);
-  };
 
   // --- HANDLERS ---
 
   const handleUpdateStatus = (status: ClientProject['status']) => {
+    const updates: Partial<ClientProject> = { status };
+    
+    if (status === 'Termination' && !project.termination) {
+      updates.termination = {
+        reason: "Manual Studio Override",
+        requestedBy: "Studio",
+        requestedDate: format(new Date(), "MMM dd, yyyy"),
+        financialSummary: "Awaiting Studio Audit",
+        projectSummary: "Awaiting Site Protocol Audit",
+        studioAgreed: false,
+        clientAgreed: false
+      };
+    }
+
     updateClientProject(project.id, { 
-      status,
+      ...updates,
       lastActivity: `Lifecycle transitioned manually to ${status}.`
     });
     toast({
       title: "Lifecycle Updated",
       description: `Commission moved to ${status} phase.`,
+    });
+  };
+
+  const handleSaveTerminationDetails = () => {
+    if (!project.termination) return;
+    updateClientProject(project.id, {
+      termination: {
+        ...project.termination,
+        financialSummary: finSum,
+        projectSummary: projSum,
+        resolutionTerms: resTerms
+      }
+    });
+    toast({
+      title: "Dissolution Dossier Updated",
+      description: "Transparency summaries have been synchronized.",
+    });
+  };
+
+  const handleStudioAgreeTermination = () => {
+    if (!project.termination) return;
+    updateClientProject(project.id, {
+      termination: {
+        ...project.termination,
+        studioAgreed: true
+      }
+    });
+    toast({
+      title: "Studio Resolution Signed",
+      description: "Handover terms authorized by Studio Steward.",
+    });
+  };
+
+  const handleFinalizeTermination = () => {
+    updateClientProject(project.id, {
+      status: 'Terminated',
+      isArchived: true,
+      lastActivity: "Commission Dissolved - Final Resolution Executed"
+    });
+    toast({
+      title: "Commission Terminated",
+      description: "Dossier transitioned to Permanent Archives.",
     });
   };
 
@@ -147,80 +206,28 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     recalculateVelocity(updatedTasks, "Sub-task protocol updated.");
   };
 
-  const handleAddSubtask = (taskId: string) => {
-    const updatedTasks = (project.tasks || []).map(t => {
-      if (t.id === taskId) {
-        const subtasks = t.subtasks || [];
-        const newSub: SubTask = { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "New Protocol", isCompleted: false };
-        return { ...t, subtasks: [...subtasks, newSub] };
-      }
-      return t;
-    });
-    updateClientProject(project.id, { tasks: updatedTasks });
-  };
-
   const recalculateVelocity = (updatedTasks: ProjectTask[], activity: string) => {
     const done = updatedTasks.filter(t => t.status === 'Done').length;
-    const inProgress = updatedTasks.filter(t => t.status === 'In Progress').length;
     const total = updatedTasks.length;
     const velocity = total > 0 ? Math.round((done / total) * 100) : project.progress;
-
-    // Automated Phase Transition Logic
-    let newStatus: ClientProject['status'] = project.status;
-    if (project.status !== 'Termination') {
-      if (total > 0 && done === total) {
-        newStatus = 'Completion';
-      } else if (inProgress > 0 || done > 0) {
-        newStatus = 'Execution';
-      } else {
-        newStatus = 'Planning';
-      }
-    }
 
     updateClientProject(project.id, { 
       tasks: updatedTasks,
       progress: velocity,
-      status: newStatus,
       lastActivity: activity
     });
-  };
-
-  const handleAddTask = () => {
-    const newTask: ProjectTask = {
-      id: `T-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-      title: "New Site Task",
-      status: "Todo",
-      priority: "Medium",
-      subtasks: []
-    };
-    const updatedTasks = [...(project.tasks || []), newTask];
-    recalculateVelocity(updatedTasks, "New site task added to backlog.");
   };
 
   const handleToggleInstallment = (idx: number) => {
     const ins = project.installments[idx];
     if (ins.status === 'Paid') {
-      // Revoking payment
       const updated = [...project.installments];
       updated[idx] = { ...updated[idx], status: 'Pending', transactionCode: undefined };
       updateClientProject(project.id, { 
         installments: updated,
         lastActivity: `Financial Entry Revoked: ${ins.label}`
       });
-      toast({
-        title: "Payment Revoked",
-        description: `${ins.label} has been returned to Pending state.`,
-      });
     } else {
-      // Verifying payment (restricted to index 1 and 2 for manual entry)
-      if (idx === 0) {
-        toast({
-          title: "Protocol Restriction",
-          description: "Initial deposit is verified via the Journey Activation protocol.",
-          variant: "destructive"
-        });
-        return;
-      }
       setVerifyingIdx(idx);
       setTransactionCode("");
       setIsVerifyingPayment(true);
@@ -237,22 +244,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     };
     updateClientProject(project.id, { 
       installments: updated,
-      lastActivity: `Payment Verified: ${updated[verifyingIdx].label} (Ref: ${transactionCode})`
+      lastActivity: `Payment Verified: ${updated[verifyingIdx].label}`
     });
     setIsVerifyingPayment(false);
     setVerifyingIdx(null);
-    toast({
-      title: "Payment Synchronized",
-      description: "Financial ledger updated with transaction reference.",
-    });
-  };
-
-  const handleVerifyAudit = () => {
-    updateClientProject(project.id, { financialReportStatus: 'Verified' });
-    toast({
-      title: "Audit Synchronized",
-      description: "Project financial report verified by Studio Steward.",
-    });
   };
 
   const toggleTaskExpansion = (taskId: string) => {
@@ -299,7 +294,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                   </div>
                 )}
 
-                {!project.isArchived && (
+                {project.status !== 'Terminated' && project.status !== 'Termination' && (
                   <div className="flex items-center justify-between pt-4 border-t border-accent/5">
                     <Button 
                       variant="ghost" 
@@ -327,7 +322,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                 )}
 
                 <AnimatePresence>
-                  {isExpanded && !project.isArchived && (
+                  {isExpanded && project.status !== 'Terminated' && project.status !== 'Termination' && (
                     <motion.div 
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
@@ -351,13 +346,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                             </Label>
                           </div>
                         ))}
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => handleAddSubtask(task.id)}
-                          className="h-8 w-full border border-dashed border-accent/10 rounded-none text-[9px] uppercase tracking-widest font-bold text-accent/40 hover:bg-accent/5"
-                        >
-                          <Plus className="h-3 w-3 mr-2" /> Append Protocol
-                        </Button>
                       </div>
                     </motion.div>
                   )}
@@ -389,7 +377,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               <span className="flex items-center gap-2"><User className="h-3.5 w-3.5 opacity-40" /> {project.name}</span>
               <div className="h-1 w-1 bg-accent/20 rounded-full" />
               <span className="opacity-40">{project.id}</span>
-              {project.isArchived && (
+              {(project.isArchived || project.status === 'Terminated') && (
                 <>
                   <div className="h-1 w-1 bg-black rounded-full" />
                   <span className="text-black flex items-center gap-2"><Archive className="h-3 w-3" /> Archived Dossier</span>
@@ -398,7 +386,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          {!project.isArchived ? (
+          {!project.isArchived && project.status !== 'Terminated' ? (
             <div className="flex flex-wrap items-center gap-4 bg-white p-6 border border-accent/5 shadow-2xl">
               <div className="space-y-1 pr-8 border-r border-accent/10">
                 <Label className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label>
@@ -410,7 +398,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                     <SelectItem value="Planning">Planning</SelectItem>
                     <SelectItem value="Execution">Execution</SelectItem>
                     <SelectItem value="Completion">Completion</SelectItem>
-                    <SelectItem value="Termination">Termination</SelectItem>
+                    <SelectItem value="Termination" className="text-destructive">Termination Hub</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -450,37 +438,125 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-12">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12">
+          {project.status === 'Termination' && (
+            <TabsTrigger value="dissolution" className="rounded-none border-b-2 border-transparent data-[state=active]:border-destructive data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2 text-destructive">
+              <ShieldAlert className="h-3.5 w-3.5" /> Dissolution Protocol
+            </TabsTrigger>
+          )}
           <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
             <Layout className="h-3.5 w-3.5" /> Overview
           </TabsTrigger>
           <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
             <PlayCircle className="h-3.5 w-3.5" /> Site Workflow
           </TabsTrigger>
-          <TabsTrigger value="network" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
-            <Users className="h-3.5 w-3.5" /> Network
-          </TabsTrigger>
           <TabsTrigger value="ledger" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
             <Wallet className="h-3.5 w-3.5" /> Ledger
           </TabsTrigger>
         </TabsList>
+
+        {/* --- DISSOLUTION TAB --- */}
+        <TabsContent value="dissolution" className="m-0 space-y-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div className="lg:col-span-8 space-y-8">
+              <Card className="rounded-none border-destructive/20 bg-destructive/5 p-10 space-y-8">
+                <div className="flex items-center gap-4">
+                  <ShieldAlert className="h-6 w-6 text-destructive" />
+                  <h3 className="text-2xl font-headline italic text-destructive">Dissolution Transparency Protocol</h3>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-destructive">Financial Reconciliation Transparency</Label>
+                    <Textarea 
+                      value={finSum}
+                      onChange={(e) => setFinSum(e.target.value)}
+                      placeholder="Detail the financial status for both parties..."
+                      className="min-h-[120px] rounded-none border-destructive/10 bg-white"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-destructive">Project Implementation Transparency</Label>
+                    <Textarea 
+                      value={projSum}
+                      onChange={(e) => setProjSum(e.target.value)}
+                      placeholder="Detail the work scope completed to date..."
+                      className="min-h-[120px] rounded-none border-destructive/10 bg-white"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-destructive">Mutual Resolution Terms</Label>
+                    <Textarea 
+                      value={resTerms}
+                      onChange={(e) => setResTerms(e.target.value)}
+                      placeholder="Outline the terms of the project's early conclusion..."
+                      className="min-h-[120px] rounded-none border-destructive/10 bg-white"
+                    />
+                  </div>
+                  <Button onClick={handleSaveTerminationDetails} className="bg-destructive text-white rounded-none h-12 px-8 uppercase tracking-widest text-[10px]">
+                    Synchronize Transparency Dossier
+                  </Button>
+                </div>
+              </Card>
+            </div>
+
+            <div className="lg:col-span-4 space-y-8">
+              <Card className="rounded-none border-destructive/20 bg-white p-8 space-y-8">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-destructive/60">Execution Agreement</h3>
+                <div className="space-y-6">
+                  <div className={cn("p-6 border flex items-center justify-between", project.termination?.studioAgreed ? "border-green-600/20 bg-green-600/5" : "border-destructive/10")}>
+                    <div className="space-y-1">
+                      <p className="text-[10px] uppercase tracking-widest font-bold">Studio Agreement</p>
+                      <p className="text-xs font-light italic">{project.termination?.studioAgreed ? "Signed & Authorized" : "Signature Required"}</p>
+                    </div>
+                    {project.termination?.studioAgreed ? <CheckCircle2 className="h-5 w-5 text-green-600" /> : <FileText className="h-5 w-5 text-destructive/20" />}
+                  </div>
+                  <div className={cn("p-6 border flex items-center justify-between", project.termination?.clientAgreed ? "border-green-600/20 bg-green-600/5" : "border-destructive/10")}>
+                    <div className="space-y-1">
+                      <p className="text-[10px] uppercase tracking-widest font-bold">Client Agreement</p>
+                      <p className="text-xs font-light italic">{project.termination?.clientAgreed ? "Signed & Confirmed" : "Awaiting Client Review"}</p>
+                    </div>
+                    {project.termination?.clientAgreed ? <CheckCircle2 className="h-5 w-5 text-green-600" /> : <FileText className="h-5 w-5 text-destructive/20" />}
+                  </div>
+
+                  <Button 
+                    onClick={handleStudioAgreeTermination} 
+                    disabled={project.termination?.studioAgreed}
+                    className="w-full h-14 bg-destructive text-white hover:bg-destructive/90 rounded-none uppercase tracking-widest text-[10px] font-bold"
+                  >
+                    Authorize Studio Resolution
+                  </Button>
+
+                  {project.termination?.studioAgreed && project.termination?.clientAgreed && (
+                    <Button 
+                      onClick={handleFinalizeTermination}
+                      className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-none uppercase tracking-widest text-[10px] font-bold"
+                    >
+                      Execute Final Dissolution
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
 
         {/* --- OVERVIEW TAB --- */}
         <TabsContent value="overview" className="m-0 space-y-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div className="lg:col-span-8 space-y-12">
               <Card className="rounded-none border-accent/5 shadow-xl bg-white overflow-hidden">
-                <div className={cn("h-1.5 w-full", project.isArchived ? "bg-black" : "bg-accent")} />
+                <div className={cn("h-1.5 w-full", (project.isArchived || project.status === 'Terminated') ? "bg-black" : "bg-accent")} />
                 <CardContent className="p-10 space-y-10">
                   <div className="flex justify-between items-end">
                     <div className="space-y-1">
                       <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">
-                        {project.isArchived ? "Finalized Velocity" : "Implementation Velocity"}
+                        {(project.isArchived || project.status === 'Terminated') ? "Finalized Velocity" : "Implementation Velocity"}
                       </p>
                       <h2 className="text-4xl font-headline italic">{project.progress}% Complete</h2>
                     </div>
                     <div className="text-right">
                        <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">
-                         {project.isArchived ? "Handover Synchronization" : "Last Activity Sync"}
+                         {(project.isArchived || project.status === 'Terminated') ? "Archival Sync" : "Last Activity Sync"}
                        </p>
                        <p className="text-xs font-light italic text-muted-foreground">{project.lastActivity}</p>
                     </div>
@@ -504,90 +580,34 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             <div className="lg:col-span-4 space-y-8">
               {/* Temporal Health Card */}
               <Card className="rounded-none border-accent/5 shadow-xl bg-white p-8 space-y-6 relative overflow-hidden">
-                <div className={cn("absolute top-0 right-0 p-4 opacity-5", isOverdue && !project.isArchived ? "text-destructive" : "text-accent")}>
+                <div className={cn("absolute top-0 right-0 p-4 opacity-5", isOverdue && !project.isArchived && project.status !== 'Terminated' ? "text-destructive" : "text-accent")}>
                   <Timer className="h-20 w-20" />
                 </div>
                 <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">
-                  {project.isArchived ? "Dossier Timeline" : "Temporal Status"}
+                  {(project.isArchived || project.status === 'Terminated') ? "Dossier Timeline" : "Temporal Status"}
                 </h3>
                 
                 <div className="space-y-6 relative z-10">
                   <div className="flex justify-between items-center pb-4 border-b border-accent/5">
                     <div className="space-y-1">
                       <span className="text-[9px] uppercase tracking-widest opacity-60 block">
-                        {project.isArchived ? "Completion Date" : "Authorized Deadline"}
+                        {(project.isArchived || project.status === 'Terminated') ? "Handover Date" : "Authorized Deadline"}
                       </span>
                       <span className="text-sm font-bold flex items-center gap-2">
                         <CalendarIcon className="h-3.5 w-3.5 text-accent/40" /> {project.endDate}
                       </span>
                     </div>
-                    {!project.isArchived && (
-                      <div className="text-right">
-                        {isOverdue ? (
-                          <Badge variant="destructive" className="rounded-none text-[8px] uppercase tracking-widest font-bold">Overdue</Badge>
-                        ) : (
-                          <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest font-bold text-green-600 border-green-600/20">On Track</Badge>
-                        )}
-                      </div>
-                    )}
                   </div>
 
                   <div className="flex justify-between items-center">
                     <div className="space-y-1">
                       <span className="text-[9px] uppercase tracking-widest opacity-60 block">
-                        {project.isArchived ? "Total Implementation" : "Remaining Duration"}
+                        {(project.isArchived || project.status === 'Terminated') ? "Total Implementation" : "Remaining Duration"}
                       </span>
-                      <span className={cn("text-2xl font-headline italic", isOverdue && !project.isArchived ? "text-destructive" : "text-accent")}>
-                        {project.isArchived ? `${totalDuration} Days` : isOverdue ? "Expired" : `${daysRemaining} Days`}
+                      <span className={cn("text-2xl font-headline italic", isOverdue && !project.isArchived && project.status !== 'Terminated' ? "text-destructive" : "text-accent")}>
+                        {(project.isArchived || project.status === 'Terminated') ? `${totalDuration} Days` : isOverdue ? "Expired" : `${daysRemaining} Days`}
                       </span>
                     </div>
-                    {project.isExtended && (
-                      <Badge className="bg-orange-500 text-white rounded-none text-[8px] uppercase tracking-widest flex gap-1.5">
-                        <RefreshCcw className="h-2.5 w-2.5" /> Extended
-                      </Badge>
-                    )}
-                  </div>
-
-                  {!project.isArchived && (
-                    <>
-                      {isOverdue && (
-                        <div className="p-4 bg-destructive/5 border border-destructive/10 space-y-3">
-                          <div className="flex items-center gap-2 text-destructive text-[9px] font-bold uppercase tracking-widest">
-                            <AlertTriangle className="h-3.5 w-3.5" /> Extension Required
-                          </div>
-                          <Button 
-                            onClick={() => setIsExtending(true)}
-                            className="w-full bg-destructive text-white h-10 rounded-none text-[9px] uppercase tracking-widest font-bold"
-                          >
-                            Authorize Timeline Shift
-                          </Button>
-                        </div>
-                      )}
-                      
-                      {!isOverdue && (
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setIsExtending(true)}
-                          className="w-full border-accent/20 text-accent h-10 rounded-none text-[9px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white"
-                        >
-                          Adjust Deadline
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
-              </Card>
-
-              <Card className="rounded-none border-accent/5 shadow-xl bg-white p-8 space-y-6">
-                <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Technical Specs</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center pb-4 border-b border-accent/5">
-                    <span className="text-[10px] uppercase tracking-widest opacity-60">Spatial Scale</span>
-                    <span className="text-sm font-bold">{project.roomsCount || 'N/A'} Rooms</span>
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-[10px] uppercase tracking-widest opacity-60">Authorized Representative</span>
-                    <p className="text-xs font-bold text-accent">{project.email}</p>
                   </div>
                 </div>
               </Card>
@@ -606,57 +626,16 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             <div className="space-y-8">
               <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-headline italic">
-                  {project.isArchived ? "Completed Site Protocol Index" : "Live Site Implementation"}
+                  {(project.isArchived || project.status === 'Terminated') ? "Finalized Protocol Index" : "Live Site Implementation"}
                 </h2>
-                {!project.isArchived && (
-                  <Button onClick={handleAddTask} className="bg-accent text-white rounded-none h-12 px-6 uppercase tracking-widest text-[10px] flex gap-2">
-                    <Plus className="h-4 w-4" /> New Task
-                  </Button>
-                )}
               </div>
               <div className="flex gap-8 overflow-x-auto pb-12 custom-scrollbar">
-                <KanbanCol status="Todo" title={project.isArchived ? "Pending (N/A)" : "Site Backlog"} color="bg-orange-400" />
-                <KanbanCol status="In Progress" title={project.isArchived ? "Active (N/A)" : "In Implementation"} color="bg-accent" />
+                <KanbanCol status="Todo" title={(project.isArchived || project.status === 'Terminated') ? "Pending (N/A)" : "Site Backlog"} color="bg-orange-400" />
+                <KanbanCol status="In Progress" title={(project.isArchived || project.status === 'Terminated') ? "Active (N/A)" : "In Implementation"} color="bg-accent" />
                 <KanbanCol status="Done" title="Task Completed" color="bg-green-600" />
               </div>
             </div>
           )}
-        </TabsContent>
-
-        {/* --- NETWORK TAB --- */}
-        <TabsContent value="network" className="m-0 space-y-12">
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-headline italic">{project.isArchived ? "Historical Network Index" : "Network Matrix"}</h2>
-              {!project.isArchived && (
-                <Button variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[9px] flex gap-2">
-                  <Plus className="h-4 w-4" /> Allocate Partner
-                </Button>
-              )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {(project.vendorAllocations || []).map((v, i) => (
-                <div key={v.id || i} className="p-8 border border-accent/5 bg-white shadow-xl flex items-center justify-between group hover:border-accent/20 transition-all">
-                  <div className="flex items-center gap-8">
-                    <div className="h-12 w-12 bg-secondary/30 flex items-center justify-center text-accent/40 font-bold text-xs">{v.vendorName[0]}</div>
-                    <div className="space-y-1">
-                      <h4 className="text-lg font-headline italic">{v.vendorName}</h4>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold">{v.role} • {v.category}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] uppercase tracking-widest text-accent/40 mb-1">Cost Model</p>
-                    <Badge variant="secondary" className="rounded-none uppercase tracking-widest text-[8px]">{v.costType}</Badge>
-                  </div>
-                </div>
-              ))}
-              {(project.vendorAllocations || []).length === 0 && (
-                <div className="col-span-full py-20 text-center border border-dashed border-accent/10">
-                  <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No partners allocated to the site network</p>
-                </div>
-              )}
-            </div>
-          </div>
         </TabsContent>
 
         {/* --- LEDGER TAB --- */}
@@ -680,7 +659,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                           </div>
                         )}
                       </div>
-                      {!project.isArchived && project.isActivated && (
+                      {!project.isArchived && project.isActivated && project.status !== 'Terminated' && project.status !== 'Termination' && (
                         <div className="flex items-center gap-4">
                           {i === 0 ? (
                             <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest opacity-40">System Verified</Badge>
@@ -709,43 +688,12 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                      <p className="text-[10px] uppercase tracking-widest text-white/40">Authorized Budget</p>
                      <p className="text-3xl font-headline italic">KES {project.totalBudget.toLocaleString()}</p>
                    </div>
-                   <div className="space-y-1 border-t border-white/10 pt-8">
-                     <p className="text-[10px] uppercase tracking-widest text-white/40">Audit Protocol Status</p>
-                     <div className="flex items-center gap-3">
-                       {project.financialReportStatus === 'Verified' ? <FileCheck className="h-5 w-5 text-green-400" /> : <Building2 className="h-5 w-5 text-white/20" />}
-                       <span className="text-xl font-headline italic">{project.financialReportStatus || "Pending"}</span>
-                     </div>
-                   </div>
-                   {!project.isArchived && project.financialReportStatus !== 'Verified' && (
-                     <Button onClick={handleVerifyAudit} className="w-full h-14 bg-white text-accent hover:bg-white/90 rounded-none uppercase tracking-widest text-[10px] font-bold mt-4 shadow-2xl">
-                       Authorize Steward Audit
-                     </Button>
-                   )}
                 </div>
               </Card>
             </div>
           </div>
         </TabsContent>
       </Tabs>
-
-      {/* Extension Dialog */}
-      <Popover open={isExtending} onOpenChange={setIsExtending}>
-        <PopoverContent className="w-80 rounded-none border-accent/20 p-6 space-y-6 font-body shadow-2xl">
-          <div className="space-y-2">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-accent">Authorize Extension</h4>
-            <p className="text-[10px] text-muted-foreground font-light italic">Shift the delivery framework for this commission.</p>
-          </div>
-          <div className="space-y-4">
-            <Calendar mode="single" selected={newDeadline} onSelect={setNewDeadline} initialFocus />
-            <Button 
-              onClick={handleApplyExtension}
-              className="w-full bg-accent text-white h-12 rounded-none text-[10px] font-bold uppercase tracking-widest"
-            >
-              Confirm Timeline Shift
-            </Button>
-          </div>
-        </PopoverContent>
-      </Popover>
 
       {/* Payment Verification Dialog */}
       <Dialog open={isVerifyingPayment} onOpenChange={setIsVerifyingPayment}>

@@ -26,7 +26,10 @@ import {
   Archive,
   History,
   Zap,
-  BookOpen
+  BookOpen,
+  ShieldAlert,
+  FileText,
+  Handshake
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -35,13 +38,15 @@ import { useWhyteStore, ClientProject, ProjectTask } from "@/store/use-whyte-sto
 import { Badge } from "@/components/ui/badge";
 import { parse, differenceInDays, isAfter, format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ClientDashboardPage() {
-  const { clientProjects } = useWhyteStore();
+  const { clientProjects, updateClientProject } = useWhyteStore();
   const [verifiedProjectId, setVerifiedProjectId] = useState<string | null>(null);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request">("project_support");
   const [isMounted, setIsMounted] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsMounted(true);
@@ -51,7 +56,6 @@ export default function ClientDashboardPage() {
 
   if (!isMounted) return null;
 
-  // Prioritize verified project, then fallback to first active or first archived if nothing else found
   const activeProject = clientProjects.find(p => p.id === verifiedProjectId) 
     || clientProjects.find(p => p.isActivated && !p.isArchived)
     || clientProjects.find(p => p.isArchived);
@@ -73,15 +77,27 @@ export default function ClientDashboardPage() {
     );
   }
 
+  const handleClientAgreeTermination = () => {
+    if (!activeProject.termination) return;
+    updateClientProject(activeProject.id, {
+      termination: {
+        ...activeProject.termination,
+        clientAgreed: true
+      }
+    });
+    toast({
+      title: "Resolution Terms Accepted",
+      description: "You have digitally signed the dissolution agreement.",
+    });
+  };
+
   const openSupport = (type: "project_support" | "complaint" | "termination_request") => {
     setSupportType(type);
     setIsSupportOpen(true);
   };
 
-  const activeTasks = (activeProject.tasks || []).filter(t => t.status !== 'Done');
   const completedTasksCount = (activeProject.tasks || []).filter(t => t.status === 'Done').length;
 
-  // Temporal Logic for Client View
   const deadlineStr = activeProject.endDate || format(new Date(), "MMM dd, yyyy");
   const startStr = activeProject.startDate || format(new Date(), "MMM dd, yyyy");
   
@@ -89,15 +105,121 @@ export default function ClientDashboardPage() {
   const startDate = parse(startStr, "MMM dd, yyyy", new Date());
   const today = new Date();
   
-  const daysRemaining = differenceInDays(deadline, today);
   const totalDuration = differenceInDays(deadline, startDate);
-  const isOverdue = isAfter(today, deadline);
-
-  // Efficiency Logic
-  // Efficiency is high if project was not extended and completed on time.
-  const efficiencyRating = activeProject.isArchived 
+  const efficiencyRating = (activeProject.isArchived || activeProject.status === 'Terminated')
     ? (activeProject.isExtended ? 88 : 96) 
     : Math.round((completedTasksCount / Math.max(1, activeProject.tasks?.length || 1)) * 100);
+
+  if (activeProject.status === 'Termination') {
+    return (
+      <div className="max-w-6xl mx-auto space-y-12 font-body pb-24">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          <div className="flex items-center gap-4">
+            <ShieldAlert className="h-5 w-5 text-destructive" />
+            <span className="text-destructive text-[10px] font-bold uppercase tracking-[0.4em]">Dissolution Protocol Active</span>
+          </div>
+          <h1 className="text-6xl font-headline italic">Project <span className="not-italic">Conclusion.</span></h1>
+          <p className="text-muted-foreground font-light italic">Detailed transparency report & mutual resolution agreement.</p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          <div className="lg:col-span-8 space-y-12">
+            <Card className="rounded-none border-destructive/20 bg-white p-10 space-y-10 shadow-2xl">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <Handshake className="h-5 w-5 text-destructive" />
+                  <h3 className="text-2xl font-headline italic">Resolution terms</h3>
+                </div>
+                <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-destructive/20 pl-8">
+                  "{activeProject.termination?.resolutionTerms || "The studio is currently drafting the final resolution terms. Please check back shortly."}"
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-10 border-t border-destructive/10">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-destructive/60">Management Transparency</h4>
+                  <p className="text-sm font-light leading-relaxed text-muted-foreground italic">
+                    {activeProject.termination?.projectSummary || "Calculating work-to-date site protocols..."}
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-destructive/60">Financial Transparency</h4>
+                  <p className="text-sm font-light leading-relaxed text-muted-foreground italic">
+                    {activeProject.termination?.financialSummary || "Auditing procurement and site mobilization costs..."}
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <div className="space-y-8">
+              <h2 className="text-2xl font-headline italic flex items-center gap-3">
+                <Activity className="h-5 w-5 text-destructive/40" /> Final Workflow Audit
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {(activeProject.tasks || []).map((task) => (
+                  <div key={task.id} className="p-6 border border-destructive/10 bg-white shadow-sm flex flex-col justify-between min-h-[140px] opacity-60">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start">
+                        <span className="text-[8px] font-bold text-destructive/30 uppercase tracking-widest">{task.id}</span>
+                        <Badge variant="ghost" className={`text-[8px] uppercase tracking-widest p-0 h-auto ${task.status === 'Done' ? 'text-green-600' : 'text-destructive'}`}>{task.status}</Badge>
+                      </div>
+                      <h4 className="text-sm font-bold uppercase tracking-widest leading-tight">{task.title}</h4>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 space-y-8">
+            <Card className="rounded-none border-destructive/20 bg-destructive/5 p-8 space-y-8">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-destructive">Execution Agreement</h3>
+              <div className="space-y-6">
+                <div className={cn("p-6 border bg-white flex items-center justify-between", activeProject.termination?.studioAgreed ? "border-green-600/20" : "border-destructive/10")}>
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-widest font-bold">Studio Agreement</p>
+                    <p className="text-[9px] font-light italic">{activeProject.termination?.studioAgreed ? "Authorized" : "Pending"}</p>
+                  </div>
+                  {activeProject.termination?.studioAgreed && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                </div>
+                <div className={cn("p-6 border bg-white flex items-center justify-between", activeProject.termination?.clientAgreed ? "border-green-600/20" : "border-destructive/10")}>
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-widest font-bold">Client Agreement</p>
+                    <p className="text-[9px] font-light italic">{activeProject.termination?.clientAgreed ? "Signed" : "Signature Required"}</p>
+                  </div>
+                  {activeProject.termination?.clientAgreed && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                </div>
+
+                <Button 
+                  onClick={handleClientAgreeTermination}
+                  disabled={activeProject.termination?.clientAgreed || !activeProject.termination?.resolutionTerms}
+                  className="w-full h-16 bg-destructive text-white hover:bg-destructive/90 rounded-none uppercase tracking-widest text-[10px] font-bold shadow-2xl"
+                >
+                  {activeProject.termination?.clientAgreed ? "Agreement Signed" : "Accept Resolution Terms"}
+                </Button>
+              </div>
+            </Card>
+
+            <Card className="rounded-none border-destructive/10 bg-white p-8 space-y-6">
+              <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-destructive/40">Financial Record</h4>
+              <div className="space-y-4">
+                {activeProject.installments.map((ins, i) => (
+                  <div key={i} className={`p-4 border ${ins.status === 'Paid' ? 'border-green-600/10 bg-green-600/[0.02]' : 'border-destructive/10'}`}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{ins.label}</span>
+                      <span className={`text-[8px] font-bold uppercase tracking-widest ${ins.status === 'Paid' ? 'text-green-600' : 'text-destructive/40'}`}>{ins.status}</span>
+                    </div>
+                    <p className="text-sm font-bold tracking-widest">KES {ins.amount.toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
+        <ClientSupportDialog isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} projectId={activeProject.id} defaultType="termination_request" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-16 pb-24 font-body">
@@ -105,16 +227,16 @@ export default function ClientDashboardPage() {
         <div className="flex items-center gap-4">
           <div className="h-px w-12 bg-accent" />
           <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">
-            {activeProject.isArchived ? "Commission Archive" : "Client Workspace"}
+            {(activeProject.isArchived || activeProject.status === 'Terminated') ? "Commission Archive" : "Client Workspace"}
           </span>
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-2">
             <h1 className="text-6xl font-headline">
-              {activeProject.isArchived ? "The Historical Record." : "The Evolution."}
+              {(activeProject.isArchived || activeProject.status === 'Terminated') ? "The Historical Record." : "The Evolution."}
             </h1>
             <p className="text-muted-foreground font-light italic">
-              {activeProject.isArchived 
+              {(activeProject.isArchived || activeProject.status === 'Terminated') 
                 ? "Archived Architectural Dossier — Nairobi Studio HQ" 
                 : "Synchronized with Nairobi Studio HQ"}
             </p>
@@ -126,7 +248,7 @@ export default function ClientDashboardPage() {
               <Badge variant="outline" className={`rounded-none uppercase tracking-widest text-[8px] border-accent/20 text-accent/60`}>
                 Phase: {activeProject.status}
               </Badge>
-              {activeProject.isArchived && (
+              {(activeProject.isArchived || activeProject.status === 'Terminated') && (
                 <Badge className="bg-black text-white rounded-none uppercase tracking-widest text-[8px] py-1 px-3 flex gap-2">
                   <Archive className="h-3 w-3" /> Historical Archive
                 </Badge>
@@ -136,7 +258,7 @@ export default function ClientDashboardPage() {
         </div>
       </motion.div>
 
-      {activeProject.isArchived && (
+      {(activeProject.isArchived || activeProject.status === 'Terminated') && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -168,7 +290,7 @@ export default function ClientDashboardPage() {
               <p className="text-4xl font-headline italic">{completedTasksCount} Protocol(s)</p>
             </div>
             <div className="pt-6 mt-6 border-t border-accent/5">
-              <p className="text-[9px] uppercase tracking-widest text-accent/40">100% Structural Completion</p>
+              <p className="text-[9px] uppercase tracking-widest text-accent/40">Structural Protocol History</p>
             </div>
           </Card>
         </motion.div>
@@ -178,8 +300,8 @@ export default function ClientDashboardPage() {
         <div className="lg:col-span-8 space-y-12">
           {/* Main Status Card */}
           <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-            <Card className={cn("rounded-none border-accent/10 shadow-2xl overflow-hidden bg-white", activeProject.isArchived && "opacity-90")}>
-              <div className={cn("h-1.5 w-full", activeProject.isArchived ? "bg-black" : "bg-accent")} />
+            <Card className={cn("rounded-none border-accent/10 shadow-2xl overflow-hidden bg-white", (activeProject.isArchived || activeProject.status === 'Terminated') && "opacity-90")}>
+              <div className={cn("h-1.5 w-full", (activeProject.isArchived || activeProject.status === 'Terminated') ? "bg-black" : "bg-accent")} />
               <CardHeader className="p-10 pb-6">
                 <div className="flex justify-between items-start mb-6">
                   <div>
@@ -187,8 +309,10 @@ export default function ClientDashboardPage() {
                     <CardTitle className="text-4xl font-headline italic">{activeProject.project}</CardTitle>
                   </div>
                   <div className="flex gap-3">
-                    {activeProject.isExtended && !activeProject.isArchived && (
-                      <Badge className="bg-orange-500 text-white rounded-none uppercase tracking-widest text-[8px] py-1.5">Timeline Extended</Badge>
+                    {activeProject.status === 'Terminated' && (
+                      <Badge className="bg-destructive text-white rounded-none uppercase tracking-widest text-[8px] py-1.5 flex gap-2">
+                        <XCircle className="h-3 w-3" /> Dissolved Contract
+                      </Badge>
                     )}
                     {activeProject.financialReportStatus === 'Verified' && (
                       <Badge className="bg-green-600 text-white rounded-none uppercase tracking-widest text-[8px] py-1.5 flex gap-2">
@@ -208,7 +332,7 @@ export default function ClientDashboardPage() {
                   </p>
                 </div>
 
-                {!activeProject.isArchived && (
+                {!activeProject.isArchived && activeProject.status !== 'Terminated' && (
                   <div className="space-y-4 pt-6 border-t border-accent/5">
                     <div className="flex justify-between text-[9px] uppercase tracking-[0.4em] font-bold text-accent/60">
                       <span>Implementation Velocity</span>
@@ -221,29 +345,24 @@ export default function ClientDashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
                   <div className="p-8 bg-secondary/30 border-l-2 border-accent italic">
                     <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2 mb-4">
-                      <Clock className="h-3 w-3" /> {activeProject.isArchived ? "Archival Sync" : "Latest Site Entry"}
+                      <Clock className="h-3 w-3" /> {(activeProject.isArchived || activeProject.status === 'Terminated') ? "Archival Sync" : "Latest Site Entry"}
                     </h4>
                     <p className="text-sm font-light leading-relaxed text-accent/80">
                       "{activeProject.lastActivity || 'Architectural synchronization established.'}"
                     </p>
                   </div>
 
-                  <div className={cn("p-8 border-l-2 italic", activeProject.isArchived ? "bg-secondary/50 border-black" : isOverdue ? "bg-destructive/5 border-destructive" : "bg-accent/5 border-accent")}>
+                  <div className={cn("p-8 border-l-2 italic", (activeProject.isArchived || activeProject.status === 'Terminated') ? "bg-secondary/50 border-black" : "bg-accent/5 border-accent")}>
                     <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold opacity-40 flex items-center gap-2 mb-4">
                       <Timer className="h-3 w-3" /> Delivery Framework
                     </h4>
                     <div className="space-y-2">
                       <p className="text-xs font-bold uppercase tracking-widest opacity-60">
-                        {activeProject.isArchived ? "Completed On" : "Estimated Handover"}
+                        {(activeProject.isArchived || activeProject.status === 'Terminated') ? "Closed On" : "Estimated Handover"}
                       </p>
-                      <p className={cn("text-2xl font-headline font-bold", !activeProject.isArchived && isOverdue ? "text-destructive" : "text-accent")}>
+                      <p className="text-2xl font-headline font-bold text-accent">
                         {activeProject.endDate || "Pending Schedule"}
                       </p>
-                      {!activeProject.isArchived && (
-                        <p className="text-[10px] uppercase tracking-widest opacity-40">
-                          {isOverdue ? "Authorized timeline extension pending" : `${daysRemaining} days until scheduled completion`}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -257,7 +376,7 @@ export default function ClientDashboardPage() {
               <div className="flex items-center gap-4">
                 <Activity className="h-4 w-4 text-accent" />
                 <h2 className="text-2xl font-headline italic">
-                  {activeProject.isArchived ? "Completed Protocol Index" : "Project Workflow Recap"}
+                  {(activeProject.isArchived || activeProject.status === 'Terminated') ? "Completed Protocol Index" : "Project Workflow Recap"}
                 </h2>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">{completedTasksCount} Tasks Logged</span>
@@ -272,11 +391,6 @@ export default function ClientDashboardPage() {
                     </div>
                     <h4 className="text-sm font-bold uppercase tracking-widest leading-tight group-hover:text-accent transition-colors">{task.title}</h4>
                   </div>
-                  {task.assignedVendor && (
-                    <div className="flex items-center gap-2 text-[9px] text-muted-foreground uppercase tracking-widest pt-4 border-t border-accent/5 mt-4">
-                      <Truck className="h-3 w-3 opacity-40" /> {task.assignedVendor}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -294,7 +408,7 @@ export default function ClientDashboardPage() {
                 </div>
               ))}
             </div>
-            {!activeProject.isArchived && (
+            {!activeProject.isArchived && activeProject.status !== 'Terminated' && (
               <div className="pt-6 border-t border-accent/5">
                 <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[9px] font-bold">Raise Studio Inquiry</Button>
               </div>
@@ -302,7 +416,7 @@ export default function ClientDashboardPage() {
           </Card>
           
           <Card className="rounded-none border-accent/5 bg-secondary/30 p-8 space-y-6">
-            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><HardHat className="h-3 w-3" /> {activeProject.isArchived ? "Historical Network" : "Active Partner Matrix"}</h4>
+            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><HardHat className="h-3 w-3" /> {(activeProject.isArchived || activeProject.status === 'Terminated') ? "Historical Network" : "Active Partner Matrix"}</h4>
             <div className="space-y-4">
               {(activeProject.vendorAllocations || []).map((vendor, vIdx) => (
                 <div key={vIdx} className="flex items-center justify-between">
@@ -310,9 +424,6 @@ export default function ClientDashboardPage() {
                   <Badge variant="ghost" className="text-[8px] uppercase tracking-widest opacity-40 p-0 h-auto">{vendor.category}</Badge>
                 </div>
               ))}
-              {(activeProject.vendorAllocations || []).length === 0 && (
-                <p className="text-[10px] text-muted-foreground italic">No partners officially logged.</p>
-              )}
             </div>
           </Card>
         </div>

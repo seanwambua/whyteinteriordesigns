@@ -1,3 +1,4 @@
+
 'use client';
 
 import { create } from 'zustand';
@@ -62,13 +63,25 @@ export interface ProjectTask {
   subtasks?: SubTask[];
 }
 
+export interface TerminationDetails {
+  reason: string;
+  requestedBy: 'Client' | 'Studio';
+  requestedDate: string;
+  financialSummary: string;
+  projectSummary: string;
+  resolutionTerms?: string;
+  clientAgreed?: boolean;
+  studioAgreed?: boolean;
+  finalizedDate?: string;
+}
+
 export interface ClientProject {
   id: string;
   name: string;
   email: string;
   project: string;
   tier: 'Premium' | 'Deluxe' | 'Golden';
-  status: 'Planning' | 'Execution' | 'Completion' | 'Termination';
+  status: 'Planning' | 'Execution' | 'Completion' | 'Termination' | 'Terminated';
   progress: number;
   startDate: string;
   endDate: string;
@@ -89,6 +102,7 @@ export interface ClientProject {
   workScope?: string;
   operationalBudget?: number;
   vendorAllocations?: VendorAllocation[];
+  termination?: TerminationDetails;
 }
 
 export interface Inquiry {
@@ -201,9 +215,6 @@ const initialClientProjects: ClientProject[] = [
     installments: [
       { label: "Initial Deposit (70%)", percentage: 70, amount: 10500000, status: 'Paid', transactionCode: "AUTH-8821" },
       { label: "Final Reconciliation (30%)", percentage: 30, amount: 4500000, status: 'Pending' }
-    ],
-    siteReports: [
-      { id: "LOG-1", date: "Feb 10", type: "Progress", content: "Italian marble installation complete.", urgency: "Normal" }
     ],
     tasks: [
       { 
