@@ -15,7 +15,8 @@ import {
   ExternalLink,
   ShieldAlert,
   Building2,
-  Trash2
+  Trash2,
+  Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -30,6 +31,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ProjectClosingPage() {
   const { toast } = useToast();
@@ -47,9 +49,9 @@ export default function ProjectClosingPage() {
 
   if (!isMounted) return null;
 
-  // Filter projects that are in execution or completion for closing management
+  // STRICT REQUIREMENT: Only activated projects in active/late phases can be reconciled
   const relevantProjects = clientProjects.filter(p => 
-    p.status === 'Execution' || p.status === 'Completed' || p.status === 'Styling'
+    p.isActivated && (p.status === 'Execution' || p.status === 'Completed' || p.status === 'Styling')
   );
 
   const handleUpdateSteward = () => {
@@ -123,9 +125,17 @@ export default function ProjectClosingPage() {
         </div>
       </motion.div>
 
+      <Alert className="rounded-none border-accent/10 bg-accent/[0.02] py-6">
+        <Info className="h-4 w-4 text-accent" />
+        <AlertTitle className="text-[10px] font-bold uppercase tracking-widest text-accent">Lifecycle Enforcement</AlertTitle>
+        <AlertDescription className="text-xs font-light italic text-muted-foreground">
+          Reconciliation protocols are exclusively available for **Active Journeys** currently in the Execution, Styling, or Completion phases.
+        </AlertDescription>
+      </Alert>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-8">
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40 mb-4">Pipeline Finalization</h2>
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40 mb-4">Active Pipeline Reconciliation</h2>
           
           <div className="space-y-6">
             {relevantProjects.map((project, index) => (
@@ -144,6 +154,9 @@ export default function ProjectClosingPage() {
                           <span className="text-[10px] font-bold text-accent/40 uppercase tracking-widest">{project.id}</span>
                           <Badge variant="outline" className="rounded-none border-accent/20 text-accent uppercase tracking-[0.2em] text-[8px] font-bold px-3">
                             {project.status}
+                          </Badge>
+                          <Badge className="bg-green-600/10 text-green-600 border-green-600/20 rounded-none text-[8px] uppercase tracking-widest px-2">
+                            Active
                           </Badge>
                         </div>
                         <h3 className="text-3xl font-headline italic">{project.project}</h3>
@@ -186,7 +199,7 @@ export default function ProjectClosingPage() {
             ))}
             {relevantProjects.length === 0 && (
               <div className="text-center py-24 border border-dashed border-accent/10 bg-secondary/5">
-                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No projects currently ready for final reconciliation</p>
+                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No active journeys currently prioritized for reconciliation</p>
               </div>
             )}
           </div>
@@ -197,53 +210,34 @@ export default function ProjectClosingPage() {
             <div className="absolute -right-8 -bottom-8 opacity-10">
               <Landmark className="h-40 w-40" />
             </div>
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/40 mb-10 relative z-10">Stewardship Protocol</h3>
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/40 mb-10 relative z-10">Governance Checklist</h3>
             <ul className="space-y-10 relative z-10">
               <li className="flex gap-6">
                 <ShieldCheck className="h-6 w-6 text-white/60 shrink-0" />
                 <div className="space-y-2">
-                  <p className="text-sm font-bold uppercase tracking-widest">Architectural Audit</p>
-                  <p className="text-[11px] text-white/40 font-light italic leading-relaxed">Structural verification against signed blueprints.</p>
+                  <p className="text-sm font-bold uppercase tracking-widest">Client Authenticated</p>
+                  <p className="text-[11px] text-white/40 font-light italic leading-relaxed">Project is verified against active client registration.</p>
                 </div>
               </li>
               <li className="flex gap-6">
                 <Landmark className="h-6 w-6 text-white/60 shrink-0" />
                 <div className="space-y-2">
-                  <p className="text-sm font-bold uppercase tracking-widest">Liquidity Sync</p>
-                  <p className="text-[11px] text-white/40 font-light italic leading-relaxed">
-                    Integration with {financialSteward || "Internal Systems"} for final balance reconciliation.
-                  </p>
+                  <p className="text-sm font-bold uppercase tracking-widest">Active Execution</p>
+                  <p className="text-[11px] text-white/40 font-light italic leading-relaxed">Only projects in Implementation phases can enter audit.</p>
                 </div>
               </li>
               <li className="flex gap-6">
                 <CheckCircle2 className="h-6 w-6 text-white/60 shrink-0" />
                 <div className="space-y-2">
-                  <p className="text-sm font-bold uppercase tracking-widest">Formal Handover</p>
-                  <p className="text-[11px] text-white/40 font-light italic leading-relaxed">Transfer of the Digital Vault keys to the project owner.</p>
+                  <p className="text-sm font-bold uppercase tracking-widest">Financial Clearance</p>
+                  <p className="text-[11px] text-white/40 font-light italic leading-relaxed">Final balance reconciliation with {financialSteward || "Internal Studio"}.</p>
                 </div>
               </li>
             </ul>
           </Card>
-
-          <div className="p-10 border border-dashed border-accent/20 bg-white space-y-8 text-center">
-            <h4 className="text-[10px] uppercase tracking-[0.5em] font-bold text-accent/40 italic">Active Governance</h4>
-            <div className="p-6 bg-secondary/30 border border-accent/5 space-y-4">
-              <div className="flex items-center justify-center gap-3">
-                <ShieldAlert className="h-4 w-4 text-accent/40" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">Compliance Requirement</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed italic px-4">
-                Closure requires a verified financial statement from the assigned partner: <span className="text-accent font-bold">{financialSteward || "N/A (Manual)"}</span>.
-              </p>
-              <Button variant="link" className="text-[10px] uppercase tracking-widest text-accent flex items-center gap-2 hover:no-underline opacity-60 hover:opacity-100 mx-auto">
-                Partner Support Terminal <ExternalLink className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Stewardship Editor Dialog */}
       <Dialog open={isEditingSteward} onOpenChange={setIsEditingSteward}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md">
           <DialogHeader className="space-y-4">

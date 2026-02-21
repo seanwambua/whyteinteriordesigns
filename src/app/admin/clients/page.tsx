@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { 
   Search, 
   Filter, 
-  ExternalLink, 
   Mail, 
   Calendar,
   ChevronRight,
@@ -15,12 +14,14 @@ import {
   Clock,
   Activity,
   UserPlus,
-  Users
+  Users,
+  Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 import { useWhyteStore } from "@/store/use-whyte-store";
 import { useEffect, useState } from "react";
@@ -42,6 +43,7 @@ export default function ClientDirectoryPage() {
     p.id.toLowerCase().includes(search.toLowerCase())
   );
 
+  // STRICT LIFECYCLE: Active means activated via deposit. Pending means planned but awaiting funds.
   const activeProjects = filteredProjects.filter(p => p.isActivated);
   const pendingProjects = filteredProjects.filter(p => !p.isActivated);
 
@@ -122,11 +124,11 @@ export default function ClientDirectoryPage() {
 
               <div className="flex items-center gap-8 text-[9px] uppercase tracking-widest font-bold">
                  <div className="space-y-1">
-                   <span className="text-accent/30 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Initialized</span>
+                   <span className="text-accent/30 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Registered</span>
                    <span className="text-muted-foreground">{client.startDate}</span>
                  </div>
                  <div className="space-y-1">
-                   <span className="text-accent/30 flex items-center gap-1.5"><Clock className="h-3 w-3" /> Last Sync</span>
+                   <span className="text-accent/30 flex items-center gap-1.5"><Clock className="h-3 w-3" /> Sync Activity</span>
                    <span className="text-muted-foreground italic truncate max-w-[120px] inline-block">{client.lastActivity}</span>
                  </div>
               </div>
@@ -134,11 +136,11 @@ export default function ClientDirectoryPage() {
               <div className="text-right">
                  {!client.isActivated ? (
                    <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 rounded-none text-[8px] uppercase tracking-widest px-3 py-1">
-                     Awaiting Activation
+                     Briefing Awaiting Funds
                    </Badge>
                  ) : (
                    <Badge className="bg-green-600/10 text-green-600 border-green-600/20 rounded-none text-[8px] uppercase tracking-widest px-3 py-1">
-                     Journey Verified
+                     Active Journey
                    </Badge>
                  )}
               </div>
@@ -167,21 +169,29 @@ export default function ClientDirectoryPage() {
           <div className="relative w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search Directory..." 
+              placeholder="Search Identity..." 
               className="pl-11 rounded-none border-accent/10 h-12 text-xs uppercase tracking-widest bg-white"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <Button asChild className="bg-accent text-white rounded-none h-12 px-6 uppercase tracking-widest text-[10px] flex gap-2">
-            <Link href="/admin/clients/add"><UserPlus className="h-4 w-4" /> New Briefing</Link>
+            <Link href="/admin/clients/add"><UserPlus className="h-4 w-4" /> New Registration</Link>
           </Button>
         </div>
       </motion.div>
 
+      <Alert className="rounded-none border-accent/10 bg-accent/[0.02]">
+        <Info className="h-4 w-4 text-accent" />
+        <AlertTitle className="text-[10px] font-bold uppercase tracking-widest text-accent">Registration Intelligence</AlertTitle>
+        <AlertDescription className="text-xs font-light italic text-muted-foreground">
+          All journeys originate from client registrations. **Pending Briefings** represent planned commissions awaiting financial activation.
+        </AlertDescription>
+      </Alert>
+
       <Tabs defaultValue="all" className="space-y-8">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-8">
-          <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0">All Clients ({filteredProjects.length})</TabsTrigger>
+          <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0">Total Registry ({filteredProjects.length})</TabsTrigger>
           <TabsTrigger value="active" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0">Active Journeys ({activeProjects.length})</TabsTrigger>
           <TabsTrigger value="pending" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0">Pending Briefings ({pendingProjects.length})</TabsTrigger>
         </TabsList>
@@ -193,7 +203,7 @@ export default function ClientDirectoryPage() {
             ))}
             {filteredProjects.length === 0 && (
               <div className="text-center py-20 border border-dashed border-accent/10">
-                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No studio records found matching your search</p>
+                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No studio registrations found</p>
               </div>
             )}
           </div>
@@ -206,7 +216,7 @@ export default function ClientDirectoryPage() {
             ))}
             {activeProjects.length === 0 && (
               <div className="text-center py-20 border border-dashed border-accent/10">
-                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No verified journeys currently synchronized</p>
+                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No financially activated journeys in implementation</p>
               </div>
             )}
           </div>
@@ -219,31 +229,12 @@ export default function ClientDirectoryPage() {
             ))}
             {pendingProjects.length === 0 && (
               <div className="text-center py-20 border border-dashed border-accent/10">
-                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">All project briefings have been activated</p>
+                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">All project briefings have transitioned to active states</p>
               </div>
             )}
           </div>
         </TabsContent>
       </Tabs>
-
-      <div className="p-10 border border-dashed border-accent/20 bg-secondary/5 flex flex-col md:flex-row items-center justify-between gap-8">
-        <div className="flex items-center gap-12">
-          <div className="flex items-center gap-4">
-            <Users className="h-8 w-8 text-accent/20" />
-            <div className="space-y-0.5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">Network Capacity</p>
-              <p className="text-2xl font-headline italic">{clientProjects.length} Master Briefings</p>
-            </div>
-          </div>
-          <div className="h-12 w-px bg-accent/10 hidden md:block" />
-          <div className="space-y-0.5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">Studio Integrity</p>
-            <p className="text-sm font-light italic text-muted-foreground">
-              {activeProjects.length} commissions verified and currently under architectural supervision.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
