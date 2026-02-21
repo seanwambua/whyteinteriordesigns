@@ -2,7 +2,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   CheckCircle2, 
@@ -13,54 +13,77 @@ import {
   Settings2, 
   Wallet, 
   ExternalLink,
-  ShieldAlert
+  ShieldAlert,
+  Building2,
+  Trash2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useWhyteStore } from "@/store/use-whyte-store";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 export default function ProjectClosingPage() {
   const { toast } = useToast();
-  const [financialProvider, setFinancialProvider] = useState("Imani Financial Services (IFS-KE)");
+  const { clientProjects, financialSteward, setFinancialSteward, updateClientProject } = useWhyteStore();
+  
+  const [isMounted, setIsMounted] = useState(false);
+  const [isEditingSteward, setIsEditingSteward] = useState(false);
+  const [newStewardName, setNewStewardName] = useState(financialSteward);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const pendingClosure = [
-    { 
-      id: "WP-0079", 
-      client: "Gigiri Diplomatic Villa", 
-      closedAt: "Oct 15", 
-      status: "Final Audit",
-      revenue: "Reconciled",
-      financialReport: "Verified",
-      satisfaction: 5.0
-    },
-    { 
-      id: "WP-0080", 
-      client: "Muthaiga North Residency", 
-      closedAt: "Oct 22", 
-      status: "Handover Complete",
-      revenue: "Pending Final 20%",
-      financialReport: "Awaiting IFS-KE",
-      satisfaction: 4.8
-    }
-  ];
+  useEffect(() => {
+    setIsMounted(true);
+    setNewStewardName(financialSteward);
+  }, [financialSteward]);
 
-  const handleProviderChange = () => {
+  if (!isMounted) return null;
+
+  // Filter projects that are in execution or completion for closing management
+  const relevantProjects = clientProjects.filter(p => 
+    p.status === 'Execution' || p.status === 'Completed' || p.status === 'Styling'
+  );
+
+  const handleUpdateSteward = () => {
     setIsSyncing(true);
     setTimeout(() => {
+      setFinancialSteward(newStewardName);
       setIsSyncing(false);
+      setIsEditingSteward(false);
       toast({
-        title: "Financial Sync Updated",
-        description: `Stewardship protocol switched to manual reconciliation.`,
+        title: "Financial Protocol Updated",
+        description: `Stewardship partner synchronized to: ${newStewardName || 'Internal Reconciliation'}.`,
       });
-      setFinancialProvider("Manual Internal Reconciliation");
-    }, 1500);
+    }, 1200);
+  };
+
+  const handleRemoveSteward = () => {
+    setIsSyncing(true);
+    setTimeout(() => {
+      setFinancialSteward("");
+      setNewStewardName("");
+      setIsSyncing(false);
+      setIsEditingSteward(false);
+      toast({
+        title: "Stewardship Dissolved",
+        description: "Reconciliation transitioned to Internal Studio Audit.",
+      });
+    }, 1000);
   };
 
   const handleVerifyReport = (projectId: string) => {
+    updateClientProject(projectId, { financialReportStatus: 'Verified' });
     toast({
       title: "Report Synchronized",
-      description: `Financial report for ${projectId} has been cross-referenced with ${financialProvider}.`,
+      description: `Financial audit for ${projectId} has been cross-referenced with ${financialSteward || 'Internal Systems'}.`,
     });
   };
 
@@ -79,122 +102,199 @@ export default function ProjectClosingPage() {
           <h1 className="text-5xl font-headline italic">Reconciliation & <span className="not-italic">Closing.</span></h1>
         </div>
         
-        <div className="p-4 border border-accent/10 bg-white shadow-sm flex items-center gap-6">
+        <div className="p-6 border border-accent/10 bg-white shadow-xl flex items-center gap-8 group hover:border-accent/30 transition-all">
+          <div className="h-10 w-10 bg-accent/5 flex items-center justify-center text-accent">
+            <Building2 className="h-5 w-5" />
+          </div>
           <div className="space-y-1">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-accent/40">Financial Steward</p>
-            <p className="text-xs font-bold uppercase tracking-widest text-accent">{financialProvider}</p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40">Financial Steward</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-accent">
+              {financialSteward || "Internal Reconciliation"}
+            </p>
           </div>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-10 w-10 hover:bg-accent/5 text-accent/40 hover:text-accent"
-            onClick={handleProviderChange}
-            disabled={isSyncing}
+            className="h-10 w-10 hover:bg-accent/10 text-accent/40 hover:text-accent ml-4"
+            onClick={() => setIsEditingSteward(true)}
           >
-            <Settings2 className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            <Settings2 className="h-4 w-4" />
           </Button>
         </div>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40 mb-8">Pending Finalization</h2>
-          {pendingClosure.map((project, index) => (
-            <motion.div
-              key={project.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="rounded-none border-accent/10 shadow-lg bg-white group hover:shadow-2xl transition-all">
-                <CardContent className="p-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                  <div className="space-y-3 flex-1">
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-accent/40 uppercase tracking-widest">{project.id}</span>
-                      <div className="h-1 w-1 bg-accent/20 rounded-full" />
-                      <span className="text-[10px] font-bold text-accent uppercase tracking-widest italic">{project.status}</span>
-                    </div>
-                    <h3 className="text-3xl font-headline">{project.client}</h3>
-                    <div className="flex flex-wrap gap-6 items-center">
-                      <div className="flex gap-1">
-                        {[1,2,3,4,5].map(i => <Star key={i} className={`h-2.5 w-2.5 ${i <= project.satisfaction ? 'fill-accent text-accent' : 'text-accent/20'}`} />)}
+        <div className="lg:col-span-2 space-y-8">
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40 mb-4">Pipeline Finalization</h2>
+          
+          <div className="space-y-6">
+            {relevantProjects.map((project, index) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className="rounded-none border-accent/5 shadow-xl bg-white group hover:shadow-2xl transition-all overflow-hidden">
+                  <div className="flex flex-col md:flex-row items-center">
+                    <div className="h-full w-2 bg-accent opacity-20 group-hover:opacity-100 transition-opacity self-stretch" />
+                    <CardContent className="p-10 flex-1 flex flex-col md:flex-row items-center justify-between gap-10">
+                      <div className="space-y-4 flex-1">
+                        <div className="flex items-center gap-4">
+                          <span className="text-[10px] font-bold text-accent/40 uppercase tracking-widest">{project.id}</span>
+                          <Badge variant="outline" className="rounded-none border-accent/20 text-accent uppercase tracking-[0.2em] text-[8px] font-bold px-3">
+                            {project.status}
+                          </Badge>
+                        </div>
+                        <h3 className="text-3xl font-headline italic">{project.project}</h3>
+                        <div className="flex flex-wrap gap-8 items-center border-t border-accent/5 pt-4">
+                          <div className="flex items-center gap-2">
+                            <Wallet className="h-3.5 w-3.5 text-accent/30" />
+                            <span className={`text-[10px] font-bold uppercase tracking-widest ${
+                              project.financialReportStatus === 'Verified' ? 'text-green-600' : 'text-orange-500 animate-pulse'
+                            }`}>
+                              Audit: {project.financialReportStatus || 'Pending'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Star className="h-3 w-3 text-accent/20" />
+                            <span className="text-[9px] uppercase tracking-widest">Client: {project.name}</span>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-widest italic">Aesthetic Quality: {project.satisfaction}</span>
-                      <div className="flex items-center gap-2">
-                        <Wallet className="h-3 w-3 text-accent/40" />
-                        <span className={`text-[9px] font-bold uppercase tracking-widest ${project.financialReport === 'Verified' ? 'text-green-600' : 'text-orange-600 animate-pulse'}`}>
-                          Report: {project.financialReport}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-8 text-right min-w-[200px]">
-                    <div>
-                      <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Status</span>
-                      <span className={`text-[10px] font-bold uppercase tracking-widest ${project.revenue.includes('Pending') ? 'text-orange-600' : 'text-green-600'}`}>
-                        {project.revenue}
-                      </span>
-                    </div>
-                    <Button 
-                      onClick={() => handleVerifyReport(project.id)}
-                      variant="ghost" 
-                      className="h-12 w-12 rounded-full border border-accent/10 group-hover:bg-accent group-hover:text-white transition-all p-0"
-                    >
-                      <FileCheck className="h-4 w-4" />
-                    </Button>
+                      <div className="flex items-center gap-8 min-w-[200px] justify-end">
+                        <div className="text-right">
+                          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Execution Velocity</span>
+                          <span className="text-lg font-headline italic">{project.progress}%</span>
+                        </div>
+                        <Button 
+                          onClick={() => handleVerifyReport(project.id)}
+                          disabled={project.financialReportStatus === 'Verified'}
+                          variant="outline" 
+                          className={`h-14 w-14 rounded-full border border-accent/10 transition-all p-0 ${
+                            project.financialReportStatus === 'Verified' ? 'bg-green-600 text-white border-green-600' : 'hover:bg-accent hover:text-white'
+                          }`}
+                        >
+                          <FileCheck className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    </CardContent>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                </Card>
+              </motion.div>
+            ))}
+            {relevantProjects.length === 0 && (
+              <div className="text-center py-24 border border-dashed border-accent/10 bg-secondary/5">
+                <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No projects currently ready for final reconciliation</p>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="space-y-8">
-          <Card className="rounded-none border-accent/10 shadow-xl bg-accent p-10 text-white">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/40 mb-8">Reconciliation Protocol</h3>
-            <ul className="space-y-8">
-              <li className="flex gap-4">
-                <ShieldCheck className="h-5 w-5 text-white/60 shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-widest">Architectural Audit</p>
-                  <p className="text-[10px] text-white/40 font-light italic leading-relaxed">Verification of design fidelity and technical execution.</p>
+          <Card className="rounded-none border-accent/10 shadow-2xl bg-accent p-12 text-white relative overflow-hidden">
+            <div className="absolute -right-8 -bottom-8 opacity-10">
+              <Landmark className="h-40 w-40" />
+            </div>
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/40 mb-10 relative z-10">Stewardship Protocol</h3>
+            <ul className="space-y-10 relative z-10">
+              <li className="flex gap-6">
+                <ShieldCheck className="h-6 w-6 text-white/60 shrink-0" />
+                <div className="space-y-2">
+                  <p className="text-sm font-bold uppercase tracking-widest">Architectural Audit</p>
+                  <p className="text-[11px] text-white/40 font-light italic leading-relaxed">Structural verification against signed blueprints.</p>
                 </div>
               </li>
-              <li className="flex gap-4">
-                <Landmark className="h-5 w-5 text-white/60 shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-widest">3rd Party Financial Sync</p>
-                  <p className="text-[10px] text-white/40 font-light italic leading-relaxed">Integration with {financialProvider} for liquidity reporting.</p>
+              <li className="flex gap-6">
+                <Landmark className="h-6 w-6 text-white/60 shrink-0" />
+                <div className="space-y-2">
+                  <p className="text-sm font-bold uppercase tracking-widest">Liquidity Sync</p>
+                  <p className="text-[11px] text-white/40 font-light italic leading-relaxed">
+                    Integration with {financialSteward || "Internal Systems"} for final balance reconciliation.
+                  </p>
                 </div>
               </li>
-              <li className="flex gap-4">
-                <CheckCircle2 className="h-5 w-5 text-white/60 shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-widest">White-Glove Handover</p>
-                  <p className="text-[10px] text-white/40 font-light italic leading-relaxed">Final digital archive and physical styling completion.</p>
+              <li className="flex gap-6">
+                <CheckCircle2 className="h-6 w-6 text-white/60 shrink-0" />
+                <div className="space-y-2">
+                  <p className="text-sm font-bold uppercase tracking-widest">Formal Handover</p>
+                  <p className="text-[11px] text-white/40 font-light italic leading-relaxed">Transfer of the Digital Vault keys to the project owner.</p>
                 </div>
               </li>
             </ul>
           </Card>
 
-          <div className="p-8 border border-dashed border-accent/20 rounded-none bg-white space-y-6">
-            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 italic text-center">External Stewardship</h4>
-            <div className="p-4 bg-secondary/30 border border-accent/5 space-y-4">
-              <div className="flex items-center gap-3">
+          <div className="p-10 border border-dashed border-accent/20 bg-white space-y-8 text-center">
+            <h4 className="text-[10px] uppercase tracking-[0.5em] font-bold text-accent/40 italic">Active Governance</h4>
+            <div className="p-6 bg-secondary/30 border border-accent/5 space-y-4">
+              <div className="flex items-center justify-center gap-3">
                 <ShieldAlert className="h-4 w-4 text-accent/40" />
-                <span className="text-[9px] font-bold uppercase tracking-widest">Audit Compliance</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">Compliance Requirement</span>
               </div>
-              <p className="text-[10px] text-muted-foreground leading-relaxed italic">
-                Closing a project requires a verified financial report from the assigned steward. Current active partner: <span className="text-accent font-bold">{financialProvider}</span>.
+              <p className="text-[11px] text-muted-foreground leading-relaxed italic px-4">
+                Closure requires a verified financial statement from the assigned partner: <span className="text-accent font-bold">{financialSteward || "N/A (Manual)"}</span>.
               </p>
-              <Button variant="link" className="h-auto p-0 text-[9px] uppercase tracking-widest text-accent flex items-center gap-1.5 hover:no-underline opacity-60 hover:opacity-100">
-                Contact Partner Support <ExternalLink className="h-2.5 w-2.5" />
+              <Button variant="link" className="text-[10px] uppercase tracking-widest text-accent flex items-center gap-2 hover:no-underline opacity-60 hover:opacity-100 mx-auto">
+                Partner Support Terminal <ExternalLink className="h-3 w-3" />
               </Button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Stewardship Editor Dialog */}
+      <Dialog open={isEditingSteward} onOpenChange={setIsEditingSteward}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md">
+          <DialogHeader className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Building2 className="h-4 w-4 text-accent" />
+              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Stewardship Configuration</span>
+            </div>
+            <DialogTitle className="text-3xl font-headline italic">Update Steward</DialogTitle>
+            <DialogDescription className="font-light italic text-muted-foreground">
+              Define the 3rd party financial partner responsible for project audits.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 space-y-6">
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-widest font-bold opacity-60">Partner Identity</p>
+              <Input 
+                value={newStewardName}
+                onChange={(e) => setNewStewardName(e.target.value)}
+                placeholder="E.g., Imani Financial Services"
+                className="rounded-none border-accent/20 h-12 focus:ring-accent"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-accent/5">
+              <Button 
+                variant="outline" 
+                className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px]"
+                onClick={() => setNewStewardName("Imani Financial Services (IFS-KE)")}
+              >
+                Reset Default
+              </Button>
+              <Button 
+                variant="outline" 
+                className="rounded-none border-destructive/10 text-destructive hover:bg-destructive hover:text-white h-12 uppercase tracking-widest text-[10px] flex gap-2"
+                onClick={handleRemoveSteward}
+                disabled={isSyncing}
+              >
+                <Trash2 className="h-4 w-4" /> Remove Partner
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              className="w-full bg-accent text-white h-14 rounded-none uppercase tracking-widest text-[10px] font-bold"
+              onClick={handleUpdateSteward}
+              disabled={isSyncing}
+            >
+              {isSyncing ? "Synchronizing Protocols..." : "Authorize Update"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

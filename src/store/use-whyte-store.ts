@@ -23,6 +23,7 @@ export interface ClientProject {
   progress: number;
   startDate: string;
   lastActivity: string;
+  financialReportStatus?: 'Verified' | 'Pending' | 'Awaiting Steward';
 }
 
 export interface Inquiry {
@@ -64,6 +65,7 @@ interface WhyteState {
   inquiries: Inquiry[];
   feedback: Feedback[];
   collaborators: Collaborator[];
+  financialSteward: string;
   
   // Actions
   addProject: (project: Project) => void;
@@ -80,6 +82,8 @@ interface WhyteState {
   removeFeedback: (id: string) => void;
   
   addCollaborator: (collaborator: Collaborator) => void;
+  
+  setFinancialSteward: (steward: string) => void;
   
   clearAllData: () => void;
 }
@@ -113,7 +117,8 @@ const initialClientProjects: ClientProject[] = [
     status: "Execution",
     progress: 78,
     startDate: "Jan 15, 2024",
-    lastActivity: "2 hours ago"
+    lastActivity: "2 hours ago",
+    financialReportStatus: 'Pending'
   },
   {
     id: "WP-0091",
@@ -124,7 +129,8 @@ const initialClientProjects: ClientProject[] = [
     status: "Planning",
     progress: 32,
     startDate: "Feb 10, 2024",
-    lastActivity: "1 day ago"
+    lastActivity: "1 day ago",
+    financialReportStatus: 'Awaiting Steward'
   }
 ];
 
@@ -162,6 +168,7 @@ export const useWhyteStore = create<WhyteState>()(
       inquiries: initialInquiries,
       feedback: [],
       collaborators: initialCollaborators,
+      financialSteward: "Imani Financial Services (IFS-KE)",
 
       addProject: (project) => set((state) => ({ projects: [...state.projects, project] })),
       removeProject: (id) => set((state) => ({ projects: state.projects.filter(p => p.id !== id) })),
@@ -184,12 +191,15 @@ export const useWhyteStore = create<WhyteState>()(
 
       addCollaborator: (col) => set((state) => ({ collaborators: [...state.collaborators, col] })),
 
+      setFinancialSteward: (steward) => set({ financialSteward: steward }),
+
       clearAllData: () => set({
         projects: [],
         clientProjects: [],
         inquiries: [],
         feedback: [],
-        collaborators: []
+        collaborators: [],
+        financialSteward: "Imani Financial Services (IFS-KE)"
       }),
     }),
     {
