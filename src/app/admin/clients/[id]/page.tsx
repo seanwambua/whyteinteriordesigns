@@ -413,50 +413,34 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
         {/* --- NETWORK TAB --- */}
         <TabsContent value="network" className="m-0 space-y-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            <div className="lg:col-span-4 space-y-8">
-              <Card className="rounded-none border-accent/5 shadow-xl bg-white p-10 space-y-8">
-                <div className="flex items-center gap-3">
-                  <Layout className="h-5 w-5 text-accent/40" />
-                  <h3 className="text-xl font-headline italic">Spatial Logic</h3>
-                </div>
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label className="text-[9px] font-bold uppercase tracking-widest text-accent/40">Total Room Count</Label>
-                    <Input type="number" value={project.roomsCount || ""} onChange={(e) => updateClientProject(project.id, { roomsCount: parseInt(e.target.value) })} className="rounded-none border-accent/10" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[9px] font-bold uppercase tracking-widest text-accent/40">Site Operational Budget (KES)</Label>
-                    <Input type="number" value={project.operationalBudget || ""} onChange={(e) => updateClientProject(project.id, { operationalBudget: parseInt(e.target.value) })} className="rounded-none border-accent/10" />
-                  </div>
-                </div>
-              </Card>
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-headline italic">Network Matrix</h2>
+              <Button variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[9px] flex gap-2">
+                <Plus className="h-4 w-4" /> Allocate Partner
+              </Button>
             </div>
-
-            <div className="lg:col-span-8 space-y-8">
-              <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-headline italic">Network Matrix</h2>
-                <Button variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[9px] flex gap-2">
-                  <Plus className="h-4 w-4" /> Allocate Partner
-                </Button>
-              </div>
-              <div className="space-y-6">
-                {(project.vendorAllocations || []).map((v, i) => (
-                  <div key={v.id} className="p-8 border border-accent/5 bg-white shadow-xl flex items-center justify-between">
-                    <div className="flex items-center gap-8">
-                      <div className="h-12 w-12 bg-secondary/30 flex items-center justify-center text-accent/40 font-bold text-xs">{v.vendorName[0]}</div>
-                      <div className="space-y-1">
-                        <h4 className="text-lg font-headline italic">{v.vendorName}</h4>
-                        <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold">{v.role} • {v.category}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] uppercase tracking-widest text-accent/40 mb-1">Cost Model</p>
-                      <Badge variant="secondary" className="rounded-none uppercase tracking-widest text-[8px]">{v.costType}</Badge>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {(project.vendorAllocations || []).map((v, i) => (
+                <div key={v.id} className="p-8 border border-accent/5 bg-white shadow-xl flex items-center justify-between group hover:border-accent/20 transition-all">
+                  <div className="flex items-center gap-8">
+                    <div className="h-12 w-12 bg-secondary/30 flex items-center justify-center text-accent/40 font-bold text-xs">{v.vendorName[0]}</div>
+                    <div className="space-y-1">
+                      <h4 className="text-lg font-headline italic">{v.vendorName}</h4>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold">{v.role} • {v.category}</p>
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase tracking-widest text-accent/40 mb-1">Cost Model</p>
+                    <Badge variant="secondary" className="rounded-none uppercase tracking-widest text-[8px]">{v.costType}</Badge>
+                  </div>
+                </div>
+              ))}
+              {(project.vendorAllocations || []).length === 0 && (
+                <div className="col-span-full py-20 text-center border border-dashed border-accent/10">
+                  <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No partners allocated to the site network</p>
+                </div>
+              )}
             </div>
           </div>
         </TabsContent>
