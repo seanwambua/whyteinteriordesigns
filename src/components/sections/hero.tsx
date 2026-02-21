@@ -84,10 +84,38 @@ export function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 2 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-white/40"
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-white/60"
       >
-        <span className="text-[10px] uppercase tracking-[0.5em]">Scroll</span>
-        <div className="h-16 w-px bg-gradient-to-b from-white/40 to-transparent" />
+        <div className="relative flex items-center justify-center">
+          {/* Radial Pulse Effect */}
+          <motion.div
+            animate={{
+              scale: [1, 1.8, 2.5],
+              opacity: [0.4, 0.2, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute h-10 w-10 border border-white/50 rounded-full"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.4, 1.8],
+              opacity: [0.3, 0.1, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.5
+            }}
+            className="absolute h-10 w-10 border border-white/40 rounded-full"
+          />
+          <span className="text-[10px] uppercase tracking-[0.5em] relative z-10 font-bold">Scroll</span>
+        </div>
+        <div className="h-16 w-px bg-gradient-to-b from-white/60 to-transparent" />
       </motion.div>
     </section>
   );
