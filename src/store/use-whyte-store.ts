@@ -38,6 +38,14 @@ export interface VendorAllocation {
   materials: string[];
 }
 
+export interface SiteReport {
+  id: string;
+  date: string;
+  type: 'Progress' | 'Issue' | 'Log';
+  content: string;
+  urgency: 'Normal' | 'High' | 'Critical';
+}
+
 export interface ClientProject {
   id: string;
   name: string;
@@ -55,6 +63,7 @@ export interface ClientProject {
   totalBudget: number;
   milestones: Milestone[];
   installments: Installment[];
+  siteReports?: SiteReport[];
   description?: string;
   // Planning Fields
   roomsCount?: number;
@@ -173,6 +182,9 @@ const initialClientProjects: ClientProject[] = [
     installments: [
       { label: "Initial Deposit (70%)", percentage: 70, amount: 10500000, status: 'Paid' },
       { label: "Final Reconciliation (30%)", percentage: 30, amount: 4500000, status: 'Pending' }
+    ],
+    siteReports: [
+      { id: "LOG-1", date: "Feb 10", type: "Progress", content: "Italian marble installation complete.", urgency: "Normal" }
     ],
     vendorAllocations: [
       {
