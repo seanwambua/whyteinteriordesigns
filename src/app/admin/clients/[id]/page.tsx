@@ -2,13 +2,11 @@
 
 import { use } from "react";
 import { motion } from "framer-motion";
-import { useWhyteStore, ClientProject, ProjectTask, AuditAllocation, FinancialAudit, SubTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -23,28 +21,22 @@ import {
   ChevronLeft,
   PlayCircle,
   Banknote,
-  ShieldAlert,
-  FileText,
   Trash2,
   CheckCircle2,
-  Scale,
-  ExternalLink,
   Lock,
   Loader2,
   Check,
   CreditCard,
   History,
   TrendingUp,
-  ArrowUpRight,
-  Timer,
-  AlertCircle
+  Timer
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -88,6 +80,14 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       setVerifyingInstallment(null);
       setTxnCode("");
     }, 1200);
+  };
+
+  const handleUpdateTask = (taskId: string, updates: Partial<ProjectTask>) => {
+    if (isReadOnly) return;
+    const updatedTasks = (project.tasks || []).map(task => 
+      task.id === taskId ? { ...task, ...updates } : task
+    );
+    updateClientProject(project.id, { tasks: updatedTasks });
   };
 
   const handleMoveTask = (taskId: string, newStatus: ProjectTask['status']) => {
@@ -178,8 +178,16 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               )}
             </div>
             <div className="space-y-3">
-              <h4 className="text-base font-bold uppercase tracking-widest leading-tight">{task.title}</h4>
-              <Badge variant="outline" className="rounded-none text-[12px] uppercase tracking-widest opacity-40 py-0.5">{task.priority} Priority</Badge>
+              <Textarea 
+                value={task.title}
+                onChange={(e) => handleUpdateTask(task.id, { title: e.target.value })}
+                readOnly={isReadOnly}
+                className="bg-transparent border-none p-0 resize-none focus-visible:ring-0 text-base font-bold uppercase tracking-widest leading-tight min-h-0 h-auto shadow-none"
+                placeholder="Protocol Title"
+              />
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest opacity-40 py-0.5">{task.priority} Priority</Badge>
+              </div>
             </div>
             <div className="pt-4 border-t border-accent/5 space-y-3">
               <div className="flex justify-between items-center">
@@ -279,7 +287,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                <div className="space-y-4 relative z-10"><p className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p><p className="text-4xl font-headline italic">KES {(project.totalBudget || 0).toLocaleString()}</p></div>
              </Card>
              <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><ShieldCheck className="h-16 w-16" /></div>
+               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-16 w-16" /></div>
                <div className="space-y-4 relative z-10"><p className="text-[12px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p><p className="text-4xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p></div>
              </Card>
              <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group">
