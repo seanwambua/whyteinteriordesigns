@@ -8,21 +8,19 @@ import {
   PlayCircle, 
   Clock, 
   Truck, 
-  HardHat, 
-  AlertCircle, 
   Plus, 
   Activity, 
   ChevronRight, 
-  Settings2,
-  Trash2,
-  AlertTriangle,
   LayoutGrid,
   List,
   MoreVertical,
-  CheckCircle2
+  CheckCircle2,
+  Filter,
+  ArrowRight,
+  MoreHorizontal
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { useWhyteStore, ClientProject, SiteReport } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SiteReport } from "@/store/use-whyte-store";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -37,8 +35,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 
@@ -47,160 +43,152 @@ export default function ProjectImplementationPage() {
   const { clientProjects, updateClientProject } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
-  const [activeProject, setActiveProject] = useState<ClientProject | null>(null);
-  const [isLogOpen, setIsLogOpen] = useState(false);
   const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   
-  const [logForm, setLogForm] = useState({
-    type: 'Progress' as SiteReport['type'],
-    urgency: 'Normal' as SiteReport['urgency'],
-    content: ''
+  const [newTaskForm, setNewTaskForm] = useState({
+    title: "",
+    priority: "Medium" as ProjectTask['priority'],
+    assignedVendor: ""
   });
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    // Auto-select first active project if none selected
+    const active = clientProjects.find(p => p.isActivated);
+    if (active && !selectedProjectId) {
+      setSelectedProjectId(active.id);
+    }
+  }, [clientProjects, selectedProjectId]);
 
   if (!isMounted) return null;
 
-  // Lifecycle Rule: Only projects in Implementation phases that are activated are shown here.
   const liveProjects = clientProjects.filter(p => 
     p.isActivated && (p.status === 'Execution' || p.status === 'Styling' || p.status === 'Procurement' || p.status === 'Completed')
   );
 
-  const handleUpdateProgress = (id: string, val: number[]) => {
-    updateClientProject(id, { progress: val[0] });
+  const selectedProject = liveProjects.find(p => p.id === selectedProjectId);
+
+  const handleUpdateTaskStatus = (taskId: string, newStatus: ProjectTask['status']) => {
+    if (!selectedProject) return;
+
+    const updatedTasks = (selectedProject.tasks || []).map(t => 
+      t.id === taskId ? { ...t, status: newStatus } : t
+    );
+
+    // Calculate velocity: (Done tasks / Total tasks) * 100
+    const doneTasks = updatedTasks.filter(t => t.status === 'Done').length;
+    const totalTasks = updatedTasks.length;
+    const newProgress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : selectedProject.progress;
+
+    updateClientProject(selectedProject.id, { 
+      tasks: updatedTasks,
+      progress: newProgress,
+      lastActivity: `Task status updated: ${updatedTasks.find(t => t.id === taskId)?.title}`
+    });
+
+    toast({
+      title: "Task Synchronized",
+      description: `Velocity recalculated to ${newProgress}%.`,
+    });
   };
 
-  const handleAddLog = () => {
-    if (!activeProject || !logForm.content) return;
+  const handleAddTask = () => {
+    if (!selectedProject || !newTaskForm.title) return;
 
-    const newReport: SiteReport = {
-      id: `LOG-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }),
-      type: logForm.type,
-      urgency: logForm.urgency,
-      content: logForm.content
+    const newTask: ProjectTask = {
+      id: `T-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      title: newTaskForm.title,
+      status: "Todo",
+      priority: newTaskForm.priority,
+      assignedVendor: newTaskForm.assignedVendor
     };
 
-    const updatedReports = [newReport, ...(activeProject.siteReports || [])];
+    const updatedTasks = [...(selectedProject.tasks || []), newTask];
     
-    updateClientProject(activeProject.id, { 
-      siteReports: updatedReports,
-      lastActivity: `${logForm.type}: ${logForm.content.substring(0, 30)}...`
+    // Recalculate progress with new task added
+    const doneTasks = updatedTasks.filter(t => t.status === 'Done').length;
+    const totalTasks = updatedTasks.length;
+    const newProgress = Math.round((doneTasks / totalTasks) * 100);
+
+    updateClientProject(selectedProject.id, { 
+      tasks: updatedTasks,
+      progress: newProgress,
+      lastActivity: `New Task Assigned: ${newTask.title}`
     });
 
+    setIsTaskDialogOpen(false);
+    setNewTaskForm({ title: "", priority: "Medium", assignedVendor: "" });
     toast({
-      title: "Site Entry Synchronized",
-      description: "Log has been appended to the project architectural record.",
-    });
-
-    setIsLogOpen(false);
-    setLogForm({ type: 'Progress', urgency: 'Normal', content: '' });
-  };
-
-  const handleUpdateStatus = (id: string, status: ClientProject['status']) => {
-    // Automatic Velocity Mapping
-    let newProgress = 0;
-    const currentProject = clientProjects.find(p => p.id === id);
-    if (!currentProject) return;
-
-    switch(status) {
-      case 'Procurement': newProgress = Math.max(currentProject.progress, 20); break;
-      case 'Execution': newProgress = Math.max(currentProject.progress, 50); break;
-      case 'Styling': newProgress = Math.max(currentProject.progress, 85); break;
-      case 'Completed': newProgress = 100; break;
-      default: newProgress = currentProject.progress;
-    }
-
-    updateClientProject(id, { status, progress: newProgress });
-    toast({
-      title: "Phase Transition",
-      description: `Project transitioned to ${status}. Velocity synchronized to ${newProgress}%.`,
+      title: "Task Registered",
+      description: "Architectural task appended to project workflow.",
     });
   };
 
-  const KanbanColumn = ({ status, title, color }: { status: ClientProject['status'], title: string, color: string }) => {
-    const projects = liveProjects.filter(p => p.status === status);
+  const KanbanColumn = ({ status, title, color }: { status: ProjectTask['status'], title: string, color: string }) => {
+    const tasks = (selectedProject?.tasks || []).filter(t => t.status === status);
     
     return (
-      <div className="flex-1 min-w-[350px] bg-secondary/5 border border-accent/5 p-6 space-y-6">
+      <div className="flex-1 min-w-[300px] bg-secondary/5 border border-accent/5 p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`h-2 w-2 rounded-full ${color}`} />
             <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/60">{title}</h3>
           </div>
-          <Badge variant="outline" className="rounded-none text-[9px] border-accent/10 opacity-40">{projects.length}</Badge>
+          <Badge variant="outline" className="rounded-none text-[9px] border-accent/10 opacity-40">{tasks.length}</Badge>
         </div>
 
         <div className="space-y-4">
-          {projects.map((project) => (
+          {tasks.map((task) => (
             <motion.div
-              key={project.id}
-              layoutId={project.id}
+              key={task.id}
+              layoutId={task.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-accent/5 shadow-md p-6 space-y-4 group hover:border-accent/20 transition-all cursor-pointer"
-              onClick={() => router.push(`/admin/clients/${project.id}`)}
+              className="bg-white border border-accent/5 shadow-md p-6 space-y-4 group hover:border-accent/20 transition-all cursor-grab active:cursor-grabbing"
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                  <span className="text-[8px] font-bold text-accent/30 uppercase tracking-widest">{project.id}</span>
-                  <h4 className="text-lg font-headline italic leading-tight group-hover:text-accent transition-colors">{project.project}</h4>
+                  <span className="text-[8px] font-bold text-accent/30 uppercase tracking-widest">{task.id}</span>
+                  <h4 className="text-sm font-bold uppercase tracking-widest leading-tight group-hover:text-accent transition-colors">{task.title}</h4>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Optional: Specific context menu here if needed
-                  }}
-                >
-                  <MoreVertical className="h-3 w-3" />
-                </Button>
+                <Badge variant="ghost" className="text-[8px] uppercase tracking-widest opacity-40 p-0 h-auto">{task.priority}</Badge>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-[8px] uppercase tracking-widest font-bold text-accent/40">
-                  <span>Velocity</span>
-                  <span>{project.progress}%</span>
+              {task.assignedVendor && (
+                <div className="flex items-center gap-2 text-[9px] text-muted-foreground uppercase tracking-widest font-bold">
+                  <Truck className="h-3 w-3 opacity-40" /> {task.assignedVendor}
                 </div>
-                <Progress value={project.progress} className="h-0.5 bg-secondary rounded-none" />
-              </div>
+              )}
 
-              <div className="flex items-center justify-between pt-2 border-t border-accent/5">
-                <span className="text-[9px] font-light italic text-muted-foreground truncate max-w-[150px]">
-                  {project.lastActivity}
-                </span>
-                <div className="flex gap-1">
-                  {status !== 'Procurement' && (
-                    <Button 
-                      variant="ghost" 
-                      className="h-6 px-2 text-[8px] uppercase tracking-widest"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUpdateStatus(project.id, status === 'Execution' ? 'Procurement' : status === 'Styling' ? 'Execution' : 'Styling');
-                      }}
-                    >Back</Button>
-                  )}
-                  {status !== 'Completed' && (
-                    <Button 
-                      variant="outline" 
-                      className="h-6 px-2 text-[8px] uppercase tracking-widest border-accent/10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUpdateStatus(project.id, status === 'Procurement' ? 'Execution' : status === 'Execution' ? 'Styling' : 'Completed');
-                      }}
-                    >Advance</Button>
-                  )}
-                </div>
+              <div className="flex items-center justify-end pt-4 border-t border-accent/5 gap-2">
+                {status !== 'Todo' && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 hover:bg-accent/5 text-accent/40"
+                    onClick={() => handleUpdateTaskStatus(task.id, status === 'Done' ? 'In Progress' : 'Todo')}
+                  >
+                    <ChevronRight className="h-4 w-4 rotate-180" />
+                  </Button>
+                )}
+                {status !== 'Done' && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 hover:bg-accent/5 text-accent/40"
+                    onClick={() => handleUpdateTaskStatus(task.id, status === 'Todo' ? 'In Progress' : 'Done')}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </motion.div>
           ))}
-          {projects.length === 0 && (
+          {tasks.length === 0 && (
             <div className="h-32 border border-dashed border-accent/10 flex items-center justify-center">
-              <p className="text-[9px] uppercase tracking-widest text-accent/20 italic">No Active Deployments</p>
+              <p className="text-[9px] uppercase tracking-widest text-accent/20 italic">Empty Stack</p>
             </div>
           )}
         </div>
@@ -223,213 +211,193 @@ export default function ProjectImplementationPage() {
           <h1 className="text-5xl font-headline italic">Live <span className="not-italic">Implementation.</span></h1>
         </div>
         
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4 items-center">
           <div className="bg-white border border-accent/5 shadow-xl flex p-1">
             <Button 
               variant={view === 'kanban' ? 'secondary' : 'ghost'} 
               className={`rounded-none h-10 px-4 flex gap-2 uppercase tracking-widest text-[9px] font-bold ${view === 'kanban' ? 'bg-accent text-white hover:bg-accent' : ''}`}
               onClick={() => setView('kanban')}
             >
-              <LayoutGrid className="h-3.5 w-3.5" /> Kanban
+              <LayoutGrid className="h-3.5 w-3.5" /> Task Kanban
             </Button>
             <Button 
               variant={view === 'list' ? 'secondary' : 'ghost'} 
               className={`rounded-none h-10 px-4 flex gap-2 uppercase tracking-widest text-[9px] font-bold ${view === 'list' ? 'bg-accent text-white hover:bg-accent' : ''}`}
               onClick={() => setView('list')}
             >
-              <List className="h-3.5 w-3.5" /> Site Index
+              <List className="h-3.5 w-3.5" /> Project Index
             </Button>
           </div>
+
+          <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+            <SelectTrigger className="w-[250px] rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold">
+              <SelectValue placeholder="Select Active Project" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-accent/10">
+              {liveProjects.map(p => (
+                <SelectItem key={p.id} value={p.id}>{p.project}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {view === 'kanban' && selectedProjectId && (
+            <Button 
+              onClick={() => setIsTaskDialogOpen(true)}
+              className="bg-accent text-white rounded-none h-12 px-6 uppercase tracking-widest text-[10px] flex gap-2"
+            >
+              <Plus className="h-4 w-4" /> New Task
+            </Button>
+          )}
         </div>
       </motion.div>
 
-      {view === 'kanban' ? (
-        <div className="flex gap-8 overflow-x-auto pb-12 custom-scrollbar">
-          <KanbanColumn status="Procurement" title="Procurement & Logistics" color="bg-orange-400" />
-          <KanbanColumn status="Execution" title="Active Execution" color="bg-accent" />
-          <KanbanColumn status="Styling" title="Styling & Curation" color="bg-purple-500" />
-          <KanbanColumn status="Completed" title="Awaiting Closure" color="bg-green-600" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-12">
-          {liveProjects.map((project, index) => (
-            <motion.div
-              key={project.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="cursor-pointer"
-              onClick={() => router.push(`/admin/clients/${project.id}`)}
-            >
-              <Card className="rounded-none border-accent/10 shadow-2xl bg-white overflow-hidden relative group">
-                <div className="flex flex-col lg:flex-row min-h-[400px]">
-                  <div className="lg:w-2/3 p-10 space-y-10 border-r border-accent/5">
-                    <div className="flex justify-between items-start">
+      {selectedProject ? (
+        <>
+          <div className="flex items-center justify-between p-8 bg-white border border-accent/5 shadow-2xl overflow-hidden relative">
+            <div className="absolute top-0 left-0 h-1 w-full bg-accent/5" />
+            <div className="flex items-center gap-8">
+              <div className="h-16 w-16 bg-secondary/30 rounded-full flex items-center justify-center text-accent font-headline text-2xl italic border border-accent/5">
+                {selectedProject.project[0]}
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-3xl font-headline italic">{selectedProject.project}</h2>
+                <div className="flex items-center gap-4 text-[9px] text-muted-foreground uppercase tracking-widest font-bold">
+                  <span>{selectedProject.name}</span>
+                  <div className="h-1 w-1 bg-accent/20 rounded-full" />
+                  <span>{selectedProject.status} Phase</span>
+                  <div className="h-1 w-1 bg-accent/20 rounded-full" />
+                  <span className="text-accent">{selectedProject.id}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-12">
+              <div className="text-right space-y-2 min-w-[200px]">
+                <div className="flex justify-between text-[9px] uppercase tracking-widest font-bold text-accent/40">
+                  <span>Velocity</span>
+                  <span>{selectedProject.progress}%</span>
+                </div>
+                <Progress value={selectedProject.progress} className="h-1 bg-secondary rounded-none" />
+              </div>
+              <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/10 hover:bg-accent hover:text-white p-0">
+                <Link href={`/admin/clients/${selectedProject.id}`}><ArrowRight className="h-5 w-5" /></Link>
+              </Button>
+            </div>
+          </div>
+
+          {view === 'kanban' ? (
+            <div className="flex gap-8 overflow-x-auto pb-12 custom-scrollbar">
+              <KanbanColumn status="Todo" title="Backlog / To-Do" color="bg-orange-400" />
+              <KanbanColumn status="In Progress" title="In Implementation" color="bg-accent" />
+              <KanbanColumn status="Done" title="Task Completed" color="bg-green-600" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6">
+              {liveProjects.map((p) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  onClick={() => setSelectedProjectId(p.id)}
+                  className={`p-8 bg-white border cursor-pointer transition-all ${
+                    selectedProjectId === p.id ? 'border-accent shadow-xl ring-1 ring-accent/10' : 'border-accent/5 shadow-md hover:border-accent/20'
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-2xl font-headline italic">{p.project}</h3>
+                        <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest font-bold">{p.status}</Badge>
+                      </div>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold">Client: {p.name} • {p.id}</p>
+                    </div>
+                    <div className="flex items-center gap-8 text-right">
                       <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-accent/40 uppercase tracking-[0.4em] block">{project.id}</span>
-                        <h3 className="text-4xl font-headline italic">{project.project}</h3>
-                        <div className="flex items-center gap-4 text-[9px] text-muted-foreground uppercase tracking-widest font-bold">
-                          <span>{project.name}</span>
-                          <div className="h-1 w-1 bg-accent/20 rounded-full" />
-                          <span>{project.tier} Tier</span>
-                        </div>
+                        <span className="text-[8px] uppercase tracking-widest text-accent/40 block">Implementation Velocity</span>
+                        <span className="text-lg font-headline italic">{p.progress}%</span>
                       </div>
-                      <div className="flex flex-col items-end gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Select defaultValue={project.status} onValueChange={(v: any) => handleUpdateStatus(project.id, v)}>
-                          <SelectTrigger className="rounded-none border-accent/10 h-10 w-44 uppercase tracking-widest text-[9px] font-bold">
-                            <SelectValue placeholder="Phase Status" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-none">
-                            <SelectItem value="Procurement">Procurement</SelectItem>
-                            <SelectItem value="Execution">Execution</SelectItem>
-                            <SelectItem value="Styling">Styling</SelectItem>
-                            <SelectItem value="Completed">Completed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-6" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-between text-[10px] uppercase tracking-[0.4em] font-bold text-accent/60">
-                        <span>Implementation Velocity</span>
-                        <span>{project.progress}%</span>
-                      </div>
-                      <Slider 
-                        defaultValue={[project.progress]} 
-                        max={100} 
-                        step={1} 
-                        onValueChange={(v) => handleUpdateProgress(project.id, v)}
-                        className="cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-accent/5">
-                      <div className="space-y-4">
-                        <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2">
-                          <Activity className="h-3 w-3" /> Technical Scope
-                        </h4>
-                        <p className="text-xs font-light leading-relaxed text-muted-foreground italic">
-                          {project.workScope || "Detailed scope synchronization pending."}
-                        </p>
-                      </div>
-                      <div className="space-y-4">
-                        <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2">
-                          <Truck className="h-3 w-3" /> Active Deployments
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {(project.vendorAllocations || []).map(va => (
-                            <span key={va.id} className="text-[8px] uppercase tracking-widest bg-secondary/50 px-3 py-1 border border-accent/5">
-                              {va.vendorName}
-                            </span>
-                          ))}
-                          {(!project.vendorAllocations || project.vendorAllocations.length === 0) && (
-                            <span className="text-[8px] uppercase tracking-widest text-muted-foreground opacity-50 italic">No partners allocated.</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="lg:w-1/3 bg-secondary/10 p-10 flex flex-col" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-between mb-8">
-                      <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2">
-                        <Clock className="h-3 w-3" /> Site Diary
-                      </h4>
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => { setActiveProject(project); setIsLogOpen(true); }}
-                        className="h-8 w-8 p-0 rounded-full border border-accent/10 hover:bg-accent hover:text-white"
-                      >
-                        <Plus className="h-4 w-4" />
+                      <Button asChild variant="ghost" className="h-10 w-10 p-0" onClick={(e) => e.stopPropagation()}>
+                        <Link href={`/admin/clients/${p.id}`}><ChevronRight className="h-5 w-5" /></Link>
                       </Button>
                     </div>
-
-                    <div className="space-y-4 flex-1 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
-                      {(project.siteReports || []).map((report) => (
-                        <div key={report.id} className="p-6 bg-white border border-accent/5 shadow-sm space-y-3 relative overflow-hidden group/log">
-                          {report.urgency === 'Critical' && <div className="absolute top-0 right-0 p-2"><AlertTriangle className="h-3 w-3 text-destructive" /></div>}
-                          <div className="flex justify-between items-center">
-                            <span className={`text-[8px] font-bold uppercase tracking-widest ${
-                              report.type === 'Issue' ? 'text-destructive' : 'text-accent/60'
-                            }`}>
-                              {report.type}
-                            </span>
-                            <span className="text-[8px] font-bold text-accent/20">{report.date}</span>
-                          </div>
-                          <p className="text-[11px] font-light italic leading-relaxed text-accent/80">
-                            "{report.content}"
-                          </p>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="text-center py-32 border border-dashed border-accent/10 bg-secondary/5 space-y-6">
+          <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No active implementation projects prioritized</p>
+          <Button asChild variant="outline" className="rounded-none uppercase tracking-widest text-[10px]">
+            <Link href="/admin/operations/planning">View Planning Briefs</Link>
+          </Button>
         </div>
       )}
 
-      {/* Project Details / Log Entry Dialog */}
-      <Dialog open={!!activeProject && isLogOpen} onOpenChange={(open) => !open && setIsLogOpen(false)}>
+      {/* Add Task Dialog */}
+      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md">
           <DialogHeader className="space-y-4">
             <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-accent" />
-              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Site Synchronization</span>
+              <Activity className="h-4 w-4 text-accent" />
+              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Workflow Assignment</span>
             </div>
-            <DialogTitle className="text-3xl font-headline italic">New Diary Entry</DialogTitle>
+            <DialogTitle className="text-3xl font-headline italic">Define New Task</DialogTitle>
             <DialogDescription className="font-light italic text-muted-foreground">
-              Document site progress or technical issues for {activeProject?.project}.
+              Add a granular implementation task for {selectedProject?.project}.
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-6 space-y-6">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Task Objective</Label>
+              <Input 
+                value={newTaskForm.title}
+                onChange={(e) => setNewTaskForm({...newTaskForm, title: e.target.value})}
+                placeholder="E.g., Site Measurement Verification"
+                className="rounded-none border-accent/20 h-12 focus:ring-accent"
+              />
+            </div>
+            
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Entry Nature</Label>
-                <Select value={logForm.type} onValueChange={(v: any) => setLogForm({...logForm, type: v})}>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Urgency Protocol</Label>
+                <Select value={newTaskForm.priority} onValueChange={(v: any) => setNewTaskForm({...newTaskForm, priority: v})}>
                   <SelectTrigger className="rounded-none border-accent/20 h-12">
-                    <SelectValue placeholder="Type" />
+                    <SelectValue placeholder="Priority" />
                   </SelectTrigger>
                   <SelectContent className="rounded-none">
-                    <SelectItem value="Progress">Progress Update</SelectItem>
-                    <SelectItem value="Issue">Site Issue</SelectItem>
-                    <SelectItem value="Log">General Log</SelectItem>
+                    <SelectItem value="Low">Low Priority</SelectItem>
+                    <SelectItem value="Medium">Medium Priority</SelectItem>
+                    <SelectItem value="High">High Urgency</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Urgency Protocol</Label>
-                <Select value={logForm.urgency} onValueChange={(v: any) => setLogForm({...logForm, urgency: v})}>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Vendor Assignment</Label>
+                <Select value={newTaskForm.assignedVendor} onValueChange={(v) => setNewTaskForm({...newTaskForm, assignedVendor: v})}>
                   <SelectTrigger className="rounded-none border-accent/20 h-12">
-                    <SelectValue placeholder="Urgency" />
+                    <SelectValue placeholder="Select Vendor" />
                   </SelectTrigger>
                   <SelectContent className="rounded-none">
-                    <SelectItem value="Normal">Normal</SelectItem>
-                    <SelectItem value="High">High Priority</SelectItem>
-                    <SelectItem value="Critical">Critical Alert</SelectItem>
+                    {selectedProject?.vendorAllocations?.map(v => (
+                      <SelectItem key={v.id} value={v.vendorName}>{v.vendorName}</SelectItem>
+                    ))}
+                    <SelectItem value="Internal Team">Internal Team</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Architectural Note</Label>
-              <Textarea 
-                value={logForm.content}
-                onChange={(e) => setLogForm({...logForm, content: e.target.value})}
-                placeholder="Details from the site visit..."
-                className="rounded-none border-accent/20 min-h-[120px] focus:ring-accent resize-none italic"
-              />
             </div>
           </div>
 
           <DialogFooter>
             <Button 
-              className="w-full bg-accent text-white h-14 rounded-none uppercase tracking-widest text-[10px] font-bold"
-              onClick={handleAddLog}
+              className="w-full bg-accent text-white h-14 rounded-none uppercase tracking-widest text-[10px] font-bold shadow-2xl"
+              onClick={handleAddTask}
+              disabled={!newTaskForm.title}
             >
-              Commit to Registry
+              Assign to Workflow
             </Button>
           </DialogFooter>
         </DialogContent>
