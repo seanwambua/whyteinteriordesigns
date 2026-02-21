@@ -25,7 +25,7 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
         <Link href="/" className="group">
-          <span className="text-2xl font-headline font-bold tracking-tight text-accent">
+          <span className="text-xl font-headline font-bold tracking-[0.1em] text-accent uppercase">
             Whyte Interior Designs
           </span>
         </Link>
@@ -36,12 +36,12 @@ export function Navbar() {
             <Link
               key={item.name}
               href={item.href}
-              className="text-sm font-medium hover:text-accent transition-colors"
+              className="text-xs font-bold uppercase tracking-widest hover:text-accent transition-colors"
             >
               {item.name}
             </Link>
           ))}
-          <Button asChild variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-none">
+          <Button asChild variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-none h-10 px-6 uppercase tracking-widest text-[10px]">
             <Link href="/#contact">Book Consultation</Link>
           </Button>
         </div>
@@ -61,12 +61,12 @@ export function Navbar() {
                     key={item.name}
                     href={item.href}
                     onClick={() => setIsOpen(false)}
-                    className="text-xl font-medium"
+                    className="text-lg font-medium uppercase tracking-widest"
                   >
                     {item.name}
                   </Link>
                 ))}
-                <Button asChild className="mt-4 rounded-none" onClick={() => setIsOpen(false)}>
+                <Button asChild className="mt-4 rounded-none uppercase tracking-widest text-xs" onClick={() => setIsOpen(false)}>
                   <Link href="/#contact">Book Consultation</Link>
                 </Button>
               </div>
