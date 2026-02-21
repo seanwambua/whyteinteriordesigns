@@ -22,7 +22,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const clientNav = [
     { title: "Client Directory", icon: Users, href: "/admin/clients" },
-    { title: "New Commission", icon: UserPlus, href: "/admin/clients/add" },
   ];
 
   const operationsNav = [
