@@ -46,12 +46,19 @@ export interface SiteReport {
   urgency: 'Normal' | 'High' | 'Critical';
 }
 
+export interface SubTask {
+  id: string;
+  title: string;
+  isCompleted: boolean;
+}
+
 export interface ProjectTask {
   id: string;
   title: string;
   status: 'Todo' | 'In Progress' | 'Done';
   priority: 'Low' | 'Medium' | 'High';
   assignedVendor?: string;
+  subtasks?: SubTask[];
 }
 
 export interface ClientProject {
@@ -197,9 +204,27 @@ const initialClientProjects: ClientProject[] = [
       { id: "LOG-1", date: "Feb 10", type: "Progress", content: "Italian marble installation complete.", urgency: "Normal" }
     ],
     tasks: [
-      { id: "T-1", title: "Marble Sourcing", status: "Done", priority: "High" },
+      { 
+        id: "T-1", 
+        title: "Marble Sourcing", 
+        status: "Done", 
+        priority: "High",
+        subtasks: [
+          { id: "S-1", title: "Vendor Selection", isCompleted: true },
+          { id: "S-2", title: "Quality Inspection", isCompleted: true }
+        ]
+      },
       { id: "T-2", title: "Site Leveling", status: "Done", priority: "High" },
-      { id: "T-3", title: "Joinery Fabrication", status: "In Progress", priority: "Medium" },
+      { 
+        id: "T-3", 
+        title: "Joinery Fabrication", 
+        status: "In Progress", 
+        priority: "Medium",
+        subtasks: [
+          { id: "S-3", title: "Material Cutting", isCompleted: true },
+          { id: "S-4", title: "Initial Assembly", isCompleted: false }
+        ]
+      },
       { id: "T-4", title: "Lighting Installation", status: "Todo", priority: "Low" }
     ],
     vendorAllocations: [

@@ -25,11 +25,12 @@ import {
   Trash2,
   Activity,
   Layers,
+  CheckCircle2,
   Calendar as CalendarIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { useWhyteStore, ClientProject, Milestone, ProjectTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, Milestone, ProjectTask, SubTask } from "@/store/use-whyte-store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
@@ -52,8 +53,13 @@ export default function AddClientPage() {
       { label: "Project Initialization", date: format(new Date(), "yyyy-MM-dd"), isCompleted: true, description: "Kick-off and initial site survey." }
     ] as Milestone[],
     tasks: [
-      { title: "Site Measurement Verification", priority: "High" as const, status: "Todo" as const }
-    ] as Omit<ProjectTask, 'id'>[]
+      { 
+        title: "Site Measurement Verification", 
+        priority: "High" as const, 
+        status: "Todo" as const,
+        subtasks: [] as SubTask[]
+      }
+    ] as (Omit<ProjectTask, 'id'>)[]
   });
 
   const totalSteps = 5;
@@ -87,7 +93,7 @@ export default function AddClientPage() {
   const addTask = () => {
     setFormData({
       ...formData,
-      tasks: [...formData.tasks, { title: "", priority: "Medium", status: "Todo" }]
+      tasks: [...formData.tasks, { title: "", priority: "Medium", status: "Todo", subtasks: [] }]
     });
   };
 
@@ -101,6 +107,30 @@ export default function AddClientPage() {
   const updateTask = (index: number, field: keyof Omit<ProjectTask, 'id'>, value: any) => {
     const updated = [...formData.tasks];
     updated[index] = { ...updated[index], [field]: value };
+    setFormData({ ...formData, tasks: updated });
+  };
+
+  const addSubtask = (taskIdx: number) => {
+    const updated = [...formData.tasks];
+    const task = updated[taskIdx];
+    const subtasks = task.subtasks || [];
+    task.subtasks = [...subtasks, { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "", isCompleted: false }];
+    setFormData({ ...formData, tasks: updated });
+  };
+
+  const updateSubtask = (taskIdx: number, subIdx: number, title: string) => {
+    const updated = [...formData.tasks];
+    if (updated[taskIdx].subtasks) {
+      updated[taskIdx].subtasks![subIdx].title = title;
+    }
+    setFormData({ ...formData, tasks: updated });
+  };
+
+  const removeSubtask = (taskIdx: number, subIdx: number) => {
+    const updated = [...formData.tasks];
+    if (updated[taskIdx].subtasks) {
+      updated[taskIdx].subtasks = updated[taskIdx].subtasks!.filter((_, i) => i !== subIdx);
+    }
     setFormData({ ...formData, tasks: updated });
   };
 
@@ -347,29 +377,29 @@ export default function AddClientPage() {
                       <h3 className="text-xl font-headline italic">Operational Workflow</h3>
                     </div>
                     <Button type="button" onClick={addTask} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[9px] flex gap-2">
-                      <Plus className="h-3.5 w-3.5" /> Add Task
+                      <Plus className="h-3.5 w-3.5" /> Add Primary Task
                     </Button>
                   </div>
                   
                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest italic mb-4">
-                    Define granular site tasks that will be managed via the implementation Kanban deck.
+                    Define primary site tasks and decompose them into granular sub-task protocols.
                   </p>
 
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                  <div className="space-y-8 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
                     {formData.tasks.map((task, idx) => (
-                      <div key={idx} className="p-6 border border-accent/10 bg-white relative space-y-4 shadow-sm">
+                      <div key={idx} className="p-8 border border-accent/10 bg-white relative space-y-6 shadow-sm group">
                         <Button type="button" variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive" onClick={() => removeTask(idx)} disabled={formData.tasks.length === 1}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Task Title</Label>
-                            <Input placeholder="E.g., Site Leveling" className="rounded-none h-10 text-sm" value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} />
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Primary Task Identity</Label>
+                            <Input placeholder="E.g., Site Leveling" className="rounded-none h-12 text-sm font-bold uppercase tracking-widest" value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Urgency Protocol</Label>
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Urgency Protocol</Label>
                             <Select value={task.priority} onValueChange={(v: any) => updateTask(idx, 'priority', v)}>
-                              <SelectTrigger className="rounded-none h-10 text-sm border-accent/10">
+                              <SelectTrigger className="rounded-none h-12 text-xs border-accent/10 font-bold uppercase tracking-widest">
                                 <SelectValue placeholder="Priority" />
                               </SelectTrigger>
                               <SelectContent className="rounded-none">
@@ -378,6 +408,35 @@ export default function AddClientPage() {
                                 <SelectItem value="High">High Urgency</SelectItem>
                               </SelectContent>
                             </Select>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 pt-4 border-t border-accent/5">
+                          <div className="flex justify-between items-center">
+                            <Label className="text-[8px] uppercase tracking-[0.3em] opacity-40 font-bold">Sub-task Protocol</Label>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => addSubtask(idx)} className="h-6 text-[8px] uppercase tracking-widest font-bold text-accent hover:bg-accent/5 p-0">
+                              <Plus className="h-2.5 w-2.5 mr-1" /> Append Sub-task
+                            </Button>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            {task.subtasks?.map((sub, sIdx) => (
+                              <div key={sub.id} className="flex gap-3 items-center group/sub">
+                                <div className="h-1.5 w-1.5 rounded-full bg-accent/20" />
+                                <Input 
+                                  placeholder="Sub-task objective..." 
+                                  value={sub.title} 
+                                  onChange={(e) => updateSubtask(idx, sIdx, e.target.value)}
+                                  className="h-8 rounded-none border-none text-xs italic focus:ring-0 p-0"
+                                />
+                                <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(idx, sIdx)} className="h-6 w-6 text-destructive/20 hover:text-destructive opacity-0 group-hover/sub:opacity-100 transition-opacity">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                            {(!task.subtasks || task.subtasks.length === 0) && (
+                              <p className="text-[9px] italic text-muted-foreground opacity-40">No granular sub-tasks defined.</p>
+                            )}
                           </div>
                         </div>
                       </div>

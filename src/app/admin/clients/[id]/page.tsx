@@ -3,7 +3,7 @@
 
 import { use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, VendorAllocation, Milestone, ProjectTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, VendorAllocation, Milestone, ProjectTask, SubTask } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -39,7 +40,9 @@ import {
   ClipboardList,
   Building2,
   FileCheck,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +55,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const [isMounted, setIsMounted] = useState(false);
   const [isEditingRoadmap, setIsEditingRoadmap] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -110,13 +114,42 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     updateClientProject(project.id, { milestones: project.milestones.filter((_, i) => i !== idx) });
   };
 
-  // Task Logic (Kanban Integration)
+  // Task & Subtask Logic
   const handleUpdateTaskStatus = (taskId: string, newStatus: ProjectTask['status']) => {
     const updatedTasks = (project.tasks || []).map(t => 
       t.id === taskId ? { ...t, status: newStatus } : t
     );
     
-    // Auto-calculate velocity based on tasks
+    recalculateVelocity(updatedTasks, `Task "${updatedTasks.find(t => t.id === taskId)?.title}" synchronized to ${newStatus}.`);
+  };
+
+  const handleToggleSubtask = (taskId: string, subId: string) => {
+    const updatedTasks = (project.tasks || []).map(t => {
+      if (t.id === taskId) {
+        const updatedSubtasks = (t.subtasks || []).map(s => 
+          s.id === subId ? { ...s, isCompleted: !s.isCompleted } : s
+        );
+        return { ...t, subtasks: updatedSubtasks };
+      }
+      return t;
+    });
+    
+    updateClientProject(project.id, { tasks: updatedTasks });
+  };
+
+  const handleAddSubtask = (taskId: string) => {
+    const updatedTasks = (project.tasks || []).map(t => {
+      if (t.id === taskId) {
+        const subtasks = t.subtasks || [];
+        const newSub: SubTask = { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "New Protocol", isCompleted: false };
+        return { ...t, subtasks: [...subtasks, newSub] };
+      }
+      return t;
+    });
+    updateClientProject(project.id, { tasks: updatedTasks });
+  };
+
+  const recalculateVelocity = (updatedTasks: ProjectTask[], activity: string) => {
     const done = updatedTasks.filter(t => t.status === 'Done').length;
     const total = updatedTasks.length;
     const velocity = total > 0 ? Math.round((done / total) * 100) : project.progress;
@@ -124,7 +157,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     updateClientProject(project.id, { 
       tasks: updatedTasks,
       progress: velocity,
-      lastActivity: `Task "${updatedTasks.find(t => t.id === taskId)?.title}" synchronized to ${newStatus}.`
+      lastActivity: activity
     });
   };
 
@@ -133,7 +166,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       id: `T-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
       title: "New Site Task",
       status: "Todo",
-      priority: "Medium"
+      priority: "Medium",
+      subtasks: []
     };
     updateClientProject(project.id, { tasks: [...(project.tasks || []), newTask] });
   };
@@ -153,12 +187,18 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     });
   };
 
+  const toggleTaskExpansion = (taskId: string) => {
+    setExpandedTasks(prev => 
+      prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+    );
+  };
+
   // --- SUB-COMPONENTS ---
 
   const KanbanCol = ({ status, title, color }: { status: ProjectTask['status'], title: string, color: string }) => {
     const tasks = (project.tasks || []).filter(t => t.status === status);
     return (
-      <div className="flex-1 min-w-[280px] bg-secondary/5 border border-accent/5 p-6 space-y-6">
+      <div className="flex-1 min-w-[320px] bg-secondary/5 border border-accent/5 p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`h-2 w-2 rounded-full ${color}`} />
@@ -167,29 +207,96 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <Badge variant="outline" className="rounded-none text-[9px] border-accent/10 opacity-40">{tasks.length}</Badge>
         </div>
         <div className="space-y-4">
-          {tasks.map(task => (
-            <div key={task.id} className="bg-white border border-accent/5 shadow-md p-6 space-y-4 group">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <span className="text-[8px] font-bold text-accent/30 uppercase tracking-widest">{task.id}</span>
-                  <h4 className="text-sm font-bold uppercase tracking-widest leading-tight group-hover:text-accent transition-colors">{task.title}</h4>
+          {tasks.map(task => {
+            const isExpanded = expandedTasks.includes(task.id);
+            const completedSubs = task.subtasks?.filter(s => s.isCompleted).length || 0;
+            const totalSubs = task.subtasks?.length || 0;
+            const subProgress = totalSubs > 0 ? (completedSubs / totalSubs) * 100 : 0;
+
+            return (
+              <div key={task.id} className="bg-white border border-accent/5 shadow-md p-6 space-y-4 group">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <span className="text-[8px] font-bold text-accent/30 uppercase tracking-widest">{task.id}</span>
+                    <h4 className="text-sm font-bold uppercase tracking-widest leading-tight group-hover:text-accent transition-colors">{task.title}</h4>
+                  </div>
+                  <Badge variant="ghost" className="text-[8px] uppercase tracking-widest opacity-40 p-0 h-auto">{task.priority}</Badge>
                 </div>
-                <Badge variant="ghost" className="text-[8px] uppercase tracking-widest opacity-40 p-0 h-auto">{task.priority}</Badge>
-              </div>
-              <div className="flex items-center justify-end pt-4 border-t border-accent/5 gap-2">
-                {status !== 'Todo' && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-accent/40" onClick={() => handleUpdateTaskStatus(task.id, status === 'Done' ? 'In Progress' : 'Todo')}>
-                    <ChevronRight className="h-4 w-4 rotate-180" />
-                  </Button>
+
+                {totalSubs > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[8px] uppercase tracking-widest text-accent/40 font-bold">
+                      <span>Protocols</span>
+                      <span>{completedSubs}/{totalSubs}</span>
+                    </div>
+                    <Progress value={subProgress} className="h-0.5 bg-secondary" />
+                  </div>
                 )}
-                {status !== 'Done' && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-accent/40" onClick={() => handleUpdateTaskStatus(task.id, status === 'Todo' ? 'In Progress' : 'Done')}>
-                    <ChevronRight className="h-4 w-4" />
+
+                <div className="flex items-center justify-between pt-4 border-t border-accent/5">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => toggleTaskExpansion(task.id)}
+                    className="h-6 text-[8px] uppercase tracking-widest font-bold text-accent/40 p-0 hover:bg-transparent hover:text-accent"
+                  >
+                    {isExpanded ? <ChevronUp className="h-3 w-3 mr-1" /> : <ChevronDown className="h-3 w-3 mr-1" />}
+                    {isExpanded ? "Hide Details" : "Manage Protocols"}
                   </Button>
-                )}
+                  
+                  <div className="flex gap-2">
+                    {status !== 'Todo' && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-accent/40" onClick={() => handleUpdateTaskStatus(task.id, status === 'Done' ? 'In Progress' : 'Todo')}>
+                        <ChevronRight className="h-4 w-4 rotate-180" />
+                      </Button>
+                    )}
+                    {status !== 'Done' && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-accent/40" onClick={() => handleUpdateTaskStatus(task.id, status === 'Todo' ? 'In Progress' : 'Done')}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden space-y-4 pt-4 border-t border-accent/5 border-dashed"
+                    >
+                      <div className="space-y-3">
+                        {task.subtasks?.map(sub => (
+                          <div key={sub.id} className="flex items-center gap-3 group/sub">
+                            <Checkbox 
+                              id={sub.id} 
+                              checked={sub.isCompleted} 
+                              onCheckedChange={() => handleToggleSubtask(task.id, sub.id)}
+                              className="rounded-none border-accent/20 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                            />
+                            <Label 
+                              htmlFor={sub.id} 
+                              className={`text-[11px] font-light italic transition-all ${sub.isCompleted ? 'line-through opacity-40' : 'text-accent/80'}`}
+                            >
+                              {sub.title}
+                            </Label>
+                          </div>
+                        ))}
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => handleAddSubtask(task.id)}
+                          className="h-8 w-full border border-dashed border-accent/10 rounded-none text-[9px] uppercase tracking-widest font-bold text-accent/40 hover:bg-accent/5"
+                        >
+                          <Plus className="h-3 w-3 mr-2" /> Append Protocol
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
