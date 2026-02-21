@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use } from "react";
@@ -70,19 +69,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   const handleUpdateStatus = (status: ClientProject['status']) => {
     if (isReadOnly) return;
-    const updates: Partial<ClientProject> = { status };
-    if (status === 'Termination' && !project.termination) {
-      updates.termination = {
-        reason: "Manual Studio Override",
-        requestedBy: "Studio",
-        requestedDate: format(new Date(), "MMM dd, yyyy"),
-        financialSummary: "Awaiting Studio Audit",
-        projectSummary: "Awaiting Site Protocol Audit",
-        studioAgreed: false,
-        clientAgreed: false
-      };
-    }
-    updateClientProject(project.id, { ...updates, lastActivity: `Lifecycle transitioned manually to ${status}.` });
+    updateClientProject(project.id, { status, lastActivity: `Lifecycle transitioned manually to ${status}.` });
   };
 
   const handleVerifyPayment = () => {
@@ -177,7 +164,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             animate={{ opacity: 1, y: 0 }} 
             className={cn(
               "group relative bg-white border border-accent/5 p-6 shadow-sm hover:shadow-xl transition-all space-y-4",
-              isReadOnly && "opacity-80 pointer-events-none"
+              isReadOnly && "opacity-80"
             )}
           >
             <div className="flex justify-between items-start">
@@ -192,11 +179,11 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             </div>
             <div className="space-y-3">
               <h4 className="text-base font-bold uppercase tracking-widest leading-tight">{task.title}</h4>
-              <Badge variant="outline" className="rounded-none text-[10px] uppercase tracking-widest opacity-40 py-0.5">{task.priority} Priority</Badge>
+              <Badge variant="outline" className="rounded-none text-[12px] uppercase tracking-widest opacity-40 py-0.5">{task.priority} Priority</Badge>
             </div>
             <div className="pt-4 border-t border-accent/5 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span>
+                <span className="text-[12px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span>
                 {!isReadOnly && <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddSubtask(task.id)}><Plus className="h-3.5 w-3.5" /></Button>}
               </div>
               <div className="space-y-2">
@@ -249,22 +236,21 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           </div>
           <div className="flex flex-wrap items-center gap-4 bg-white p-6 border border-accent/5 shadow-2xl">
             <div className="space-y-1 pr-8 border-r border-accent/10">
-              <Label className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label>
+              <Label className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label>
               <Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)} disabled={isReadOnly}>
                 <SelectTrigger className="rounded-none border-none h-8 p-0 text-[13px] font-bold uppercase tracking-widest text-accent focus:ring-0 w-44"><SelectValue /></SelectTrigger>
                 <SelectContent className="rounded-none">
-                  <SelectItem value="Planning">Planning</SelectItem><SelectItem value="Execution">Execution</SelectItem><SelectItem value="Completion">Completion</SelectItem><SelectItem value="Termination" className="text-destructive">Termination Hub</SelectItem>
+                  <SelectItem value="Planning">Planning</SelectItem><SelectItem value="Execution">Execution</SelectItem><SelectItem value="Completion">Completion</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="px-8 border-r border-accent/10"><span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span><Badge className="rounded-none uppercase tracking-widest text-[11px] bg-accent text-white py-1">{project.tier}</Badge></div>
+            <div className="px-8 border-r border-accent/10"><span className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span><Badge className="rounded-none uppercase tracking-widest text-[12px] bg-accent text-white py-1">{project.tier}</Badge></div>
           </div>
         </div>
       </motion.div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-12">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto">
-          {project.status === 'Termination' && <TabsTrigger value="dissolution" className="rounded-none border-b-2 border-transparent data-[state=active]:border-destructive data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2 text-destructive"><ShieldAlert className="h-4 w-4" /> Dissolution Protocol</TabsTrigger>}
           <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><Layout className="h-4 w-4" /> Overview</TabsTrigger>
           <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><PlayCircle className="h-4 w-4" /> Workflow</TabsTrigger>
           <TabsTrigger value="ledger" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><Wallet className="h-4 w-4" /> Ledger</TabsTrigger>
@@ -276,8 +262,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                <div className="space-y-6"><h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Architectural Brief</h3><p className="text-xl font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || project.workScope}"</p></div>
                <div className="space-y-6"><h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Temporal Status</h3>
                  <div className="grid grid-cols-2 gap-8">
-                   <div className="space-y-1"><p className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Start Date</p><p className="font-headline italic text-2xl">{project.startDate}</p></div>
-                   <div className="space-y-1"><p className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Deadline</p><p className="font-headline italic text-2xl">{project.endDate}</p></div>
+                   <div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Start Date</p><p className="font-headline italic text-2xl">{project.startDate}</p></div>
+                   <div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Deadline</p><p className="font-headline italic text-2xl">{project.endDate}</p></div>
                  </div>
                </div>
              </div>
@@ -290,27 +276,27 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-16 w-16" /></div>
-               <div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p><p className="text-4xl font-headline italic">KES {(project.totalBudget || 0).toLocaleString()}</p></div>
+               <div className="space-y-4 relative z-10"><p className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p><p className="text-4xl font-headline italic">KES {(project.totalBudget || 0).toLocaleString()}</p></div>
              </Card>
              <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><ShieldCheck className="h-16 w-16" /></div>
-               <div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p><p className="text-4xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p></div>
+               <div className="space-y-4 relative z-10"><p className="text-[12px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p><p className="text-4xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p></div>
              </Card>
              <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><History className="h-16 w-16" /></div>
-               <div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-orange-600/60">Outstanding Balance</p><p className="text-4xl font-headline italic text-orange-600">KES {remainingBalance.toLocaleString()}</p></div>
+               <div className="space-y-4 relative z-10"><p className="text-[12px] font-bold uppercase tracking-[0.4em] text-orange-600/60">Outstanding Balance</p><p className="text-4xl font-headline italic text-orange-600">KES {remainingBalance.toLocaleString()}</p></div>
              </Card>
            </div>
            <Card className="rounded-none border-accent/5 p-0 bg-white shadow-2xl overflow-hidden">
-             <div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center"><h3 className="text-[13px] font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3"><CreditCard className="h-5 w-5" /> Architectural Registry</h3><Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">Stewardship Verified</Badge></div>
+             <div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center"><h3 className="text-[13px] font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3"><CreditCard className="h-5 w-5" /> Architectural Registry</h3><Badge variant="outline" className="rounded-none text-[12px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">Stewardship Verified</Badge></div>
              <div className="divide-y divide-accent/5">
                {project.installments.map((ins, i) => (
                  <div key={i} className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8">
                    <div className="flex items-center gap-8">
                      <div className={cn("h-14 w-14 rounded-full flex items-center justify-center shrink-0 border", ins.status === 'Paid' ? "bg-green-600/5 border-green-600/20 text-green-600" : "bg-orange-600/5 border-orange-600/20 text-orange-600")}>{ins.status === 'Paid' ? <CheckCircle2 className="h-6 w-6" /> : <Timer className="h-6 w-6 animate-pulse" />}</div>
-                     <div className="space-y-1.5"><div className="flex items-center gap-3"><p className="text-base font-bold uppercase tracking-[0.2em]">{ins.label}</p><Badge className={cn("rounded-none text-[10px] uppercase tracking-widest px-2.5 py-1 font-bold", ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white")}>{ins.status}</Badge></div><div className="flex items-center gap-4 text-[12px] text-muted-foreground font-bold uppercase tracking-widest"><span>Ref: {ins.transactionCode || 'Awaiting Sync'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.percentage}% Allocation</span></div></div>
+                     <div className="space-y-1.5"><div className="flex items-center gap-3"><p className="text-base font-bold uppercase tracking-[0.2em]">{ins.label}</p><Badge className={cn("rounded-none text-[12px] uppercase tracking-widest px-2.5 py-1 font-bold", ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white")}>{ins.status}</Badge></div><div className="flex items-center gap-4 text-[13px] text-muted-foreground font-bold uppercase tracking-widest"><span>Ref: {ins.transactionCode || 'Awaiting Sync'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.percentage}% Allocation</span></div></div>
                    </div>
-                   <div className="flex items-center gap-12 justify-between lg:justify-end"><div className="text-right"><p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Value</p><p className="text-4xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p></div>{ins.status === 'Pending' && !isReadOnly && <Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-14 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"><ShieldCheck className="h-5 w-5" /> Verify Entry</Button>}{ins.status === 'Paid' && <div className="h-14 w-14 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]"><Check className="h-7 w-7" /></div>}</div>
+                   <div className="flex items-center gap-12 justify-between lg:justify-end"><div className="text-right"><p className="text-[12px] font-bold uppercase tracking-widest text-accent/30 mb-1">Value</p><p className="text-4xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p></div>{ins.status === 'Pending' && !isReadOnly && <Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-14 px-8 border-accent/20 text-[12px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"><ShieldCheck className="h-5 w-5" /> Verify Entry</Button>}{ins.status === 'Paid' && <div className="h-14 w-14 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]"><Check className="h-7 w-7" /></div>}</div>
                  </div>
                ))}
              </div>
@@ -328,8 +314,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               <DialogDescription className="font-light italic text-muted-foreground text-base">Confirming receipt of the <strong>{verifyingInstallment !== null ? project.installments[verifyingInstallment].label : ""}</strong>.</DialogDescription>
             </DialogHeader>
             <div className="space-y-8">
-              <div className="p-8 bg-secondary/30 border border-accent/5 space-y-4 relative overflow-hidden"><div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-14 w-14" /></div><div className="flex justify-between items-end relative z-10"><span className="text-[11px] uppercase tracking-widest font-bold text-accent/40">Authorized Amount</span><span className="text-3xl font-headline italic text-accent">KES {verifyingInstallment !== null ? project.installments[verifyingInstallment].amount.toLocaleString() : 0}</span></div></div>
-              <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label><Input placeholder="E.g., TRX-9921-WHYTE" className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] font-medium" value={txnCode} onChange={(e) => setTxnCode(e.target.value)} /></div>
+              <div className="p-8 bg-secondary/30 border border-accent/5 space-y-4 relative overflow-hidden"><div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-14 w-14" /></div><div className="flex justify-between items-end relative z-10"><span className="text-[12px] uppercase tracking-widest font-bold text-accent/40">Authorized Amount</span><span className="text-3xl font-headline italic text-accent">KES {verifyingInstallment !== null ? project.installments[verifyingInstallment].amount.toLocaleString() : 0}</span></div></div>
+              <div className="space-y-3"><Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label><Input placeholder="E.g., TRX-9921-WHYTE" className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] font-medium" value={txnCode} onChange={(e) => setTxnCode(e.target.value)} /></div>
             </div>
             <DialogFooter className="pt-4"><Button className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all" onClick={handleVerifyPayment} disabled={isVerifying || !txnCode}>{isVerifying ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Syncing...</span> : "Authorize Entry"}</Button></DialogFooter>
           </div>

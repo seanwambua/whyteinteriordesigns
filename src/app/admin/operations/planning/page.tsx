@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -141,6 +140,15 @@ export default function ProjectPlanningPage() {
 
   const handleOpenEdit = (project: ClientProject) => {
     setEditProject(project);
+    
+    // Safety parse for dates
+    let startD = new Date();
+    let endD = new Date();
+    try {
+      startD = parse(project.startDate, "MMM dd, yyyy", new Date());
+      endD = parse(project.endDate, "MMM dd, yyyy", new Date());
+    } catch (e) {}
+
     setEditFormData({
       name: project.name,
       email: project.email,
@@ -148,11 +156,11 @@ export default function ProjectPlanningPage() {
       tier: project.tier,
       totalBudget: project.totalBudget,
       description: project.description || project.workScope || "",
-      startDate: parse(project.startDate, "MMM dd, yyyy", new Date()),
-      endDate: parse(project.endDate, "MMM dd, yyyy", new Date()),
-      milestones: [...(project.milestones || [])],
-      tasks: [...(project.tasks || [])].map(t => ({ ...t, subtasks: [...(t.subtasks || [])] })),
-      vendorAllocations: [...(project.vendorAllocations || [])]
+      startDate: startD,
+      endDate: endD,
+      milestones: project.milestones ? [...project.milestones] : [],
+      tasks: project.tasks ? project.tasks.map(t => ({ ...t, subtasks: t.subtasks ? [...t.subtasks] : [] })) : [],
+      vendorAllocations: project.vendorAllocations ? [...project.vendorAllocations] : []
     });
   };
 
@@ -176,7 +184,7 @@ export default function ProjectPlanningPage() {
   const addTask = () => {
     setEditFormData(prev => ({
       ...prev,
-      tasks: [...prev.tasks, { id: `T-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "", priority: "Medium", status: "Todo", subtasks: [] }]
+      tasks: [...prev.tasks, { id: `T-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "New Site Protocol", priority: "Medium", status: "Todo", subtasks: [] }]
     }));
   };
 
@@ -193,20 +201,24 @@ export default function ProjectPlanningPage() {
   const addSubtask = (taskIdx: number) => {
     const updated = [...editFormData.tasks];
     const subtasks = updated[taskIdx].subtasks || [];
-    updated[taskIdx].subtasks = [...subtasks, { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "", isCompleted: false }];
+    updated[taskIdx].subtasks = [...subtasks, { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "Sub-protocol step", isCompleted: false }];
     setEditFormData(prev => ({ ...prev, tasks: updated }));
   };
 
   const updateSubtask = (taskIdx: number, subIdx: number, title: string) => {
     const updated = [...editFormData.tasks];
-    updated[taskIdx].subtasks![subIdx].title = title;
-    setEditFormData(prev => ({ ...prev, tasks: updated }));
+    if (updated[taskIdx].subtasks && updated[taskIdx].subtasks![subIdx]) {
+      updated[taskIdx].subtasks![subIdx].title = title;
+      setEditFormData(prev => ({ ...prev, tasks: updated }));
+    }
   };
 
   const removeSubtask = (taskIdx: number, subIdx: number) => {
     const updated = [...editFormData.tasks];
-    updated[taskIdx].subtasks = updated[taskIdx].subtasks!.filter((_, i) => i !== subIdx);
-    setEditFormData(prev => ({ ...prev, tasks: updated }));
+    if (updated[taskIdx].subtasks) {
+      updated[taskIdx].subtasks = updated[taskIdx].subtasks!.filter((_, i) => i !== subIdx);
+      setEditFormData(prev => ({ ...prev, tasks: updated }));
+    }
   };
 
   const addVendor = () => {
@@ -566,9 +578,19 @@ export default function ProjectPlanningPage() {
                           <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Authorized Sync Date</Label>
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button variant="outline" className="w-full h-12 rounded-none justify-start text-sm border-accent/10 font-bold uppercase tracking-widest"><CalendarIcon className="mr-3 h-4 w-4 opacity-40" />{m.date}</Button>
+                              <Button variant="outline" className="w-full h-12 rounded-none justify-start text-sm border-accent/10 font-bold uppercase tracking-widest">
+                                <CalendarIcon className="mr-3 h-4 w-4 opacity-40" />
+                                {m.date}
+                              </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={parse(m.date, "MMM dd, yyyy", new Date())} onSelect={(d) => d && updateMilestone(idx, 'date', format(d, "MMM dd, yyyy"))} initialFocus /></PopoverContent>
+                            <PopoverContent className="w-auto p-0 rounded-none">
+                              <Calendar 
+                                mode="single" 
+                                selected={parse(m.date, "MMM dd, yyyy", new Date())} 
+                                onSelect={(d) => d && updateMilestone(idx, 'date', format(d, "MMM dd, yyyy"))} 
+                                initialFocus 
+                              />
+                            </PopoverContent>
                           </Popover>
                         </div>
                       </div>
@@ -586,7 +608,7 @@ export default function ProjectPlanningPage() {
                 <div className="flex justify-between items-center mb-6">
                   <div className="space-y-1">
                     <h4 className="text-[13px] font-bold uppercase tracking-widest text-accent">Operational Site Protocols</h4>
-                    <p className="text-[11px] text-muted-foreground uppercase tracking-widest italic">Core execution workflow Recaps</p>
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-widest italic">Core execution workflow recaps</p>
                   </div>
                   <Button variant="outline" size="sm" onClick={addTask} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white transition-all"><Plus className="h-4 w-4 mr-2" /> Initialize Protocol</Button>
                 </div>
@@ -615,7 +637,7 @@ export default function ProjectPlanningPage() {
                       <div className="space-y-6 pt-8 border-t border-accent/5">
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-3">
-                            <Label className="text-[11px] uppercase tracking-[0.3em] font-bold text-accent/40">Sub-protocol Recaps</Label>
+                            <Label className="text-[11px] uppercase tracking-[0.3em] font-bold text-accent/40">Sub-protocol steps</Label>
                             <Badge variant="ghost" className="text-[10px] text-accent/30 font-bold p-0">{task.subtasks?.length || 0} Registered</Badge>
                           </div>
                           <Button variant="ghost" size="sm" onClick={() => addSubtask(idx)} className="h-8 px-4 text-[11px] uppercase tracking-widest font-bold text-accent hover:bg-accent/5 transition-all"><Plus className="h-3.5 w-3.5 mr-2" /> Append Step</Button>
@@ -624,7 +646,12 @@ export default function ProjectPlanningPage() {
                           {task.subtasks?.map((sub, sIdx) => (
                             <div key={sub.id} className="flex gap-4 items-center group/sub bg-secondary/5 p-4 border border-transparent hover:border-accent/10 hover:bg-white transition-all">
                               <div className="h-2 w-2 rounded-full bg-accent/20 group-hover/sub:bg-accent transition-colors" />
-                              <Input placeholder="Describe sub-objective..." value={sub.title} onChange={(e) => updateSubtask(idx, sIdx, e.target.value)} className="h-10 rounded-none border-none text-[13px] font-light italic focus:ring-0 p-0 bg-transparent" />
+                              <Input 
+                                placeholder="Describe step..." 
+                                value={sub.title} 
+                                onChange={(e) => updateSubtask(idx, sIdx, e.target.value)} 
+                                className="h-10 rounded-none border-none text-[13px] font-light italic focus:ring-0 p-0 bg-transparent" 
+                              />
                               <Button variant="ghost" size="icon" onClick={() => removeSubtask(idx, sIdx)} className="h-8 w-8 text-destructive/10 hover:text-destructive opacity-0 group-hover/sub:opacity-100 transition-opacity"><Trash2 className="h-4 w-4" /></Button>
                             </div>
                           ))}
@@ -718,7 +745,7 @@ export default function ProjectPlanningPage() {
             </div>
             <AlertDialogTitle className="text-3xl font-headline italic text-destructive">Confirm Dossier Purge?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">
-              This will permanently remove project briefing **{deleteId}** and all associated site Recaps from the master registry. This action is irreversible.
+              This will permanently remove project briefing **{deleteId}** and all associated site data from the master registry. This action is irreversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-10">
