@@ -2,29 +2,57 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Sparkles, ShieldCheck } from "lucide-react";
+import { UserPlus, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
+import { useRouter } from "next/navigation";
 
 export default function AddClientPage() {
   const { toast } = useToast();
+  const router = useRouter();
+  const { addClientProject } = useWhyteStore();
   const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    project: "",
+    tier: "Premium" as ClientProject['tier'],
+    description: ""
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
+    const id = `WP-${Math.floor(Math.random() * 9000) + 1000}`;
+    
+    const newProject: ClientProject = {
+      id,
+      name: formData.name,
+      email: formData.email,
+      project: formData.project,
+      tier: formData.tier,
+      status: "Consultation",
+      progress: 0,
+      startDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      lastActivity: "Just now"
+    };
+
     setTimeout(() => {
+      addClientProject(newProject);
       setLoading(false);
       toast({
         title: "Client Journey Initialized",
-        description: "Project Reference ID: WP-XXXX has been synchronized.",
+        description: `Project Reference ID: ${id} has been synchronized.`,
       });
+      router.push("/admin/clients");
     }, 1500);
   };
 
@@ -48,18 +76,34 @@ export default function AddClientPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-3">
                 <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Client Full Name</Label>
-                <Input placeholder="E.g., Jonathan Muthaiga" className="rounded-none border-accent/20 h-12 focus:ring-accent" required />
+                <Input 
+                  placeholder="E.g., Jonathan Muthaiga" 
+                  className="rounded-none border-accent/20 h-12 focus:ring-accent" 
+                  required 
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                />
               </div>
               <div className="space-y-3">
                 <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email Address</Label>
-                <Input type="email" placeholder="client@example.com" className="rounded-none border-accent/20 h-12 focus:ring-accent" required />
+                <Input 
+                  type="email" 
+                  placeholder="client@example.com" 
+                  className="rounded-none border-accent/20 h-12 focus:ring-accent" 
+                  required 
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-3">
                 <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Commission Tier</Label>
-                <Select required>
+                <Select 
+                  onValueChange={(v: ClientProject['tier']) => setFormData({...formData, tier: v})} 
+                  defaultValue={formData.tier}
+                >
                   <SelectTrigger className="rounded-none border-accent/20 h-12 focus:ring-accent">
                     <SelectValue placeholder="Select Commission Tier" />
                   </SelectTrigger>
@@ -72,7 +116,13 @@ export default function AddClientPage() {
               </div>
               <div className="space-y-3">
                 <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Project Title</Label>
-                <Input placeholder="E.g., Runda Residence Phase II" className="rounded-none border-accent/20 h-12 focus:ring-accent" required />
+                <Input 
+                  placeholder="E.g., Runda Residence Phase II" 
+                  className="rounded-none border-accent/20 h-12 focus:ring-accent" 
+                  required 
+                  value={formData.project}
+                  onChange={(e) => setFormData({...formData, project: e.target.value})}
+                />
               </div>
             </div>
 
@@ -81,6 +131,8 @@ export default function AddClientPage() {
               <Textarea 
                 placeholder="Describe the primary spatial goals and structural constraints..." 
                 className="min-h-[120px] rounded-none border-accent/20 focus:ring-accent resize-none bg-transparent" 
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
               />
             </div>
 

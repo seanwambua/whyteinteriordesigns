@@ -2,64 +2,40 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
-  MessageSquare, 
   Mail, 
   Calendar, 
   AlertTriangle, 
   CheckCircle2, 
-  XCircle, 
   Clock,
   Briefcase,
   ShieldAlert
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useWhyteStore, Inquiry } from "@/store/use-whyte-store";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminInquiriesPage() {
-  const inquiries = [
-    {
-      id: "INQ-9901",
-      name: "Victoria W.",
-      type: "new_business",
-      service: "bundle",
-      message: "Looking for a full architectural and decor transformation for a 6,000 sq ft villa in Karen. Interested in the Golden Tier.",
-      date: "2 hours ago",
-      status: "new",
-      urgency: "normal"
-    },
-    {
-      id: "INQ-9905",
-      name: "Samuel K.",
-      type: "termination_request",
-      projectId: "WP-0072",
-      message: "FORMAL NOTICE: We wish to initiate the termination protocol due to extended delays in international marble procurement.",
-      date: "1 hour ago",
-      status: "new",
-      urgency: "critical"
-    },
-    {
-      id: "INQ-8822",
-      name: "David O.",
-      type: "complaint",
-      projectId: "WP-0082",
-      message: "URGENT: Issues with the Galana stone installation in the main foyer. The vein alignment does not match the approved renders.",
-      date: "5 hours ago",
-      status: "pending",
-      urgency: "high"
-    },
-    {
-      id: "INQ-7710",
-      name: "Elena M.",
-      type: "project_support",
-      projectId: "WP-0091",
-      message: "Requesting an updated 3D walkthrough for the living room mezzanine after last week's spatial adjustments.",
-      date: "1 day ago",
-      status: "contacted",
-      urgency: "normal"
-    }
-  ];
+  const { inquiries, updateInquiryStatus } = useWhyteStore();
+  const { toast } = useToast();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return null;
+
+  const handleUpdateStatus = (id: string, status: Inquiry['status']) => {
+    updateInquiryStatus(id, status);
+    toast({
+      title: "Pipeline Updated",
+      description: `Inquiry status synchronized to ${status}.`,
+    });
+  };
 
   const getTypeStyles = (type: string) => {
     switch(type) {
@@ -113,9 +89,14 @@ export default function AdminInquiriesPage() {
                         <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> {inq.date}</span>
                       </div>
                     </div>
-                    <Badge variant="outline" className={`rounded-none uppercase tracking-widest text-[9px] py-1.5 px-4 font-bold h-fit ${getTypeStyles(inq.type)}`}>
-                      {inq.type.replace('_', ' ')}
-                    </Badge>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className={`rounded-none uppercase tracking-widest text-[9px] py-1.5 px-4 font-bold h-fit ${getTypeStyles(inq.type)}`}>
+                        {inq.type.replace('_', ' ')}
+                      </Badge>
+                      <Badge className={`rounded-none uppercase tracking-widest text-[8px] ${inq.status === 'new' ? 'bg-accent' : 'bg-secondary text-muted-foreground'}`}>
+                        {inq.status}
+                      </Badge>
+                    </div>
                   </div>
                   
                   <div className="relative">
@@ -140,19 +121,23 @@ export default function AdminInquiriesPage() {
                   <Button className="flex-1 md:w-full bg-accent text-white rounded-none h-14 uppercase tracking-widest text-[10px] font-bold flex gap-3 hover:bg-accent/90">
                     <Mail className="h-4 w-4" /> Respond
                   </Button>
-                  <Button variant="outline" className="h-14 w-14 rounded-none border-accent/10 hover:bg-accent hover:text-white transition-all group/btn">
-                    <CheckCircle2 className="h-5 w-5 transition-transform group-hover/btn:scale-110" />
+                  <Button 
+                    variant="outline" 
+                    className="h-14 w-14 rounded-none border-accent/10 hover:bg-accent hover:text-white transition-all group/btn"
+                    onClick={() => handleUpdateStatus(inq.id, inq.status === 'closed' ? 'contacted' : 'closed')}
+                  >
+                    <CheckCircle2 className={`h-5 w-5 transition-transform ${inq.status === 'closed' ? 'text-green-600' : ''}`} />
                   </Button>
-                  {inq.urgency === 'critical' && (
-                    <Button variant="outline" className="h-14 w-14 rounded-none border-destructive/20 text-destructive hover:bg-destructive hover:text-white transition-all">
-                      <XCircle className="h-5 w-5" />
-                    </Button>
-                  )}
                 </div>
               </div>
             </Card>
           </motion.div>
         ))}
+        {inquiries.length === 0 && (
+          <div className="text-center py-20 border border-dashed border-accent/10">
+            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No studio inquiries currently logged</p>
+          </div>
+        )}
       </div>
 
       <div className="p-10 border border-dashed border-accent/20 text-center bg-secondary/5">

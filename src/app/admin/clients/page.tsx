@@ -18,60 +18,32 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { useWhyteStore } from "@/store/use-whyte-store";
+import { useEffect, useState } from "react";
 
 export default function ActiveJourneysPage() {
-  const activeClients = [
-    {
-      id: "WP-0082",
-      name: "Jonathan Muthaiga",
-      email: "jonathan@muthaiga.com",
-      project: "Muthaiga Residence",
-      tier: "Golden",
-      status: "Execution",
-      progress: 78,
-      startDate: "Jan 15, 2024",
-      lastActivity: "2 hours ago"
-    },
-    {
-      id: "WP-0091",
-      name: "Victoria Wambui",
-      email: "v.wambui@karen.co.ke",
-      project: "Karen Villa Phase II",
-      tier: "Deluxe",
-      status: "Planning",
-      progress: 32,
-      startDate: "Feb 10, 2024",
-      lastActivity: "1 day ago"
-    },
-    {
-      id: "WP-0072",
-      name: "Samuel Kiprop",
-      email: "sam@kiprop-invest.com",
-      project: "Runda Estate",
-      tier: "Premium",
-      status: "Termination Pending",
-      progress: 85,
-      startDate: "Nov 12, 2023",
-      lastActivity: "5 hours ago"
-    },
-    {
-      id: "WP-0095",
-      name: "Elena Mbeki",
-      email: "elena@mbeki-architects.com",
-      project: "Westlands Penthouse",
-      tier: "Golden",
-      status: "Consultation",
-      progress: 10,
-      startDate: "Mar 01, 2024",
-      lastActivity: "Just now"
-    }
-  ];
+  const { clientProjects } = useWhyteStore();
+  const [isMounted, setIsMounted] = useState(false);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return null;
+
+  const filteredProjects = clientProjects.filter(p => 
+    p.name.toLowerCase().includes(search.toLowerCase()) || 
+    p.project.toLowerCase().includes(search.toLowerCase())
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Termination Pending': return "bg-destructive/10 text-destructive border-destructive/20";
+      case 'Terminated': return "bg-destructive text-white border-destructive";
       case 'Execution': return "bg-green-500/10 text-green-600 border-green-500/20";
       case 'Planning': return "bg-accent/10 text-accent border-accent/20";
+      case 'Completed': return "bg-primary text-white";
       default: return "bg-secondary text-muted-foreground border-border";
     }
   };
@@ -93,7 +65,12 @@ export default function ActiveJourneysPage() {
         <div className="flex gap-4">
           <div className="relative w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search Clients..." className="pl-11 rounded-none border-accent/10 h-12 text-xs uppercase tracking-widest bg-white" />
+            <Input 
+              placeholder="Search Clients..." 
+              className="pl-11 rounded-none border-accent/10 h-12 text-xs uppercase tracking-widest bg-white"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
           <Button variant="outline" className="rounded-none h-12 border-accent/10 px-6 uppercase tracking-widest text-[10px] flex gap-2">
             <Filter className="h-4 w-4" /> Filter
@@ -102,7 +79,7 @@ export default function ActiveJourneysPage() {
       </motion.div>
 
       <div className="grid grid-cols-1 gap-6">
-        {activeClients.map((client, index) => (
+        {filteredProjects.map((client, index) => (
           <motion.div
             key={client.id}
             initial={{ opacity: 0, x: -20 }}
@@ -111,7 +88,6 @@ export default function ActiveJourneysPage() {
           >
             <Card className="rounded-none border-accent/5 shadow-xl hover:shadow-2xl transition-all bg-white group overflow-hidden">
               <div className="flex flex-col lg:flex-row">
-                {/* Visual Indicator of Tier */}
                 <div className={`w-1.5 shrink-0 ${
                   client.tier === 'Golden' ? 'bg-accent' : 
                   client.tier === 'Deluxe' ? 'bg-accent/60' : 'bg-accent/20'
@@ -167,18 +143,25 @@ export default function ActiveJourneysPage() {
             </Card>
           </motion.div>
         ))}
+        {filteredProjects.length === 0 && (
+          <div className="text-center py-20 border border-dashed border-accent/10">
+            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No active journeys found matching your search</p>
+          </div>
+        )}
       </div>
 
       <div className="p-10 border border-dashed border-accent/20 bg-secondary/5 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-6">
           <div className="space-y-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">Total Active Revenue</p>
-            <p className="text-2xl font-headline italic">12 Full Commissions</p>
+            <p className="text-2xl font-headline italic">{clientProjects.length} Full Commissions</p>
           </div>
           <div className="h-12 w-px bg-accent/10" />
           <div className="space-y-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">Global Sourcing</p>
-            <p className="text-2xl font-headline italic">4 Deluxe / 2 Golden</p>
+            <p className="text-2xl font-headline italic">
+              {clientProjects.filter(p => p.tier === 'Deluxe').length} Deluxe / {clientProjects.filter(p => p.tier === 'Golden').length} Golden
+            </p>
           </div>
         </div>
         <Button asChild className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-[0.2em] text-[10px]">

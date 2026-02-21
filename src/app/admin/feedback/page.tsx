@@ -2,32 +2,40 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, CheckCircle2, XCircle, Trash2 } from "lucide-react";
+import { Star, CheckCircle2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useWhyteStore } from "@/store/use-whyte-store";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminFeedbackPage() {
-  const mockFeedback = [
-    {
-      id: "FB-001",
-      name: "Edward K.",
-      email: "edward@example.com",
-      rating: 5,
-      comment: "The architectural depth in the Westlands Penthouse project is exactly what we were looking for. The transition between the Galana stone foyer and the hardwood main hall is seamless.",
-      isApproved: false,
-      date: "Oct 24, 2023"
-    },
-    {
-      id: "FB-002",
-      name: "Sarah M.",
-      email: "sarah@runda.com",
-      rating: 4,
-      comment: "Incredible attention to detail. The Italian marble procurement took slightly longer than expected, but the final result justifies the wait.",
-      isApproved: true,
-      date: "Oct 20, 2023"
-    }
-  ];
+  const { feedback, approveFeedback, removeFeedback } = useWhyteStore();
+  const { toast } = useToast();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return null;
+
+  const handleApprove = (id: string) => {
+    approveFeedback(id);
+    toast({
+      title: "Voice Synchronized",
+      description: "Testimonial has been approved for public exhibition.",
+    });
+  };
+
+  const handleArchive = (id: string) => {
+    removeFeedback(id);
+    toast({
+      title: "Voice Archived",
+      description: "Testimonial has been removed from the studio records.",
+    });
+  };
 
   return (
     <div className="space-y-12 max-w-7xl mx-auto font-body">
@@ -43,7 +51,7 @@ export default function AdminFeedbackPage() {
       </motion.div>
 
       <div className="grid grid-cols-1 gap-6">
-        {mockFeedback.map((fb, index) => (
+        {feedback.map((fb, index) => (
           <motion.div
             key={fb.id}
             initial={{ opacity: 0, x: -10 }}
@@ -78,11 +86,19 @@ export default function AdminFeedbackPage() {
                   {fb.isApproved ? (
                     <Badge className="bg-green-600 text-white rounded-none uppercase tracking-widest text-[9px] py-1.5 justify-center">Approved</Badge>
                   ) : (
-                    <Button variant="outline" className="rounded-none border-green-600/20 text-green-600 hover:bg-green-600 hover:text-white h-12 uppercase tracking-widest text-[10px] flex gap-2">
+                    <Button 
+                      onClick={() => handleApprove(fb.id)}
+                      variant="outline" 
+                      className="rounded-none border-green-600/20 text-green-600 hover:bg-green-600 hover:text-white h-12 uppercase tracking-widest text-[10px] flex gap-2"
+                    >
                       <CheckCircle2 className="h-4 w-4" /> Approve
                     </Button>
                   )}
-                  <Button variant="outline" className="rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white h-12 uppercase tracking-widest text-[10px] flex gap-2">
+                  <Button 
+                    onClick={() => handleArchive(fb.id)}
+                    variant="outline" 
+                    className="rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white h-12 uppercase tracking-widest text-[10px] flex gap-2"
+                  >
                     <Trash2 className="h-4 w-4" /> Archive
                   </Button>
                 </div>
@@ -90,6 +106,11 @@ export default function AdminFeedbackPage() {
             </Card>
           </motion.div>
         ))}
+        {feedback.length === 0 && (
+          <div className="text-center py-24 border border-dashed border-accent/10">
+            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">The digital testimonial archives are currently empty</p>
+          </div>
+        )}
       </div>
     </div>
   );

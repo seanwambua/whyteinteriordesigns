@@ -2,41 +2,22 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Hammer, Globe, BadgeCheck, Phone, Mail, Plus, Filter } from "lucide-react";
+import { Hammer, Globe, BadgeCheck, Phone, Plus, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useWhyteStore } from "@/store/use-whyte-store";
+import { useEffect, useState } from "react";
 
 export default function AdminHRPage() {
-  const collaborators = [
-    {
-      id: "COL-001",
-      name: "Architectural Stone Specialists",
-      specialty: "Galana Stone Masonry",
-      contact: "+254 700 000000",
-      rating: 4.9,
-      status: "active",
-      type: "Trade Partner"
-    },
-    {
-      id: "COL-002",
-      name: "Venetian Fine Arts",
-      specialty: "Italian Marble Sourcing",
-      contact: "logistics@venetian.it",
-      rating: 5.0,
-      status: "active",
-      type: "Global Vendor"
-    },
-    {
-      id: "COL-003",
-      name: "Rift Valley Woodworks",
-      specialty: "Bespoke Mahogany Fabrication",
-      contact: "+254 711 111111",
-      rating: 4.7,
-      status: "on_hold",
-      type: "Trade Partner"
-    }
-  ];
+  const { collaborators } = useWhyteStore();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return null;
 
   return (
     <div className="space-y-12 max-w-7xl mx-auto font-body">
@@ -111,6 +92,11 @@ export default function AdminHRPage() {
             </Card>
           </motion.div>
         ))}
+        {collaborators.length === 0 && (
+          <div className="text-center py-24 border border-dashed border-accent/10">
+            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No registered collaborators in the network</p>
+          </div>
+        )}
       </div>
     </div>
   );
