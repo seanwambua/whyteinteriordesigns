@@ -27,6 +27,16 @@ export interface Installment {
   status: 'Pending' | 'Paid';
 }
 
+export interface VendorAllocation {
+  id: string;
+  vendorName: string;
+  role: string;
+  costType: 'Daily' | 'Percentage';
+  costValue: number;
+  timelineDays: number;
+  materials: string[];
+}
+
 export interface ClientProject {
   id: string;
   name: string;
@@ -45,6 +55,11 @@ export interface ClientProject {
   milestones: Milestone[];
   installments: Installment[];
   description?: string;
+  // Planning Fields
+  roomsCount?: number;
+  workScope?: string;
+  operationalBudget?: number;
+  vendorAllocations?: VendorAllocation[];
 }
 
 export interface Inquiry {
@@ -144,6 +159,9 @@ const initialClientProjects: ClientProject[] = [
     initialDepositPaid: true,
     depositCode: "AUTH-8821",
     totalBudget: 15000000,
+    roomsCount: 8,
+    workScope: "Full architectural renovation of primary and secondary wings including sustainable material integration.",
+    operationalBudget: 2500000,
     milestones: [
       { label: "Concept Approval", date: "Jan 12", isCompleted: true, description: "Bespoke mood boards finalized." },
       { label: "Technical Drawings", date: "Feb 05", isCompleted: true, description: "Architectural blueprints signed off." },
@@ -152,8 +170,24 @@ const initialClientProjects: ClientProject[] = [
     installments: [
       { label: "Initial Deposit (70%)", percentage: 70, amount: 10500000, status: 'Paid' },
       { label: "Final Reconciliation (30%)", percentage: 30, amount: 4500000, status: 'Pending' }
+    ],
+    vendorAllocations: [
+      {
+        id: "V-001",
+        vendorName: "Artisanal Woodworks KE",
+        role: "Primary Joinery",
+        costType: "Percentage",
+        costValue: 12,
+        timelineDays: 14,
+        materials: ["Sustainably Sourced Teak", "Brass Inlays"]
+      }
     ]
   }
+];
+
+const initialCollaborators: Collaborator[] = [
+  { id: "C-1", name: "Artisanal Woodworks KE", specialty: "Joinery & Custom Fabrication", contact: "+254 700 000 000", rating: 4.8, status: 'active', type: 'Local Specialist' },
+  { id: "C-2", name: "Nairobi Marble & Tile", specialty: "Stone Masonry", contact: "+254 711 111 111", rating: 4.9, status: 'active', type: 'Materials Partner' }
 ];
 
 export const useWhyteStore = create<WhyteState>()(
@@ -163,7 +197,7 @@ export const useWhyteStore = create<WhyteState>()(
       clientProjects: initialClientProjects,
       inquiries: [],
       feedback: [],
-      collaborators: [],
+      collaborators: initialCollaborators,
       financialSteward: "Imani Financial Services (IFS-KE)",
 
       addProject: (project) => set((state) => ({ projects: [...state.projects, project] })),
