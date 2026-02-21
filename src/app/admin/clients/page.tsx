@@ -74,7 +74,6 @@ export default function ClientDirectoryPage() {
 
   // LIFECYCLE FILTERS
   const totalActiveRegistry = filteredProjects.filter(p => !p.isArchived);
-  const activeProjects = totalActiveRegistry.filter(p => p.isActivated && p.status !== 'Termination' && p.status !== 'Completion');
   const pendingProjects = totalActiveRegistry.filter(p => !p.isActivated && p.status === 'Planning');
   const archivedProjects = filteredProjects.filter(p => p.isArchived);
 
@@ -259,7 +258,7 @@ export default function ClientDirectoryPage() {
             />
           </div>
           <Button asChild className="bg-accent text-white rounded-none h-12 px-8 uppercase tracking-widest text-[11px] font-bold flex gap-2 shadow-lg">
-            <Link href="/admin/clients/add"><UserPlus className="h-4 w-4" /> New Registration</Link>
+            <Link href="/admin/clients/add"><UserPlus className="h-4 w-4" /> New Commission</Link>
           </Button>
         </div>
       </motion.div>
@@ -272,27 +271,13 @@ export default function ClientDirectoryPage() {
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="active" className="space-y-8">
+      <Tabs defaultValue="pending" className="space-y-8">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-10">
-          <TabsTrigger value="active" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0">Active Journeys ({activeProjects.length})</TabsTrigger>
           <TabsTrigger value="pending" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0">Pending Briefings ({pendingProjects.length})</TabsTrigger>
           <TabsTrigger value="archives" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0 flex gap-2">
             <Archive className="h-4 w-4" /> Project Archives ({archivedProjects.length})
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="active" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            {activeProjects.map((client) => (
-              <ClientCard key={client.id} client={client} />
-            ))}
-            {activeProjects.length === 0 && (
-              <div className="text-center py-24 border border-dashed border-accent/10">
-                <p className="text-base font-light italic text-muted-foreground uppercase tracking-[0.3em]">No financially activated journeys in standard implementation</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
 
         <TabsContent value="pending" className="space-y-6">
           <div className="grid grid-cols-1 gap-6">

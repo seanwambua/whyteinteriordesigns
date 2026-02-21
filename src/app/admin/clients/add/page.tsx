@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -236,19 +235,26 @@ export default function AddClientPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-12 font-body">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-        <Button asChild variant="ghost" className="text-accent/40 hover:text-accent p-0 font-bold uppercase tracking-widest text-[9px] h-auto flex items-center gap-2 mb-4">
-          <Link href="/admin/clients"><ArrowLeft className="h-3 w-3" /> Back to Registry</Link>
-        </Button>
-        <div className="flex items-center gap-4">
-          <div className="h-px w-8 bg-accent" />
-          <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Architectural Onboarding</span>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+        <Link 
+          href="/admin/clients" 
+          className="inline-flex items-center gap-2 text-accent/40 hover:text-accent transition-all group"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          <span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Master Registry</span>
+        </Link>
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="h-px w-8 bg-accent" />
+            <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Architectural Onboarding</span>
+          </div>
+          <h1 className="text-5xl font-headline italic">Initialize <span className="not-italic">New Commission.</span></h1>
         </div>
-        <h1 className="text-5xl font-headline italic">Initialize <span className="not-italic">New Commission.</span></h1>
       </motion.div>
 
       <div className="max-w-md mx-auto mb-8">
-        <div className="flex justify-between text-[9px] uppercase tracking-widest font-bold text-accent/40 mb-2">
+        <div className="flex justify-between text-[11px] uppercase tracking-widest font-bold text-accent/40 mb-2">
           <span>Phase {step} of {totalSteps}</span>
           <span>{Math.round(progress)}% Seeded</span>
         </div>
@@ -269,11 +275,11 @@ export default function AddClientPage() {
                   <div className="flex items-center gap-4 mb-8"><User className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Client Identity</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label>
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Full Name</Label>
                       <Input placeholder="Client Name" className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email Address</Label>
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Email Address</Label>
                       <Input type="email" placeholder="client@example.com" className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
                     </div>
                   </div>
@@ -284,12 +290,12 @@ export default function AddClientPage() {
                 <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="flex items-center gap-4 mb-8"><Briefcase className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Project Scope & Timeline</h3></div>
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Project Title</Label>
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Title</Label>
                     <Input placeholder="E.g., Runda Residency - Master Suite" className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent" required value={formData.project} onChange={(e) => setFormData({...formData, project: e.target.value})} />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Commencement Date</Label>
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Date</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" className={cn("w-full h-14 rounded-none border-accent/20 text-lg font-light justify-start text-left", !formData.startDate && "text-muted-foreground")}>
@@ -301,7 +307,7 @@ export default function AddClientPage() {
                       </Popover>
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Authorized Deadline</Label>
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Authorized Deadline</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" className={cn("w-full h-14 rounded-none border-accent/20 text-lg font-light justify-start text-left", !formData.endDate && "text-muted-foreground")}>
@@ -314,7 +320,7 @@ export default function AddClientPage() {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Architectural Brief</Label>
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Brief</Label>
                     <Textarea placeholder="Describe the spatial goals..." className="min-h-[150px] rounded-none border-accent/20 focus:ring-accent resize-none p-6 text-lg" required value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
                   </div>
                 </motion.div>
@@ -325,7 +331,7 @@ export default function AddClientPage() {
                   <div className="flex items-center gap-4 mb-8"><Calculator className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Financial Framework</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
                       <Select onValueChange={(v: ClientProject['tier']) => setFormData({...formData, tier: v})} defaultValue={formData.tier}>
                         <SelectTrigger className="rounded-none border-accent/20 h-14 text-lg"><SelectValue placeholder="Select Tier" /></SelectTrigger>
                         <SelectContent className="rounded-none border-accent/20">
@@ -336,15 +342,15 @@ export default function AddClientPage() {
                       </Select>
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Total Budget (KES)</Label>
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Total Budget (KES)</Label>
                       <Input type="number" placeholder="10,000,000" className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent" required value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} />
                     </div>
                   </div>
                   <div className="p-6 bg-secondary/30 border border-accent/5 space-y-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Payment Schedule Expectations</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Payment Schedule Expectations</p>
                     <div className="space-y-2">
                       {getInstallmentPlan(formData.tier, Number(formData.totalBudget) || 0).map((ins, i) => (
-                        <div key={i} className="flex justify-between text-[11px] font-light italic"><span>{ins.label}</span><span className="font-bold">KES {ins.amount.toLocaleString()}</span></div>
+                        <div key={i} className="flex justify-between text-[12px] font-light italic"><span>{ins.label}</span><span className="font-bold">KES {ins.amount.toLocaleString()}</span></div>
                       ))}
                     </div>
                   </div>
@@ -355,7 +361,7 @@ export default function AddClientPage() {
                 <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4"><Flag className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Target Milestones</h3></div>
-                    <Button type="button" onClick={addMilestone} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[9px] flex gap-2"><Plus className="h-3.5 w-3.5" /> Append Target</Button>
+                    <Button type="button" onClick={addMilestone} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[11px] flex gap-2"><Plus className="h-3.5 w-3.5" /> Append Target</Button>
                   </div>
                   <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                     {formData.milestones.map((m, idx) => (
@@ -363,11 +369,11 @@ export default function AddClientPage() {
                         <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive/40 hover:text-destructive" onClick={() => removeMilestone(idx)} disabled={formData.milestones.length === 1}><Trash2 className="h-4 w-4" /></Button>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Milestone Title</Label>
+                            <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Milestone Title</Label>
                             <Input placeholder="E.g., Structural Handover" className="rounded-none h-12 text-sm font-bold uppercase tracking-widest" value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Target Date</Label>
+                            <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Target Date</Label>
                             <Popover>
                               <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full h-12 rounded-none border-accent/10 text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4 opacity-40" />{format(m.date, "PPP")}</Button>
@@ -386,7 +392,7 @@ export default function AddClientPage() {
                 <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4"><Activity className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Operational Workflow</h3></div>
-                    <Button type="button" onClick={addTask} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[9px] flex gap-2"><Plus className="h-3.5 w-3.5" /> Add Primary Task</Button>
+                    <Button type="button" onClick={addTask} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[11px] flex gap-2"><Plus className="h-3.5 w-3.5" /> Add Primary Task</Button>
                   </div>
                   <div className="space-y-8 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
                     {formData.tasks.map((task, idx) => (
@@ -394,11 +400,11 @@ export default function AddClientPage() {
                         <Button type="button" variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive" onClick={() => removeTask(idx)} disabled={formData.tasks.length === 1}><Trash2 className="h-4 w-4" /></Button>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Primary Task Identity</Label>
+                            <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Primary Task Identity</Label>
                             <Input placeholder="E.g., Site Leveling" className="rounded-none h-12 text-sm font-bold uppercase tracking-widest" value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Urgency Protocol</Label>
+                            <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Urgency Protocol</Label>
                             <Select value={task.priority} onValueChange={(v: any) => updateTask(idx, 'priority', v)}>
                               <SelectTrigger className="rounded-none h-12 text-xs border-accent/10 font-bold uppercase tracking-widest"><SelectValue placeholder="Priority" /></SelectTrigger>
                               <SelectContent className="rounded-none">
@@ -410,7 +416,7 @@ export default function AddClientPage() {
                           </div>
                         </div>
                         <div className="space-y-4 pt-4 border-t border-accent/5">
-                          <div className="flex justify-between items-center"><Label className="text-[8px] uppercase tracking-[0.3em] opacity-40 font-bold">Sub-task Protocol</Label><Button type="button" variant="ghost" size="sm" onClick={() => addSubtask(idx)} className="h-6 text-[8px] uppercase tracking-widest font-bold text-accent hover:bg-accent/5 p-0"><Plus className="h-2.5 w-2.5 mr-1" /> Append Sub-task</Button></div>
+                          <div className="flex justify-between items-center"><Label className="text-[10px] uppercase tracking-[0.3em] opacity-40 font-bold">Sub-task Protocol</Label><Button type="button" variant="ghost" size="sm" onClick={() => addSubtask(idx)} className="h-6 text-[10px] uppercase tracking-widest font-bold text-accent hover:bg-accent/5 p-0"><Plus className="h-2.5 w-2.5 mr-1" /> Append Sub-task</Button></div>
                           <div className="space-y-2">
                             {task.subtasks?.map((sub, sIdx) => (
                               <div key={sub.id} className="flex gap-3 items-center group/sub">
@@ -430,7 +436,7 @@ export default function AddClientPage() {
                 <motion.div key="step6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4"><Users className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Network Matrix</h3></div>
-                    <Button type="button" onClick={addVendorAllocation} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[9px] flex gap-2"><Plus className="h-3.5 w-3.5" /> Allocate Partner</Button>
+                    <Button type="button" onClick={addVendorAllocation} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[11px] flex gap-2"><Plus className="h-3.5 w-3.5" /> Allocate Partner</Button>
                   </div>
                   <div className="space-y-6 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
                     {formData.vendorAllocations.map((v, idx) => (
@@ -438,7 +444,7 @@ export default function AddClientPage() {
                         <Button type="button" variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive" onClick={() => removeVendorAllocation(idx)}><Trash2 className="h-4 w-4" /></Button>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Partner Identity</Label>
+                            <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Partner Identity</Label>
                             <Select value={v.vendorName} onValueChange={(val) => updateVendorAllocation(idx, 'vendorName', val)}>
                               <SelectTrigger className="rounded-none h-12 text-sm font-bold uppercase tracking-widest"><SelectValue placeholder="Select Partner" /></SelectTrigger>
                               <SelectContent className="rounded-none">
@@ -448,13 +454,13 @@ export default function AddClientPage() {
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Role in Commission</Label>
+                            <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Role in Commission</Label>
                             <Input placeholder="E.g., Structural Architect" className="rounded-none h-12 text-sm" value={v.role} onChange={(e) => updateVendorAllocation(idx, 'role', e.target.value)} />
                           </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Cost Model</Label>
+                            <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Cost Model</Label>
                             <Select value={v.costType} onValueChange={(val: any) => updateVendorAllocation(idx, 'costType', val)}>
                               <SelectTrigger className="rounded-none h-12 text-xs font-bold uppercase tracking-widest"><SelectValue /></SelectTrigger>
                               <SelectContent className="rounded-none">
@@ -465,11 +471,11 @@ export default function AddClientPage() {
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Model Value</Label>
+                            <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Model Value</Label>
                             <Input type="number" className="rounded-none h-12" value={v.costValue} onChange={(e) => updateVendorAllocation(idx, 'costValue', Number(e.target.value))} />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Projected Days</Label>
+                            <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Projected Days</Label>
                             <Input type="number" className="rounded-none h-12" value={v.timelineDays} onChange={(e) => updateVendorAllocation(idx, 'timelineDays', Number(e.target.value))} />
                           </div>
                         </div>
@@ -486,11 +492,11 @@ export default function AddClientPage() {
             </AnimatePresence>
 
             <div className="pt-10 flex items-center justify-between border-t border-accent/5">
-              {step > 1 ? <Button type="button" variant="ghost" onClick={handleBack} className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[10px]">Previous Phase</Button> : <div />}
+              {step > 1 ? <Button type="button" variant="ghost" onClick={handleBack} className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[12px]">Previous Phase</Button> : <div />}
               {step < totalSteps ? (
-                <Button type="button" onClick={handleNext} disabled={!isStepValid()} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.2em] text-[10px] font-bold flex gap-3 hover:bg-accent/90 transition-all">Continue <ChevronRight className="h-4 w-4" /></Button>
+                <Button type="button" onClick={handleNext} disabled={!isStepValid()} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.2em] text-[12px] font-bold flex gap-3 hover:bg-accent/90 transition-all">Continue <ChevronRight className="h-4 w-4" /></Button>
               ) : (
-                <Button type="submit" disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.3em] text-[10px] font-bold flex gap-4 hover:bg-accent/90 transition-all shadow-2xl disabled:opacity-50">{loading ? "Initializing Journey..." : <><ClipboardList className="h-5 w-5" /> Authorize Commission</>}</Button>
+                <Button type="submit" disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.3em] text-[12px] font-bold flex gap-4 hover:bg-accent/90 transition-all shadow-2xl disabled:opacity-50">{loading ? "Initializing Journey..." : <><ClipboardList className="h-5 w-5" /> Authorize Commission</>}</Button>
               )}
             </div>
           </form>
