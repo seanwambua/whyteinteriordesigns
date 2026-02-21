@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -194,7 +193,9 @@ export default function ClientDirectoryPage() {
                  {client.isArchived ? (
                    <span className="text-[12px] uppercase tracking-[0.3em] font-bold text-black/40">Commission Retired</span>
                  ) : !client.isActivated ? (
-                   <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 rounded-none text-[12px] uppercase tracking-widest px-5 py-2 font-bold">Awaiting Funds</Badge>
+                   <Button asChild variant="outline" className="border-orange-500/20 text-orange-600 hover:bg-orange-600 hover:text-white rounded-none text-[11px] uppercase tracking-widest px-6 h-10 font-bold transition-all shadow-sm">
+                     <Link href="/admin/operations/planning">Authorize Activation</Link>
+                   </Button>
                  ) : (
                    <Badge className="bg-green-600/10 text-green-600 border-green-500/20 rounded-none text-[12px] uppercase tracking-widest px-5 py-2 font-bold">Active Journey</Badge>
                  )}

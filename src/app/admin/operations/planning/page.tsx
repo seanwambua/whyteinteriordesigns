@@ -230,12 +230,44 @@ export default function ProjectPlanningPage() {
           </DialogHeader>
           <Tabs defaultValue="identity" className="flex-1 overflow-hidden flex flex-col px-10">
             <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-10 mb-8">
-              <TabsTrigger value="identity" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0">Identity</TabsTrigger>
+              <TabsTrigger value="identity" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0">Identity & Temporal</TabsTrigger>
               <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0">Site Protocols</TabsTrigger>
             </TabsList>
             <div className="flex-1 overflow-y-auto pr-2 pb-10">
               <TabsContent value="identity" className="m-0 space-y-10">
                 <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Designation</Label><Input value={editFormData.project} onChange={(e) => setEditFormData({...editFormData, project: e.target.value})} className="rounded-none h-14 text-2xl font-headline italic border-accent/20" /></div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-3">
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Protocol</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-14 rounded-none justify-start text-base border-accent/20 uppercase tracking-widest font-bold">
+                          <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
+                          {format(editFormData.startDate, "MMM dd, yyyy")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 rounded-none" align="start">
+                        <Calendar mode="single" selected={editFormData.startDate} onSelect={(d) => d && setEditFormData({...editFormData, startDate: d})} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Projected Delivery Target</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-14 rounded-none justify-start text-base border-accent/20 uppercase tracking-widest font-bold">
+                          <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
+                          {format(editFormData.endDate, "MMM dd, yyyy")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 rounded-none" align="start">
+                        <Calendar mode="single" selected={editFormData.endDate} onSelect={(d) => d && setEditFormData({...editFormData, endDate: d})} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+
                 <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Narrative</Label><Textarea value={editFormData.description} onChange={(e) => setEditFormData({...editFormData, description: e.target.value})} className="min-h-[200px] rounded-none p-6 font-light italic text-lg border-accent/20" /></div>
               </TabsContent>
               <TabsContent value="workflow" className="m-0 space-y-8">
@@ -291,6 +323,24 @@ export default function ProjectPlanningPage() {
           <AlertDialogFooter className="pt-10"><AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 border-accent/10">Abort Cancellation</AlertDialogCancel><AlertDialogAction onClick={() => { if(deleteId) { removeClientProject(deleteId); setDeleteId(null); toast({title: "Briefing Purged"}); } }} className="bg-destructive text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-12 hover:bg-destructive/90 shadow-xl">Confirm Purge</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={activationProject !== null} onOpenChange={(open) => !open && setActivationProject(null)}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden">
+          <div className="bg-orange-600 h-1.5 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-orange-600" /><span className="text-orange-600 text-[12px] font-bold uppercase tracking-[0.4em]">Activation Protocol</span></div>
+              <DialogTitle className="text-3xl font-headline italic">Verify Initial Transaction</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-base">To transition <strong>{activationProject?.project}</strong> to execution, verify the initial capital commitment.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-8">
+              <div className="p-8 bg-orange-500/5 border border-orange-500/10 space-y-4 relative overflow-hidden"><div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-14 w-14" /></div><div className="flex justify-between items-end relative z-10"><span className="text-[12px] uppercase tracking-widest font-bold text-orange-600/60">Authorized Deposit</span><span className="text-3xl font-headline italic text-orange-600">KES {activationProject ? (activationProject.installments.find(i => i.label.includes('Deposit'))?.amount || 0).toLocaleString() : 0}</span></div></div>
+              <div className="space-y-3"><Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label><Input placeholder="E.g., TRX-9921-WHYTE" className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] font-medium" value={depositCode} onChange={(e) => setDepositCode(e.target.value)} /></div>
+            </div>
+            <DialogFooter className="pt-4"><Button className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all" onClick={handleActivateJourney} disabled={isActivating || !depositCode}>{isActivating ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Syncing...</span> : "Authorize Activation"}</Button></DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
