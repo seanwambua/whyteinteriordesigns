@@ -69,6 +69,19 @@
         "isApproved": { "type": "boolean", "default": false },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "Collaborator": {
+      "title": "Studio Collaborator",
+      "description": "A trade person, vendor, or specialist partner",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "specialty": { "type": "string" },
+        "contact": { "type": "string" },
+        "rating": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "on_hold", "blacklisted"] },
+        "projects": { "type": "array", "items": { "type": "string" } }
+      }
     }
   },
   "auth": {
@@ -90,6 +103,10 @@
     "/feedback/{feedbackId}": {
       "schema": "Feedback",
       "description": "Client testimonials"
+    },
+    "/collaborators/{collaboratorId}": {
+      "schema": "Collaborator",
+      "description": "Studio vendors and tradespeople"
     }
   }
 }
