@@ -31,7 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   const hrNav = [
-    { title: "Collaborators", icon: Users, href: "/admin/hr" },
+    { title: "Business Partners / Collaborators", icon: Users, href: "/admin/hr" },
     { title: "Vendors & Trades", icon: HardHat, href: "/admin/hr" },
   ];
 

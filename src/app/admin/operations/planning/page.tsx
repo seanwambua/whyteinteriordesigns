@@ -648,7 +648,7 @@ export default function ProjectPlanningPage() {
                         </div>
                         <div className="space-y-2">
                           <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Projected Days</Label>
-                          <Input type="number" className="rounded-none h-12 text-sm" value={v.timelineDays} onChange={(e) => updateVendor(idx, 'timelineDays', Number(e.target.value))} />
+                          <Input type="number" className="rounded-none h-12 text-sm" value={v.costValue} onChange={(e) => updateVendor(idx, 'timelineDays', Number(e.target.value))} />
                         </div>
                       </div>
                     </div>

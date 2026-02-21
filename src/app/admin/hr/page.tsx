@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -158,7 +157,7 @@ export default function NetworkEcosystemPage() {
       <Tabs value={activeCategory} onValueChange={setActiveCategory} className="space-y-10">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12">
           <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0">All Resources ({collaborators.length})</TabsTrigger>
-          <TabsTrigger value="partners" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-2"><Compass className="h-4 w-4" /> Creative Partners</TabsTrigger>
+          <TabsTrigger value="partners" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-2"><Compass className="h-4 w-4" /> Business Partners / Collaborators</TabsTrigger>
           <TabsTrigger value="trades" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-2"><HardHat className="h-4 w-4" /> Site Trades</TabsTrigger>
         </TabsList>
 
@@ -187,7 +186,7 @@ export default function NetworkEcosystemPage() {
                             res.category === 'Collaborator' ? 'bg-accent text-white' : 'bg-secondary/30 text-accent/40'
                           )}>
                              {res.category === 'Collaborator' ? <Compass className="h-6 w-6" /> : <HardHat className="h-6 w-6" />}
-                             <span className="text-[8px] uppercase font-black tracking-widest mt-1">{res.category === 'Collaborator' ? 'CR' : 'TR'}</span>
+                             <span className="text-[8px] uppercase font-black tracking-widest mt-1">{res.category === 'Collaborator' ? 'BP' : 'TR'}</span>
                           </div>
                           
                           <div className="space-y-1.5">
@@ -260,7 +259,7 @@ export default function NetworkEcosystemPage() {
               </div>
               <DialogTitle className="text-4xl font-headline italic">Register Resource</DialogTitle>
               <DialogDescription className="font-light italic text-muted-foreground text-base">
-                Add an architectural partner or trade specialist to the studio network ecosystem.
+                Add a business partner, collaborator, or trade specialist to the studio network ecosystem.
               </DialogDescription>
             </DialogHeader>
             
@@ -276,7 +275,7 @@ export default function NetworkEcosystemPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
-                      <SelectItem value="Collaborator">Creative Partner</SelectItem>
+                      <SelectItem value="Collaborator">Business Partner / Collaborator</SelectItem>
                       <SelectItem value="Vendor">Site Trade Specialist</SelectItem>
                     </SelectContent>
                   </Select>
