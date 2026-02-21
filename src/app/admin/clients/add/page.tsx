@@ -201,7 +201,7 @@ export default function AddClientPage() {
     if (step === 2) return formData.project && formData.description && formData.startDate && formData.endDate;
     if (step === 3) return formData.totalBudget && Number(formData.totalBudget) > 0;
     if (step === 4) return formData.milestones.every(m => m.label);
-    if (step === 5) return formData.tasks.every(t => t.title);
+    if (step === 5) return formData.tasks.length > 0 && formData.tasks.every(t => t.title.trim() !== "" && t.priority);
     return true;
   };
 
@@ -229,7 +229,11 @@ export default function AddClientPage() {
       <Card className="rounded-none border-accent/10 shadow-2xl bg-white overflow-hidden">
         <div className="bg-accent h-1.5 w-full" />
         <CardContent className="p-10 md:p-16">
-          <form onSubmit={handleSubmit} className="space-y-10">
+          <form 
+            onSubmit={handleSubmit} 
+            onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+            className="space-y-10"
+          >
             <AnimatePresence mode="wait">
               {step === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
@@ -399,7 +403,7 @@ export default function AddClientPage() {
               {step < totalSteps ? (
                 <Button type="button" onClick={handleNext} disabled={!isStepValid()} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.2em] text-[10px] font-bold flex gap-3 hover:bg-accent/90 transition-all">Continue <ChevronRight className="h-4 w-4" /></Button>
               ) : (
-                <Button type="submit" disabled={loading} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.3em] text-[10px] font-bold flex gap-4 hover:bg-accent/90 transition-all shadow-2xl disabled:opacity-50">{loading ? "Initializing Journey..." : <><ClipboardList className="h-5 w-5" /> Authorize Commission</>}</Button>
+                <Button type="submit" disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-[0.3em] text-[10px] font-bold flex gap-4 hover:bg-accent/90 transition-all shadow-2xl disabled:opacity-50">{loading ? "Initializing Journey..." : <><ClipboardList className="h-5 w-5" /> Authorize Commission</>}</Button>
               )}
             </div>
           </form>
