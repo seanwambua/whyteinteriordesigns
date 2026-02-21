@@ -15,10 +15,10 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
-    { name: "Services", href: "#services" },
-    { name: "Portfolio", href: "#portfolio" },
-    { name: "Style Quiz", href: "#quiz" },
-    { name: "Contact", href: "#contact" },
+    { name: "Services", href: "/#services" },
+    { name: "Portfolio", href: "/#portfolio" },
+    { name: "Investment", href: "/pricing" },
+    { name: "Style Quiz", href: "/#quiz" },
   ];
 
   return (
@@ -26,7 +26,7 @@ export function Navbar() {
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
         <Link href="/" className="group">
           <span className="text-2xl font-headline font-bold tracking-tight text-accent">
-            Whyte <span className="font-light text-muted-foreground">Interior Designs</span>
+            Whyte Interior Designs
           </span>
         </Link>
 
@@ -41,8 +41,8 @@ export function Navbar() {
               {item.name}
             </Link>
           ))}
-          <Button asChild variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link href="#contact">Book Consultation</Link>
+          <Button asChild variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-none">
+            <Link href="/#contact">Book Consultation</Link>
           </Button>
         </div>
 
@@ -66,8 +66,8 @@ export function Navbar() {
                     {item.name}
                   </Link>
                 ))}
-                <Button asChild className="mt-4" onClick={() => setIsOpen(false)}>
-                  <Link href="#contact">Book Consultation</Link>
+                <Button asChild className="mt-4 rounded-none" onClick={() => setIsOpen(false)}>
+                  <Link href="/#contact">Book Consultation</Link>
                 </Button>
               </div>
             </SheetContent>
