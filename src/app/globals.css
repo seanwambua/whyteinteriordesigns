@@ -5,26 +5,26 @@
 
 @layer base {
   :root {
-    --background: 240 100% 99%;
-    --foreground: 264 16% 15%;
+    --background: 0 0% 100%;
+    --foreground: 264 16% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 264 16% 15%;
+    --card-foreground: 264 16% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 264 16% 15%;
-    --primary: 300 24% 80%;
-    --primary-foreground: 264 16% 20%;
-    --secondary: 264 10% 95%;
-    --secondary-foreground: 264 16% 47%;
-    --muted: 264 10% 95%;
-    --muted-foreground: 264 10% 40%;
-    --accent: 264 16% 47%;
+    --popover-foreground: 264 16% 12%;
+    --primary: 264 16% 25%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 264 10% 97%;
+    --secondary-foreground: 264 16% 40%;
+    --muted: 264 10% 97%;
+    --muted-foreground: 264 10% 45%;
+    --accent: 300 24% 20%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 264 10% 90%;
-    --input: 264 10% 90%;
-    --ring: 264 16% 47%;
-    --radius: 0.75rem;
+    --border: 264 10% 92%;
+    --input: 264 10% 92%;
+    --ring: 300 24% 20%;
+    --radius: 0.25rem;
   }
   .dark {
     --background: 264 16% 5%;
@@ -54,9 +54,14 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-background text-foreground font-body selection:bg-accent/20;
+    font-size: 1.125rem;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-headline;
+    @apply font-headline font-normal tracking-tight;
   }
+}
+
+.luxury-gradient {
+  background: linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.2));
 }
