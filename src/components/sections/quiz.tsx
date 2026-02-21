@@ -3,17 +3,23 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { styleQuizRecommendation, type StyleQuizRecommendationOutput } from "@/ai/flows/style-quiz-recommendation";
-import { Loader2, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
+import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+type StyleResult = {
+  designStyleName: string;
+  summary: string;
+  keyElements: string[];
+  colorScheme: string;
+  furnitureSuggestions: string[];
+};
 
 export function StyleQuiz() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<StyleQuizRecommendationOutput | null>(null);
+  const [result, setResult] = useState<StyleResult | null>(null);
   const [step, setStep] = useState(1);
 
   const [formData, setFormData] = useState({
@@ -29,17 +35,45 @@ export function StyleQuiz() {
   const handleNext = () => setStep(prev => prev + 1);
   const handleBack = () => setStep(prev => prev - 1);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const recommendation = await styleQuizRecommendation(formData);
-      setResult(recommendation);
-    } catch (error) {
-      console.error("Quiz failed", error);
-    } finally {
+    
+    // Rule-based logic replacing previous AI integration
+    setTimeout(() => {
+      const styles: Record<string, StyleResult> = {
+        "Mid-century Modern": {
+          designStyleName: "Refined Modernist",
+          summary: "A seamless blend of organic forms and geometric precision.",
+          keyElements: ["Tapered legs", "Teak accents", "Functional aesthetics"],
+          colorScheme: "Mustard yellow, olive green, and warm walnut.",
+          furnitureSuggestions: ["Eames Lounge Chair", "Sleek Sideboard", "Sunburst Clock"]
+        },
+        "Minimalist": {
+          designStyleName: "Pure Essentialism",
+          summary: "Elegance through subtraction and intentionality.",
+          keyElements: ["Negative space", "Monochromatic textures", "Hidden storage"],
+          colorScheme: "Alabaster, charcoal, and soft greige.",
+          furnitureSuggestions: ["Low-profile Sofa", "Stone Coffee Table", "Floating Shelves"]
+        },
+        "Default": {
+          designStyleName: "Contemporary Bespoke",
+          summary: "A curated harmony of timeless comfort and modern luxury.",
+          keyElements: ["Layered textiles", "Ambient lighting", "Artisanal finishes"],
+          colorScheme: "Champagne, slate, and brushed gold.",
+          furnitureSuggestions: ["Velvet Armchair", "Modular Sectional", "Brass Floor Lamp"]
+        }
+      };
+
+      const matchedStyle = formData.furnitureStyles.includes("Minimalist") 
+        ? styles["Minimalist"] 
+        : formData.furnitureStyles.includes("Mid-century Modern") 
+        ? styles["Mid-century Modern"] 
+        : styles["Default"];
+
+      setResult(matchedStyle);
       setLoading(false);
-    }
+    }, 1500);
   };
 
   const toggleFurniture = (style: string) => {
@@ -126,11 +160,11 @@ export function StyleQuiz() {
               className="flex items-center gap-4 mb-6"
             >
               <div className="h-px w-12 bg-accent" />
-              <span className="text-accent text-sm font-bold uppercase tracking-[0.3em]">AI Designer</span>
+              <span className="text-accent text-sm font-bold uppercase tracking-[0.3em]">Design Consultant</span>
             </motion.div>
             <h2 className="text-5xl font-headline mb-8 leading-tight">Discover Your <span className="italic">Visual Language.</span></h2>
             <p className="text-lg text-muted-foreground font-light leading-relaxed mb-12">
-              Our AI analysis engine cross-references your preferences with classic design movements to pinpoint your unique interior DNA.
+              Our analysis engine cross-references your preferences with classic design movements to pinpoint your unique interior DNA.
             </p>
             <div className="space-y-6">
               {[1, 2, 3, 4].map(i => (
@@ -223,10 +257,6 @@ export function StyleQuiz() {
                             </Label>
                           ))}
                         </RadioGroup>
-                      </div>
-                      <div className="flex items-center gap-4 text-accent/60 bg-accent/[0.02] p-6 italic font-light">
-                        <Sparkles className="h-5 w-5 shrink-0" />
-                        Analyzing selection with our proprietary Whyte AI models...
                       </div>
                     </div>
                   )}
