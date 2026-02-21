@@ -136,8 +136,10 @@ export default function ActiveJourneysPage() {
                               <ExternalLink className="h-5 w-5" />
                             </Link>
                           </Button>
-                          <Button variant="ghost" className="h-14 w-14 rounded-full border border-accent/5 group-hover:bg-accent group-hover:text-white transition-all p-0">
-                            <ChevronRight className="h-6 w-6" />
+                          <Button asChild variant="ghost" className="h-14 w-14 rounded-full border border-accent/5 group-hover:bg-accent group-hover:text-white transition-all p-0">
+                            <Link href={`/admin/clients/${client.id}`}>
+                              <ChevronRight className="h-6 w-6" />
+                            </Link>
                           </Button>
                        </div>
                     </div>
