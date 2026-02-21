@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -25,15 +24,15 @@ export function Footer() {
               <li><Link href="/#services" className="hover:text-primary transition-colors">Our Method</Link></li>
               <li><Link href="/#portfolio" className="hover:text-primary transition-colors">The Collection</Link></li>
               <li><Link href="/pricing" className="hover:text-primary transition-colors">Investment</Link></li>
-              <li><Link href="/#quiz" className="hover:text-primary transition-colors">Style Quiz</Link></li>
+              <li><Link href="/feedback" className="hover:text-primary transition-colors">Client Voice</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-bold mb-6 uppercase tracking-widest text-sm">Services</h4>
             <ul className="space-y-3 text-sm text-white/60">
-              <li>Interior Design</li>
-              <li>Interior Decor</li>
+              <li><Link href="/services/interior-design" className="hover:text-primary transition-colors">Interior Design</Link></li>
+              <li><Link href="/services/interior-decor" className="hover:text-primary transition-colors">Interior Decor</Link></li>
               <li>Bespoke Curation</li>
               <li>Commercial Projects</li>
             </ul>
