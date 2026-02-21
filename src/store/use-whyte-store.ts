@@ -1,4 +1,3 @@
-
 'use client';
 
 import { create } from 'zustand';
@@ -67,7 +66,7 @@ export interface ClientProject {
   email: string;
   project: string;
   tier: 'Premium' | 'Deluxe' | 'Golden';
-  status: 'Consultation' | 'Planning' | 'Procurement' | 'Execution' | 'Styling' | 'Completed' | 'Termination Pending' | 'Terminated';
+  status: 'Planning' | 'Execution' | 'Completion' | 'Termination';
   progress: number;
   startDate: string;
   lastActivity: string;
@@ -81,7 +80,6 @@ export interface ClientProject {
   siteReports?: SiteReport[];
   tasks?: ProjectTask[];
   description?: string;
-  // Planning Fields
   roomsCount?: number;
   workScope?: string;
   operationalBudget?: number;
@@ -130,7 +128,6 @@ interface WhyteState {
   collaborators: Collaborator[];
   financialSteward: string;
   
-  // Actions
   addProject: (project: Project) => void;
   removeProject: (id: string) => void;
   

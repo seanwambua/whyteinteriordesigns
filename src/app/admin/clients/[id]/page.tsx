@@ -66,7 +66,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const handleUpdateStatus = (status: ClientProject['status']) => {
     updateClientProject(project.id, { 
       status,
-      lastActivity: `Lifecycle transitioned to ${status}.`
+      lastActivity: `Lifecycle transitioned manually to ${status}.`
     });
     toast({
       title: "Lifecycle Updated",
@@ -94,7 +94,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       return t;
     });
     
-    updateClientProject(project.id, { tasks: updatedTasks });
+    recalculateVelocity(updatedTasks, "Sub-task protocol updated.");
   };
 
   const handleAddSubtask = (taskId: string) => {
@@ -111,12 +111,26 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   const recalculateVelocity = (updatedTasks: ProjectTask[], activity: string) => {
     const done = updatedTasks.filter(t => t.status === 'Done').length;
+    const inProgress = updatedTasks.filter(t => t.status === 'In Progress').length;
     const total = updatedTasks.length;
     const velocity = total > 0 ? Math.round((done / total) * 100) : project.progress;
+
+    // Automated Status Logic
+    let newStatus: ClientProject['status'] = project.status;
+    if (project.status !== 'Termination') {
+      if (total > 0 && done === total) {
+        newStatus = 'Completion';
+      } else if (inProgress > 0 || done > 0) {
+        newStatus = 'Execution';
+      } else {
+        newStatus = 'Planning';
+      }
+    }
 
     updateClientProject(project.id, { 
       tasks: updatedTasks,
       progress: velocity,
+      status: newStatus,
       lastActivity: activity
     });
   };
@@ -129,7 +143,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       priority: "Medium",
       subtasks: []
     };
-    updateClientProject(project.id, { tasks: [...(project.tasks || []), newTask] });
+    const updatedTasks = [...(project.tasks || []), newTask];
+    recalculateVelocity(updatedTasks, "New site task added to backlog.");
   };
 
   // Financial Logic
@@ -293,11 +308,9 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                 </SelectTrigger>
                 <SelectContent className="rounded-none">
                   <SelectItem value="Planning">Planning</SelectItem>
-                  <SelectItem value="Procurement">Procurement</SelectItem>
                   <SelectItem value="Execution">Execution</SelectItem>
-                  <SelectItem value="Styling">Styling</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Termination Pending">Termination Request</SelectItem>
+                  <SelectItem value="Completion">Completion</SelectItem>
+                  <SelectItem value="Termination">Termination</SelectItem>
                 </SelectContent>
               </Select>
             </div>

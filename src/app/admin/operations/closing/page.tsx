@@ -49,9 +49,9 @@ export default function ProjectClosingPage() {
 
   if (!isMounted) return null;
 
-  // STRICT REQUIREMENT: Only activated projects in active/late phases can be reconciled
+  // RECONCILIATION: Only activated projects in active/late phases can be reconciled
   const relevantProjects = clientProjects.filter(p => 
-    p.isActivated && (p.status === 'Execution' || p.status === 'Completed' || p.status === 'Styling')
+    p.isActivated && (p.status === 'Execution' || p.status === 'Completion')
   );
 
   const handleUpdateSteward = () => {
@@ -129,7 +129,7 @@ export default function ProjectClosingPage() {
         <Info className="h-4 w-4 text-accent" />
         <AlertTitle className="text-[10px] font-bold uppercase tracking-widest text-accent">Lifecycle Enforcement</AlertTitle>
         <AlertDescription className="text-xs font-light italic text-muted-foreground">
-          Reconciliation protocols are exclusively available for **Active Journeys** currently in the Execution, Styling, or Completion phases.
+          Reconciliation protocols are exclusively available for **Active Journeys** currently in the Execution or Completion phases.
         </AlertDescription>
       </Alert>
 
@@ -222,7 +222,7 @@ export default function ProjectClosingPage() {
               <li className="flex gap-6">
                 <Landmark className="h-6 w-6 text-white/60 shrink-0" />
                 <div className="space-y-2">
-                  <p className="text-sm font-bold uppercase tracking-widest">Active Execution</p>
+                  <p className="text-sm font-bold uppercase tracking-widest">Active Implementation</p>
                   <p className="text-[11px] text-white/40 font-light italic leading-relaxed">Only projects in Implementation phases can enter audit.</p>
                 </div>
               </li>

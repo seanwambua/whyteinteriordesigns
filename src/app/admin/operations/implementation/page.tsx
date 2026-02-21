@@ -32,7 +32,7 @@ export default function ProjectImplementationPage() {
   if (!isMounted) return null;
 
   const liveProjects = clientProjects.filter(p => 
-    p.isActivated && (p.status === 'Execution' || p.status === 'Styling' || p.status === 'Procurement' || p.status === 'Completed')
+    p.isActivated && (p.status === 'Execution' || p.status === 'Planning' || p.status === 'Completion')
   );
 
   return (
@@ -72,7 +72,7 @@ export default function ProjectImplementationPage() {
         <Info className="h-4 w-4 text-accent" />
         <AlertTitle className="text-[10px] font-bold uppercase tracking-widest text-accent">Deployment Logic</AlertTitle>
         <AlertDescription className="text-xs font-light italic text-muted-foreground">
-          Showing all commissions currently in active site deployment. Granular task management is handled via the individual **Project Terminals**.
+          Showing all commissions currently in active site deployment. Lifecycle transitions are automated via the **Project Kanban** protocol.
         </AlertDescription>
       </Alert>
 
