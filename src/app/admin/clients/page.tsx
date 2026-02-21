@@ -73,12 +73,10 @@ export default function ClientDirectoryPage() {
   );
 
   // LIFECYCLE FILTERS
-  const archivedProjects = filteredProjects.filter(p => p.isArchived);
   const totalActiveRegistry = filteredProjects.filter(p => !p.isArchived);
-  
   const activeProjects = totalActiveRegistry.filter(p => p.isActivated && p.status !== 'Termination' && p.status !== 'Completion');
   const pendingProjects = totalActiveRegistry.filter(p => !p.isActivated && p.status === 'Planning');
-  const dissolutionProjects = totalActiveRegistry.filter(p => p.status === 'Termination');
+  const archivedProjects = filteredProjects.filter(p => p.isArchived);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -219,10 +217,6 @@ export default function ClientDirectoryPage() {
               <div className="text-right">
                  {client.isArchived ? (
                    <span className="text-[11px] uppercase tracking-[0.3em] font-bold text-black/40">Commission Retired</span>
-                 ) : client.status === 'Termination' ? (
-                   <Badge className="bg-destructive text-white rounded-none text-[11px] uppercase tracking-widest px-4 py-1.5 animate-pulse">
-                     Dissolution Active
-                   </Badge>
                  ) : !client.isActivated ? (
                    <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 rounded-none text-[11px] uppercase tracking-widest px-4 py-1.5">
                      Briefing Awaiting Funds
@@ -278,31 +272,14 @@ export default function ClientDirectoryPage() {
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="all" className="space-y-8">
+      <Tabs defaultValue="active" className="space-y-8">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-10">
-          <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0">Active Registry ({totalActiveRegistry.length})</TabsTrigger>
           <TabsTrigger value="active" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0">Active Journeys ({activeProjects.length})</TabsTrigger>
           <TabsTrigger value="pending" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0">Pending Briefings ({pendingProjects.length})</TabsTrigger>
-          <TabsTrigger value="dissolution" className="rounded-none border-b-2 border-transparent data-[state=active]:border-destructive data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0 flex gap-2 text-destructive/60 data-[state=active]:text-destructive">
-            <ShieldAlert className="h-4 w-4" /> Dissolution Protocol ({dissolutionProjects.length})
-          </TabsTrigger>
           <TabsTrigger value="archives" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0 flex gap-2">
             <Archive className="h-4 w-4" /> Project Archives ({archivedProjects.length})
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="all" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            {totalActiveRegistry.map((client) => (
-              <ClientCard key={client.id} client={client} />
-            ))}
-            {totalActiveRegistry.length === 0 && (
-              <div className="text-center py-24 border border-dashed border-accent/10">
-                <p className="text-base font-light italic text-muted-foreground uppercase tracking-[0.3em]">No active studio registrations found</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
 
         <TabsContent value="active" className="space-y-6">
           <div className="grid grid-cols-1 gap-6">
@@ -325,19 +302,6 @@ export default function ClientDirectoryPage() {
             {pendingProjects.length === 0 && (
               <div className="text-center py-24 border border-dashed border-accent/10">
                 <p className="text-base font-light italic text-muted-foreground uppercase tracking-[0.3em]">All project briefings have transitioned to active states</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="dissolution" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            {dissolutionProjects.map((client) => (
-              <ClientCard key={client.id} client={client} />
-            ))}
-            {dissolutionProjects.length === 0 && (
-              <div className="text-center py-24 border border-dashed border-destructive/10 bg-destructive/[0.02]">
-                <p className="text-base font-light italic text-muted-foreground uppercase tracking-[0.3em]">No commissions currently in dissolution protocol</p>
               </div>
             )}
           </div>
