@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Star, Send, Share2, Twitter, Facebook, Linkedin, Check, Copy } from "lucide-react";
+import { Star, Send, Share2, Twitter, Facebook, Linkedin, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 
@@ -43,19 +43,25 @@ export function Feedback() {
     },
   });
 
+  const getShareUrl = () => {
+    if (typeof window === 'undefined') return '';
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `${baseUrl}#feedback`;
+  };
+
   const handleShare = () => {
-    const url = window.location.href;
+    const url = getShareUrl();
     navigator.clipboard.writeText(url);
     setCopied(true);
     toast({
       title: "Link Copied",
-      description: "Feedback section link has been copied to your clipboard.",
+      description: "Direct link to feedback section copied.",
     });
     setTimeout(() => setCopied(false), 2000);
   };
 
   const shareToSocial = (platform: 'twitter' | 'facebook' | 'linkedin') => {
-    const url = encodeURIComponent(window.location.href);
+    const url = encodeURIComponent(getShareUrl());
     const text = encodeURIComponent("Just shared my experience with Whyte Interior Designs. Timeless sophistication in Nairobi.");
     
     const shareUrls = {
@@ -98,10 +104,10 @@ export function Feedback() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleShare}
-                className="group flex items-center gap-2 text-accent/60 hover:text-accent transition-colors uppercase tracking-widest text-[10px] font-bold"
+                className="group flex items-center gap-2 text-accent/70 hover:text-accent hover:bg-accent/5 px-6 py-2 transition-all duration-300 uppercase tracking-widest text-[10px] font-bold border border-transparent hover:border-accent/20 rounded-none h-12"
               >
                 {copied ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
-                {copied ? "Copied" : "Share This Page"}
+                {copied ? "Copied" : "Share This Section"}
               </Button>
             </div>
             
