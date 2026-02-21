@@ -8,13 +8,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ChevronRight, Check, Briefcase, User, Bell, Sparkles, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
+import { 
+  ChevronRight, 
+  Check, 
+  Briefcase, 
+  User, 
+  Bell, 
+  Sparkles, 
+  ArrowLeft, 
+  X,
+  Lock,
+  Trophy
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
   
   const [formData, setFormData] = useState({
@@ -32,16 +54,122 @@ export default function OnboardingPage() {
       setStep(step + 1);
     } else {
       setLoading(true);
+      // Simulate verification and finalization
       setTimeout(() => {
-        router.push("/dashboard");
+        setLoading(false);
+        setShowSuccess(true);
+        // Redirect after showing the animation
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 4000);
       }, 2000);
     }
   };
 
   const handleBack = () => setStep(step - 1);
 
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen bg-accent flex items-center justify-center p-6 overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-8 max-w-2xl"
+        >
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="flex justify-center"
+          >
+            <div className="h-24 w-24 rounded-full border border-white/20 flex items-center justify-center bg-white/5 relative">
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 rounded-full border border-white/40"
+              />
+              <Trophy className="h-10 w-10 text-white" />
+            </div>
+          </motion.div>
+          
+          <div className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="flex justify-center items-center gap-4 mb-2"
+            >
+              <div className="h-px w-8 bg-white/20" />
+              <span className="text-white/40 text-[10px] font-bold uppercase tracking-[0.5em]">Identity Synchronized</span>
+              <div className="h-px w-8 bg-white/20" />
+            </motion.div>
+            
+            <motion.h2
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="text-5xl md:text-6xl font-headline text-white italic"
+            >
+              Welcome to the <br /> <span className="not-italic">Inner Circle.</span>
+            </motion.h2>
+            
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+              className="text-white/60 font-light text-lg italic leading-relaxed max-w-md mx-auto"
+            >
+              Your project archives are now unlocked. Transitioning you to your private command center...
+            </motion.p>
+          </div>
+
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 3, ease: "linear", delay: 1 }}
+            className="h-0.5 bg-white/20 max-w-xs mx-auto overflow-hidden"
+          >
+            <div className="h-full bg-white w-full" />
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-secondary/5 flex items-center justify-center p-6 font-body">
+    <div className="min-h-screen bg-secondary/5 flex flex-col items-center justify-center p-6 font-body">
+      <div className="w-full max-w-4xl flex justify-end mb-8">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" className="text-accent/40 hover:text-accent hover:bg-transparent flex items-center gap-2 group">
+              <span className="text-[10px] font-bold uppercase tracking-widest">Exit Onboarding</span>
+              <X className="h-4 w-4 transition-transform group-hover:rotate-90" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="rounded-none border-accent/20 font-body">
+            <AlertDialogHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Lock className="h-4 w-4 text-accent/40" />
+                <span className="text-accent text-[10px] font-bold uppercase tracking-[0.3em]">Session Protection</span>
+              </div>
+              <AlertDialogTitle className="text-2xl font-headline italic">Interrupt the synchronization?</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed">
+                Exiting now will pause your digital transition. You will need to re-verify your project ID to access the private studio archives.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="pt-6">
+              <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[10px] font-bold h-12">Return to Process</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => router.push("/dashboard")}
+                className="bg-accent text-white rounded-none uppercase tracking-widest text-[10px] font-bold h-12 hover:bg-accent/90"
+              >
+                Exit Session
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+
       <div className="max-w-4xl w-full">
         <div className="mb-12 text-center space-y-4">
           <div className="flex justify-center items-center gap-4 mb-2">
@@ -171,7 +299,7 @@ export default function OnboardingPage() {
                     className="bg-accent text-white hover:bg-accent/90 rounded-none h-14 px-12 uppercase tracking-[0.2em] transition-all min-w-[200px]"
                   >
                     {loading ? (
-                      <span className="flex items-center gap-2">Synchronizing...</span>
+                      <span className="flex items-center gap-2">Finalizing synchronization...</span>
                     ) : (
                       <span className="flex items-center gap-2">
                         {step === totalSteps ? "Finalize Access" : "Continue"} <ChevronRight className="h-4 w-4" />
