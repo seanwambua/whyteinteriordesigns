@@ -54,6 +54,8 @@ export default function NetworkEcosystemPage() {
     category: "Collaborator" as Collaborator['category'],
     specialty: "",
     contact: "",
+    email: "",
+    rating: "5.0",
     status: "active" as Collaborator['status'],
     type: "Individual Artisan",
     subType: "Local"
@@ -75,7 +77,7 @@ export default function NetworkEcosystemPage() {
   });
 
   const handleAddResource = () => {
-    if (!formData.name || !formData.specialty) return;
+    if (!formData.name || !formData.specialty || !formData.email) return;
     setIsSubmitting(true);
     
     const newResource: Collaborator = {
@@ -84,7 +86,8 @@ export default function NetworkEcosystemPage() {
       category: formData.category,
       specialty: formData.specialty,
       contact: formData.contact,
-      rating: 5.0,
+      email: formData.email,
+      rating: parseFloat(formData.rating),
       status: formData.status,
       type: `${formData.type} — ${formData.subType}`
     };
@@ -98,6 +101,8 @@ export default function NetworkEcosystemPage() {
         category: "Collaborator", 
         specialty: "", 
         contact: "", 
+        email: "",
+        rating: "5.0",
         status: "active", 
         type: "Individual Artisan", 
         subType: "Local" 
@@ -155,7 +160,7 @@ export default function NetworkEcosystemPage() {
       </motion.div>
 
       <Tabs value={activeCategory} onValueChange={setActiveCategory} className="space-y-10">
-        <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12">
+        <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto custom-scrollbar">
           <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0">All Resources ({collaborators.length})</TabsTrigger>
           <TabsTrigger value="partners" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-2"><Compass className="h-4 w-4" /> Business Partners / Collaborators</TabsTrigger>
           <TabsTrigger value="trades" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-2"><HardHat className="h-4 w-4" /> Site Trades</TabsTrigger>
@@ -210,7 +215,7 @@ export default function NetworkEcosystemPage() {
                               <Phone className="h-3.5 w-3.5 opacity-40" /> {res.contact}
                             </div>
                             <div className="flex items-center gap-2 text-muted-foreground">
-                              <Mail className="h-3.5 w-3.5 opacity-40" /> {res.id.toLowerCase()}@whyte.studio
+                              <Mail className="h-3.5 w-3.5 opacity-40" /> {res.email}
                             </div>
                           </div>
 
@@ -303,8 +308,19 @@ export default function NetworkEcosystemPage() {
                 <Input 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="E.g., Studio Vibe Architecture or Nairobi Masonry"
+                  placeholder="E.g., Studio Vibe Architecture"
                   className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Professional Email Address</Label>
+                <Input 
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  placeholder="contact@entity.studio"
+                  className="rounded-none border-accent/20 h-12 text-base"
                 />
               </div>
 
@@ -345,13 +361,18 @@ export default function NetworkEcosystemPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Mobilization Base</Label>
-                  <Input 
-                    value={formData.subType}
-                    onChange={(e) => setFormData({...formData, subType: e.target.value})}
-                    placeholder="E.g., Nairobi Central"
-                    className="rounded-none border-accent/20 h-12 text-base"
-                  />
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Integrity Score</Label>
+                  <Select value={formData.rating} onValueChange={(v) => setFormData({...formData, rating: v})}>
+                    <SelectTrigger className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase tracking-widest">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="5.0">5.0 — Elite</SelectItem>
+                      <SelectItem value="4.5">4.5 — High Integrity</SelectItem>
+                      <SelectItem value="4.0">4.0 — Standard</SelectItem>
+                      <SelectItem value="3.0">3.0 — Audit Required</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -360,7 +381,7 @@ export default function NetworkEcosystemPage() {
               <Button 
                 className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.25em]"
                 onClick={handleAddResource}
-                disabled={isSubmitting || !formData.name || !formData.specialty}
+                disabled={isSubmitting || !formData.name || !formData.specialty || !formData.email}
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Authorizing Entry...</span>

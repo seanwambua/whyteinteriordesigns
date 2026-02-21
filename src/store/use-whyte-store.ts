@@ -149,6 +149,7 @@ export interface Collaborator {
   category: 'Collaborator' | 'Vendor';
   specialty: string;
   contact: string;
+  email: string;
   rating: number;
   status: 'active' | 'on_hold' | 'blacklisted';
   type: string;
@@ -271,9 +272,9 @@ const initialClientProjects: ClientProject[] = [
 ];
 
 const initialCollaborators: Collaborator[] = [
-  { id: "C-1", name: "Artisanal Woodworks KE", category: 'Vendor', specialty: "Joinery & Custom Fabrication", contact: "+254 700 000 000", rating: 4.8, status: 'active', type: 'Local Specialist' },
-  { id: "C-2", name: "Nairobi Marble & Tile", category: 'Vendor', specialty: "Stone Masonry", contact: "+254 711 111 111", rating: 4.9, status: 'active', type: 'Materials Partner' },
-  { id: "C-3", name: "Sarah Studio", category: 'Collaborator', specialty: "Interior Styling", contact: "+254 722 000 000", rating: 5.0, status: 'active', type: 'Consulting Architect' }
+  { id: "C-1", name: "Artisanal Woodworks KE", category: 'Vendor', specialty: "Joinery & Custom Fabrication", contact: "+254 700 000 000", email: "info@artisanalwoodworks.co.ke", rating: 4.8, status: 'active', type: 'Local Specialist' },
+  { id: "C-2", name: "Nairobi Marble & Tile", category: 'Vendor', specialty: "Stone Masonry", contact: "+254 711 111 111", email: "sales@nairobitile.com", rating: 4.9, status: 'active', type: 'Materials Partner' },
+  { id: "C-3", name: "Sarah Studio", category: 'Collaborator', specialty: "Interior Styling", contact: "+254 722 000 000", email: "sarah@sarahstudio.design", rating: 5.0, status: 'active', type: 'Consulting Architect' }
 ];
 
 export const useWhyteStore = create<WhyteState>()(
