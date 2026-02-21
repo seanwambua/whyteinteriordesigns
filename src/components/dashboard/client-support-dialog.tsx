@@ -34,6 +34,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Loader2, LifeBuoy, AlertTriangle, XCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useWhyteStore, Inquiry } from "@/store/use-whyte-store";
 
 const formSchema = z.object({
   type: z.enum(["project_support", "complaint", "termination_request"], {
@@ -66,6 +67,7 @@ export function ClientSupportDialog({
   defaultType = "project_support",
 }: ClientSupportDialogProps) {
   const { toast } = useToast();
+  const { addInquiry, clientProjects } = useWhyteStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -93,15 +95,31 @@ export function ClientSupportDialog({
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    // Simulate API call to register inquiry/termination request
+    
+    // Find client info for the inquiry
+    const project = clientProjects.find(p => p.id === projectId);
+    
+    const newInquiry: Inquiry = {
+      id: `INQ-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      name: project?.name || "Client Portal User",
+      email: project?.email || "portal@client.com",
+      type: values.type as any,
+      serviceType: 'bundle', // Default for portal inquiries
+      message: `[${values.subject}] ${values.message}`,
+      status: 'new',
+      urgency: values.type === 'termination_request' ? 'critical' : values.type === 'complaint' ? 'high' : 'normal',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      projectId: projectId
+    };
+
     setTimeout(() => {
-      console.log("Client support request submitted:", { ...values, projectId });
+      addInquiry(newInquiry);
       
       let title = "Request Transmitted";
       let description = "Your request has been logged in the project archives.";
 
       if (values.type === 'complaint') {
-        description = "Our project managers have been alerted to your concern. We will respond within 4 hours.";
+        description = "Our project managers have been alerted to your concern. High-urgency response protocols initiated.";
       } else if (values.type === 'termination_request') {
         title = "Termination Protocol Initiated";
         description = "Your request to terminate Project " + projectId + " has been received. A senior partner will contact you for a formal exit interview.";

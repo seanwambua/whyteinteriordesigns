@@ -29,20 +29,25 @@ import {
   ArrowLeft, 
   X,
   Lock,
-  Trophy
+  Trophy,
+  Loader2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useWhyteStore } from "@/store/use-whyte-store";
+import { useToast } from "@/hooks/use-toast";
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
+  const { clientProjects } = useWhyteStore();
+  const { toast } = useToast();
   
   const [formData, setFormData] = useState({
     projectRef: "",
-    fullName: "Valued Client",
-    email: "client@example.com",
+    fullName: "",
+    email: "",
     notifications: true
   });
 
@@ -50,17 +55,33 @@ export default function OnboardingPage() {
   const progress = (step / totalSteps) * 100;
 
   const handleNext = () => {
-    if (step < totalSteps) {
+    if (step === 1) {
+      // Real verification against the store
+      const project = clientProjects.find(p => p.id.toUpperCase() === formData.projectRef.toUpperCase());
+      if (project) {
+        setFormData({
+          ...formData,
+          fullName: project.name,
+          email: project.email
+        });
+        setStep(2);
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: "Project Reference ID not found in studio archives. Please contact support.",
+          variant: "destructive"
+        });
+      }
+    } else if (step < totalSteps) {
       setStep(step + 1);
     } else {
       setLoading(true);
-      // Simulate verification and finalization
+      // Simulate finalization
       setTimeout(() => {
-        // Persist verified status
         localStorage.setItem("whyte_onboarded", "true");
+        localStorage.setItem("whyte_verified_project_id", formData.projectRef.toUpperCase());
         setLoading(false);
         setShowSuccess(true);
-        // Redirect after showing the animation
         setTimeout(() => {
           router.push("/dashboard");
         }, 4000);
@@ -241,7 +262,7 @@ export default function OnboardingPage() {
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label>
                         <Input 
-                          className="rounded-none border-accent/20 h-12 focus:ring-accent" 
+                          className="rounded-none border-accent/20 h-12 focus:ring-accent bg-secondary/10" 
                           value={formData.fullName}
                           readOnly
                         />
@@ -249,7 +270,7 @@ export default function OnboardingPage() {
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Contact Email</Label>
                         <Input 
-                          className="rounded-none border-accent/20 h-12 focus:ring-accent" 
+                          className="rounded-none border-accent/20 h-12 focus:ring-accent bg-secondary/10" 
                           value={formData.email}
                           readOnly
                         />
@@ -275,7 +296,7 @@ export default function OnboardingPage() {
                           <p className="text-sm font-bold uppercase tracking-widest">Real-time Site Updates</p>
                           <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Receive SMS/Email for daily progress</p>
                         </div>
-                        <div className="h-6 w-12 bg-accent rounded-full flex items-center px-1">
+                        <div className="h-6 w-12 bg-accent rounded-full flex items-center px-1 cursor-pointer">
                           <div className="h-4 w-4 bg-white rounded-full ml-auto" />
                         </div>
                       </div>
@@ -301,7 +322,7 @@ export default function OnboardingPage() {
                     className="bg-accent text-white hover:bg-accent/90 rounded-none h-14 px-12 uppercase tracking-[0.2em] transition-all min-w-[200px]"
                   >
                     {loading ? (
-                      <span className="flex items-center gap-2">Finalizing synchronization...</span>
+                      <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Finalizing synchronization...</span>
                     ) : (
                       <span className="flex items-center gap-2">
                         {step === totalSteps ? "Finalize Access" : "Continue"} <ChevronRight className="h-4 w-4" />
