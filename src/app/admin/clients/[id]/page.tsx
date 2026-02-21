@@ -29,11 +29,18 @@ import {
   FileCheck,
   ChevronDown,
   ChevronUp,
-  PlayCircle
+  PlayCircle,
+  Calendar as CalendarIcon,
+  Timer,
+  AlertTriangle,
+  RefreshCcw
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { format, differenceInDays, parse, isAfter } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -42,6 +49,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
+  const [isExtending, setIsExtending] = useState(false);
+  const [newDeadline, setNewDeadline] = useState<Date | undefined>(new Date());
 
   useEffect(() => {
     setIsMounted(true);
@@ -61,6 +70,27 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     );
   }
 
+  // --- TEMPORAL LOGIC ---
+  const deadline = parse(project.endDate, "MMM dd, yyyy", new Date());
+  const today = new Date();
+  const daysRemaining = differenceInDays(deadline, today);
+  const isOverdue = isAfter(today, deadline);
+
+  const handleApplyExtension = () => {
+    if (!newDeadline) return;
+    const formattedDate = format(newDeadline, "MMM dd, yyyy");
+    updateClientProject(project.id, {
+      endDate: formattedDate,
+      isExtended: true,
+      lastActivity: `Timeline extension authorized until ${formattedDate}.`
+    });
+    toast({
+      title: "Extension Authorized",
+      description: `Project deadline synchronized to ${formattedDate}.`,
+    });
+    setIsExtending(false);
+  };
+
   // --- HANDLERS ---
 
   const handleUpdateStatus = (status: ClientProject['status']) => {
@@ -74,7 +104,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     });
   };
 
-  // Task & Subtask Logic
   const handleUpdateTaskStatus = (taskId: string, newStatus: ProjectTask['status']) => {
     const updatedTasks = (project.tasks || []).map(t => 
       t.id === taskId ? { ...t, status: newStatus } : t
@@ -115,7 +144,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     const total = updatedTasks.length;
     const velocity = total > 0 ? Math.round((done / total) * 100) : project.progress;
 
-    // Automated Status Logic
     let newStatus: ClientProject['status'] = project.status;
     if (project.status !== 'Termination') {
       if (total > 0 && done === total) {
@@ -147,7 +175,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     recalculateVelocity(updatedTasks, "New site task added to backlog.");
   };
 
-  // Financial Logic
   const handleToggleInstallment = (idx: number) => {
     const updated = [...project.installments];
     updated[idx] = { ...updated[idx], status: updated[idx].status === 'Paid' ? 'Pending' : 'Paid' };
@@ -167,8 +194,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
     );
   };
-
-  // --- SUB-COMPONENTS ---
 
   const KanbanCol = ({ status, title, color }: { status: ProjectTask['status'], title: string, color: string }) => {
     const tasks = (project.tasks || []).filter(t => t.status === status);
@@ -383,6 +408,70 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             </div>
 
             <div className="lg:col-span-4 space-y-8">
+              {/* Temporal Health Card */}
+              <Card className="rounded-none border-accent/5 shadow-xl bg-white p-8 space-y-6 relative overflow-hidden">
+                <div className={cn("absolute top-0 right-0 p-4 opacity-5", isOverdue ? "text-destructive" : "text-accent")}>
+                  <Timer className="h-20 w-20" />
+                </div>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Temporal Status</h3>
+                
+                <div className="space-y-6 relative z-10">
+                  <div className="flex justify-between items-center pb-4 border-b border-accent/5">
+                    <div className="space-y-1">
+                      <span className="text-[9px] uppercase tracking-widest opacity-60 block">Authorized Deadline</span>
+                      <span className="text-sm font-bold flex items-center gap-2">
+                        <CalendarIcon className="h-3.5 w-3.5 text-accent/40" /> {project.endDate}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      {isOverdue ? (
+                        <Badge variant="destructive" className="rounded-none text-[8px] uppercase tracking-widest font-bold">Overdue</Badge>
+                      ) : (
+                        <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest font-bold text-green-600 border-green-600/20">On Track</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                      <span className="text-[9px] uppercase tracking-widest opacity-60 block">Remaining Duration</span>
+                      <span className={cn("text-2xl font-headline italic", isOverdue ? "text-destructive" : "text-accent")}>
+                        {isOverdue ? "Expired" : `${daysRemaining} Days`}
+                      </span>
+                    </div>
+                    {project.isExtended && (
+                      <Badge className="bg-orange-500 text-white rounded-none text-[8px] uppercase tracking-widest flex gap-1.5">
+                        <RefreshCcw className="h-2.5 w-2.5" /> Extended
+                      </Badge>
+                    )}
+                  </div>
+
+                  {isOverdue && (
+                    <div className="p-4 bg-destructive/5 border border-destructive/10 space-y-3">
+                      <div className="flex items-center gap-2 text-destructive text-[9px] font-bold uppercase tracking-widest">
+                        <AlertTriangle className="h-3.5 w-3.5" /> Extension Required
+                      </div>
+                      <Button 
+                        onClick={() => setIsExtending(true)}
+                        className="w-full bg-destructive text-white h-10 rounded-none text-[9px] uppercase tracking-widest font-bold"
+                      >
+                        Authorize Timeline Shift
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {!isOverdue && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsExtending(true)}
+                      className="w-full border-accent/20 text-accent h-10 rounded-none text-[9px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white"
+                    >
+                      Adjust Deadline
+                    </Button>
+                  )}
+                </div>
+              </Card>
+
               <Card className="rounded-none border-accent/5 shadow-xl bg-white p-8 space-y-6">
                 <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Technical Specs</h3>
                 <div className="space-y-4">
@@ -509,6 +598,25 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Extension Dialog */}
+      <Popover open={isExtending} onOpenChange={setIsExtending}>
+        <PopoverContent className="w-80 rounded-none border-accent/20 p-6 space-y-6 font-body shadow-2xl">
+          <div className="space-y-2">
+            <h4 className="text-sm font-bold uppercase tracking-widest text-accent">Authorize Extension</h4>
+            <p className="text-[10px] text-muted-foreground font-light italic">Shift the delivery framework for this commission.</p>
+          </div>
+          <div className="space-y-4">
+            <Calendar mode="single" selected={newDeadline} onSelect={setNewDeadline} initialFocus />
+            <Button 
+              onClick={handleApplyExtension}
+              className="w-full bg-accent text-white h-12 rounded-none text-[10px] font-bold uppercase tracking-widest"
+            >
+              Confirm Timeline Shift
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

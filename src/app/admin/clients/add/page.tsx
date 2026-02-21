@@ -17,7 +17,8 @@ import {
   Plus, 
   Trash2,
   Activity,
-  ClipboardList
+  ClipboardList,
+  Calendar as CalendarIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -25,6 +26,10 @@ import { useWhyteStore, ClientProject, ProjectTask, SubTask } from "@/store/use-
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function AddClientPage() {
   const { toast } = useToast();
@@ -40,6 +45,8 @@ export default function AddClientPage() {
     tier: "Premium" as ClientProject['tier'],
     description: "",
     totalBudget: "",
+    startDate: new Date(),
+    endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
     tasks: [
       { 
         title: "Site Measurement Verification", 
@@ -125,7 +132,6 @@ export default function AddClientPage() {
     const id = `WP-${Math.floor(Math.random() * 9000) + 1000}`;
     const budget = Number(formData.totalBudget) || 0;
     
-    // Assign unique IDs to tasks
     const tasksWithIds: ProjectTask[] = formData.tasks.map((t, idx) => ({
       ...t,
       id: `T-${id}-${idx + 1}`
@@ -139,7 +145,8 @@ export default function AddClientPage() {
       tier: formData.tier,
       status: "Planning",
       progress: 0,
-      startDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      startDate: format(formData.startDate, "MMM dd, yyyy"),
+      endDate: format(formData.endDate, "MMM dd, yyyy"),
       lastActivity: "Briefing Synchronized",
       financialReportStatus: 'Pending',
       isActivated: false,
@@ -164,7 +171,7 @@ export default function AddClientPage() {
 
   const isStepValid = () => {
     if (step === 1) return formData.name && formData.email;
-    if (step === 2) return formData.project && formData.description;
+    if (step === 2) return formData.project && formData.description && formData.startDate && formData.endDate;
     if (step === 3) return formData.totalBudget && Number(formData.totalBudget) > 0;
     if (step === 4) return formData.tasks.every(t => t.title);
     return true;
@@ -178,7 +185,7 @@ export default function AddClientPage() {
         className="space-y-4"
       >
         <Button asChild variant="ghost" className="text-accent/40 hover:text-accent p-0 font-bold uppercase tracking-widest text-[9px] h-auto flex items-center gap-2 mb-4">
-          <Link href="/admin/clients"><ArrowLeft className="h-3 w-3" /> Back to Directory</Link>
+          <Link href="/admin/clients"><ArrowLeft className="h-3 w-3" /> Back to Registry</Link>
         </Button>
         <div className="flex items-center gap-4">
           <div className="h-px w-8 bg-accent" />
@@ -223,12 +230,44 @@ export default function AddClientPage() {
                 <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="flex items-center gap-4 mb-8">
                     <Briefcase className="h-5 w-5 text-accent/40" />
-                    <h3 className="text-xl font-headline italic">Project Scope</h3>
+                    <h3 className="text-xl font-headline italic">Project Scope & Timeline</h3>
                   </div>
                   <div className="space-y-3">
                     <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Project Title</Label>
                     <Input placeholder="E.g., Runda Residency - Master Suite" className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent" required value={formData.project} onChange={(e) => setFormData({...formData, project: e.target.value})} />
                   </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Commencement Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className={cn("w-full h-14 rounded-none border-accent/20 text-lg font-light justify-start text-left", !formData.startDate && "text-muted-foreground")}>
+                            <CalendarIcon className="mr-2 h-4 w-4 opacity-40" />
+                            {formData.startDate ? format(formData.startDate, "PPP") : "Select Start Date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-none border-accent/20">
+                          <Calendar mode="single" selected={formData.startDate} onSelect={(d) => d && setFormData({...formData, startDate: d})} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Authorized Deadline</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className={cn("w-full h-14 rounded-none border-accent/20 text-lg font-light justify-start text-left", !formData.endDate && "text-muted-foreground")}>
+                            <CalendarIcon className="mr-2 h-4 w-4 opacity-40" />
+                            {formData.endDate ? format(formData.endDate, "PPP") : "Select End Date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-none border-accent/20">
+                          <Calendar mode="single" selected={formData.endDate} onSelect={(d) => d && setFormData({...formData, endDate: d})} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
                   <div className="space-y-3">
                     <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Architectural Brief</Label>
                     <Textarea placeholder="Describe the spatial goals..." className="min-h-[150px] rounded-none border-accent/20 focus:ring-accent resize-none p-6 text-lg" required value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />

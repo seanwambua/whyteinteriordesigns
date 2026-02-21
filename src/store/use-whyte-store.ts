@@ -1,3 +1,4 @@
+
 'use client';
 
 import { create } from 'zustand';
@@ -69,6 +70,8 @@ export interface ClientProject {
   status: 'Planning' | 'Execution' | 'Completion' | 'Termination';
   progress: number;
   startDate: string;
+  endDate: string;
+  isExtended?: boolean;
   lastActivity: string;
   financialReportStatus?: 'Verified' | 'Pending' | 'Awaiting Steward';
   isActivated: boolean;
@@ -179,6 +182,7 @@ const initialClientProjects: ClientProject[] = [
     status: "Execution",
     progress: 78,
     startDate: "Jan 15, 2024",
+    endDate: "Jun 30, 2024",
     lastActivity: "2 hours ago",
     financialReportStatus: 'Pending',
     isActivated: true,

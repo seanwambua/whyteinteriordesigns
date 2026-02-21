@@ -20,13 +20,17 @@ import {
   Activity,
   Truck,
   HardHat,
-  FileCheck
+  FileCheck,
+  Calendar as CalendarIcon,
+  Timer
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { ClientSupportDialog } from "@/components/dashboard/client-support-dialog";
 import { useWhyteStore, ClientProject, ProjectTask } from "@/store/use-whyte-store";
 import { Badge } from "@/components/ui/badge";
+import { parse, differenceInDays, isAfter } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function ClientDashboardPage() {
   const { clientProjects } = useWhyteStore();
@@ -43,7 +47,6 @@ export default function ClientDashboardPage() {
 
   if (!isMounted) return null;
 
-  // Filter for the verified project if it exists, otherwise fallback to the first active one for demo
   const activeProject = clientProjects.find(p => p.id === verifiedProjectId) || clientProjects.find(p => p.isActivated);
 
   if (!activeProject) {
@@ -70,6 +73,12 @@ export default function ClientDashboardPage() {
 
   const activeTasks = (activeProject.tasks || []).filter(t => t.status !== 'Done');
   const completedTasksCount = (activeProject.tasks || []).filter(t => t.status === 'Done').length;
+
+  // Temporal Logic for Client View
+  const deadline = parse(activeProject.endDate, "MMM dd, yyyy", new Date());
+  const today = new Date();
+  const daysRemaining = differenceInDays(deadline, today);
+  const isOverdue = isAfter(today, deadline);
 
   return (
     <div className="max-w-6xl mx-auto space-y-16 pb-24 font-body">
@@ -105,11 +114,16 @@ export default function ClientDashboardPage() {
                     <span className="text-[10px] font-bold text-accent/40 uppercase tracking-[0.5em] block mb-2">{activeProject.id}</span>
                     <CardTitle className="text-4xl font-headline italic">{activeProject.project}</CardTitle>
                   </div>
-                  {activeProject.financialReportStatus === 'Verified' && (
-                    <Badge className="bg-green-600 text-white rounded-none uppercase tracking-widest text-[8px] py-1.5 flex gap-2">
-                      <FileCheck className="h-3 w-3" /> Audit Verified
-                    </Badge>
-                  )}
+                  <div className="flex gap-3">
+                    {activeProject.isExtended && (
+                      <Badge className="bg-orange-500 text-white rounded-none uppercase tracking-widest text-[8px] py-1.5">Timeline Extended</Badge>
+                    )}
+                    {activeProject.financialReportStatus === 'Verified' && (
+                      <Badge className="bg-green-600 text-white rounded-none uppercase tracking-widest text-[8px] py-1.5 flex gap-2">
+                        <FileCheck className="h-3 w-3" /> Audit Verified
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-10 pt-0 space-y-10">
@@ -121,13 +135,30 @@ export default function ClientDashboardPage() {
                   <Progress value={activeProject.progress} className="h-1 bg-secondary rounded-none" />
                 </div>
 
-                <div className="p-8 bg-secondary/30 border-l-2 border-accent italic">
-                  <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2 mb-4">
-                    <Clock className="h-3 w-3" /> Latest Site Entry
-                  </h4>
-                  <p className="text-sm font-light leading-relaxed text-accent/80">
-                    "{activeProject.lastActivity || 'Architectural synchronization established.'}"
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="p-8 bg-secondary/30 border-l-2 border-accent italic">
+                    <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2 mb-4">
+                      <Clock className="h-3 w-3" /> Latest Site Entry
+                    </h4>
+                    <p className="text-sm font-light leading-relaxed text-accent/80">
+                      "{activeProject.lastActivity || 'Architectural synchronization established.'}"
+                    </p>
+                  </div>
+
+                  <div className={cn("p-8 border-l-2 italic", isOverdue ? "bg-destructive/5 border-destructive" : "bg-accent/5 border-accent")}>
+                    <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold opacity-40 flex items-center gap-2 mb-4">
+                      <Timer className="h-3 w-3" /> Delivery Framework
+                    </h4>
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold uppercase tracking-widest opacity-60">Estimated Handover</p>
+                      <p className={cn("text-2xl font-headline font-bold", isOverdue ? "text-destructive" : "text-accent")}>
+                        {activeProject.endDate}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-widest opacity-40">
+                        {isOverdue ? "Authorized timeline extension pending" : `${daysRemaining} days until scheduled completion`}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -207,21 +238,6 @@ export default function ClientDashboardPage() {
               </Button>
             </div>
           </Card>
-
-          {/* Investment Health */}
-          <div className="p-10 bg-accent text-white space-y-6 shadow-2xl relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-4 opacity-5">
-               <Wallet className="h-20 w-20" />
-             </div>
-             <div className="flex items-center gap-3 relative z-10">
-               <Wallet className="h-4 w-4 text-white/40" />
-               <h4 className="text-[10px] uppercase tracking-[0.5em] font-bold text-white/40 italic">Investment Health</h4>
-             </div>
-             <p className="text-sm font-light leading-relaxed italic relative z-10">
-               Total Authorized Budget: <br />
-               <span className="text-2xl font-headline italic text-white font-bold">KES {activeProject.totalBudget.toLocaleString()}</span>
-             </p>
-          </div>
 
           {/* Site Resources Card */}
           <Card className="rounded-none border-accent/5 bg-secondary/30 p-8 space-y-6">
