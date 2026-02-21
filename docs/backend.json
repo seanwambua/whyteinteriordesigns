@@ -22,7 +22,7 @@
       "type": "object",
       "properties": {
         "title": { "type": "string" },
-        "planType": { "type": "string", "enum": ["Genesis", "Full Commission"] },
+        "planType": { "type": "string", "enum": ["Genesis", "Premium", "Deluxe", "Golden"] },
         "status": { "type": "string", "enum": ["Consultation", "Planning", "Procurement", "Execution", "Styling", "Completed", "Termination Pending", "Terminated"] },
         "progress": { "type": "number" },
         "description": { "type": "string" },

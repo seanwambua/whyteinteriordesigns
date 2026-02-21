@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Navbar } from "@/components/navbar";
@@ -5,36 +6,56 @@ import { Footer } from "@/components/footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChevronRight, Check } from "lucide-react";
+import { ChevronRight, Check, Sparkles } from "lucide-react";
 
 export default function PricingPage() {
   const tiers = [
     {
-      name: "The Genesis",
-      price: "KES 5,000",
-      description: "An initial consultation where the designer gets an idea of what the client is looking towards and allows them to gauge the feasibility of the project.",
+      name: "Premium",
+      price: "Project Based",
+      description: "The essential luxury experience. Focused on refined local curation and expert spatial planning.",
       features: [
-        "Initial project discovery session",
-        "Feasibility & scope assessment"
+        "Everything in 'The Genesis'",
+        "Full architectural blueprints",
+        "Local artisanal procurement",
+        "On-site site management",
+        "Final project handover"
       ],
-      cta: "Book Consultation",
+      cta: "Request Premium Quote",
       href: "/#contact",
       highlight: false
     },
     {
-      name: "The Full Commission",
-      price: "Project-Based",
-      description: "An end-to-end journey from raw space to a masterfully curated residence or commercial environment.",
+      name: "Deluxe",
+      price: "Bespoke Portfolio",
+      description: "For those seeking global excellence. A comprehensive journey including international sourcing and custom fabrication.",
       features: [
-        "Everything in 'The Genesis'",
-        "Full architectural blueprints & 3D renders",
-        "Bespoke furniture & lighting design",
-        "Global procurement & white-glove delivery",
-        "On-site project management & styling"
+        "Everything in Premium",
+        "Global material procurement",
+        "Bespoke furniture design",
+        "Advanced 3D visualizations",
+        "Dedicated project architect",
+        "Custom textile layering"
       ],
-      cta: "Request Proposal",
-      href: "/#quiz",
+      cta: "Request Deluxe Proposal",
+      href: "/#contact",
       highlight: true
+    },
+    {
+      name: "Golden",
+      price: "The Zenith",
+      description: "The ultimate architectural journey. Unrestricted access to global archives and lifetime styling maintenance.",
+      features: [
+        "Everything in Deluxe",
+        "24/7 VIP studio access",
+        "White-glove global logistics",
+        "Art collection direction",
+        "Lifetime styling maintenance",
+        "Priority project timeline"
+      ],
+      cta: "Enter The Golden Circle",
+      href: "/#contact",
+      highlight: false
     }
   ];
 
@@ -61,7 +82,7 @@ export default function PricingPage() {
               transition={{ duration: 1, delay: 0.2 }}
               className="text-6xl md:text-8xl font-headline mb-8"
             >
-              Transparency in <span className="italic">Excellence.</span>
+              Full <span className="italic">Commission.</span>
             </motion.h1>
             
             <motion.p
@@ -70,36 +91,40 @@ export default function PricingPage() {
               transition={{ duration: 1, delay: 0.5 }}
               className="text-xl text-muted-foreground font-light leading-relaxed max-w-2xl mx-auto"
             >
-              We believe luxury is built on trust and clarity. Our structured investment tiers ensure your vision is realized with uncompromising precision.
+              Our structured investment tiers ensure your vision is realized with uncompromising precision. Select the level of curation that matches your ambition.
             </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {tiers.map((tier, index) => (
               <motion.div
                 key={tier.name}
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 + index * 0.2 }}
-                className={`p-12 border ${tier.highlight ? 'bg-accent text-white border-accent' : 'bg-white border-border'} flex flex-col justify-between shadow-2xl`}
+                className={`p-10 border ${tier.highlight ? 'bg-accent text-white border-accent scale-105 z-10' : 'bg-white border-border'} flex flex-col justify-between shadow-2xl relative overflow-hidden`}
               >
-                <div>
-                  <h3 className={`text-sm font-bold uppercase tracking-[0.3em] mb-8 ${tier.highlight ? 'text-white/60' : 'text-accent'}`}>
-                    {tier.name}
-                  </h3>
-                  <div className="mb-8">
-                    <span className="text-5xl font-headline">{tier.price}</span>
-                    {tier.name === "The Genesis" && <span className={`text-sm ml-2 ${tier.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>Initial Fee</span>}
+                {tier.highlight && (
+                  <div className="absolute top-0 right-0 p-4 opacity-20">
+                    <Sparkles className="h-20 w-20" />
                   </div>
-                  <p className={`text-lg mb-12 font-light leading-relaxed ${tier.highlight ? 'text-white/80 italic' : 'text-muted-foreground'}`}>
-                    {tier.description}
+                )}
+                <div>
+                  <h3 className={`text-[10px] font-bold uppercase tracking-[0.4em] mb-12 ${tier.highlight ? 'text-white/60' : 'text-accent'}`}>
+                    {tier.name} Package
+                  </h3>
+                  <div className="mb-10">
+                    <span className="text-4xl font-headline">{tier.price}</span>
+                  </div>
+                  <p className={`text-sm mb-12 font-light leading-relaxed italic ${tier.highlight ? 'text-white/80' : 'text-muted-foreground'}`}>
+                    "{tier.description}"
                   </p>
                   
-                  <ul className="space-y-6 mb-16">
+                  <ul className="space-y-5 mb-16 border-t border-dashed border-current/10 pt-8">
                     {tier.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-4">
-                        <Check className={`h-5 w-5 mt-0.5 ${tier.highlight ? 'text-white' : 'text-accent'}`} />
-                        <span className={`font-light ${tier.highlight ? 'text-white/90' : 'text-foreground'}`}>{feature}</span>
+                      <li key={feature} className="flex items-start gap-3">
+                        <Check className={`h-4 w-4 mt-0.5 shrink-0 ${tier.highlight ? 'text-white' : 'text-accent'}`} />
+                        <span className={`text-[13px] font-light ${tier.highlight ? 'text-white/90' : 'text-foreground'}`}>{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -108,7 +133,7 @@ export default function PricingPage() {
                 <Button 
                   asChild 
                   size="lg" 
-                  className={`w-full h-14 rounded-none text-lg transition-all hover:tracking-wider ${
+                  className={`w-full h-14 rounded-none text-[10px] font-bold uppercase tracking-[0.3em] transition-all hover:tracking-[0.4em] ${
                     tier.highlight 
                     ? 'bg-white text-accent hover:bg-white/90' 
                     : 'bg-accent text-white hover:bg-accent/90'
@@ -120,17 +145,15 @@ export default function PricingPage() {
             ))}
           </div>
 
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1.2 }}
-            className="mt-32 text-center"
-          >
-            <h4 className="text-2xl font-headline italic mb-4">Unsure where to begin?</h4>
-            <Link href="/#quiz" className="text-accent font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:opacity-70 transition-opacity">
-              Identify Your Visual Language <ChevronRight className="h-4 w-4" />
-            </Link>
-          </motion.div>
+          <div className="mt-32 border-t border-accent/5 pt-12 flex flex-col md:flex-row items-center justify-between gap-12 max-w-7xl mx-auto">
+            <div className="space-y-2 text-center md:text-left">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-accent">The Genesis Consultation</h4>
+              <p className="text-sm text-muted-foreground font-light italic">Initial feasibility assessment and project discovery — KES 5,000</p>
+            </div>
+            <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent hover:text-white rounded-none h-12 px-10 uppercase tracking-widest text-[10px]">
+              <Link href="/#contact">Book Initial Session</Link>
+            </Button>
+          </div>
         </div>
       </main>
       <Footer />

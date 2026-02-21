@@ -30,7 +30,7 @@ export default function ClientDashboardPage() {
   const activeProject = {
     title: "The Muthaiga Residence",
     id: "WP-0082",
-    planType: "Full Commission",
+    planType: "Golden Commission",
     status: "Execution & Installation",
     progress: 78,
     lastUpdate: "Italian marble shipment installed in the foyer. Master suite textiles arriving Friday.",
