@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,7 +23,10 @@ import {
   Info,
   Users,
   HardHat,
-  Settings2
+  Settings2,
+  CheckCircle2,
+  Timer,
+  Zap
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -59,7 +63,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { format, parse } from "date-fns";
+import { format, parse, isValid } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -145,8 +149,11 @@ export default function ProjectPlanningPage() {
     let startD = new Date();
     let endD = new Date();
     try {
-      startD = parse(project.startDate, "MMM dd, yyyy", new Date());
-      endD = parse(project.endDate, "MMM dd, yyyy", new Date());
+      const parsedStart = parse(project.startDate, "MMM dd, yyyy", new Date());
+      if (isValid(parsedStart)) startD = parsedStart;
+      
+      const parsedEnd = parse(project.endDate, "MMM dd, yyyy", new Date());
+      if (isValid(parsedEnd)) endD = parsedEnd;
     } catch (e) {}
 
     setEditFormData({
@@ -158,16 +165,16 @@ export default function ProjectPlanningPage() {
       description: project.description || project.workScope || "",
       startDate: startD,
       endDate: endD,
-      milestones: project.milestones ? [...project.milestones] : [],
-      tasks: project.tasks ? project.tasks.map(t => ({ ...t, subtasks: t.subtasks ? [...t.subtasks] : [] })) : [],
-      vendorAllocations: project.vendorAllocations ? [...project.vendorAllocations] : []
+      milestones: project.milestones ? JSON.parse(JSON.stringify(project.milestones)) : [],
+      tasks: project.tasks ? JSON.parse(JSON.stringify(project.tasks)) : [],
+      vendorAllocations: project.vendorAllocations ? JSON.parse(JSON.stringify(project.vendorAllocations)) : []
     });
   };
 
   const addMilestone = () => {
     setEditFormData(prev => ({
       ...prev,
-      milestones: [...prev.milestones, { id: `M-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, label: "", date: format(new Date(), "MMM dd, yyyy"), isCompleted: false, description: "" }]
+      milestones: [...prev.milestones, { id: `M-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, label: "New Target", date: format(new Date(), "MMM dd, yyyy"), isCompleted: false, description: "" }]
     }));
   };
 
@@ -201,7 +208,7 @@ export default function ProjectPlanningPage() {
   const addSubtask = (taskIdx: number) => {
     const updated = [...editFormData.tasks];
     const subtasks = updated[taskIdx].subtasks || [];
-    updated[taskIdx].subtasks = [...subtasks, { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "Sub-protocol step", isCompleted: false }];
+    updated[taskIdx].subtasks = [...subtasks, { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "New Sub-protocol step", isCompleted: false }];
     setEditFormData(prev => ({ ...prev, tasks: updated }));
   };
 
@@ -224,7 +231,7 @@ export default function ProjectPlanningPage() {
   const addVendor = () => {
     setEditFormData(prev => ({
       ...prev,
-      vendorAllocations: [...prev.vendorAllocations, { id: `VA-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, vendorName: "", role: "", category: "Vendor", costType: "Fixed", costValue: 0, timelineDays: 0, materials: [] }]
+      vendorAllocations: [...prev.vendorAllocations, { id: `VA-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, vendorName: "", role: "Lead Artisan", category: "Vendor", costType: "Fixed", costValue: 0, timelineDays: 0, materials: [] }]
     }));
   };
 
@@ -241,7 +248,9 @@ export default function ProjectPlanningPage() {
   const handleSaveEdit = () => {
     if (!editProject) return;
     
-    const budget = Number(editFormData.totalBudget);
+    const budget = Number(editFormData.totalBudget) || 0;
+    
+    // Recalculate Installments based on logic in onboarding
     const getInstallmentPlan = (tier: ClientProject['tier'], budget: number) => {
       if (tier === 'Premium') return [
         { label: "Initial Deposit (50%)", percentage: 50, amount: budget * 0.5, status: 'Pending' as const },
@@ -254,7 +263,7 @@ export default function ProjectPlanningPage() {
         { label: "Final Handover (20%)", percentage: 20, amount: budget * 0.2, status: 'Pending' as const },
       ];
       return [
-        { label: "Initial Deposit (70%)", percentage: 70, amount: budget * 0.7, status: 'Paid' as const },
+        { label: "Initial Deposit (70%)", percentage: 70, amount: budget * 0.7, status: 'Pending' as const },
         { label: "Final Handover (30%)", percentage: 30, amount: budget * 0.3, status: 'Pending' as const },
       ];
     };
@@ -272,12 +281,12 @@ export default function ProjectPlanningPage() {
       tasks: editFormData.tasks,
       vendorAllocations: editFormData.vendorAllocations,
       installments: getInstallmentPlan(editFormData.tier, budget),
-      lastActivity: "Comprehensive Briefing Synchronization Complete"
+      lastActivity: "Architectural Dossier Synchronization Completed"
     });
 
     toast({
       title: "Protocol Synchronized",
-      description: `Architectural dossier ${editProject.id} has been fully re-calibrated.`,
+      description: `Dossier ${editProject.id} has been fully re-calibrated.`,
     });
     setEditProject(null);
   };
@@ -287,7 +296,7 @@ export default function ProjectPlanningPage() {
     removeClientProject(deleteId);
     toast({
       title: "Briefing Cancelled",
-      description: "Project briefing dossier has been removed from the studio registry.",
+      description: "Project briefing dossier has been removed from the registry.",
       variant: "destructive"
     });
     setDeleteId(null);
@@ -586,7 +595,7 @@ export default function ProjectPlanningPage() {
                             <PopoverContent className="w-auto p-0 rounded-none">
                               <Calendar 
                                 mode="single" 
-                                selected={parse(m.date, "MMM dd, yyyy", new Date())} 
+                                selected={isValid(parse(m.date, "MMM dd, yyyy", new Date())) ? parse(m.date, "MMM dd, yyyy", new Date()) : new Date()} 
                                 onSelect={(d) => d && updateMilestone(idx, 'date', format(d, "MMM dd, yyyy"))} 
                                 initialFocus 
                               />
@@ -650,7 +659,7 @@ export default function ProjectPlanningPage() {
                                 placeholder="Describe step..." 
                                 value={sub.title} 
                                 onChange={(e) => updateSubtask(idx, sIdx, e.target.value)} 
-                                className="h-10 rounded-none border-none text-[13px] font-light italic focus:ring-0 p-0 bg-transparent" 
+                                className="h-10 rounded-none border-none text-[13px] font-light italic focus:ring-0 p-0 bg-transparent flex-1" 
                               />
                               <Button variant="ghost" size="icon" onClick={() => removeSubtask(idx, sIdx)} className="h-8 w-8 text-destructive/10 hover:text-destructive opacity-0 group-hover/sub:opacity-100 transition-opacity"><Trash2 className="h-4 w-4" /></Button>
                             </div>
@@ -681,7 +690,7 @@ export default function ProjectPlanningPage() {
                             <SelectTrigger className="rounded-none h-14 text-[13px] font-bold uppercase tracking-widest border-accent/10 focus:ring-accent"><SelectValue placeholder="Select Resource" /></SelectTrigger>
                             <SelectContent className="rounded-none">
                               {collaborators.map(c => <SelectItem key={c.id} value={c.name} className="uppercase tracking-widest text-[11px] font-bold py-3">{c.name} — {c.specialty}</SelectItem>)}
-                              <SelectItem value="Manual Entry" className="italic opacity-40">Manual Override required</SelectItem>
+                              <SelectItem value="Manual Entry" className="italic opacity-40">Manual Override Required</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
