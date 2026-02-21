@@ -1,7 +1,7 @@
 
-# Whyte Interiors — Digital Showroom
+# Whyte Interior Designs — Digital Showroom
 
-A luxury interior design platform built for high-end residential and commercial consultancy. This application serves as a digital portfolio and interactive consultation tool for Whyte Interiors, a boutique design firm specializing in bespoke, sophisticated spaces.
+A luxury interior design platform built for high-end residential and commercial consultancy. This application serves as a digital portfolio and interactive consultation tool for Whyte Interior Designs, a boutique firm specializing in bespoke, sophisticated spaces.
 
 ## 🏛 Architecture & Design Principles
 
@@ -17,16 +17,16 @@ The platform is engineered with a focus on performance, aesthetics, and user exp
 ## ✨ Key Features
 
 ### 1. Editorial Hero Section
-A cinematic entry point featuring a dynamic zoom-out animation and elegant typographic reveals, immediately establishing the brand's luxury positioning.
+A cinematic entry point featuring dynamic motion and elegant typographic reveals, establishing the brand's luxury positioning.
 
 ### 2. High-Impact Portfolio
-A responsive gallery showcasing the collection through large-scale imagery and editorial captions. Each project card includes interactive state transitions and detailed project context.
+A responsive gallery showcasing a curated collection of residential and commercial transformations through large-scale imagery and editorial captions.
 
 ### 3. Interactive Style Quiz
-A personalized interactive experience that guides users through a series of aesthetic choices to identify their "Visual Language." The quiz uses a specialized analysis engine to provide instant design recommendations.
+A personalized interactive experience that guides users through a series of aesthetic choices to identify their "Visual Language" and unique interior DNA.
 
 ### 4. Bespoke Service Pillars
-A deep-dive into the firm's methodology, presenting Artistic Consultancy, Architectural Build, and Curation services through a refined grid layout with monochromatic imagery.
+A deep-dive into the firm's methodology, presenting **Interior Design** (architectural and spatial planning) and **Interior Decor** (curation and styling) as the foundations of their work.
 
 ## 🛠 Developer Guide
 
@@ -53,8 +53,8 @@ npm run dev
 ## 🎨 Styling Philosophy
 - **Whitespace:** Generous padding and margin to allow designs to "breathe," mirroring luxury physical spaces.
 - **Color Palette:** A sophisticated base of pure white and deep charcoals, punctuated by a signature "Accent" purple (`hsl(300 24% 20%)`).
-- **Typography:** High-contrast serif headlines paired with lightweight sans-serif labels for clear information hierarchy.
+- **Typography:** High-contrast serif headlines (EB Garamond) for clear information hierarchy and editorial feel.
 
 ---
 
-*Curated by Whyte Interiors. All rights reserved.*
+*Curated by Whyte Interior Designs. All rights reserved.*

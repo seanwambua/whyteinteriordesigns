@@ -1,27 +1,22 @@
+
 "use client";
 
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
-import { Sparkles, Hammer, MessageSquare } from "lucide-react";
+import { Sparkles, Hammer, LayoutGrid } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function Services() {
   const services = [
     {
-      title: "Artistic Consultancy",
-      description: "Defining the soul of your space through curated color palettes and avant-garde material selections.",
-      icon: <MessageSquare className="h-5 w-5" />,
-      image: PlaceHolderImages.find(img => img.id === "service-consultancy")!,
-    },
-    {
-      title: "Architectural Build",
-      description: "Master-level execution of structural transformations, from heritage restoration to modern minimal builds.",
+      title: "Interior Design",
+      description: "Comprehensive spatial planning and architectural structural changes to redefine the functionality and flow of your luxury environment.",
       icon: <Hammer className="h-5 w-5" />,
       image: PlaceHolderImages.find(img => img.id === "service-build")!,
     },
     {
-      title: "Curation & Styling",
-      description: "Final-layer perfection. Sourcing rare antiques, custom furniture, and bespoke art installations.",
+      title: "Interior Decor",
+      description: "Masterful curation of high-end furniture, bespoke textiles, and artistic accents to manifest your unique visual identity.",
       icon: <Sparkles className="h-5 w-5" />,
       image: PlaceHolderImages.find(img => img.id === "service-refresh")!,
     },
@@ -57,12 +52,12 @@ export function Services() {
             className="flex-1"
           >
             <p className="text-xl text-muted-foreground font-light leading-relaxed">
-              We don't just design rooms; we choreograph experiences. Our holistic approach ensures that every sensory detail—from tactile textures to spatial acoustics—is considered.
+              We focus on two distinct yet harmonious disciplines to create spaces that are as functional as they are beautiful. From structural integrity to the final artistic layer.
             </p>
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 max-w-6xl mx-auto">
           {services.map((service, index) => (
             <motion.div 
               key={index}
@@ -72,7 +67,7 @@ export function Services() {
               transition={{ delay: index * 0.2 }}
               className="group"
             >
-              <div className="relative aspect-[3/4] overflow-hidden mb-10 shadow-2xl">
+              <div className="relative aspect-[16/10] md:aspect-[16/12] overflow-hidden mb-10 shadow-2xl">
                 <Image
                   src={service.image.imageUrl}
                   alt={service.image.description}
@@ -87,9 +82,9 @@ export function Services() {
                    <div className="h-10 w-10 flex items-center justify-center border border-accent/20 rounded-full text-accent group-hover:bg-accent group-hover:text-white transition-all">
                     {service.icon}
                    </div>
-                   <h3 className="text-2xl font-headline">{service.title}</h3>
+                   <h3 className="text-3xl font-headline">{service.title}</h3>
                 </div>
-                <p className="text-muted-foreground leading-relaxed font-light">
+                <p className="text-xl text-muted-foreground leading-relaxed font-light">
                   {service.description}
                 </p>
               </div>

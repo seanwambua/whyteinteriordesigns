@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -31,9 +32,9 @@ export function Footer() {
           <div>
             <h4 className="font-bold mb-6 uppercase tracking-widest text-sm">Services</h4>
             <ul className="space-y-3 text-sm text-white/60">
-              <li>Artistic Consultancy</li>
-              <li>Architectural Build</li>
-              <li>Curation & Styling</li>
+              <li>Interior Design</li>
+              <li>Interior Decor</li>
+              <li>Bespoke Curation</li>
               <li>Commercial Projects</li>
             </ul>
           </div>
