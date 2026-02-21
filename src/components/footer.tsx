@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -53,8 +52,8 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-white/40 uppercase tracking-widest font-medium">
           <p>© {new Date().getFullYear()} Whyte Interior Designs. All rights reserved.</p>
           <div className="flex gap-8">
-            <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Navbar } from "@/components/navbar";
@@ -12,14 +11,11 @@ export default function PricingPage() {
   const tiers = [
     {
       name: "The Advisory",
-      price: "$5,000",
+      price: "KES 650,000",
       description: "A comprehensive initial phase for those seeking master-level guidance and conceptual direction.",
       features: [
         "On-site architectural assessment",
-        "Visual language & mood curation",
-        "Preliminary space planning & layout",
-        "Materiality & finish consultation",
-        "Detailed project feasibility report"
+        "Materiality & finish consultation"
       ],
       cta: "Book Consultation",
       href: "/#contact",
@@ -93,7 +89,7 @@ export default function PricingPage() {
                   </h3>
                   <div className="mb-8">
                     <span className="text-5xl font-headline">{tier.price}</span>
-                    {tier.price === "$5,000" && <span className={`text-sm ml-2 ${tier.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>Initial Fee</span>}
+                    {tier.name === "The Advisory" && <span className={`text-sm ml-2 ${tier.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>Initial Fee</span>}
                   </div>
                   <p className={`text-lg mb-12 font-light leading-relaxed ${tier.highlight ? 'text-white/80 italic' : 'text-muted-foreground'}`}>
                     {tier.description}
