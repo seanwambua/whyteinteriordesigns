@@ -3,7 +3,7 @@
 
 import { use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, ProjectTask, AuditAllocation, FinancialAudit } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, AuditAllocation, FinancialAudit, SubTask } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ import {
   Users,
   ShieldCheck,
   ChevronRight,
+  ChevronLeft,
   ClipboardList,
   ChevronDown,
   ChevronUp,
@@ -42,7 +43,9 @@ import {
   ExternalLink,
   ShieldQuestion,
   Lock,
-  Loader2
+  Loader2,
+  MoreVertical,
+  Check
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -184,6 +187,160 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     toast({ title: "Commission Terminated", description: "Dossier transitioned to Archives." });
   };
 
+  // KANBAN LOGIC
+  const handleMoveTask = (taskId: string, newStatus: ProjectTask['status']) => {
+    const updatedTasks = (project.tasks || []).map(task => 
+      task.id === taskId ? { ...task, status: newStatus } : task
+    );
+    
+    // Recalculate progress
+    const completed = updatedTasks.filter(t => t.status === 'Done').length;
+    const progress = Math.round((completed / Math.max(1, updatedTasks.length)) * 100);
+
+    updateClientProject(project.id, { 
+      tasks: updatedTasks,
+      progress,
+      lastActivity: `Protocol status transition: ${taskId} to ${newStatus}`
+    });
+  };
+
+  const handleAddTask = (status: ProjectTask['status']) => {
+    const newTask: ProjectTask = {
+      id: `T-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      title: "New Protocol",
+      status,
+      priority: "Medium",
+      subtasks: []
+    };
+    const updatedTasks = [...(project.tasks || []), newTask];
+    
+    const completed = updatedTasks.filter(t => t.status === 'Done').length;
+    const progress = Math.round((completed / Math.max(1, updatedTasks.length)) * 100);
+
+    updateClientProject(project.id, { tasks: updatedTasks, progress });
+    toast({ title: "Protocol Initiated", description: "New task appended to the site registry." });
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    const updatedTasks = (project.tasks || []).filter(t => t.id !== taskId);
+    const completed = updatedTasks.filter(t => t.status === 'Done').length;
+    const progress = Math.round((completed / Math.max(1, updatedTasks.length)) * 100);
+    updateClientProject(project.id, { tasks: updatedTasks, progress });
+  };
+
+  const handleAddSubtask = (taskId: string) => {
+    const updatedTasks = (project.tasks || []).map(task => {
+      if (task.id === taskId) {
+        const sub: SubTask = { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "Sub-protocol", isCompleted: false };
+        return { ...task, subtasks: [...(task.subtasks || []), sub] };
+      }
+      return task;
+    });
+    updateClientProject(project.id, { tasks: updatedTasks });
+  };
+
+  const handleToggleSubtask = (taskId: string, subId: string) => {
+    const updatedTasks = (project.tasks || []).map(task => {
+      if (task.id === taskId) {
+        const subs = (task.subtasks || []).map(s => 
+          s.id === subId ? { ...s, isCompleted: !s.isCompleted } : s
+        );
+        return { ...task, subtasks: subs };
+      }
+      return task;
+    });
+    updateClientProject(project.id, { tasks: updatedTasks });
+  };
+
+  const KanbanColumn = ({ status, tasks }: { status: ProjectTask['status'], tasks: ProjectTask[] }) => (
+    <div className="flex-1 flex flex-col gap-6 min-w-[320px]">
+      <div className="flex items-center justify-between pb-4 border-b border-accent/10">
+        <div className="flex items-center gap-3">
+          <div className={cn("h-2 w-2 rounded-full", 
+            status === 'Todo' ? 'bg-accent/20' : 
+            status === 'In Progress' ? 'bg-orange-400' : 'bg-green-500'
+          )} />
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">{status} ({tasks.length})</h3>
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => handleAddTask(status)} className="h-8 w-8 hover:bg-accent/5">
+          <Plus className="h-4 w-4 opacity-40" />
+        </Button>
+      </div>
+      
+      <div className="flex flex-col gap-4 flex-1">
+        {tasks.map(task => (
+          <motion.div 
+            key={task.id} 
+            layoutId={task.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="group relative bg-white border border-accent/5 p-6 shadow-sm hover:shadow-xl hover:border-accent/20 transition-all space-y-4"
+          >
+            <div className="flex justify-between items-start">
+              <span className="text-[9px] font-bold text-accent/20 uppercase tracking-widest">{task.id}</span>
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {status !== 'Todo' && (
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleMoveTask(task.id, status === 'Done' ? 'In Progress' : 'Todo')}>
+                    <ChevronLeft className="h-3 w-3" />
+                  </Button>
+                )}
+                {status !== 'Done' && (
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleMoveTask(task.id, status === 'Todo' ? 'In Progress' : 'Done')}>
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/40 hover:text-destructive" onClick={() => handleDeleteTask(task.id)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold uppercase tracking-widest leading-tight">{task.title}</h4>
+              <div className="flex gap-2">
+                <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest opacity-40">{task.priority} Priority</Badge>
+              </div>
+            </div>
+
+            {/* Subtasks */}
+            <div className="pt-4 border-t border-accent/5 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-[8px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span>
+                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleAddSubtask(task.id)}>
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="space-y-1.5">
+                {(task.subtasks || []).map(sub => (
+                  <div key={sub.id} className="flex items-center gap-3 group/sub">
+                    <button 
+                      onClick={() => handleToggleSubtask(task.id, sub.id)}
+                      className={cn("h-3 w-3 border flex items-center justify-center transition-colors", 
+                        sub.isCompleted ? "bg-accent border-accent" : "border-accent/20 bg-transparent"
+                      )}
+                    >
+                      {sub.isCompleted && <Check className="h-2 w-2 text-white" />}
+                    </button>
+                    <span className={cn("text-[10px] font-light italic transition-all", 
+                      sub.isCompleted ? "text-accent/30 line-through" : "text-accent/70"
+                    )}>
+                      {sub.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+        {tasks.length === 0 && (
+          <div className="h-32 border border-dashed border-accent/5 flex items-center justify-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-accent/10 italic">Empty Protocol Stack</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="max-w-7xl mx-auto space-y-12 font-body">
       {/* Header Cockpit */}
@@ -230,7 +387,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       </motion.div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-12">
-        <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12">
+        <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto">
           {project.status === 'Termination' && (
             <TabsTrigger value="dissolution" className="rounded-none border-b-2 border-transparent data-[state=active]:border-destructive data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-4 px-0 flex gap-2 text-destructive">
               <ShieldAlert className="h-3.5 w-3.5" /> Dissolution Protocol
@@ -368,8 +525,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           </div>
         </TabsContent>
 
-        <TabsContent value="overview">
-           <Card className="rounded-none p-10 space-y-8">
+        <TabsContent value="overview" className="m-0 space-y-12">
+           <Card className="rounded-none border-accent/5 p-10 space-y-8">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                <div className="space-y-6">
                  <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-accent/40">Architectural Brief</h3>
@@ -391,23 +548,17 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
              </div>
            </Card>
         </TabsContent>
-        <TabsContent value="workflow">
-           <Card className="rounded-none p-10">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               {(project.tasks || []).map(task => (
-                 <div key={task.id} className="p-6 border border-accent/5 bg-secondary/5 space-y-4">
-                   <div className="flex justify-between items-start">
-                     <span className="text-[9px] font-bold text-accent/30 uppercase tracking-widest">{task.id}</span>
-                     <Badge variant="outline" className="text-[9px] uppercase tracking-widest">{task.status}</Badge>
-                   </div>
-                   <h4 className="text-sm font-bold uppercase tracking-widest">{task.title}</h4>
-                 </div>
-               ))}
-             </div>
-           </Card>
+
+        <TabsContent value="workflow" className="m-0">
+           <div className="flex gap-8 overflow-x-auto pb-8 custom-scrollbar">
+             <KanbanColumn status="Todo" tasks={(project.tasks || []).filter(t => t.status === 'Todo')} />
+             <KanbanColumn status="In Progress" tasks={(project.tasks || []).filter(t => t.status === 'In Progress')} />
+             <KanbanColumn status="Done" tasks={(project.tasks || []).filter(t => t.status === 'Done')} />
+           </div>
         </TabsContent>
-        <TabsContent value="ledger">
-           <Card className="rounded-none p-10">
+
+        <TabsContent value="ledger" className="m-0">
+           <Card className="rounded-none border-accent/5 p-10">
              <div className="space-y-4">
                {project.installments.map((ins, i) => (
                  <div key={i} className="flex justify-between items-center p-6 border border-accent/5 bg-white shadow-sm hover:border-accent/20 transition-all">
