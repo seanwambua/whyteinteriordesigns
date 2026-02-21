@@ -10,7 +10,6 @@ import {
   ChevronRight, 
   MessageSquare, 
   Clock, 
-  Layout, 
   Sparkles,
   CheckCircle2,
   Circle,
@@ -27,10 +26,12 @@ export default function ClientDashboardPage() {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request">("project_support");
 
+  // This data is simulate being set per-project by an admin
   const activeProject = {
     title: "The Muthaiga Residence",
     id: "WP-0082",
-    planType: "Golden Commission",
+    planType: "Golden (Full Commission)",
+    installmentSchedule: "70% / 30%",
     status: "Execution & Installation",
     progress: 78,
     lastUpdate: "Italian marble shipment installed in the foyer. Master suite textiles arriving Friday.",
@@ -88,8 +89,9 @@ export default function ClientDashboardPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <h1 className="text-6xl font-headline">The <span className="italic">Evolution.</span></h1>
           <div className="text-right">
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Active Plan</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Assigned Plan</span>
             <span className="text-lg font-headline italic text-accent">{activeProject.planType}</span>
+            <span className="text-[9px] uppercase tracking-widest text-accent/30 block mt-1">Schedule: {activeProject.installmentSchedule}</span>
           </div>
         </div>
       </motion.div>

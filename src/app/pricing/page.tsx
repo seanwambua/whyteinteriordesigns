@@ -6,13 +6,13 @@ import { Footer } from "@/components/footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChevronRight, Check, Sparkles, Lock } from "lucide-react";
+import { Check, Sparkles, Lock } from "lucide-react";
 
 export default function PricingPage() {
   const tiers = [
     {
       name: "Premium",
-      price: "Bespoke Curation",
+      price: "Full Commission",
       description: "The essential luxury experience. Focused on refined local curation and expert spatial planning.",
       installments: "50% / 30% / 20% Installments",
       isRestricted: true,
@@ -29,7 +29,7 @@ export default function PricingPage() {
     },
     {
       name: "Deluxe",
-      price: "Global Portfolio",
+      price: "Full Commission",
       description: "For those seeking global excellence. A comprehensive journey including international sourcing and custom fabrication.",
       installments: "60% / 20% / 20% Installments",
       isRestricted: true,
@@ -47,7 +47,7 @@ export default function PricingPage() {
     },
     {
       name: "Golden",
-      price: "The Zenith",
+      price: "Full Commission",
       description: "The ultimate architectural journey. Unrestricted access to global archives and lifetime styling maintenance.",
       installments: "70% / 30% Installments",
       isRestricted: false,
@@ -88,7 +88,7 @@ export default function PricingPage() {
               transition={{ duration: 1, delay: 0.2 }}
               className="text-6xl md:text-8xl font-headline mb-8"
             >
-              Full <span className="italic">Commission.</span>
+              Bespoke <span className="italic">Commission.</span>
             </motion.h1>
             
             <motion.p
@@ -125,13 +125,13 @@ export default function PricingPage() {
 
                 <div>
                   <h3 className={`text-[10px] font-bold uppercase tracking-[0.4em] mb-12 ${tier.highlight ? 'text-white/60' : 'text-accent'}`}>
-                    {tier.name} Commission
+                    {tier.name} Tier
                   </h3>
                   <div className="mb-4">
                     <span className="text-3xl font-headline">{tier.price}</span>
                   </div>
                   <div className={`text-[10px] font-bold uppercase tracking-widest mb-10 ${tier.highlight ? 'text-white/40' : 'text-accent/30'}`}>
-                    Structure: {tier.installments}
+                    Schedule: {tier.installments}
                   </div>
                   <p className={`text-sm mb-12 font-light leading-relaxed italic ${tier.highlight ? 'text-white/80' : 'text-muted-foreground'}`}>
                     "{tier.description}"
@@ -162,10 +162,10 @@ export default function PricingPage() {
                 
                 {tier.isRestricted && (
                   <p className={`text-[9px] mt-4 text-center uppercase tracking-widest opacity-40 italic ${tier.highlight ? 'text-white' : 'text-accent'}`}>
-                    Requires previous studio project history
+                    Exclusive to existing studio projects
                   </p>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
 
