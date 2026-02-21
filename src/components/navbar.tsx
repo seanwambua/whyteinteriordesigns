@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Palette, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -24,10 +24,9 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
-          <Palette className="h-8 w-8 text-accent transition-transform group-hover:rotate-12" />
-          <span className="text-2xl font-headline font-bold tracking-tighter text-accent">
-            WHYTE <span className="font-light text-muted-foreground">INTERIORS</span>
+        <Link href="/" className="group">
+          <span className="text-2xl font-headline font-bold tracking-tight text-accent">
+            Whyte <span className="font-light text-muted-foreground">Interior Designs</span>
           </span>
         </Link>
 

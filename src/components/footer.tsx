@@ -1,6 +1,5 @@
 
 import Link from "next/link";
-import { Palette } from "lucide-react";
 
 export function Footer() {
   return (
@@ -8,10 +7,9 @@ export function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-white/10 pb-12 mb-12">
           <div className="col-span-1 md:col-span-1 space-y-4">
-            <Link href="/" className="flex items-center gap-2 group">
-              <Palette className="h-6 w-6 text-primary" />
-              <span className="text-xl font-headline font-bold tracking-tighter text-white">
-                WHYTE <span className="font-light text-primary/80">INTERIORS</span>
+            <Link href="/" className="group">
+              <span className="text-xl font-headline font-bold tracking-tight text-white">
+                Whyte <span className="font-light text-primary/80">Interior Designs</span>
               </span>
             </Link>
             <p className="text-white/60 text-sm leading-relaxed">
@@ -50,7 +48,7 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-white/40 uppercase tracking-widest font-medium">
-          <p>© {new Date().getFullYear()} Whyte Interiors. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Whyte Interior Designs. All rights reserved.</p>
           <div className="flex gap-8">
             <Link href="#" className="hover:text-primary transition-colors">Instagram</Link>
             <Link href="#" className="hover:text-primary transition-colors">Pinterest</Link>
