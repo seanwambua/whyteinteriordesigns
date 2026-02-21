@@ -71,7 +71,7 @@ export function Hero() {
             <Button asChild size="lg" className="bg-white text-black hover:bg-white/90 text-lg px-10 h-14 rounded-none transition-all hover:tracking-wider">
               <Link href="#portfolio">Explore Works</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10 text-lg px-10 h-14 rounded-none transition-all">
+            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black text-lg px-10 h-14 rounded-none transition-all">
               <Link href="#quiz" className="flex items-center gap-2">
                 Curate Your Style <ChevronRight className="h-4 w-4" />
               </Link>
@@ -87,7 +87,6 @@ export function Hero() {
         className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-white/60"
       >
         <div className="relative flex items-center justify-center">
-          {/* Radial Pulse Effect */}
           <motion.div
             animate={{
               scale: [1, 1.8, 2.5],
