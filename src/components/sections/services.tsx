@@ -1,21 +1,24 @@
-
 "use client";
 
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
-import { Sparkles, Hammer, LayoutGrid } from "lucide-react";
+import { Sparkles, Hammer, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function Services() {
   const services = [
     {
       title: "Interior Design",
+      href: "/services/interior-design",
       description: "Comprehensive spatial planning and architectural structural changes to redefine the functionality and flow of your luxury environment.",
       icon: <Hammer className="h-5 w-5" />,
       image: PlaceHolderImages.find(img => img.id === "service-build")!,
     },
     {
       title: "Interior Decor",
+      href: "/services/interior-decor",
       description: "Masterful curation of high-end furniture, bespoke textiles, and artistic accents to manifest your unique visual identity.",
       icon: <Sparkles className="h-5 w-5" />,
       image: PlaceHolderImages.find(img => img.id === "service-refresh")!,
@@ -72,12 +75,12 @@ export function Services() {
                   src={service.image.imageUrl}
                   alt={service.image.description}
                   fill
-                  className="object-cover grayscale hover:grayscale-0 transition-all duration-700 scale-110 group-hover:scale-100"
+                  className="object-cover transition-all duration-700 scale-110 group-hover:scale-100"
                   data-ai-hint={service.image.imageHint}
                 />
                 <div className="absolute inset-0 bg-accent/10 group-hover:bg-transparent transition-colors duration-500" />
               </div>
-              <div className="space-y-4 pr-6">
+              <div className="space-y-6 pr-6">
                 <div className="flex items-center gap-3">
                    <div className="h-10 w-10 flex items-center justify-center border border-accent/20 rounded-full text-accent group-hover:bg-accent group-hover:text-white transition-all">
                     {service.icon}
@@ -87,6 +90,11 @@ export function Services() {
                 <p className="text-xl text-muted-foreground leading-relaxed font-light">
                   {service.description}
                 </p>
+                <Button asChild variant="outline" className="rounded-none border-accent text-accent hover:bg-accent hover:text-white h-12 px-8 uppercase tracking-widest text-xs transition-all flex items-center gap-2 group">
+                  <Link href={service.href}>
+                    Explore Service <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
               </div>
             </motion.div>
           ))}
