@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -20,7 +19,11 @@ import {
   Star,
   ExternalLink,
   Zap,
-  Briefcase
+  Briefcase,
+  Search,
+  MoreVertical,
+  Mail,
+  ShieldCheck
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -37,6 +40,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useWhyteStore, Collaborator } from "@/store/use-whyte-store";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 export default function AdminHRPage() {
   const { collaborators, addCollaborator, removeCollaborator } = useWhyteStore();
@@ -44,6 +48,7 @@ export default function AdminHRPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [activeDialog, setActiveDialog] = useState<"partner" | "vendor" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [search, setSearch] = useState("");
 
   // Separate Form States
   const [partnerForm, setPartnerForm] = useState({
@@ -67,6 +72,11 @@ export default function AdminHRPage() {
   }, []);
 
   if (!isMounted) return null;
+
+  const filteredCollaborators = collaborators.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase()) || 
+    c.specialty.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleAddPartner = () => {
     if (!partnerForm.name || !partnerForm.specialty) return;
@@ -128,266 +138,299 @@ export default function AdminHRPage() {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col lg:flex-row lg:items-end justify-between gap-8"
       >
-        <div className="space-y-2">
+        <div className="space-y-4">
           <div className="flex items-center gap-4">
             <div className="h-px w-8 bg-accent" />
-            <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Resource Matrix</span>
+            <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Resource Matrix</span>
           </div>
           <h1 className="text-5xl font-headline italic">Network <span className="not-italic">Ecosystem.</span></h1>
         </div>
+        
         <div className="flex flex-wrap gap-4">
+          <div className="relative mr-4">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input 
+              placeholder="Search Partners..." 
+              className="pl-11 pr-4 h-14 bg-white border border-accent/10 w-64 text-[12px] uppercase tracking-widest focus:outline-none focus:border-accent/40"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           <Button 
             onClick={() => setActiveDialog("partner")}
             variant="outline" 
-            className="rounded-none h-14 border-accent/20 uppercase tracking-widest text-[9px] flex gap-2 hover:bg-accent/5"
+            className="rounded-none h-14 border-accent/20 uppercase tracking-widest text-[11px] font-bold flex gap-2 hover:bg-accent/5"
           >
-            <Zap className="h-3.5 w-3.5" /> Register Creative Partner
+            <Zap className="h-4 w-4" /> Register Partner
           </Button>
           <Button 
             onClick={() => setActiveDialog("vendor")}
-            className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-[0.2em] text-[10px] flex gap-2 shadow-xl"
+            className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-[0.2em] text-[11px] font-bold flex gap-2 shadow-xl"
           >
-            <Plus className="h-4 w-4" /> Add Trade Specialist
+            <Plus className="h-4 w-4" /> Add Trade
           </Button>
         </div>
       </motion.div>
 
       <div className="grid grid-cols-1 gap-6">
-        {collaborators.map((col, index) => (
+        {filteredCollaborators.map((col, index) => (
           <motion.div
             key={col.id}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
           >
-            <Card className="rounded-none border-accent/10 shadow-xl bg-white overflow-hidden group hover:border-accent/30 transition-all">
+            <Card className="rounded-none border-accent/5 shadow-xl bg-white dark:bg-zinc-900 overflow-hidden group hover:border-accent/20 transition-all">
               <div className="p-8 flex flex-col md:flex-row items-center gap-12">
-                <div className={`h-24 w-24 rounded-none flex flex-col items-center justify-center shrink-0 border border-accent/5 ${
-                  col.category === 'Collaborator' ? 'bg-accent text-white' : 'bg-secondary/30 text-accent/40'
-                }`}>
-                   {col.category === 'Collaborator' ? <Compass className="h-8 w-8 mb-1" /> : <HardHat className="h-8 w-8 mb-1" />}
-                   <span className="text-[7px] uppercase font-black tracking-widest">{col.category === 'Collaborator' ? 'Creative' : 'Trade'}</span>
+                <div className={cn(
+                  "h-28 w-28 rounded-none flex flex-col items-center justify-center shrink-0 border border-accent/5",
+                  col.category === 'Collaborator' ? 'bg-accent text-white' : 'bg-secondary/30 dark:bg-zinc-800 text-accent/40'
+                )}>
+                   {col.category === 'Collaborator' ? <Compass className="h-10 w-10 mb-2" /> : <HardHat className="h-10 w-10 mb-2" />}
+                   <span className="text-[10px] uppercase font-black tracking-[0.2em]">{col.category === 'Collaborator' ? 'Creative' : 'Trade'}</span>
                 </div>
                 
-                <div className="flex-1 space-y-4">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-1">
+                <div className="flex-1 space-y-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-3">
-                        <h3 className="text-2xl font-headline italic">{col.name}</h3>
-                        <BadgeCheck className="h-4 w-4 text-accent" />
+                        <h3 className="text-3xl font-headline italic">{col.name}</h3>
+                        <BadgeCheck className="h-5 w-5 text-accent" />
                       </div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                        {col.specialty} <span className="opacity-20 px-2">|</span> {col.type}
-                      </p>
+                      <div className="flex items-center gap-4">
+                        <p className="text-[12px] text-muted-foreground uppercase tracking-widest font-bold">
+                          {col.specialty}
+                        </p>
+                        <div className="h-1 w-1 bg-accent/20 rounded-full" />
+                        <p className="text-[11px] text-accent/40 uppercase tracking-widest font-bold">
+                          {col.type}
+                        </p>
+                      </div>
                     </div>
                     <div className="text-right">
-                       <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Integrity Score</span>
+                       <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Integrity Score</span>
                        <div className="flex items-center gap-2 justify-end">
-                         <Star className="h-3 w-3 fill-accent text-accent" />
-                         <span className="text-lg font-headline italic">{col.rating.toFixed(1)}</span>
+                         <Star className="h-4 w-4 fill-accent text-accent" />
+                         <span className="text-2xl font-headline italic">{col.rating.toFixed(1)}</span>
                        </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-8 pt-2 border-t border-accent/5">
-                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                      <Phone className="h-3 w-3 opacity-40" /> {col.contact}
+                  <div className="flex flex-wrap items-center gap-8 pt-4 border-t border-accent/5">
+                    <div className="flex items-center gap-2 text-[12px] uppercase tracking-widest text-muted-foreground font-bold">
+                      <Phone className="h-4 w-4 opacity-40" /> {col.contact}
                     </div>
-                    <Badge variant="outline" className="rounded-none uppercase tracking-widest text-[8px] border-accent/10">
+                    <div className="flex items-center gap-2 text-[12px] uppercase tracking-widest text-muted-foreground font-bold">
+                      <Mail className="h-4 w-4 opacity-40" /> {col.id.toLowerCase()}@studio.com
+                    </div>
+                    <Badge variant="outline" className="rounded-none uppercase tracking-widest text-[10px] border-accent/10 font-bold px-3 py-1">
                       {col.status}
                     </Badge>
                   </div>
                 </div>
 
-                <div className="flex md:flex-col gap-2 min-w-[160px]">
-                   <Button variant="outline" className="rounded-none border-accent/10 h-10 uppercase tracking-widest text-[9px] w-full hover:bg-accent hover:text-white transition-all">View Dossier</Button>
+                <div className="flex md:flex-col gap-3 min-w-[180px]">
+                   <Button variant="outline" className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[11px] font-bold w-full hover:bg-accent hover:text-white transition-all flex gap-2">
+                     <ShieldCheck className="h-4 w-4" /> View Dossier
+                   </Button>
                    <Button 
                     variant="ghost" 
-                    className="rounded-none text-destructive/40 hover:text-destructive hover:bg-destructive/5 h-10 uppercase tracking-widest text-[9px] w-full"
+                    className="rounded-none text-destructive/40 hover:text-destructive hover:bg-destructive/5 h-12 uppercase tracking-widest text-[11px] font-bold w-full flex gap-2"
                     onClick={() => handleRemove(col.id)}
                    >
-                    Archive
+                    <Building2 className="h-4 w-4" /> Archive
                    </Button>
                 </div>
               </div>
             </Card>
           </motion.div>
         ))}
+        {filteredCollaborators.length === 0 && (
+          <div className="text-center py-24 border border-dashed border-accent/10">
+            <p className="text-lg font-light italic text-muted-foreground uppercase tracking-[0.2em]">No network identities found in current registry</p>
+          </div>
+        )}
       </div>
 
-      {/* STRICT: CREATIVE PARTNER FORM */}
+      {/* CREATIVE PARTNER FORM */}
       <Dialog open={activeDialog === 'partner'} onOpenChange={() => setActiveDialog(null)}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg">
-          <DialogHeader className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Zap className="h-4 w-4 text-accent" />
-              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Creative & Influence Network</span>
-            </div>
-            <DialogTitle className="text-3xl font-headline italic">Register Creative Partner</DialogTitle>
-            <DialogDescription className="font-light italic text-muted-foreground">
-              Register influencers, firms, or consulting architects into the studio creative matrix.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-8 space-y-6">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Professional Identity</Label>
-              <Input 
-                value={partnerForm.name}
-                onChange={(e) => setPartnerForm({...partnerForm, name: e.target.value})}
-                placeholder="E.g., Jane Doe Influence or Studio Vibe"
-                className="rounded-none border-accent/20 h-12"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-6">
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg p-0 overflow-hidden">
+          <div className="bg-accent h-1.5 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Zap className="h-5 w-5 text-accent" />
+                <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Creative & Influence Network</span>
+              </div>
+              <DialogTitle className="text-4xl font-headline italic">Register Creative Partner</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-base">
+                Synchronize influencers, firms, or consulting architects into the studio creative matrix.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Creative focus</Label>
+                <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Professional Identity</Label>
                 <Input 
-                  value={partnerForm.specialty}
-                  onChange={(e) => setPartnerForm({...partnerForm, specialty: e.target.value})}
-                  placeholder="E.g., Interior Styling, 3D Visualization"
-                  className="rounded-none border-accent/20 h-12"
+                  value={partnerForm.name}
+                  onChange={(e) => setPartnerForm({...partnerForm, name: e.target.value})}
+                  placeholder="E.g., Studio Vibe Architecture"
+                  className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent"
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Entity Classification</Label>
-                <Select value={partnerForm.entityType} onValueChange={(v) => setPartnerForm({...partnerForm, entityType: v})}>
-                  <SelectTrigger className="rounded-none border-accent/20 h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-none">
-                    <SelectItem value="Individual Influencer">Individual Influencer</SelectItem>
-                    <SelectItem value="Design Firm">Design Firm</SelectItem>
-                    <SelectItem value="Creative Collective">Creative Collective</SelectItem>
-                    <SelectItem value="Consulting Architect">Consulting Architect</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Creative Focus</Label>
+                  <Input 
+                    value={partnerForm.specialty}
+                    onChange={(e) => setPartnerForm({...partnerForm, specialty: e.target.value})}
+                    placeholder="E.g., Interior Styling"
+                    className="rounded-none border-accent/20 h-14 text-lg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Entity Classification</Label>
+                  <Select value={partnerForm.entityType} onValueChange={(v) => setPartnerForm({...partnerForm, entityType: v})}>
+                    <SelectTrigger className="rounded-none border-accent/20 h-14 text-lg">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="Individual Influencer">Individual Influencer</SelectItem>
+                      <SelectItem value="Design Firm">Design Firm</SelectItem>
+                      <SelectItem value="Creative Collective">Creative Collective</SelectItem>
+                      <SelectItem value="Consulting Architect">Consulting Architect</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Network Magnitude</Label>
+                  <Select value={partnerForm.influence} onValueChange={(v) => setPartnerForm({...partnerForm, influence: v})}>
+                    <SelectTrigger className="rounded-none border-accent/20 h-14 text-lg">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="Boutique">Boutique / Niche</SelectItem>
+                      <SelectItem value="Mid-Scale">Mid-Scale Reach</SelectItem>
+                      <SelectItem value="Macro">Macro Influence</SelectItem>
+                      <SelectItem value="Global Firm">Global Authority</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Direct Contact</Label>
+                  <Input 
+                    value={partnerForm.contact}
+                    onChange={(e) => setPartnerForm({...partnerForm, contact: e.target.value})}
+                    placeholder="Email or Social"
+                    className="rounded-none border-accent/20 h-14 text-lg"
+                  />
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Network Magnitude</Label>
-                <Select value={partnerForm.influence} onValueChange={(v) => setPartnerForm({...partnerForm, influence: v})}>
-                  <SelectTrigger className="rounded-none border-accent/20 h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-none">
-                    <SelectItem value="Boutique">Boutique / Niche</SelectItem>
-                    <SelectItem value="Mid-Scale">Mid-Scale Reach</SelectItem>
-                    <SelectItem value="Macro">Macro Influence</SelectItem>
-                    <SelectItem value="Global Firm">Global Authority</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Direct Contact</Label>
-                <Input 
-                  value={partnerForm.contact}
-                  onChange={(e) => setPartnerForm({...partnerForm, contact: e.target.value})}
-                  placeholder="Email or Social Handle"
-                  className="rounded-none border-accent/20 h-12"
-                />
-              </div>
-            </div>
-          </div>
 
-          <DialogFooter>
-            <Button 
-              className="w-full bg-accent text-white h-14 rounded-none uppercase tracking-widest text-[10px] font-bold shadow-2xl"
-              onClick={handleAddPartner}
-              disabled={isSubmitting || !partnerForm.name}
-            >
-              {isSubmitting ? "Authorizing Identity..." : "Authorize Creative Registration"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="pt-4">
+              <Button 
+                className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em]"
+                onClick={handleAddPartner}
+                disabled={isSubmitting || !partnerForm.name}
+              >
+                {isSubmitting ? "Authorizing Identity..." : "Authorize Creative Registration"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* STRICT: TRADESPERSON FORM */}
+      {/* TRADESPERSON FORM */}
       <Dialog open={activeDialog === 'vendor'} onOpenChange={() => setActiveDialog(null)}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg">
-          <DialogHeader className="space-y-4">
-            <div className="flex items-center gap-3">
-              <HardHat className="h-4 w-4 text-accent" />
-              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Site & Implementation Trades</span>
-            </div>
-            <DialogTitle className="text-3xl font-headline italic">Add Trade Specialist</DialogTitle>
-            <DialogDescription className="font-light italic text-muted-foreground">
-              Register technical implementation experts like masons, painters, or site contractors.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-8 space-y-6">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Workshop or Contractor Name</Label>
-              <Input 
-                value={vendorForm.name}
-                onChange={(e) => setVendorForm({...vendorForm, name: e.target.value})}
-                placeholder="E.g., Nairobi Masonry Pros"
-                className="rounded-none border-accent/20 h-12"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Technical Trade</Label>
-                <Select value={vendorForm.trade} onValueChange={(v) => setVendorForm({...vendorForm, trade: v})}>
-                  <SelectTrigger className="rounded-none border-accent/20 h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-none">
-                    <SelectItem value="Masonry">Masonry & Structural</SelectItem>
-                    <SelectItem value="Painting">Painting & Finishes</SelectItem>
-                    <SelectItem value="Plumbing">Plumbing & HVAC</SelectItem>
-                    <SelectItem value="Electrical">Electrical & Lighting</SelectItem>
-                    <SelectItem value="Joinery">Carpentry & Joinery</SelectItem>
-                  </SelectContent>
-                </Select>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg p-0 overflow-hidden">
+          <div className="bg-accent h-1.5 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <HardHat className="h-5 w-5 text-accent" />
+                <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Site & Implementation Trades</span>
               </div>
+              <DialogTitle className="text-4xl font-headline italic">Add Trade Specialist</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-base">
+                Register technical implementation experts like masons, painters, or site contractors.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Workforce Capacity</Label>
-                <Select value={vendorForm.capacity} onValueChange={(v) => setVendorForm({...vendorForm, capacity: v})}>
-                  <SelectTrigger className="rounded-none border-accent/20 h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-none">
-                    <SelectItem value="Individual Artisan">Individual Artisan</SelectItem>
-                    <SelectItem value="Small Team">Small Team (2-5)</SelectItem>
-                    <SelectItem value="Industrial Contractor">Industrial Contractor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Mobilization Base</Label>
+                <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Workshop or Contractor Name</Label>
                 <Input 
-                  value={vendorForm.location}
-                  onChange={(e) => setVendorForm({...vendorForm, location: e.target.value})}
-                  placeholder="E.g., Nairobi West"
-                  className="rounded-none border-accent/20 h-12"
+                  value={vendorForm.name}
+                  onChange={(e) => setVendorForm({...vendorForm, name: e.target.value})}
+                  placeholder="E.g., Nairobi Masonry Pros"
+                  className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent"
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Trade Contact</Label>
-                <Input 
-                  value={vendorForm.contact}
-                  onChange={(e) => setVendorForm({...vendorForm, contact: e.target.value})}
-                  placeholder="+254 XXX XXX XXX"
-                  className="rounded-none border-accent/20 h-12"
-                />
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Technical Trade</Label>
+                  <Select value={vendorForm.trade} onValueChange={(v) => setVendorForm({...vendorForm, trade: v})}>
+                    <SelectTrigger className="rounded-none border-accent/20 h-14 text-lg">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="Masonry">Masonry & Structural</SelectItem>
+                      <SelectItem value="Painting">Painting & Finishes</SelectItem>
+                      <SelectItem value="Plumbing">Plumbing & HVAC</SelectItem>
+                      <SelectItem value="Electrical">Electrical & Lighting</SelectItem>
+                      <SelectItem value="Joinery">Carpentry & Joinery</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Workforce Capacity</Label>
+                  <Select value={vendorForm.capacity} onValueChange={(v) => setVendorForm({...vendorForm, capacity: v})}>
+                    <SelectTrigger className="rounded-none border-accent/20 h-14 text-lg">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="Individual Artisan">Individual Artisan</SelectItem>
+                      <SelectItem value="Small Team">Small Team (2-5)</SelectItem>
+                      <SelectItem value="Industrial Contractor">Industrial Contractor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Mobilization Base</Label>
+                  <Input 
+                    value={vendorForm.location}
+                    onChange={(e) => setVendorForm({...vendorForm, location: e.target.value})}
+                    placeholder="E.g., Nairobi West"
+                    className="rounded-none border-accent/20 h-14 text-lg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Trade Contact</Label>
+                  <Input 
+                    value={vendorForm.contact}
+                    onChange={(e) => setVendorForm({...vendorForm, contact: e.target.value})}
+                    placeholder="+254 XXX XXX XXX"
+                    className="rounded-none border-accent/20 h-14 text-lg"
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <DialogFooter>
-            <Button 
-              className="w-full bg-accent text-white h-14 rounded-none uppercase tracking-widest text-[10px] font-bold shadow-2xl"
-              onClick={handleAddVendor}
-              disabled={isSubmitting || !vendorForm.name}
-            >
-              {isSubmitting ? "Registering Specialist..." : "Authorize Trade Registration"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="pt-4">
+              <Button 
+                className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em]"
+                onClick={handleAddVendor}
+                disabled={isSubmitting || !vendorForm.name}
+              >
+                {isSubmitting ? "Registering Specialist..." : "Authorize Trade Registration"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
