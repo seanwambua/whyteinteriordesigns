@@ -1,0 +1,53 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Luxurious modern living room with large windows and elegant purple accents",
+      "imageUrl": "https://picsum.photos/seed/whyte1/1920/1080",
+      "imageHint": "luxury interior living room"
+    },
+    {
+      "id": "portfolio-1",
+      "description": "Minimalist serene bedroom with soft lighting and lavender textiles",
+      "imageUrl": "https://picsum.photos/seed/whyte2/800/600",
+      "imageHint": "modern bedroom interior"
+    },
+    {
+      "id": "portfolio-2",
+      "description": "Executive home office with sleek dark wood furniture and professional ambiance",
+      "imageUrl": "https://picsum.photos/seed/whyte3/800/600",
+      "imageHint": "executive home office"
+    },
+    {
+      "id": "portfolio-3",
+      "description": "Contemporary kitchen with clean lines and marble countertops",
+      "imageUrl": "https://picsum.photos/seed/whyte4/800/600",
+      "imageHint": "modern kitchen interior"
+    },
+    {
+      "id": "portfolio-4",
+      "description": "Spacious commercial lobby with architectural lighting and designer seating",
+      "imageUrl": "https://picsum.photos/seed/whyte5/800/600",
+      "imageHint": "commercial lobby interior"
+    },
+    {
+      "id": "service-consultancy",
+      "description": "Designer reviewing blueprints with a client in a bright studio",
+      "imageUrl": "https://picsum.photos/seed/whyte6/600/400",
+      "imageHint": "interior design consultation"
+    },
+    {
+      "id": "service-build",
+      "description": "Construction progress of a high-end residential project",
+      "imageUrl": "https://picsum.photos/seed/whyte7/600/400",
+      "imageHint": "interior construction build"
+    },
+    {
+      "id": "service-refresh",
+      "description": "Stylishly arranged decor items and fresh flowers on a console table",
+      "imageUrl": "https://picsum.photos/seed/whyte8/600/400",
+      "imageHint": "interior styling decor"
+    }
+  ]
+}
