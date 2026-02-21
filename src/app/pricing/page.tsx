@@ -6,20 +6,22 @@ import { Footer } from "@/components/footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChevronRight, Check, Sparkles } from "lucide-react";
+import { ChevronRight, Check, Sparkles, Lock } from "lucide-react";
 
 export default function PricingPage() {
   const tiers = [
     {
       name: "Premium",
-      price: "Project Based",
+      price: "Bespoke Curation",
       description: "The essential luxury experience. Focused on refined local curation and expert spatial planning.",
+      installments: "50% / 30% / 20% Installments",
+      isRestricted: true,
       features: [
-        "Everything in 'The Genesis'",
         "Full architectural blueprints",
         "Local artisanal procurement",
         "On-site site management",
-        "Final project handover"
+        "Final project handover",
+        "3D spatial visualization"
       ],
       cta: "Request Premium Quote",
       href: "/#contact",
@@ -27,13 +29,15 @@ export default function PricingPage() {
     },
     {
       name: "Deluxe",
-      price: "Bespoke Portfolio",
+      price: "Global Portfolio",
       description: "For those seeking global excellence. A comprehensive journey including international sourcing and custom fabrication.",
+      installments: "60% / 20% / 20% Installments",
+      isRestricted: true,
       features: [
         "Everything in Premium",
         "Global material procurement",
         "Bespoke furniture design",
-        "Advanced 3D visualizations",
+        "Advanced VR walkthroughs",
         "Dedicated project architect",
         "Custom textile layering"
       ],
@@ -45,6 +49,8 @@ export default function PricingPage() {
       name: "Golden",
       price: "The Zenith",
       description: "The ultimate architectural journey. Unrestricted access to global archives and lifetime styling maintenance.",
+      installments: "70% / 30% Installments",
+      isRestricted: false,
       features: [
         "Everything in Deluxe",
         "24/7 VIP studio access",
@@ -60,7 +66,7 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background font-body">
       <Navbar />
       <main className="py-32">
         <div className="container mx-auto px-6">
@@ -89,9 +95,9 @@ export default function PricingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 1, delay: 0.5 }}
-              className="text-xl text-muted-foreground font-light leading-relaxed max-w-2xl mx-auto"
+              className="text-xl text-muted-foreground font-light leading-relaxed max-w-2xl mx-auto italic"
             >
-              Our structured investment tiers ensure your vision is realized with uncompromising precision. Select the level of curation that matches your ambition.
+              Our tiered commission structure ensures uncompromising precision. Please note that Premium and Deluxe tiers are reserved for returning clients of the Whyte Studio.
             </motion.p>
           </div>
 
@@ -109,12 +115,23 @@ export default function PricingPage() {
                     <Sparkles className="h-20 w-20" />
                   </div>
                 )}
+                
+                {tier.isRestricted && (
+                  <div className="absolute top-6 right-6 flex items-center gap-2 opacity-40">
+                    <Lock className="h-3 w-3" />
+                    <span className="text-[8px] uppercase tracking-widest font-bold">Returning Only</span>
+                  </div>
+                )}
+
                 <div>
                   <h3 className={`text-[10px] font-bold uppercase tracking-[0.4em] mb-12 ${tier.highlight ? 'text-white/60' : 'text-accent'}`}>
-                    {tier.name} Package
+                    {tier.name} Commission
                   </h3>
-                  <div className="mb-10">
-                    <span className="text-4xl font-headline">{tier.price}</span>
+                  <div className="mb-4">
+                    <span className="text-3xl font-headline">{tier.price}</span>
+                  </div>
+                  <div className={`text-[10px] font-bold uppercase tracking-widest mb-10 ${tier.highlight ? 'text-white/40' : 'text-accent/30'}`}>
+                    Structure: {tier.installments}
                   </div>
                   <p className={`text-sm mb-12 font-light leading-relaxed italic ${tier.highlight ? 'text-white/80' : 'text-muted-foreground'}`}>
                     "{tier.description}"
@@ -133,6 +150,7 @@ export default function PricingPage() {
                 <Button 
                   asChild 
                   size="lg" 
+                  disabled={tier.isRestricted}
                   className={`w-full h-14 rounded-none text-[10px] font-bold uppercase tracking-[0.3em] transition-all hover:tracking-[0.4em] ${
                     tier.highlight 
                     ? 'bg-white text-accent hover:bg-white/90' 
@@ -141,14 +159,20 @@ export default function PricingPage() {
                 >
                   <Link href={tier.href}>{tier.cta}</Link>
                 </Button>
-              </motion.div>
+                
+                {tier.isRestricted && (
+                  <p className={`text-[9px] mt-4 text-center uppercase tracking-widest opacity-40 italic ${tier.highlight ? 'text-white' : 'text-accent'}`}>
+                    Requires previous studio project history
+                  </p>
+                )}
+              </div>
             ))}
           </div>
 
           <div className="mt-32 border-t border-accent/5 pt-12 flex flex-col md:flex-row items-center justify-between gap-12 max-w-7xl mx-auto">
             <div className="space-y-2 text-center md:text-left">
               <h4 className="text-xs font-bold uppercase tracking-widest text-accent">The Genesis Consultation</h4>
-              <p className="text-sm text-muted-foreground font-light italic">Initial feasibility assessment and project discovery — KES 5,000</p>
+              <p className="text-sm text-muted-foreground font-light italic">Mandatory for all first-time clients — Initial assessment & project discovery — KES 5,000</p>
             </div>
             <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent hover:text-white rounded-none h-12 px-10 uppercase tracking-widest text-[10px]">
               <Link href="/#contact">Book Initial Session</Link>
