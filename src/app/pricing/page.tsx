@@ -11,11 +11,11 @@ export default function PricingPage() {
   const tiers = [
     {
       name: "The Advisory",
-      price: "KES 650,000",
-      description: "A comprehensive initial phase for those seeking master-level guidance and conceptual direction.",
+      price: "KES 5,000",
+      description: "An initial consultation where the designer gets an idea of what the client is looking towards and allows them to gauge the feasibility of the project.",
       features: [
-        "On-site architectural assessment",
-        "Materiality & finish consultation"
+        "Initial project discovery session",
+        "Feasibility & scope assessment"
       ],
       cta: "Book Consultation",
       href: "/#contact",
