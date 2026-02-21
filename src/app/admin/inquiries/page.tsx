@@ -11,15 +11,25 @@ import {
   CheckCircle2, 
   Clock,
   Briefcase,
-  ShieldAlert
+  ShieldAlert,
+  Trash2,
+  RefreshCcw,
+  User
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useWhyteStore, Inquiry } from "@/store/use-whyte-store";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 export default function AdminInquiriesPage() {
-  const { inquiries, updateInquiryStatus } = useWhyteStore();
+  const { inquiries, updateInquiryStatus, removeInquiry } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -34,6 +44,14 @@ export default function AdminInquiriesPage() {
     toast({
       title: "Pipeline Updated",
       description: `Inquiry status synchronized to ${status}.`,
+    });
+  };
+
+  const handleArchive = (id: string) => {
+    removeInquiry(id);
+    toast({
+      title: "Communication Archived",
+      description: "Inquiry has been removed from the active pipeline.",
     });
   };
 
@@ -74,7 +92,7 @@ export default function AdminInquiriesPage() {
               inq.urgency === 'critical' ? 'border-l-4 border-l-destructive' : 
               inq.urgency === 'high' ? 'border-l-4 border-l-orange-500' : ''
             }`}>
-              <div className="p-10 flex flex-col md:flex-row gap-10">
+              <div className="p-10 flex flex-col lg:flex-row gap-10">
                 <div className="space-y-6 flex-1">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
@@ -87,13 +105,19 @@ export default function AdminInquiriesPage() {
                         <span>{inq.id}</span>
                         <div className="h-1 w-1 bg-accent/20 rounded-full" />
                         <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> {inq.date}</span>
+                        <div className="h-1 w-1 bg-accent/20 rounded-full" />
+                        <span className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {inq.email}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant="outline" className={`rounded-none uppercase tracking-widest text-[9px] py-1.5 px-4 font-bold h-fit ${getTypeStyles(inq.type)}`}>
                         {inq.type.replace('_', ' ')}
                       </Badge>
-                      <Badge className={`rounded-none uppercase tracking-widest text-[8px] ${inq.status === 'new' ? 'bg-accent' : 'bg-secondary text-muted-foreground'}`}>
+                      <Badge className={`rounded-none uppercase tracking-widest text-[8px] font-bold ${
+                        inq.status === 'new' ? 'bg-accent text-white' : 
+                        inq.status === 'contacted' ? 'bg-orange-500 text-white' : 
+                        'bg-secondary text-muted-foreground'
+                      }`}>
                         {inq.status}
                       </Badge>
                     </div>
@@ -117,16 +141,32 @@ export default function AdminInquiriesPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-row md:flex-col items-center justify-end gap-4 md:border-l border-accent/5 md:pl-10 min-w-[200px]">
-                  <Button className="flex-1 md:w-full bg-accent text-white rounded-none h-14 uppercase tracking-widest text-[10px] font-bold flex gap-3 hover:bg-accent/90">
+                <div className="flex flex-row lg:flex-col items-center justify-end gap-4 lg:border-l border-accent/5 lg:pl-10 min-w-[220px]">
+                  <div className="w-full space-y-2">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-accent/40 block text-center lg:text-left">Status Transition</p>
+                    <Select value={inq.status} onValueChange={(v: any) => handleUpdateStatus(inq.id, v)}>
+                      <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-none">
+                        <SelectItem value="new">Mark as New</SelectItem>
+                        <SelectItem value="contacted">Mark as Contacted</SelectItem>
+                        <SelectItem value="closed">Mark as Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="h-12 w-full rounded-none border-accent/10 hover:bg-accent hover:text-white transition-all uppercase tracking-widest text-[9px] font-bold flex gap-2"
+                  >
                     <Mail className="h-4 w-4" /> Respond
                   </Button>
                   <Button 
-                    variant="outline" 
-                    className="h-14 w-14 rounded-none border-accent/10 hover:bg-accent hover:text-white transition-all group/btn"
-                    onClick={() => handleUpdateStatus(inq.id, inq.status === 'closed' ? 'contacted' : 'closed')}
+                    variant="ghost" 
+                    className="h-12 w-full rounded-none text-destructive/40 hover:text-destructive hover:bg-destructive/5 uppercase tracking-widest text-[9px] font-bold flex gap-2"
+                    onClick={() => handleArchive(inq.id)}
                   >
-                    <CheckCircle2 className={`h-5 w-5 transition-transform ${inq.status === 'closed' ? 'text-green-600' : ''}`} />
+                    <Trash2 className="h-4 w-4" /> Archive
                   </Button>
                 </div>
               </div>

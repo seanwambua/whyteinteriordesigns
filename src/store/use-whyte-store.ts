@@ -132,6 +132,7 @@ interface WhyteState {
   
   addInquiry: (inquiry: Inquiry) => void;
   updateInquiryStatus: (id: string, status: Inquiry['status']) => void;
+  removeInquiry: (id: string) => void;
   
   addFeedback: (feedback: Feedback) => void;
   approveFeedback: (id: string) => void;
@@ -243,6 +244,9 @@ export const useWhyteStore = create<WhyteState>()(
       addInquiry: (inquiry) => set((state) => ({ inquiries: [inquiry, ...state.inquiries] })),
       updateInquiryStatus: (id, status) => set((state) => ({
         inquiries: state.inquiries.map(inq => inq.id === id ? { ...inq, status } : inq)
+      })),
+      removeInquiry: (id) => set((state) => ({
+        inquiries: state.inquiries.filter(inq => inq.id !== id)
       })),
 
       addFeedback: (fb) => set((state) => ({ feedback: [fb, ...state.feedback] })),

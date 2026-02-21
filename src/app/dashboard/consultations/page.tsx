@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Clock, Send, ShieldAlert, LifeBuoy } from "lucide-react";
+import { MessageSquare, Clock, Send, ShieldAlert, LifeBuoy, CheckCircle2, History } from "lucide-react";
 import { ClientSupportDialog } from "@/components/dashboard/client-support-dialog";
 
 export default function ClientConsultationsPage() {
@@ -34,6 +34,15 @@ export default function ClientConsultationsPage() {
     }
   };
 
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+      case 'new': return { label: 'Received & Queued', color: 'bg-accent text-white' };
+      case 'contacted': return { label: 'In Review / Contacted', color: 'bg-orange-500 text-white' };
+      case 'closed': return { label: 'Resolution Archived', color: 'bg-green-600 text-white' };
+      default: return { label: status, color: 'bg-secondary' };
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-12 font-body">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row justify-between items-end gap-6">
@@ -46,50 +55,62 @@ export default function ClientConsultationsPage() {
         </div>
         <Button 
           onClick={() => setIsSupportOpen(true)}
-          className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[10px] font-bold flex gap-2"
+          className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[10px] font-bold flex gap-2 shadow-2xl hover:bg-accent/90 transition-all"
         >
           <Send className="h-4 w-4" /> New Studio Request
         </Button>
       </motion.div>
 
       <div className="grid grid-cols-1 gap-6">
-        {myInquiries.map((inq, index) => (
-          <motion.div
-            key={inq.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Card className="rounded-none border-accent/5 shadow-lg bg-white overflow-hidden group">
-              <div className="p-8 flex flex-col md:flex-row gap-8">
-                <div className="flex-1 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <span className="text-[10px] font-bold text-accent/40 uppercase tracking-widest">{inq.id}</span>
-                      <Badge variant="outline" className={`rounded-none uppercase tracking-widest text-[8px] font-bold px-3 py-1 ${getUrgencyStyles(inq.urgency)}`}>
-                        {inq.urgency} Priority
-                      </Badge>
+        {myInquiries.map((inq, index) => {
+          const status = getStatusDisplay(inq.status);
+          return (
+            <motion.div
+              key={inq.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Card className="rounded-none border-accent/5 shadow-lg bg-white overflow-hidden group hover:border-accent/20 transition-all">
+                <div className="p-8 flex flex-col md:flex-row gap-8">
+                  <div className="flex-1 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-[10px] font-bold text-accent/40 uppercase tracking-widest">{inq.id}</span>
+                        <Badge variant="outline" className={`rounded-none uppercase tracking-widest text-[8px] font-bold px-3 py-1 ${getUrgencyStyles(inq.urgency)}`}>
+                          {inq.urgency} Priority
+                        </Badge>
+                      </div>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                        <Clock className="h-3 w-3" /> Submitted: {inq.date}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                      <Clock className="h-3 w-3" /> {inq.date}
-                    </span>
-                  </div>
-                  <p className="text-lg font-light italic text-accent/80 leading-relaxed border-l-2 border-accent/10 pl-6">
-                    {inq.message}
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <Badge className={`rounded-none uppercase tracking-widest text-[8px] ${inq.status === 'new' ? 'bg-accent' : 'bg-secondary text-muted-foreground'}`}>
-                      Status: {inq.status}
-                    </Badge>
-                    <span className="text-[9px] uppercase tracking-widest text-muted-foreground italic">
-                      Type: {inq.type.replace('_', ' ')}
-                    </span>
+                    
+                    <div className="space-y-4">
+                      <p className="text-lg font-light italic text-accent/80 leading-relaxed border-l-2 border-accent/10 pl-6 py-1">
+                        {inq.message}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-6 pt-2">
+                      <Badge className={`rounded-none uppercase tracking-widest text-[8px] font-bold px-4 py-1.5 ${status.color}`}>
+                        {status.label}
+                      </Badge>
+                      <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold italic">
+                        Category: {inq.type.replace('_', ' ')}
+                      </span>
+                      {inq.status === 'closed' && (
+                        <div className="flex items-center gap-2 text-green-600 text-[10px] font-bold uppercase tracking-widest">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Synchronized Resolution
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          </motion.div>
-        ))}
+              </Card>
+            </motion.div>
+          );
+        })}
 
         {myInquiries.length === 0 && (
           <div className="text-center py-24 border border-dashed border-accent/10 bg-secondary/5 space-y-6">
@@ -97,6 +118,9 @@ export default function ClientConsultationsPage() {
               <LifeBuoy className="h-6 w-6 text-accent/20" />
             </div>
             <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No communication history found in the digital vault</p>
+            <Button onClick={() => setIsSupportOpen(true)} variant="outline" className="rounded-none uppercase tracking-widest text-[10px] border-accent/20">
+              Initiate Primary Request
+            </Button>
           </div>
         )}
       </div>
