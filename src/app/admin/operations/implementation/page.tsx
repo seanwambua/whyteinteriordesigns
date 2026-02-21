@@ -40,8 +40,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 export default function ProjectImplementationPage() {
+  const router = useRouter();
   const { clientProjects, updateClientProject } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
@@ -139,14 +141,22 @@ export default function ProjectImplementationPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white border border-accent/5 shadow-md p-6 space-y-4 group hover:border-accent/20 transition-all cursor-pointer"
-              onClick={() => setActiveProject(project)}
+              onClick={() => router.push(`/admin/clients/${project.id}`)}
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
                   <span className="text-[8px] font-bold text-accent/30 uppercase tracking-widest">{project.id}</span>
                   <h4 className="text-lg font-headline italic leading-tight group-hover:text-accent transition-colors">{project.project}</h4>
                 </div>
-                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Optional: Specific context menu here if needed
+                  }}
+                >
                   <MoreVertical className="h-3 w-3" />
                 </Button>
               </div>
@@ -248,6 +258,8 @@ export default function ProjectImplementationPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
+              className="cursor-pointer"
+              onClick={() => router.push(`/admin/clients/${project.id}`)}
             >
               <Card className="rounded-none border-accent/10 shadow-2xl bg-white overflow-hidden relative group">
                 <div className="flex flex-col lg:flex-row min-h-[400px]">
@@ -262,7 +274,7 @@ export default function ProjectImplementationPage() {
                           <span>{project.tier} Tier</span>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-col items-end gap-2" onClick={(e) => e.stopPropagation()}>
                         <Select defaultValue={project.status} onValueChange={(v: any) => handleUpdateStatus(project.id, v)}>
                           <SelectTrigger className="rounded-none border-accent/10 h-10 w-44 uppercase tracking-widest text-[9px] font-bold">
                             <SelectValue placeholder="Phase Status" />
@@ -277,7 +289,7 @@ export default function ProjectImplementationPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-6" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-between text-[10px] uppercase tracking-[0.4em] font-bold text-accent/60">
                         <span>Implementation Velocity</span>
                         <span>{project.progress}%</span>
@@ -318,7 +330,7 @@ export default function ProjectImplementationPage() {
                     </div>
                   </div>
 
-                  <div className="lg:w-1/3 bg-secondary/10 p-10 flex flex-col">
+                  <div className="lg:w-1/3 bg-secondary/10 p-10 flex flex-col" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-between mb-8">
                       <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2">
                         <Clock className="h-3 w-3" /> Site Diary
@@ -419,73 +431,6 @@ export default function ProjectImplementationPage() {
             >
               Commit to Registry
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Project Quick View Dialog (When clicking card but not Advance/Back) */}
-      <Dialog open={!!activeProject && !isLogOpen} onOpenChange={(open) => !open && setActiveProject(null)}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="h-px w-8 bg-accent" />
-              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Project Inspect</span>
-            </div>
-            <DialogTitle className="text-4xl font-headline italic">{activeProject?.project}</DialogTitle>
-            <div className="flex items-center gap-4">
-              <Badge className="bg-accent text-white rounded-none uppercase tracking-widest text-[8px] px-3">{activeProject?.status}</Badge>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">{activeProject?.id}</span>
-            </div>
-          </DialogHeader>
-
-          <div className="py-8 space-y-10">
-            <div className="grid grid-cols-2 gap-12">
-              <div className="space-y-4">
-                <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40">Commission Intelligence</h4>
-                <div className="space-y-2 text-sm italic font-light">
-                  <p><span className="font-bold not-italic opacity-40 uppercase text-[9px] mr-2">Client</span> {activeProject?.name}</p>
-                  <p><span className="font-bold not-italic opacity-40 uppercase text-[9px] mr-2">Tier</span> {activeProject?.tier} Commission</p>
-                  <p><span className="font-bold not-italic opacity-40 uppercase text-[9px] mr-2">Started</span> {activeProject?.startDate}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40">Implementation Velocity</h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-xl font-headline italic">
-                    <span>{activeProject?.progress}%</span>
-                    <span className="opacity-20">Live</span>
-                  </div>
-                  <Progress value={activeProject?.progress} className="h-1 bg-secondary rounded-none" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40">Site Diary Archives</h4>
-                <Button variant="ghost" className="h-auto p-0 text-[9px] uppercase tracking-widest font-bold text-accent" onClick={() => setIsLogOpen(true)}>
-                  <Plus className="h-3 w-3 mr-1" /> Append Entry
-                </Button>
-              </div>
-              <div className="space-y-4">
-                {activeProject?.siteReports?.slice(0, 3).map(report => (
-                  <div key={report.id} className="p-6 bg-secondary/10 border border-accent/5 space-y-3">
-                    <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest">
-                      <span className={report.type === 'Issue' ? 'text-destructive' : 'text-accent/60'}>{report.type}</span>
-                      <span className="opacity-20">{report.date}</span>
-                    </div>
-                    <p className="text-xs font-light italic leading-relaxed text-accent/80">"{report.content}"</p>
-                  </div>
-                ))}
-                {(!activeProject?.siteReports || activeProject.siteReports.length === 0) && (
-                  <div className="py-12 border border-dashed border-accent/10 text-center text-[10px] uppercase tracking-widest text-accent/20 italic">No diary entries found</div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="pt-6 border-t border-accent/5">
-            <Button className="bg-accent text-white rounded-none h-12 uppercase tracking-widest text-[9px] font-bold w-full" onClick={() => setActiveProject(null)}>Exit Inspect</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
