@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { useWhyteStore, ClientProject, ProjectTask, Milestone, SubTask, VendorAllocation } from "@/store/use-whyte-store";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Dialog, 
   DialogContent, 
@@ -66,6 +66,7 @@ import { cn } from "@/lib/utils";
 export default function ProjectPlanningPage() {
   const { clientProjects, updateClientProject, removeClientProject, collaborators } = useWhyteStore();
   const { toast } = useToast();
+  const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   
   // Activation State
@@ -125,12 +126,15 @@ export default function ProjectPlanningPage() {
       
       toast({
         title: "Journey Activated",
-        description: `Financial synchronization complete for ${activationProject.id}. Transaction ${depositCode} has been logged.`,
+        description: `Financial synchronization complete for ${activationProject.id}. Transitioning to Implementation.`,
       });
       
       setIsActivating(false);
       setActivationProject(null);
       setDepositCode("");
+      
+      // Redirect to the implementation page (active projects)
+      router.push("/admin/operations/implementation");
     }, 1500);
   };
 
@@ -240,7 +244,7 @@ export default function ProjectPlanningPage() {
         { label: "Final Handover (20%)", percentage: 20, amount: budget * 0.2, status: 'Pending' as const },
       ];
       return [
-        { label: "Initial Deposit (70%)", percentage: 70, amount: budget * 0.7, status: 'Pending' as const },
+        { label: "Initial Deposit (70%)", percentage: 70, amount: budget * 0.7, status: 'Paid' as const },
         { label: "Final Handover (30%)", percentage: 30, amount: budget * 0.3, status: 'Pending' as const },
       ];
     };
