@@ -3,46 +3,33 @@
 
 import { use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, VendorAllocation, Milestone, ProjectTask, SubTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
   ArrowLeft, 
-  CheckCircle2, 
-  Circle, 
   User, 
   Plus, 
-  Trash2, 
   Activity,
   Wallet,
   Layout,
-  HardHat,
-  Clock,
   Users,
-  Settings2,
-  XCircle,
-  PlayCircle,
-  Truck,
   ShieldCheck,
   ChevronRight,
   ClipboardList,
   Building2,
   FileCheck,
-  Calendar as CalendarIcon,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  PlayCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -50,10 +37,9 @@ import { useState, useEffect } from "react";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { clientProjects, updateClientProject, collaborators, financialSteward } = useWhyteStore();
+  const { clientProjects, updateClientProject } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
-  const [isEditingRoadmap, setIsEditingRoadmap] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
 
@@ -86,32 +72,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       title: "Lifecycle Updated",
       description: `Commission moved to ${status} phase.`,
     });
-  };
-
-  const handleUpdateProgress = (val: number) => {
-    updateClientProject(project.id, { progress: val });
-  };
-
-  // Milestone Logic
-  const handleToggleMilestone = (index: number) => {
-    const updated = [...project.milestones];
-    updated[index] = { ...updated[index], isCompleted: !updated[index].isCompleted };
-    updateClientProject(project.id, { milestones: updated });
-  };
-
-  const handleUpdateMilestone = (index: number, field: keyof Milestone, value: any) => {
-    const updated = [...project.milestones];
-    updated[index] = { ...updated[index], [field]: value };
-    updateClientProject(project.id, { milestones: updated });
-  };
-
-  const handleAddMilestone = () => {
-    const newM: Milestone = { label: "New Milestone", date: format(new Date(), "yyyy-MM-dd"), isCompleted: false, description: "" };
-    updateClientProject(project.id, { milestones: [...project.milestones, newM] });
-  };
-
-  const handleRemoveMilestone = (idx: number) => {
-    updateClientProject(project.id, { milestones: project.milestones.filter((_, i) => i !== idx) });
   };
 
   // Task & Subtask Logic
@@ -367,9 +327,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
             <Layout className="h-3.5 w-3.5" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="roadmap" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
-            <Activity className="h-3.5 w-3.5" /> Roadmap
-          </TabsTrigger>
           <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
             <PlayCircle className="h-3.5 w-3.5" /> Site Workflow
           </TabsTrigger>
@@ -427,92 +384,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                 </div>
               </Card>
             </div>
-          </div>
-        </TabsContent>
-
-        {/* --- ROADMAP TAB --- */}
-        <TabsContent value="roadmap" className="m-0 space-y-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-headline italic">Architectural Roadmap</h2>
-            <div className="flex gap-4">
-              <Button variant="ghost" onClick={() => setIsEditingRoadmap(!isEditingRoadmap)} className="text-[9px] uppercase tracking-[0.3em] font-bold text-accent/60">
-                {isEditingRoadmap ? "Exit Editor" : "Curate Roadmap"}
-              </Button>
-              {isEditingRoadmap && (
-                <Button onClick={handleAddMilestone} variant="outline" className="rounded-none h-10 border-accent/20 uppercase tracking-widest text-[9px] flex gap-2">
-                  <Plus className="h-3.5 w-3.5" /> Append Phase
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {project.milestones.map((milestone, idx) => (
-              <motion.div key={idx} className={`p-8 border flex flex-col group transition-all ${milestone.isCompleted ? 'border-green-600/20 bg-green-600/[0.02]' : 'border-accent/5 bg-white shadow-xl'}`}>
-                <div className="flex items-start justify-between gap-8">
-                  <div className="flex gap-8 items-start flex-1">
-                    <button 
-                      onClick={() => !isEditingRoadmap && handleToggleMilestone(idx)}
-                      disabled={isEditingRoadmap}
-                      className={`h-12 w-12 rounded-full border flex items-center justify-center shrink-0 transition-all ${milestone.isCompleted ? 'bg-green-600 border-green-600 text-white' : 'border-accent/10 text-accent/10 hover:border-accent hover:text-accent'} ${isEditingRoadmap ? 'cursor-not-allowed opacity-40' : ''}`}
-                    >
-                      {milestone.isCompleted ? <CheckCircle2 className="h-6 w-6" /> : <Circle className="h-6 w-6" />}
-                    </button>
-                    
-                    <div className="space-y-4 flex-1">
-                      {isEditingRoadmap ? (
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <div className="md:col-span-2 space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Label</Label>
-                            <Input value={milestone.label} onChange={(e) => handleUpdateMilestone(idx, 'label', e.target.value)} className="rounded-none h-10 text-sm font-bold uppercase tracking-widest" />
-                          </div>
-                          <div className="md:col-span-2 space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Target Date</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal rounded-none h-10 border-accent/10 text-sm",
-                                    !milestone.date && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4 opacity-40" />
-                                  {milestone.date && isValid(new Date(milestone.date)) ? format(new Date(milestone.date), "PPP") : milestone.date || "Select Date"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0 rounded-none" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={milestone.date && isValid(new Date(milestone.date)) ? new Date(milestone.date) : undefined}
-                                  onSelect={(d) => handleUpdateMilestone(idx, 'date', d ? format(d, "yyyy-MM-dd") : "")}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className="md:col-span-4 space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Objective</Label>
-                            <Textarea value={milestone.description} onChange={(e) => handleUpdateMilestone(idx, 'description', e.target.value)} className="rounded-none min-h-[80px] text-sm font-light italic" />
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-4">
-                            <h4 className={`text-lg font-headline ${milestone.isCompleted ? 'text-foreground' : 'text-accent/60'}`}>{milestone.label}</h4>
-                            <span className="text-[9px] font-bold text-accent/30 uppercase tracking-widest">
-                              {milestone.date && isValid(new Date(milestone.date)) ? format(new Date(milestone.date), "MMM dd, yyyy") : milestone.date}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground font-light italic max-w-xl leading-relaxed">{milestone.description}</p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {isEditingRoadmap && <Button variant="ghost" size="icon" onClick={() => handleRemoveMilestone(idx)} className="text-destructive/40 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>}
-                </div>
-              </motion.div>
-            ))}
           </div>
         </TabsContent>
 

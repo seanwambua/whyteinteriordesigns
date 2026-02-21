@@ -8,29 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format, isValid } from "date-fns";
-import { cn } from "@/lib/utils";
 import { 
-  ClipboardList, 
   ArrowLeft, 
-  Banknote, 
   ChevronRight, 
   User, 
   Briefcase, 
   Calculator, 
-  Flag, 
   Plus, 
   Trash2,
   Activity,
-  Layers,
-  CheckCircle2,
-  Calendar as CalendarIcon
+  ClipboardList
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { useWhyteStore, ClientProject, Milestone, ProjectTask, SubTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask } from "@/store/use-whyte-store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
@@ -49,9 +40,6 @@ export default function AddClientPage() {
     tier: "Premium" as ClientProject['tier'],
     description: "",
     totalBudget: "",
-    milestones: [
-      { label: "Project Initialization", date: format(new Date(), "yyyy-MM-dd"), isCompleted: true, description: "Kick-off and initial site survey." }
-    ] as Milestone[],
     tasks: [
       { 
         title: "Site Measurement Verification", 
@@ -62,32 +50,11 @@ export default function AddClientPage() {
     ] as (Omit<ProjectTask, 'id'>)[]
   });
 
-  const totalSteps = 5;
+  const totalSteps = 4;
   const progress = (step / totalSteps) * 100;
 
   const handleNext = () => setStep(prev => prev + 1);
   const handleBack = () => setStep(prev => prev - 1);
-
-  // Milestone Handlers
-  const addMilestone = () => {
-    setFormData({
-      ...formData,
-      milestones: [...formData.milestones, { label: "", date: format(new Date(), "yyyy-MM-dd"), isCompleted: false, description: "" }]
-    });
-  };
-
-  const removeMilestone = (index: number) => {
-    setFormData({
-      ...formData,
-      milestones: formData.milestones.filter((_, i) => i !== index)
-    });
-  };
-
-  const updateMilestone = (index: number, field: keyof Milestone, value: any) => {
-    const updated = [...formData.milestones];
-    updated[index] = { ...updated[index], [field]: value };
-    setFormData({ ...formData, milestones: updated });
-  };
 
   // Task Handlers
   const addTask = () => {
@@ -178,7 +145,7 @@ export default function AddClientPage() {
       isActivated: false,
       initialDepositPaid: false,
       totalBudget: budget,
-      milestones: formData.milestones,
+      milestones: [],
       tasks: tasksWithIds,
       installments: getInstallmentPlan(formData.tier, budget),
       description: formData.description
@@ -199,8 +166,7 @@ export default function AddClientPage() {
     if (step === 1) return formData.name && formData.email;
     if (step === 2) return formData.project && formData.description;
     if (step === 3) return formData.totalBudget && Number(formData.totalBudget) > 0;
-    if (step === 4) return formData.milestones.every(m => m.label && m.date);
-    if (step === 5) return formData.tasks.every(t => t.title);
+    if (step === 4) return formData.tasks.every(t => t.title);
     return true;
   };
 
@@ -312,65 +278,6 @@ export default function AddClientPage() {
 
               {step === 4 && (
                 <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                  <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-4">
-                      <Flag className="h-5 w-5 text-accent/40" />
-                      <h3 className="text-xl font-headline italic">Project Roadmap</h3>
-                    </div>
-                    <Button type="button" onClick={addMilestone} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[9px] flex gap-2">
-                      <Plus className="h-3.5 w-3.5" /> Add Milestone
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
-                    {formData.milestones.map((milestone, idx) => (
-                      <div key={idx} className="p-6 border border-accent/10 bg-secondary/5 relative space-y-4">
-                        <Button type="button" variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive" onClick={() => removeMilestone(idx)} disabled={formData.milestones.length === 1}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Label</Label>
-                            <Input placeholder="Milestone Name" className="rounded-none h-10 text-sm" value={milestone.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Target Date</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal rounded-none h-10 border-accent/10 text-sm",
-                                    !milestone.date && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4 opacity-40" />
-                                  {milestone.date && isValid(new Date(milestone.date)) ? format(new Date(milestone.date), "PPP") : milestone.date || "Select Date"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0 rounded-none" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={milestone.date && isValid(new Date(milestone.date)) ? new Date(milestone.date) : undefined}
-                                  onSelect={(d) => updateMilestone(idx, 'date', d ? format(d, "yyyy-MM-dd") : "")}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[9px] uppercase tracking-widest opacity-40">Objective</Label>
-                          <Input placeholder="Details..." className="rounded-none h-10 text-sm" value={milestone.description} onChange={(e) => updateMilestone(idx, 'description', e.target.value)} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {step === 5 && (
-                <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                       <Activity className="h-5 w-5 text-accent/40" />
