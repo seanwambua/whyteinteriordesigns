@@ -13,6 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format, isValid } from "date-fns";
+import { cn } from "@/lib/utils";
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -34,7 +38,8 @@ import {
   ChevronRight,
   ClipboardList,
   Building2,
-  FileCheck
+  FileCheck,
+  Calendar as CalendarIcon
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -97,7 +102,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   };
 
   const handleAddMilestone = () => {
-    const newM: Milestone = { label: "New Milestone", date: "TBD", isCompleted: false, description: "" };
+    const newM: Milestone = { label: "New Milestone", date: format(new Date(), "yyyy-MM-dd"), isCompleted: false, description: "" };
     updateClientProject(project.id, { milestones: [...project.milestones, newM] });
   };
 
@@ -350,15 +355,47 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                     <div className="space-y-4 flex-1">
                       {isEditingRoadmap ? (
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <div className="md:col-span-3 space-y-2"><Input value={milestone.label} onChange={(e) => handleUpdateMilestone(idx, 'label', e.target.value)} className="rounded-none h-10 text-sm font-bold uppercase tracking-widest" /></div>
-                          <div className="space-y-2"><Input value={milestone.date} onChange={(e) => handleUpdateMilestone(idx, 'date', e.target.value)} className="rounded-none h-10 text-sm" /></div>
-                          <div className="md:col-span-4"><Textarea value={milestone.description} onChange={(e) => handleUpdateMilestone(idx, 'description', e.target.value)} className="rounded-none min-h-[80px] text-sm font-light italic" /></div>
+                          <div className="md:col-span-2 space-y-2">
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Label</Label>
+                            <Input value={milestone.label} onChange={(e) => handleUpdateMilestone(idx, 'label', e.target.value)} className="rounded-none h-10 text-sm font-bold uppercase tracking-widest" />
+                          </div>
+                          <div className="md:col-span-2 space-y-2">
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Target Date</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal rounded-none h-10 border-accent/10 text-sm",
+                                    !milestone.date && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4 opacity-40" />
+                                  {milestone.date && isValid(new Date(milestone.date)) ? format(new Date(milestone.date), "PPP") : milestone.date || "Select Date"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 rounded-none" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={milestone.date && isValid(new Date(milestone.date)) ? new Date(milestone.date) : undefined}
+                                  onSelect={(d) => handleUpdateMilestone(idx, 'date', d ? format(d, "yyyy-MM-dd") : "")}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <div className="md:col-span-4 space-y-2">
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Objective</Label>
+                            <Textarea value={milestone.description} onChange={(e) => handleUpdateMilestone(idx, 'description', e.target.value)} className="rounded-none min-h-[80px] text-sm font-light italic" />
+                          </div>
                         </div>
                       ) : (
                         <>
                           <div className="flex items-center gap-4">
                             <h4 className={`text-lg font-headline ${milestone.isCompleted ? 'text-foreground' : 'text-accent/60'}`}>{milestone.label}</h4>
-                            <span className="text-[9px] font-bold text-accent/30 uppercase tracking-widest">{milestone.date}</span>
+                            <span className="text-[9px] font-bold text-accent/30 uppercase tracking-widest">
+                              {milestone.date && isValid(new Date(milestone.date)) ? format(new Date(milestone.date), "MMM dd, yyyy") : milestone.date}
+                            </span>
                           </div>
                           <p className="text-sm text-muted-foreground font-light italic max-w-xl leading-relaxed">{milestone.description}</p>
                         </>

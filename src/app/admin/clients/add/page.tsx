@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format, isValid } from "date-fns";
+import { cn } from "@/lib/utils";
 import { 
   ClipboardList, 
   ArrowLeft, 
@@ -20,7 +24,8 @@ import {
   Plus, 
   Trash2,
   Activity,
-  Layers
+  Layers,
+  Calendar as CalendarIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -44,7 +49,7 @@ export default function AddClientPage() {
     description: "",
     totalBudget: "",
     milestones: [
-      { label: "Project Initialization", date: "Month 1", isCompleted: true, description: "Kick-off and initial site survey." }
+      { label: "Project Initialization", date: format(new Date(), "yyyy-MM-dd"), isCompleted: true, description: "Kick-off and initial site survey." }
     ] as Milestone[],
     tasks: [
       { title: "Site Measurement Verification", priority: "High" as const, status: "Todo" as const }
@@ -61,7 +66,7 @@ export default function AddClientPage() {
   const addMilestone = () => {
     setFormData({
       ...formData,
-      milestones: [...formData.milestones, { label: "", date: "", isCompleted: false, description: "" }]
+      milestones: [...formData.milestones, { label: "", date: format(new Date(), "yyyy-MM-dd"), isCompleted: false, description: "" }]
     });
   };
 
@@ -299,8 +304,29 @@ export default function AddClientPage() {
                             <Input placeholder="Milestone Name" className="rounded-none h-10 text-sm" value={milestone.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Target Timeline</Label>
-                            <Input placeholder="E.g., Month 2" className="rounded-none h-10 text-sm" value={milestone.date} onChange={(e) => updateMilestone(idx, 'date', e.target.value)} />
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40">Target Date</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal rounded-none h-10 border-accent/10 text-sm",
+                                    !milestone.date && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4 opacity-40" />
+                                  {milestone.date && isValid(new Date(milestone.date)) ? format(new Date(milestone.date), "PPP") : milestone.date || "Select Date"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 rounded-none" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={milestone.date && isValid(new Date(milestone.date)) ? new Date(milestone.date) : undefined}
+                                  onSelect={(d) => updateMilestone(idx, 'date', d ? format(d, "yyyy-MM-dd") : "")}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
                           </div>
                         </div>
                         <div className="space-y-2">
