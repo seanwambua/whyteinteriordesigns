@@ -13,7 +13,7 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
     { title: "My Workspace", icon: LayoutDashboard, href: "/dashboard" },
     { title: "Active Projects", icon: Briefcase, href: "/dashboard/projects" },
     { title: "Consultations", icon: MessageSquare, href: "/dashboard/consultations" },
-    { title: "Submit Review", icon: Star, href: "/feedback" },
+    { title: "Submit Review", icon: Star, href: "/dashboard/submit-review" },
   ];
 
   return (
