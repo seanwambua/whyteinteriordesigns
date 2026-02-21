@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -18,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Star, Send, Share2, Twitter, Facebook, Linkedin, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useWhyteStore, Feedback as FeedbackType } from "@/store/use-whyte-store";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -28,6 +30,7 @@ const formSchema = z.object({
 
 export function Feedback() {
   const { toast } = useToast();
+  const { addFeedback } = useWhyteStore();
   const [rating, setRating] = useState(5);
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -72,11 +75,21 @@ export function Feedback() {
   };
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Feedback submitted:", values);
+    const newFeedback: FeedbackType = {
+      id: `FB-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      name: values.name,
+      email: values.email,
+      rating: values.rating,
+      comment: values.comment,
+      isApproved: false,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+    };
+
+    addFeedback(newFeedback);
     setSubmitted(true);
     toast({
       title: "Feedback Received",
-      description: "Thank you for helping us refine the Whyte experience.",
+      description: "Thank you for helping us refine the Whyte experience. Your review is queued for moderation.",
     });
   }
 
@@ -153,7 +166,7 @@ export function Feedback() {
                               className="transition-transform hover:scale-110 focus:outline-none"
                             >
                               <Star 
-                                className={`h-6 w-6 ${s <= rating ? 'fill-accent text-accent' : 'text-accent/20'}`} 
+                                className={`h-6 w-6 ${s <= rating ? 'fill-accent text-accent' : 'text-accent/10'}`} 
                               />
                             </button>
                           ))}
