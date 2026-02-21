@@ -1,3 +1,4 @@
+
 "use client";
 
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -107,13 +108,6 @@ export function Services() {
                     <Link href={service.href}>
                       Explore <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
                     </Link>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => handleInquiry(service.id)}
-                    className="rounded-none text-accent hover:bg-accent/5 hover:text-accent h-12 px-8 uppercase tracking-widest text-[10px] underline underline-offset-4"
-                  >
-                    Direct Inquiry
                   </Button>
                 </div>
               </div>

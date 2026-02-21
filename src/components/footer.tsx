@@ -10,7 +10,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-white/10 pb-12 mb-12">
           <div className="col-span-1 md:col-span-1 space-y-4">
             <Link href="/" className="group">
-              <span className="text-xl font-headline font-bold tracking-tight text-white uppercase">
+              <span className="text-lg font-headline font-bold tracking-tight text-white uppercase">
                 Whyte Interior Designs
               </span>
             </Link>
