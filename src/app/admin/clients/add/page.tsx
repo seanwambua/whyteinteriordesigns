@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, ShieldCheck, ArrowLeft } from "lucide-react";
+import { ClipboardList, ShieldCheck, ArrowLeft, Banknote } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
@@ -25,7 +25,8 @@ export default function AddClientPage() {
     email: "",
     project: "",
     tier: "Premium" as ClientProject['tier'],
-    description: ""
+    description: "",
+    totalBudget: ""
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,11 +41,14 @@ export default function AddClientPage() {
       email: formData.email,
       project: formData.project,
       tier: formData.tier,
-      status: "Consultation",
+      status: "Planning",
       progress: 0,
       startDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      lastActivity: "Journey Initialized",
-      financialReportStatus: 'Pending'
+      lastActivity: "Planning Phase Initialized",
+      financialReportStatus: 'Pending',
+      isActivated: false,
+      initialDepositPaid: false,
+      totalBudget: Number(formData.totalBudget) || 0
     };
 
     // Simulated synchronization
@@ -52,10 +56,10 @@ export default function AddClientPage() {
       addClientProject(newProject);
       setLoading(false);
       toast({
-        title: "Client Journey Initialized",
-        description: `Project Reference ID: ${id} has been synchronized to the studio archives.`,
+        title: "Planning Initialized",
+        description: `Project ${id} is now in the Planning queue. Deposit verification required for activation.`,
       });
-      router.push("/admin/clients");
+      router.push("/admin/operations/planning");
     }, 1500);
   };
 
@@ -71,9 +75,9 @@ export default function AddClientPage() {
         </Button>
         <div className="flex items-center gap-4">
           <div className="h-px w-8 bg-accent" />
-          <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Client Lifecycle</span>
+          <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Project Lifecycle</span>
         </div>
-        <h1 className="text-5xl font-headline italic">Initialize <span className="not-italic">Journey.</span></h1>
+        <h1 className="text-5xl font-headline italic">Initialize <span className="not-italic">Planning.</span></h1>
       </motion.div>
 
       <Card className="rounded-none border-accent/10 shadow-2xl bg-white overflow-hidden">
@@ -115,28 +119,40 @@ export default function AddClientPage() {
                     <SelectValue placeholder="Select Commission Tier" />
                   </SelectTrigger>
                   <SelectContent className="rounded-none border-accent/20 font-body">
-                    <SelectItem value="Premium" className="py-3">Premium (50/30/20 installments)</SelectItem>
-                    <SelectItem value="Deluxe" className="py-3">Deluxe (60/20/20 installments)</SelectItem>
-                    <SelectItem value="Golden" className="py-3">Golden (70/30 installments)</SelectItem>
+                    <SelectItem value="Premium" className="py-3">Premium (50% Initial Deposit)</SelectItem>
+                    <SelectItem value="Deluxe" className="py-3">Deluxe (60% Initial Deposit)</SelectItem>
+                    <SelectItem value="Golden" className="py-3">Golden (70% Initial Deposit)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-3">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Project Reference Title</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Total Budget (KES)</Label>
                 <Input 
-                  placeholder="E.g., Runda Residence Phase II" 
+                  type="number"
+                  placeholder="E.g., 5000000" 
                   className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent bg-transparent" 
                   required 
-                  value={formData.project}
-                  onChange={(e) => setFormData({...formData, project: e.target.value})}
+                  value={formData.totalBudget}
+                  onChange={(e) => setFormData({...formData, totalBudget: e.target.value})}
                 />
               </div>
             </div>
 
             <div className="space-y-3">
+              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Project Reference Title</Label>
+              <Input 
+                placeholder="E.g., Runda Residence Phase II" 
+                className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent bg-transparent" 
+                required 
+                value={formData.project}
+                onChange={(e) => setFormData({...formData, project: e.target.value})}
+              />
+            </div>
+
+            <div className="space-y-3">
               <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Architectural Brief (Initial Notes)</Label>
               <Textarea 
-                placeholder="Describe the primary spatial goals, structural constraints, and aesthetic DNA..." 
+                placeholder="Describe the primary spatial goals..." 
                 className="min-h-[160px] rounded-none border-accent/20 focus:ring-accent resize-none bg-transparent text-lg p-6" 
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -145,26 +161,20 @@ export default function AddClientPage() {
 
             <div className="pt-10 flex flex-col items-center gap-8 border-t border-accent/5">
               <div className="flex items-center gap-3 text-accent/40 bg-secondary/30 px-6 py-3 border border-accent/5">
-                <ShieldCheck className="h-4 w-4" />
-                <span className="text-[9px] uppercase tracking-[0.3em] font-bold">Encrypted Studio Portal Provisioning Active</span>
+                <Banknote className="h-4 w-4" />
+                <span className="text-[9px] uppercase tracking-[0.3em] font-bold">Initial Deposit Requirement: {formData.tier === 'Premium' ? '50%' : formData.tier === 'Deluxe' ? '60%' : '70%'}</span>
               </div>
               <Button 
                 type="submit" 
                 disabled={loading}
                 className="bg-accent text-white rounded-none h-20 px-20 uppercase tracking-[0.4em] text-[10px] font-bold flex gap-4 hover:bg-accent/90 transition-all shadow-2xl disabled:opacity-50"
               >
-                {loading ? "Synchronizing Digital Vault..." : <><UserPlus className="h-5 w-5" /> Activate Client Journey</>}
+                {loading ? "Synchronizing Brief..." : <><ClipboardList className="h-5 w-5" /> Initialize Planning Phase</>}
               </Button>
             </div>
           </form>
         </CardContent>
       </Card>
-
-      <div className="p-10 border border-dashed border-accent/20 text-center bg-secondary/5">
-        <p className="text-[10px] uppercase tracking-[0.5em] text-accent/40 font-bold italic leading-relaxed max-w-2xl mx-auto">
-          Initializing a journey will generate a unique Digital Vault key. The client will receive an automated invitation to sync their Nairobi residency data once initialization completes.
-        </p>
-      </div>
     </div>
   );
 }

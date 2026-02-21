@@ -24,6 +24,10 @@ export interface ClientProject {
   startDate: string;
   lastActivity: string;
   financialReportStatus?: 'Verified' | 'Pending' | 'Awaiting Steward';
+  isActivated: boolean;
+  initialDepositPaid: boolean;
+  depositCode?: string;
+  totalBudget: number;
 }
 
 export interface Inquiry {
@@ -118,7 +122,11 @@ const initialClientProjects: ClientProject[] = [
     progress: 78,
     startDate: "Jan 15, 2024",
     lastActivity: "2 hours ago",
-    financialReportStatus: 'Pending'
+    financialReportStatus: 'Pending',
+    isActivated: true,
+    initialDepositPaid: true,
+    depositCode: "AUTH-8821",
+    totalBudget: 15000000
   },
   {
     id: "WP-0091",
@@ -130,7 +138,10 @@ const initialClientProjects: ClientProject[] = [
     progress: 32,
     startDate: "Feb 10, 2024",
     lastActivity: "1 day ago",
-    financialReportStatus: 'Awaiting Steward'
+    financialReportStatus: 'Awaiting Steward',
+    isActivated: false,
+    initialDepositPaid: false,
+    totalBudget: 8500000
   }
 ];
 

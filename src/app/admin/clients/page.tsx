@@ -33,9 +33,12 @@ export default function ActiveJourneysPage() {
 
   if (!isMounted) return null;
 
+  // Only show projects that have been activated via deposit
   const filteredProjects = clientProjects.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.project.toLowerCase().includes(search.toLowerCase())
+    p.isActivated && (
+      p.name.toLowerCase().includes(search.toLowerCase()) || 
+      p.project.toLowerCase().includes(search.toLowerCase())
+    )
   );
 
   const getStatusColor = (status: string) => {
@@ -60,7 +63,7 @@ export default function ActiveJourneysPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-4">
             <div className="h-px w-8 bg-accent" />
-            <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Client Lifecycle</span>
+            <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Verified Portfolio</span>
           </div>
           <h1 className="text-5xl font-headline italic">Active <span className="not-italic">Journeys.</span></h1>
         </div>
@@ -68,7 +71,7 @@ export default function ActiveJourneysPage() {
           <div className="relative w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search Clients..." 
+              placeholder="Search Active Clients..." 
               className="pl-11 rounded-none border-accent/10 h-12 text-xs uppercase tracking-widest bg-white"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -151,7 +154,7 @@ export default function ActiveJourneysPage() {
 
                     <div className="flex items-center gap-12 text-[10px] uppercase tracking-widest font-bold">
                        <div className="space-y-1">
-                         <span className="text-accent/30 flex items-center gap-2"><Calendar className="h-3 w-3" /> Commenced</span>
+                         <span className="text-accent/30 flex items-center gap-2"><Calendar className="h-3 w-3" /> Activated</span>
                          <span className="text-muted-foreground">{client.startDate}</span>
                        </div>
                        <div className="space-y-1">
@@ -161,11 +164,9 @@ export default function ActiveJourneysPage() {
                     </div>
 
                     <div className="text-right">
-                       <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Financial Reconciliation</span>
-                       <span className={`text-[10px] font-bold uppercase tracking-widest ${
-                         client.financialReportStatus === 'Verified' ? 'text-green-600' : 'text-orange-500'
-                       }`}>
-                         {client.financialReportStatus || 'Internal Audit Only'}
+                       <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Deposit Verified</span>
+                       <span className="text-[10px] font-bold uppercase tracking-widest text-green-600">
+                         {client.depositCode || 'VERIFIED'}
                        </span>
                     </div>
                   </div>
@@ -176,7 +177,7 @@ export default function ActiveJourneysPage() {
         ))}
         {filteredProjects.length === 0 && (
           <div className="text-center py-20 border border-dashed border-accent/10">
-            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No active journeys found matching your search</p>
+            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No active journeys synchronized. Check Planning Phase for pending deposits.</p>
           </div>
         )}
       </div>
@@ -185,18 +186,18 @@ export default function ActiveJourneysPage() {
         <div className="flex items-center gap-12">
           <div className="space-y-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">Total Active Commissions</p>
-            <p className="text-3xl font-headline italic">{clientProjects.length} Architectural Journeys</p>
+            <p className="text-3xl font-headline italic">{filteredProjects.length} Architectural Journeys</p>
           </div>
           <div className="h-16 w-px bg-accent/10" />
           <div className="space-y-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">Tier Stratification</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">Studio Capacity</p>
             <p className="text-lg font-headline italic">
-              {clientProjects.filter(p => p.tier === 'Golden').length} Golden • {clientProjects.filter(p => p.tier === 'Deluxe').length} Deluxe • {clientProjects.filter(p => p.tier === 'Premium').length} Premium
+              Currently managing {clientProjects.length} total project briefings.
             </p>
           </div>
         </div>
         <Button asChild className="bg-accent text-white rounded-none h-16 px-12 uppercase tracking-[0.3em] text-[10px] font-bold hover:bg-accent/90 transition-all shadow-xl">
-          <Link href="/admin/clients/add">Initialize New Journey</Link>
+          <Link href="/admin/clients/add">Initialize New Briefing</Link>
         </Button>
       </div>
     </div>
