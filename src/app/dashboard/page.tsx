@@ -24,7 +24,9 @@ import {
   Calendar as CalendarIcon,
   Timer,
   Archive,
-  History
+  History,
+  Zap,
+  BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -81,10 +83,21 @@ export default function ClientDashboardPage() {
 
   // Temporal Logic for Client View
   const deadlineStr = activeProject.endDate || format(new Date(), "MMM dd, yyyy");
+  const startStr = activeProject.startDate || format(new Date(), "MMM dd, yyyy");
+  
   const deadline = parse(deadlineStr, "MMM dd, yyyy", new Date());
+  const startDate = parse(startStr, "MMM dd, yyyy", new Date());
   const today = new Date();
+  
   const daysRemaining = differenceInDays(deadline, today);
+  const totalDuration = differenceInDays(deadline, startDate);
   const isOverdue = isAfter(today, deadline);
+
+  // Efficiency Logic
+  // Efficiency is high if project was not extended and completed on time.
+  const efficiencyRating = activeProject.isArchived 
+    ? (activeProject.isExtended ? 88 : 96) 
+    : Math.round((completedTasksCount / Math.max(1, activeProject.tasks?.length || 1)) * 100);
 
   return (
     <div className="max-w-6xl mx-auto space-y-16 pb-24 font-body">
@@ -124,29 +137,48 @@ export default function ClientDashboardPage() {
       </motion.div>
 
       {activeProject.isArchived && (
-        <div className="p-8 border border-accent/10 bg-accent/[0.03] flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-6">
-            <div className="h-14 w-14 bg-accent/5 rounded-full flex items-center justify-center text-accent">
-              <History className="h-7 w-7" />
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        >
+          <Card className="rounded-none border-black/10 bg-black p-8 text-white flex flex-col justify-between">
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-[0.4em] text-white/40">Efficiency Rating</p>
+              <p className="text-5xl font-headline italic">{efficiencyRating}%</p>
             </div>
-            <div className="space-y-1">
-              <h3 className="text-xl font-headline italic text-accent">Commission Retired</h3>
-              <p className="text-sm font-light text-muted-foreground italic leading-relaxed">
-                This project has been successfully reconciled and retired to the studio archives. All implementation data is now read-only.
-              </p>
+            <div className="pt-6 mt-6 border-t border-white/10">
+              <p className="text-[9px] uppercase tracking-widest text-white/40">Studio Performance Index</p>
             </div>
-          </div>
-          <Button variant="outline" className="rounded-none border-accent/20 text-accent uppercase tracking-widest text-[10px] h-12 px-8">
-            Download Completion Cert
-          </Button>
-        </div>
+          </Card>
+
+          <Card className="rounded-none border-accent/10 bg-white p-8 flex flex-col justify-between">
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-[0.4em] text-accent/40">Handover Lifecycle</p>
+              <p className="text-4xl font-headline italic">{totalDuration} Days</p>
+            </div>
+            <div className="pt-6 mt-6 border-t border-accent/5">
+              <p className="text-[9px] uppercase tracking-widest text-accent/40">{activeProject.startDate} — {activeProject.endDate}</p>
+            </div>
+          </Card>
+
+          <Card className="rounded-none border-accent/10 bg-accent/[0.03] p-8 flex flex-col justify-between">
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-[0.4em] text-accent/40">Task Reconciliation</p>
+              <p className="text-4xl font-headline italic">{completedTasksCount} Protocol(s)</p>
+            </div>
+            <div className="pt-6 mt-6 border-t border-accent/5">
+              <p className="text-[9px] uppercase tracking-widest text-accent/40">100% Structural Completion</p>
+            </div>
+          </Card>
+        </motion.div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         <div className="lg:col-span-8 space-y-12">
           {/* Main Status Card */}
           <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-            <Card className={cn("rounded-none border-accent/10 shadow-2xl overflow-hidden bg-white", activeProject.isArchived && "opacity-80")}>
+            <Card className={cn("rounded-none border-accent/10 shadow-2xl overflow-hidden bg-white", activeProject.isArchived && "opacity-90")}>
               <div className={cn("h-1.5 w-full", activeProject.isArchived ? "bg-black" : "bg-accent")} />
               <CardHeader className="p-10 pb-6">
                 <div className="flex justify-between items-start mb-6">
@@ -167,18 +199,29 @@ export default function ClientDashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-10 pt-0 space-y-10">
-                <div className="space-y-4">
-                  <div className="flex justify-between text-[9px] uppercase tracking-[0.4em] font-bold text-accent/60">
-                    <span>Implementation Velocity</span>
-                    <span>{activeProject.progress}%</span>
-                  </div>
-                  <Progress value={activeProject.progress} className="h-1 bg-secondary rounded-none" />
+                <div className="space-y-6">
+                  <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2">
+                    <BookOpen className="h-3 w-3" /> Architectural Brief
+                  </h4>
+                  <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">
+                    "{activeProject.description || activeProject.workScope || "No brief synchronized for this dossier."}"
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {!activeProject.isArchived && (
+                  <div className="space-y-4 pt-6 border-t border-accent/5">
+                    <div className="flex justify-between text-[9px] uppercase tracking-[0.4em] font-bold text-accent/60">
+                      <span>Implementation Velocity</span>
+                      <span>{activeProject.progress}%</span>
+                    </div>
+                    <Progress value={activeProject.progress} className="h-1 bg-secondary rounded-none" />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
                   <div className="p-8 bg-secondary/30 border-l-2 border-accent italic">
                     <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2 mb-4">
-                      <Clock className="h-3 w-3" /> Latest Site Entry
+                      <Clock className="h-3 w-3" /> {activeProject.isArchived ? "Archival Sync" : "Latest Site Entry"}
                     </h4>
                     <p className="text-sm font-light leading-relaxed text-accent/80">
                       "{activeProject.lastActivity || 'Architectural synchronization established.'}"
@@ -211,11 +254,16 @@ export default function ClientDashboardPage() {
           {/* Operational Workflow (Tasks) */}
           <div className="space-y-8">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4"><Activity className="h-4 w-4 text-accent" /><h2 className="text-2xl font-headline italic">Project Workflow Recap</h2></div>
+              <div className="flex items-center gap-4">
+                <Activity className="h-4 w-4 text-accent" />
+                <h2 className="text-2xl font-headline italic">
+                  {activeProject.isArchived ? "Completed Protocol Index" : "Project Workflow Recap"}
+                </h2>
+              </div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">{completedTasksCount} Tasks Logged</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {(activeProject.tasks || []).slice(0, 4).map((task) => (
+              {(activeProject.tasks || []).map((task) => (
                 <div key={task.id} className="p-6 border border-accent/5 bg-white shadow-sm flex flex-col justify-between min-h-[140px] group transition-all">
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
@@ -224,7 +272,11 @@ export default function ClientDashboardPage() {
                     </div>
                     <h4 className="text-sm font-bold uppercase tracking-widest leading-tight group-hover:text-accent transition-colors">{task.title}</h4>
                   </div>
-                  {task.assignedVendor && (<div className="flex items-center gap-2 text-[9px] text-muted-foreground uppercase tracking-widest pt-4 border-t border-accent/5 mt-4"><Truck className="h-3 w-3 opacity-40" /> {task.assignedVendor}</div>)}
+                  {task.assignedVendor && (
+                    <div className="flex items-center gap-2 text-[9px] text-muted-foreground uppercase tracking-widest pt-4 border-t border-accent/5 mt-4">
+                      <Truck className="h-3 w-3 opacity-40" /> {task.assignedVendor}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -250,7 +302,7 @@ export default function ClientDashboardPage() {
           </Card>
           
           <Card className="rounded-none border-accent/5 bg-secondary/30 p-8 space-y-6">
-            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><HardHat className="h-3 w-3" /> Historical Network</h4>
+            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><HardHat className="h-3 w-3" /> {activeProject.isArchived ? "Historical Network" : "Active Partner Matrix"}</h4>
             <div className="space-y-4">
               {(activeProject.vendorAllocations || []).map((vendor, vIdx) => (
                 <div key={vIdx} className="flex items-center justify-between">
@@ -258,6 +310,9 @@ export default function ClientDashboardPage() {
                   <Badge variant="ghost" className="text-[8px] uppercase tracking-widest opacity-40 p-0 h-auto">{vendor.category}</Badge>
                 </div>
               ))}
+              {(activeProject.vendorAllocations || []).length === 0 && (
+                <p className="text-[10px] text-muted-foreground italic">No partners officially logged.</p>
+              )}
             </div>
           </Card>
         </div>

@@ -36,7 +36,10 @@ import {
   RefreshCcw,
   Trash2,
   CheckCircle2,
-  Circle
+  Circle,
+  Zap,
+  BookOpen,
+  Archive
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -74,12 +77,19 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   }
 
   // --- TEMPORAL LOGIC ---
-  // Safety check for endDate to prevent 'match' error on undefined
   const deadlineStr = project.endDate || format(new Date(), "MMM dd, yyyy");
+  const startStr = project.startDate || format(new Date(), "MMM dd, yyyy");
   const deadline = parse(deadlineStr, "MMM dd, yyyy", new Date());
+  const startDate = parse(startStr, "MMM dd, yyyy", new Date());
   const today = new Date();
+  
   const daysRemaining = differenceInDays(deadline, today);
+  const totalDuration = differenceInDays(deadline, startDate);
   const isOverdue = isAfter(today, deadline);
+
+  const efficiencyRating = project.isArchived 
+    ? (project.isExtended ? 88 : 96) 
+    : 0;
 
   const handleApplyExtension = () => {
     if (!newDeadline) return;
@@ -201,30 +211,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     );
   };
 
-  // Milestone Handlers
-  const handleAddMilestone = () => {
-    const newM: Milestone = {
-      id: `M-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-      label: "New Project Milestone",
-      date: format(new Date(), "MMM dd, yyyy"),
-      isCompleted: false,
-      description: "Define milestone objective..."
-    };
-    updateClientProject(project.id, { milestones: [...(project.milestones || []), newM] });
-  };
-
-  const handleToggleMilestone = (mId: string) => {
-    const updated = (project.milestones || []).map(m => 
-      m.id === mId ? { ...m, isCompleted: !m.isCompleted } : m
-    );
-    updateClientProject(project.id, { milestones: updated });
-  };
-
-  const handleRemoveMilestone = (mId: string) => {
-    const updated = (project.milestones || []).filter(m => m.id !== mId);
-    updateClientProject(project.id, { milestones: updated });
-  };
-
   const KanbanCol = ({ status, title, color }: { status: ProjectTask['status'], title: string, color: string }) => {
     const tasks = (project.tasks || []).filter(t => t.status === status);
     return (
@@ -263,33 +249,35 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-4 border-t border-accent/5">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => toggleTaskExpansion(task.id)}
-                    className="h-6 text-[8px] uppercase tracking-widest font-bold text-accent/40 p-0 hover:bg-transparent hover:text-accent"
-                  >
-                    {isExpanded ? <ChevronUp className="h-3 w-3 mr-1" /> : <ChevronDown className="h-3 w-3 mr-1" />}
-                    {isExpanded ? "Hide Details" : "Manage Protocols"}
-                  </Button>
-                  
-                  <div className="flex gap-2">
-                    {status !== 'Todo' && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-accent/40" onClick={() => handleUpdateTaskStatus(task.id, status === 'Done' ? 'In Progress' : 'Todo')}>
-                        <ChevronRight className="h-4 w-4 rotate-180" />
-                      </Button>
-                    )}
-                    {status !== 'Done' && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-accent/40" onClick={() => handleUpdateTaskStatus(task.id, status === 'Todo' ? 'In Progress' : 'Done')}>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    )}
+                {!project.isArchived && (
+                  <div className="flex items-center justify-between pt-4 border-t border-accent/5">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => toggleTaskExpansion(task.id)}
+                      className="h-6 text-[8px] uppercase tracking-widest font-bold text-accent/40 p-0 hover:bg-transparent hover:text-accent"
+                    >
+                      {isExpanded ? <ChevronUp className="h-3 w-3 mr-1" /> : <ChevronDown className="h-3 w-3 mr-1" />}
+                      {isExpanded ? "Hide Details" : "Manage Protocols"}
+                    </Button>
+                    
+                    <div className="flex gap-2">
+                      {status !== 'Todo' && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-accent/40" onClick={() => handleUpdateTaskStatus(task.id, status === 'Done' ? 'In Progress' : 'Todo')}>
+                          <ChevronRight className="h-4 w-4 rotate-180" />
+                        </Button>
+                      )}
+                      {status !== 'Done' && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-accent/40" onClick={() => handleUpdateTaskStatus(task.id, status === 'Todo' ? 'In Progress' : 'Done')}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <AnimatePresence>
-                  {isExpanded && (
+                  {isExpanded && !project.isArchived && (
                     <motion.div 
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
@@ -351,42 +339,62 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               <span className="flex items-center gap-2"><User className="h-3.5 w-3.5 opacity-40" /> {project.name}</span>
               <div className="h-1 w-1 bg-accent/20 rounded-full" />
               <span className="opacity-40">{project.id}</span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-4 bg-white p-6 border border-accent/5 shadow-2xl">
-            <div className="space-y-1 pr-8 border-r border-accent/10">
-              <Label className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label>
-              <Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)}>
-                <SelectTrigger className="rounded-none border-none h-8 p-0 text-xs font-bold uppercase tracking-widest text-accent focus:ring-0 w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-none">
-                  <SelectItem value="Planning">Planning</SelectItem>
-                  <SelectItem value="Execution">Execution</SelectItem>
-                  <SelectItem value="Completion">Completion</SelectItem>
-                  <SelectItem value="Termination">Termination</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="px-8 border-r border-accent/10">
-              <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span>
-              <Badge className={`rounded-none uppercase tracking-widest text-[8px] ${project.tier === 'Golden' ? 'bg-accent' : 'bg-accent/40'} text-white`}>
-                {project.tier}
-              </Badge>
-            </div>
-            <div className="pl-4">
-              {!project.isActivated ? (
-                <Button asChild size="sm" className="bg-orange-600 hover:bg-orange-700 text-white rounded-none uppercase tracking-widest text-[9px] h-10 px-6">
-                  <Link href="/admin/operations/planning">Verify Activation</Link>
-                </Button>
-              ) : (
-                <div className="flex items-center gap-2 text-green-600 text-[9px] font-bold uppercase tracking-widest">
-                  <ShieldCheck className="h-4 w-4" /> Active Journey
-                </div>
+              {project.isArchived && (
+                <>
+                  <div className="h-1 w-1 bg-black rounded-full" />
+                  <span className="text-black flex items-center gap-2"><Archive className="h-3 w-3" /> Archived Dossier</span>
+                </>
               )}
             </div>
           </div>
+
+          {!project.isArchived ? (
+            <div className="flex flex-wrap items-center gap-4 bg-white p-6 border border-accent/5 shadow-2xl">
+              <div className="space-y-1 pr-8 border-r border-accent/10">
+                <Label className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label>
+                <Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)}>
+                  <SelectTrigger className="rounded-none border-none h-8 p-0 text-xs font-bold uppercase tracking-widest text-accent focus:ring-0 w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none">
+                    <SelectItem value="Planning">Planning</SelectItem>
+                    <SelectItem value="Execution">Execution</SelectItem>
+                    <SelectItem value="Completion">Completion</SelectItem>
+                    <SelectItem value="Termination">Termination</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="px-8 border-r border-accent/10">
+                <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span>
+                <Badge className={`rounded-none uppercase tracking-widest text-[8px] ${project.tier === 'Golden' ? 'bg-accent' : 'bg-accent/40'} text-white`}>
+                  {project.tier}
+                </Badge>
+              </div>
+              <div className="pl-4">
+                {!project.isActivated ? (
+                  <Button asChild size="sm" className="bg-orange-600 hover:bg-orange-700 text-white rounded-none uppercase tracking-widest text-[9px] h-10 px-6">
+                    <Link href="/admin/operations/planning">Verify Activation</Link>
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2 text-green-600 text-[9px] font-bold uppercase tracking-widest">
+                    <ShieldCheck className="h-4 w-4" /> Active Journey
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-8 bg-black p-8 text-white shadow-2xl">
+               <div className="space-y-1">
+                 <p className="text-[9px] uppercase tracking-[0.4em] text-white/40">Efficiency Rating</p>
+                 <p className="text-2xl font-headline italic">{efficiencyRating}%</p>
+               </div>
+               <div className="h-10 w-px bg-white/10" />
+               <div className="space-y-1">
+                 <p className="text-[9px] uppercase tracking-[0.4em] text-white/40">Total Lifecycle</p>
+                 <p className="text-2xl font-headline italic">{totalDuration} Days</p>
+               </div>
+            </div>
+          )}
         </div>
       </motion.div>
 
@@ -397,9 +405,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           </TabsTrigger>
           <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
             <PlayCircle className="h-3.5 w-3.5" /> Site Workflow
-          </TabsTrigger>
-          <TabsTrigger value="milestones" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
-            <ClipboardList className="h-3.5 w-3.5" /> Milestones
           </TabsTrigger>
           <TabsTrigger value="network" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[10px] font-bold pb-4 px-0 flex gap-2">
             <Users className="h-3.5 w-3.5" /> Network
@@ -414,15 +419,19 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div className="lg:col-span-8 space-y-12">
               <Card className="rounded-none border-accent/5 shadow-xl bg-white overflow-hidden">
-                <div className="bg-accent h-1.5 w-full" />
+                <div className={cn("h-1.5 w-full", project.isArchived ? "bg-black" : "bg-accent")} />
                 <CardContent className="p-10 space-y-10">
                   <div className="flex justify-between items-end">
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Implementation Velocity</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">
+                        {project.isArchived ? "Finalized Velocity" : "Implementation Velocity"}
+                      </p>
                       <h2 className="text-4xl font-headline italic">{project.progress}% Complete</h2>
                     </div>
                     <div className="text-right">
-                       <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Last Activity Sync</p>
+                       <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">
+                         {project.isArchived ? "Handover Synchronization" : "Last Activity Sync"}
+                       </p>
                        <p className="text-xs font-light italic text-muted-foreground">{project.lastActivity}</p>
                     </div>
                   </div>
@@ -431,10 +440,12 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               </Card>
 
               <div className="space-y-6">
-                <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Architectural Brief</h3>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40 flex items-center gap-2">
+                  <BookOpen className="h-3.5 w-3.5" /> Architectural Brief
+                </h3>
                 <div className="p-10 border border-accent/5 bg-white shadow-xl relative">
                   <p className="text-lg font-light italic text-accent/80 leading-relaxed">
-                    "{project.description || project.workScope || "No brief documentation synchronized."}"
+                    "{project.description || project.workScope || "No historical brief documented for this dossier."}"
                   </p>
                 </div>
               </div>
@@ -443,33 +454,41 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             <div className="lg:col-span-4 space-y-8">
               {/* Temporal Health Card */}
               <Card className="rounded-none border-accent/5 shadow-xl bg-white p-8 space-y-6 relative overflow-hidden">
-                <div className={cn("absolute top-0 right-0 p-4 opacity-5", isOverdue ? "text-destructive" : "text-accent")}>
+                <div className={cn("absolute top-0 right-0 p-4 opacity-5", isOverdue && !project.isArchived ? "text-destructive" : "text-accent")}>
                   <Timer className="h-20 w-20" />
                 </div>
-                <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Temporal Status</h3>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">
+                  {project.isArchived ? "Dossier Timeline" : "Temporal Status"}
+                </h3>
                 
                 <div className="space-y-6 relative z-10">
                   <div className="flex justify-between items-center pb-4 border-b border-accent/5">
                     <div className="space-y-1">
-                      <span className="text-[9px] uppercase tracking-widest opacity-60 block">Authorized Deadline</span>
+                      <span className="text-[9px] uppercase tracking-widest opacity-60 block">
+                        {project.isArchived ? "Completion Date" : "Authorized Deadline"}
+                      </span>
                       <span className="text-sm font-bold flex items-center gap-2">
                         <CalendarIcon className="h-3.5 w-3.5 text-accent/40" /> {project.endDate}
                       </span>
                     </div>
-                    <div className="text-right">
-                      {isOverdue ? (
-                        <Badge variant="destructive" className="rounded-none text-[8px] uppercase tracking-widest font-bold">Overdue</Badge>
-                      ) : (
-                        <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest font-bold text-green-600 border-green-600/20">On Track</Badge>
-                      )}
-                    </div>
+                    {!project.isArchived && (
+                      <div className="text-right">
+                        {isOverdue ? (
+                          <Badge variant="destructive" className="rounded-none text-[8px] uppercase tracking-widest font-bold">Overdue</Badge>
+                        ) : (
+                          <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest font-bold text-green-600 border-green-600/20">On Track</Badge>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-between items-center">
                     <div className="space-y-1">
-                      <span className="text-[9px] uppercase tracking-widest opacity-60 block">Remaining Duration</span>
-                      <span className={cn("text-2xl font-headline italic", isOverdue ? "text-destructive" : "text-accent")}>
-                        {isOverdue ? "Expired" : `${daysRemaining} Days`}
+                      <span className="text-[9px] uppercase tracking-widest opacity-60 block">
+                        {project.isArchived ? "Total Implementation" : "Remaining Duration"}
+                      </span>
+                      <span className={cn("text-2xl font-headline italic", isOverdue && !project.isArchived ? "text-destructive" : "text-accent")}>
+                        {project.isArchived ? `${totalDuration} Days` : isOverdue ? "Expired" : `${daysRemaining} Days`}
                       </span>
                     </div>
                     {project.isExtended && (
@@ -479,28 +498,32 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                     )}
                   </div>
 
-                  {isOverdue && (
-                    <div className="p-4 bg-destructive/5 border border-destructive/10 space-y-3">
-                      <div className="flex items-center gap-2 text-destructive text-[9px] font-bold uppercase tracking-widest">
-                        <AlertTriangle className="h-3.5 w-3.5" /> Extension Required
-                      </div>
-                      <Button 
-                        onClick={() => setIsExtending(true)}
-                        className="w-full bg-destructive text-white h-10 rounded-none text-[9px] uppercase tracking-widest font-bold"
-                      >
-                        Authorize Timeline Shift
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {!isOverdue && (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setIsExtending(true)}
-                      className="w-full border-accent/20 text-accent h-10 rounded-none text-[9px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white"
-                    >
-                      Adjust Deadline
-                    </Button>
+                  {!project.isArchived && (
+                    <>
+                      {isOverdue && (
+                        <div className="p-4 bg-destructive/5 border border-destructive/10 space-y-3">
+                          <div className="flex items-center gap-2 text-destructive text-[9px] font-bold uppercase tracking-widest">
+                            <AlertTriangle className="h-3.5 w-3.5" /> Extension Required
+                          </div>
+                          <Button 
+                            onClick={() => setIsExtending(true)}
+                            className="w-full bg-destructive text-white h-10 rounded-none text-[9px] uppercase tracking-widest font-bold"
+                          >
+                            Authorize Timeline Shift
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {!isOverdue && (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setIsExtending(true)}
+                          className="w-full border-accent/20 text-accent h-10 rounded-none text-[9px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white"
+                        >
+                          Adjust Deadline
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </Card>
@@ -524,7 +547,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
         {/* --- WORKFLOW TAB --- */}
         <TabsContent value="workflow" className="m-0 space-y-12">
-          {!project.isActivated ? (
+          {!project.isActivated && !project.isArchived ? (
             <div className="py-24 text-center border border-dashed border-accent/10 bg-secondary/5 space-y-6">
               <ClipboardList className="h-12 w-12 text-accent/20 mx-auto" />
               <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">Workflow initialization requires financial activation</p>
@@ -532,82 +555,38 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           ) : (
             <div className="space-y-8">
               <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-headline italic">Live Site Implementation</h2>
-                <Button onClick={handleAddTask} className="bg-accent text-white rounded-none h-12 px-6 uppercase tracking-widest text-[10px] flex gap-2">
-                  <Plus className="h-4 w-4" /> New Task
-                </Button>
+                <h2 className="text-3xl font-headline italic">
+                  {project.isArchived ? "Completed Site Protocol Index" : "Live Site Implementation"}
+                </h2>
+                {!project.isArchived && (
+                  <Button onClick={handleAddTask} className="bg-accent text-white rounded-none h-12 px-6 uppercase tracking-widest text-[10px] flex gap-2">
+                    <Plus className="h-4 w-4" /> New Task
+                  </Button>
+                )}
               </div>
               <div className="flex gap-8 overflow-x-auto pb-12 custom-scrollbar">
-                <KanbanCol status="Todo" title="Site Backlog" color="bg-orange-400" />
-                <KanbanCol status="In Progress" title="In Implementation" color="bg-accent" />
+                <KanbanCol status="Todo" title={project.isArchived ? "Pending (N/A)" : "Site Backlog"} color="bg-orange-400" />
+                <KanbanCol status="In Progress" title={project.isArchived ? "Active (N/A)" : "In Implementation"} color="bg-accent" />
                 <KanbanCol status="Done" title="Task Completed" color="bg-green-600" />
               </div>
             </div>
           )}
         </TabsContent>
 
-        {/* --- MILESTONES TAB --- */}
-        <TabsContent value="milestones" className="m-0 space-y-12">
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-headline italic">Architectural Roadmap</h2>
-              <Button onClick={handleAddMilestone} variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[9px] flex gap-2 border-accent/20">
-                <Plus className="h-4 w-4" /> New Milestone
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {(project.milestones || []).map((m) => (
-                <Card key={m.id} className="rounded-none border-accent/5 shadow-xl bg-white p-8 group hover:border-accent/30 transition-all">
-                  <div className="flex items-start justify-between gap-6">
-                    <div className="flex items-center gap-6 flex-1">
-                      <div className={cn("h-12 w-12 rounded-full border flex items-center justify-center transition-colors", m.isCompleted ? "bg-green-600 border-green-600 text-white" : "border-accent/10 text-accent/20")}>
-                        {m.isCompleted ? <CheckCircle2 className="h-6 w-6" /> : <Circle className="h-6 w-6" />}
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className={cn("text-xl font-headline italic", m.isCompleted && "line-through opacity-40")}>{m.label}</h4>
-                        <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                          <CalendarIcon className="h-3 w-3" /> Target: {m.date}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleToggleMilestone(m.id)} className="h-10 w-10 text-accent/40 hover:text-green-600">
-                        <CheckCircle2 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleRemoveMilestone(m.id)} className="h-10 w-10 text-accent/40 hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  {m.description && (
-                    <p className="mt-6 text-xs font-light italic text-accent/60 leading-relaxed pl-18">
-                      {m.description}
-                    </p>
-                  )}
-                </Card>
-              ))}
-              {(project.milestones || []).length === 0 && (
-                <div className="col-span-full py-20 text-center border border-dashed border-accent/10">
-                  <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No target milestones established for this roadmap</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
         {/* --- NETWORK TAB --- */}
         <TabsContent value="network" className="m-0 space-y-12">
           <div className="space-y-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-headline italic">Network Matrix</h2>
-              <Button variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[9px] flex gap-2">
-                <Plus className="h-4 w-4" /> Allocate Partner
-              </Button>
+              <h2 className="text-3xl font-headline italic">{project.isArchived ? "Historical Network Index" : "Network Matrix"}</h2>
+              {!project.isArchived && (
+                <Button variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[9px] flex gap-2">
+                  <Plus className="h-4 w-4" /> Allocate Partner
+                </Button>
+              )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {(project.vendorAllocations || []).map((v, i) => (
-                <div key={v.id} className="p-8 border border-accent/5 bg-white shadow-xl flex items-center justify-between group hover:border-accent/20 transition-all">
+                <div key={v.id || i} className="p-8 border border-accent/5 bg-white shadow-xl flex items-center justify-between group hover:border-accent/20 transition-all">
                   <div className="flex items-center gap-8">
                     <div className="h-12 w-12 bg-secondary/30 flex items-center justify-center text-accent/40 font-bold text-xs">{v.vendorName[0]}</div>
                     <div className="space-y-1">
@@ -646,9 +625,11 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                         </div>
                         <p className="text-2xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p>
                       </div>
-                      <Button variant="outline" onClick={() => handleToggleInstallment(i)} className="rounded-none h-12 uppercase tracking-widest text-[10px] border-accent/20">
-                        {ins.status === 'Paid' ? 'Revoke Payment' : 'Verify Receipt'}
-                      </Button>
+                      {!project.isArchived && (
+                        <Button variant="outline" onClick={() => handleToggleInstallment(i)} className="rounded-none h-12 uppercase tracking-widest text-[10px] border-accent/20">
+                          {ins.status === 'Paid' ? 'Revoke Payment' : 'Verify Receipt'}
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -670,7 +651,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                        <span className="text-xl font-headline italic">{project.financialReportStatus || "Pending"}</span>
                      </div>
                    </div>
-                   {project.financialReportStatus !== 'Verified' && (
+                   {!project.isArchived && project.financialReportStatus !== 'Verified' && (
                      <Button onClick={handleVerifyAudit} className="w-full h-14 bg-white text-accent hover:bg-white/90 rounded-none uppercase tracking-widest text-[10px] font-bold mt-4 shadow-2xl">
                        Authorize Steward Audit
                      </Button>
