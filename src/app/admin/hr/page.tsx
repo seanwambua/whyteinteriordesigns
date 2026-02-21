@@ -45,8 +45,8 @@ export default function AdminHRPage() {
   const [activeDialog, setActiveDialog] = useState<"partner" | "vendor" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form States
-  const [partnerForm, setPartnerPartnerForm] = useState({
+  // Separate Form States
+  const [partnerForm, setPartnerForm] = useState({
     name: "",
     specialty: "",
     entityType: "Design Firm",
@@ -56,7 +56,7 @@ export default function AdminHRPage() {
 
   const [vendorForm, setVendorForm] = useState({
     name: "",
-    trade: "",
+    trade: "Masonry",
     location: "",
     capacity: "Individual Artisan",
     contact: "",
@@ -87,7 +87,7 @@ export default function AdminHRPage() {
       addCollaborator(newPartner);
       setIsSubmitting(false);
       setActiveDialog(null);
-      setPartnerPartnerForm({ name: "", specialty: "", entityType: "Design Firm", influence: "Boutique", contact: "" });
+      setPartnerForm({ name: "", specialty: "", entityType: "Design Firm", influence: "Boutique", contact: "" });
       toast({ title: "Partner Synchronized", description: `${newPartner.name} authorized in creative network.` });
     }, 1200);
   };
@@ -111,7 +111,7 @@ export default function AdminHRPage() {
       addCollaborator(newVendor);
       setIsSubmitting(false);
       setActiveDialog(null);
-      setVendorForm({ name: "", trade: "", location: "", capacity: "Individual Artisan", contact: "" });
+      setVendorForm({ name: "", trade: "Masonry", location: "", capacity: "Individual Artisan", contact: "" });
       toast({ title: "Trade Registered", description: `${newVendor.name} authorized in site trade registry.` });
     }, 1200);
   };
@@ -145,7 +145,7 @@ export default function AdminHRPage() {
           </Button>
           <Button 
             onClick={() => setActiveDialog("vendor")}
-            className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-[0.2em] text-[10px] flex gap-2"
+            className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-[0.2em] text-[10px] flex gap-2 shadow-xl"
           >
             <Plus className="h-4 w-4" /> Add Trade Specialist
           </Button>
@@ -215,7 +215,7 @@ export default function AdminHRPage() {
         ))}
       </div>
 
-      {/* CREATIVE PARTNER DIALOG */}
+      {/* STRICT: CREATIVE PARTNER FORM */}
       <Dialog open={activeDialog === 'partner'} onOpenChange={() => setActiveDialog(null)}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg">
           <DialogHeader className="space-y-4">
@@ -223,19 +223,19 @@ export default function AdminHRPage() {
               <Zap className="h-4 w-4 text-accent" />
               <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Creative & Influence Network</span>
             </div>
-            <DialogTitle className="text-3xl font-headline italic">New Creative Partner</DialogTitle>
+            <DialogTitle className="text-3xl font-headline italic">Register Creative Partner</DialogTitle>
             <DialogDescription className="font-light italic text-muted-foreground">
-              Register a design firm, interior influencer, or creative consultant.
+              Register influencers, firms, or consulting architects into the studio creative matrix.
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-8 space-y-6">
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Identity Name</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Professional Identity</Label>
               <Input 
                 value={partnerForm.name}
-                onChange={(e) => setPartnerPartnerForm({...partnerForm, name: e.target.value})}
-                placeholder="E.g., Studio Vibe or Jane Influence"
+                onChange={(e) => setPartnerForm({...partnerForm, name: e.target.value})}
+                placeholder="E.g., Jane Doe Influence or Studio Vibe"
                 className="rounded-none border-accent/20 h-12"
               />
             </div>
@@ -244,30 +244,30 @@ export default function AdminHRPage() {
                 <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Creative focus</Label>
                 <Input 
                   value={partnerForm.specialty}
-                  onChange={(e) => setPartnerPartnerForm({...partnerForm, specialty: e.target.value})}
-                  placeholder="E.g., Social Influence, Styling"
+                  onChange={(e) => setPartnerForm({...partnerForm, specialty: e.target.value})}
+                  placeholder="E.g., Interior Styling, 3D Visualization"
                   className="rounded-none border-accent/20 h-12"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Entity Type</Label>
-                <Select value={partnerForm.entityType} onValueChange={(v) => setPartnerPartnerForm({...partnerForm, entityType: v})}>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Entity Classification</Label>
+                <Select value={partnerForm.entityType} onValueChange={(v) => setPartnerForm({...partnerForm, entityType: v})}>
                   <SelectTrigger className="rounded-none border-accent/20 h-12">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-none">
                     <SelectItem value="Individual Influencer">Individual Influencer</SelectItem>
                     <SelectItem value="Design Firm">Design Firm</SelectItem>
-                    <SelectItem value="Content Agency">Content Agency</SelectItem>
                     <SelectItem value="Creative Collective">Creative Collective</SelectItem>
+                    <SelectItem value="Consulting Architect">Consulting Architect</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Influence Scale</Label>
-                <Select value={partnerForm.influence} onValueChange={(v) => setPartnerPartnerForm({...partnerForm, influence: v})}>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Network Magnitude</Label>
+                <Select value={partnerForm.influence} onValueChange={(v) => setPartnerForm({...partnerForm, influence: v})}>
                   <SelectTrigger className="rounded-none border-accent/20 h-12">
                     <SelectValue />
                   </SelectTrigger>
@@ -275,7 +275,7 @@ export default function AdminHRPage() {
                     <SelectItem value="Boutique">Boutique / Niche</SelectItem>
                     <SelectItem value="Mid-Scale">Mid-Scale Reach</SelectItem>
                     <SelectItem value="Macro">Macro Influence</SelectItem>
-                    <SelectItem value="Global Firm">Global Firm</SelectItem>
+                    <SelectItem value="Global Firm">Global Authority</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -283,7 +283,7 @@ export default function AdminHRPage() {
                 <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Direct Contact</Label>
                 <Input 
                   value={partnerForm.contact}
-                  onChange={(e) => setPartnerPartnerForm({...partnerForm, contact: e.target.value})}
+                  onChange={(e) => setPartnerForm({...partnerForm, contact: e.target.value})}
                   placeholder="Email or Social Handle"
                   className="rounded-none border-accent/20 h-12"
                 />
@@ -297,13 +297,13 @@ export default function AdminHRPage() {
               onClick={handleAddPartner}
               disabled={isSubmitting || !partnerForm.name}
             >
-              {isSubmitting ? "Authorizing Creative..." : "Authorize Creative Registration"}
+              {isSubmitting ? "Authorizing Identity..." : "Authorize Creative Registration"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* TRADE SPECIALIST DIALOG */}
+      {/* STRICT: TRADESPERSON FORM */}
       <Dialog open={activeDialog === 'vendor'} onOpenChange={() => setActiveDialog(null)}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg">
           <DialogHeader className="space-y-4">
@@ -313,7 +313,7 @@ export default function AdminHRPage() {
             </div>
             <DialogTitle className="text-3xl font-headline italic">Add Trade Specialist</DialogTitle>
             <DialogDescription className="font-light italic text-muted-foreground">
-              Register technical experts like masons, painters, or site contractors.
+              Register technical implementation experts like masons, painters, or site contractors.
             </DialogDescription>
           </DialogHeader>
           
@@ -330,12 +330,18 @@ export default function AdminHRPage() {
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Technical Trade</Label>
-                <Input 
-                  value={vendorForm.trade}
-                  onChange={(e) => setVendorForm({...vendorForm, trade: e.target.value})}
-                  placeholder="E.g., Masonry, Painting, Plumbing"
-                  className="rounded-none border-accent/20 h-12"
-                />
+                <Select value={vendorForm.trade} onValueChange={(v) => setVendorForm({...vendorForm, trade: v})}>
+                  <SelectTrigger className="rounded-none border-accent/20 h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none">
+                    <SelectItem value="Masonry">Masonry & Structural</SelectItem>
+                    <SelectItem value="Painting">Painting & Finishes</SelectItem>
+                    <SelectItem value="Plumbing">Plumbing & HVAC</SelectItem>
+                    <SelectItem value="Electrical">Electrical & Lighting</SelectItem>
+                    <SelectItem value="Joinery">Carpentry & Joinery</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Workforce Capacity</Label>
