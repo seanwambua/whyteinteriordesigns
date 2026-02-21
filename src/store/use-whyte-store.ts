@@ -1,4 +1,3 @@
-
 'use client';
 
 import { create } from 'zustand';
@@ -138,6 +137,7 @@ interface WhyteState {
   
   addClientProject: (clientProject: ClientProject) => void;
   updateClientProject: (id: string, updates: Partial<ClientProject>) => void;
+  removeClientProject: (id: string) => void;
   
   addInquiry: (inquiry: Inquiry) => void;
   updateInquiryStatus: (id: string, status: Inquiry['status']) => void;
@@ -265,6 +265,9 @@ export const useWhyteStore = create<WhyteState>()(
       addClientProject: (clientProject) => set((state) => ({ clientProjects: [...state.clientProjects, clientProject] })),
       updateClientProject: (id, updates) => set((state) => ({
         clientProjects: state.clientProjects.map(cp => cp.id === id ? { ...cp, ...updates } : cp)
+      })),
+      removeClientProject: (id) => set((state) => ({
+        clientProjects: state.clientProjects.filter(p => p.id !== id)
       })),
 
       addInquiry: (inquiry) => set((state) => ({ inquiries: [inquiry, ...state.inquiries] })),
