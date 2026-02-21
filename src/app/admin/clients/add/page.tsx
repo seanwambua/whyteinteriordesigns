@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,13 +15,9 @@ import {
   Calculator, 
   Plus, 
   Trash2,
-  Activity,
-  ClipboardList,
   Calendar as CalendarIcon,
   Flag,
-  Users,
   CheckCircle2,
-  FileText,
   Clock,
   Zap
 } from "lucide-react";
@@ -157,9 +152,9 @@ export default function AddClientPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-12 font-body pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-        <Link href="/admin/clients" className="inline-flex items-center gap-2 text-accent/40 hover:text-accent transition-all group">
+        <Link href="/admin/operations/planning" className="inline-flex items-center gap-2 text-accent/40 hover:text-accent transition-all group">
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-          <span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Master Registry</span>
+          <span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Briefings</span>
         </Link>
         <div className="space-y-4">
           <div className="flex items-center gap-4"><div className="h-px w-8 bg-accent" /><span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Architectural Onboarding</span></div>
@@ -218,9 +213,6 @@ export default function AddClientPage() {
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Capital Commitment (KES)</Label>
                       <Input type="number" placeholder="5,000,000" className="rounded-none border-accent/20 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} />
                     </div>
-                  </div>
-                  <div className="p-8 bg-secondary/30 border border-accent/5 italic text-sm text-accent/60">
-                    The chosen tier determines the automated liquidation schedule for site procurement and artisanal fees.
                   </div>
                 </motion.div>
               )}
@@ -359,7 +351,7 @@ export default function AddClientPage() {
                   Continue Onboarding <ChevronRight className="h-5 w-5" />
                 </Button>
               ) : (
-                <Button type="submit" disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-[0_20px_50px_rgba(0,0,0,0.2)] transition-all hover:tracking-[0.2em] flex gap-3">
+                <Button type="submit" disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em] flex gap-3">
                   {loading ? (
                     <><Zap className="h-5 w-5 animate-pulse" /> Synchronizing...</>
                   ) : (
@@ -371,12 +363,6 @@ export default function AddClientPage() {
           </form>
         </CardContent>
       </Card>
-      
-      <div className="p-10 border border-dashed border-accent/20 bg-secondary/5 text-center rounded-none">
-        <p className="text-[11px] uppercase tracking-[0.5em] text-accent/40 font-bold italic">
-          High-integrity data collection ensures seamless project lifecycle management and financial audit compliance.
-        </p>
-      </div>
     </div>
   );
 }

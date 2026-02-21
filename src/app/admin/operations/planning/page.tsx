@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -145,7 +144,6 @@ export default function ProjectPlanningPage() {
   const handleOpenEdit = (project: ClientProject) => {
     setEditProject(project);
     
-    // Safety parse for dates
     let startD = new Date();
     let endD = new Date();
     try {
@@ -250,7 +248,6 @@ export default function ProjectPlanningPage() {
     
     const budget = Number(editFormData.totalBudget) || 0;
     
-    // Recalculate Installments based on logic in onboarding
     const getInstallmentPlan = (tier: ClientProject['tier'], budget: number) => {
       if (tier === 'Premium') return [
         { label: "Initial Deposit (50%)", percentage: 50, amount: budget * 0.5, status: 'Pending' as const },
@@ -321,7 +318,7 @@ export default function ProjectPlanningPage() {
         </Button>
       </motion.div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-8">
         {pendingPlanning.map((project, index) => (
           <motion.div
             key={project.id}
@@ -330,45 +327,71 @@ export default function ProjectPlanningPage() {
             transition={{ delay: index * 0.05 }}
           >
             <Card className={cn(
-              "rounded-none border-accent/10 shadow-lg hover:border-accent/30 transition-all bg-white overflow-hidden group",
+              "rounded-none border-accent/10 shadow-xl hover:shadow-2xl transition-all bg-white overflow-hidden group min-h-[300px]",
               !project.isActivated && 'border-l-4 border-l-orange-400'
             )}>
-              <div className="flex flex-col md:flex-row items-stretch">
-                <div className="p-10 border-b md:border-b-0 md:border-r border-accent/5 flex flex-col justify-center min-w-[240px] bg-secondary/5">
-                  <span className="text-[12px] font-bold text-accent/40 uppercase tracking-[0.4em] mb-3">{project.id}</span>
-                  <Badge className="bg-accent text-white rounded-none uppercase tracking-widest text-[11px] w-fit font-bold py-1.5 px-4 mb-6">
-                    {project.tier} Tier
-                  </Badge>
+              <div className="flex flex-col md:flex-row items-stretch h-full">
+                <div className="p-10 border-b md:border-b-0 md:border-r border-accent/5 flex flex-col justify-between min-w-[280px] bg-secondary/10">
+                  <div className="space-y-4">
+                    <span className="text-[12px] font-bold text-accent/40 uppercase tracking-[0.4em] block">{project.id}</span>
+                    <Badge className="bg-accent text-white rounded-none uppercase tracking-widest text-[11px] w-fit font-bold py-1.5 px-4">
+                      {project.tier} Tier
+                    </Badge>
+                  </div>
+                  
                   {!project.isActivated && (
-                    <div className="space-y-1.5">
+                    <div className="space-y-3">
                       <p className="text-[11px] font-bold text-orange-600/60 uppercase tracking-widest">Protocol Status</p>
-                      <div className="flex items-center gap-2 text-[12px] font-bold text-orange-600 uppercase tracking-widest">
+                      <div className="flex items-center gap-3 text-[13px] font-bold text-orange-600 uppercase tracking-widest">
                         <Banknote className="h-4 w-4" /> Awaiting Deposit
                       </div>
                     </div>
                   )}
                 </div>
-                <div className="flex-1 p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <h3 className="text-4xl font-headline italic leading-tight">{project.project}</h3>
-                      <div className="flex flex-wrap gap-8">
-                        <div className="flex items-center gap-2.5 text-muted-foreground">
-                          <User className="h-4 w-4 text-accent/30" />
-                          <span className="text-[13px] font-bold uppercase tracking-widest">Client: {project.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2.5 text-muted-foreground">
-                          <CalendarIcon className="h-4 w-4 text-accent/30" />
-                          <span className="text-[13px] font-bold uppercase tracking-widest">Target: {project.endDate}</span>
+
+                <div className="flex-1 p-10 flex flex-col justify-between">
+                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <h3 className="text-4xl font-headline italic leading-tight text-accent">{project.project}</h3>
+                        <div className="flex flex-wrap gap-8 text-[13px] text-muted-foreground uppercase tracking-widest font-bold">
+                          <div className="flex items-center gap-2.5">
+                            <User className="h-4 w-4 text-accent/30" />
+                            <span>Client: {project.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2.5">
+                            <CalendarIcon className="h-4 w-4 text-accent/30" />
+                            <span>Target: {project.endDate}</span>
+                          </div>
                         </div>
                       </div>
+                      <p className="text-base font-light italic text-accent/60 leading-relaxed border-l-2 border-accent/10 pl-6 max-w-2xl line-clamp-2">
+                        "{project.description || project.workScope}"
+                      </p>
                     </div>
+
+                    <div className="flex flex-col items-end gap-4 shrink-0">
+                      {!project.isActivated ? (
+                        <div className="text-right">
+                          <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Required Activation</span>
+                          <span className="text-2xl font-headline italic text-orange-600">KES {getDepositRequired(project)}</span>
+                        </div>
+                      ) : (
+                        <div className="text-right">
+                          <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Lifecycle Phase</span>
+                          <span className="text-xl font-headline italic text-accent">{project.status}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-8 border-t border-accent/5 mt-8">
                     <div className="flex gap-4">
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => handleOpenEdit(project)}
-                        className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/10 hover:bg-accent hover:text-white transition-all"
+                        className="rounded-none h-12 px-8 text-[11px] uppercase tracking-widest font-bold border-accent/10 hover:bg-accent hover:text-white transition-all shadow-sm"
                       >
                         <Settings2 className="h-4 w-4 mr-2" /> Comprehensive Edit
                       </Button>
@@ -376,30 +399,16 @@ export default function ProjectPlanningPage() {
                         variant="ghost" 
                         size="sm" 
                         onClick={() => setDeleteId(project.id)}
-                        className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold text-destructive/40 hover:text-destructive hover:bg-destructive/5 transition-all"
+                        className="rounded-none h-12 px-8 text-[11px] uppercase tracking-widest font-bold text-destructive/40 hover:text-destructive hover:bg-destructive/5 transition-all"
                       >
                         <Trash2 className="h-4 w-4 mr-2" /> Cancel Brief
                       </Button>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-12 justify-between lg:justify-end border-t lg:border-t-0 pt-8 lg:pt-0">
-                    {!project.isActivated ? (
-                      <div className="text-right">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1.5">Required Activation</span>
-                        <span className="text-lg font-headline italic text-orange-600">KES {getDepositRequired(project)}</span>
-                      </div>
-                    ) : (
-                      <div className="text-right">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1.5">Lifecycle Phase</span>
-                        <span className="text-lg font-headline italic text-accent">{project.status}</span>
-                      </div>
-                    )}
-                    
+
                     {!project.isActivated ? (
                       <Button 
                         onClick={() => setActivationProject(project)}
-                        className="h-14 px-8 rounded-none bg-orange-600 text-white uppercase tracking-widest text-[11px] font-bold hover:bg-orange-700 transition-all flex gap-3 shadow-xl hover:tracking-[0.2em]"
+                        className="h-14 px-10 rounded-none bg-orange-600 text-white uppercase tracking-widest text-[11px] font-bold hover:bg-orange-700 transition-all flex gap-3 shadow-xl hover:tracking-[0.2em]"
                       >
                         <ShieldCheck className="h-5 w-5" /> Activate Journey
                       </Button>
@@ -428,7 +437,6 @@ export default function ProjectPlanningPage() {
         )}
       </div>
 
-      {/* Activation Dialog */}
       <Dialog open={!!activationProject} onOpenChange={(open) => !open && setActivationProject(null)}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden">
           <div className="bg-orange-600 h-1.5 w-full" />
@@ -480,7 +488,6 @@ export default function ProjectPlanningPage() {
         </DialogContent>
       </Dialog>
 
-      {/* COMPREHENSIVE EDIT DIALOG */}
       <Dialog open={!!editProject} onOpenChange={(open) => !open && setEditProject(null)}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.25)]">
           <div className="bg-accent h-1.5 w-full" />
@@ -605,11 +612,6 @@ export default function ProjectPlanningPage() {
                       </div>
                     </div>
                   ))}
-                  {editFormData.milestones.length === 0 && (
-                    <div className="py-20 text-center border border-dashed border-accent/10 bg-secondary/5 rounded-none">
-                      <p className="text-[12px] font-light italic text-muted-foreground uppercase tracking-widest">No strategic targets defined for this briefing.</p>
-                    </div>
-                  )}
                 </div>
               </TabsContent>
 
@@ -722,14 +724,6 @@ export default function ProjectPlanningPage() {
                       </div>
                     </div>
                   ))}
-                  {editFormData.vendorAllocations.length === 0 && (
-                    <div className="py-20 text-center border border-dashed border-accent/10 bg-secondary/5">
-                      <div className="h-12 w-12 bg-accent/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <HardHat className="h-6 w-6 text-accent/20" />
-                      </div>
-                      <p className="text-[12px] font-light italic text-muted-foreground uppercase tracking-widest">No network resources allocated to this commission brief.</p>
-                    </div>
-                  )}
                 </div>
               </TabsContent>
             </div>
@@ -744,7 +738,6 @@ export default function ProjectPlanningPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent className="rounded-none border-accent/20 font-body p-10">
           <AlertDialogHeader className="space-y-6">
