@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -41,6 +41,14 @@ export function Navbar() {
               {item.name}
             </Link>
           ))}
+          
+          <div className="h-4 w-px bg-accent/20 mx-2" />
+          
+          <Link href="/dashboard" className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent hover:opacity-70 transition-opacity">
+            <User className="h-3 w-3" />
+            Client Portal
+          </Link>
+
           <Button asChild variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-none h-10 px-6 uppercase tracking-widest text-[10px]">
             <Link href="/#contact">Book Consultation</Link>
           </Button>
@@ -66,6 +74,15 @@ export function Navbar() {
                     {item.name}
                   </Link>
                 ))}
+                
+                <Link 
+                  href="/dashboard" 
+                  onClick={() => setIsOpen(false)}
+                  className="text-lg font-bold uppercase tracking-widest text-accent border-t pt-6"
+                >
+                  Client Portal
+                </Link>
+
                 <Button asChild className="mt-4 rounded-none uppercase tracking-widest text-xs" onClick={() => setIsOpen(false)}>
                   <Link href="/#contact">Book Consultation</Link>
                 </Button>

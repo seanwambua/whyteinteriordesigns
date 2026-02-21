@@ -16,6 +16,30 @@
       },
       "required": ["title", "category", "location", "imageUrl"]
     },
+    "ClientProject": {
+      "title": "Ongoing Client Project",
+      "description": "An active interior design or decor project for a specific client",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "status": { "type": "string", "enum": ["Consultation", "Planning", "Procurement", "Execution", "Styling", "Completed"] },
+        "progress": { "type": "number" },
+        "description": { "type": "string" },
+        "clientEmail": { "type": "string" },
+        "startDate": { "type": "string", "format": "date" },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "date": { "type": "string" },
+              "isCompleted": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
     "Inquiry": {
       "title": "Client Inquiry",
       "description": "A lead from the service inquiry form",
@@ -50,6 +74,10 @@
     "/projects/{projectId}": {
       "schema": "Project",
       "description": "Collection of portfolio projects"
+    },
+    "/client-projects/{clientProjectId}": {
+      "schema": "ClientProject",
+      "description": "Ongoing active client projects"
     },
     "/inquiries/{inquiryId}": {
       "schema": "Inquiry",
