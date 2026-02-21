@@ -8,7 +8,9 @@ import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function Hero() {
-  const heroImage = PlaceHolderImages.find(img => img.id === "hero-bg")!;
+  const heroImage = PlaceHolderImages.find(img => img.id === "hero-bg");
+
+  if (!heroImage) return null;
 
   return (
     <section className="relative w-full h-[95vh] flex items-center overflow-hidden">
@@ -59,7 +61,7 @@ export function Hero() {
             transition={{ duration: 1, delay: 1.2 }}
             className="text-xl md:text-2xl text-white/70 leading-relaxed max-w-xl mb-12 font-light"
           >
-            Elevating living through meticulous design and rare craftsmanship. Your vision, masterfully realized by Whyte Interiors.
+            Elevating living through meticulous design and rare craftsmanship. Your vision, masterfully realized by Whyte Interior Designs.
           </motion.p>
           
           <motion.div 
@@ -71,7 +73,7 @@ export function Hero() {
             <Button asChild size="lg" className="bg-white text-black hover:bg-white/90 text-lg px-10 h-14 rounded-none transition-all hover:tracking-wider">
               <Link href="#portfolio">Explore Works</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black text-lg px-10 h-14 rounded-none transition-all">
+            <Button asChild size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-black text-lg px-10 h-14 rounded-none transition-all">
               <Link href="#quiz" className="flex items-center gap-2">
                 Curate Your Style <ChevronRight className="h-4 w-4" />
               </Link>
