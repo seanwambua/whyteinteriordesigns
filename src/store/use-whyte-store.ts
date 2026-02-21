@@ -63,6 +63,21 @@ export interface ProjectTask {
   subtasks?: SubTask[];
 }
 
+export interface AuditAllocation {
+  id: string;
+  category: string;
+  amount: number;
+  description: string;
+}
+
+export interface FinancialAudit {
+  totalReceived: number;
+  allocations: AuditAllocation[];
+  refundAmount: number;
+  stewardComments: string;
+  isVerified: boolean;
+}
+
 export interface TerminationDetails {
   reason: string;
   requestedBy: 'Client' | 'Studio';
@@ -73,6 +88,7 @@ export interface TerminationDetails {
   clientAgreed?: boolean;
   studioAgreed?: boolean;
   finalizedDate?: string;
+  audit?: FinancialAudit;
 }
 
 export interface ClientProject {
