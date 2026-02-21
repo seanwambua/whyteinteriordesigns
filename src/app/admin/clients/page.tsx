@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion } from "framer-motion";
@@ -18,7 +19,8 @@ import {
   MoreVertical,
   XCircle,
   FileText,
-  Info
+  Info,
+  Lock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -67,8 +69,8 @@ export default function ClientDirectoryPage() {
     p.id.toLowerCase().includes(search.toLowerCase())
   );
 
-  const pendingProjects = filteredProjects.filter(p => !p.isActivated && p.status === 'Planning' && !p.isArchived);
   const activeCommissions = filteredProjects.filter(p => p.isActivated && !p.isArchived);
+  const pendingProjects = filteredProjects.filter(p => !p.isActivated && p.status === 'Planning' && !p.isArchived);
   const archivedProjects = filteredProjects.filter(p => p.isArchived);
 
   const getStatusColor = (status: string) => {
@@ -119,6 +121,9 @@ export default function ClientDirectoryPage() {
                     <Badge variant="outline" className={cn("rounded-none uppercase tracking-[0.2em] text-[12px] font-bold px-3 py-1", getStatusColor(client.status))}>
                       {client.status}
                     </Badge>
+                    {client.financialReportStatus === 'Verified' && (
+                      <Lock className="h-4 w-4 text-green-600 opacity-60" title="Audit Verified - Read Only" />
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground uppercase tracking-widest font-bold">
                     <span className="flex items-center gap-1.5"><Mail className="h-4 w-4 opacity-40" /> {client.email}</span>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { use } from "react";
@@ -36,13 +37,15 @@ import {
   History,
   TrendingUp,
   ArrowUpRight,
-  Timer
+  Timer,
+  AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -55,35 +58,18 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const [txnCode, setTxnCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const [auditTotalReceived, setAuditTotalReceived] = useState(0);
-  const [auditRefund, setAuditRefund] = useState(0);
-  const [auditAllocations, setAuditAllocations] = useState<AuditAllocation[]>([]);
-  const [auditComments, setAuditComments] = useState("");
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   const project = clientProjects.find((p) => p.id === id);
-
-  useEffect(() => {
-    if (project?.termination) {
-      if (project.termination.audit) {
-        setAuditTotalReceived(project.termination.audit.totalReceived);
-        setAuditRefund(project.termination.audit.refundAmount);
-        setAuditAllocations(project.termination.audit.allocations);
-        setAuditComments(project.termination.audit.stewardComments);
-      } else {
-        const paid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
-        setAuditTotalReceived(paid);
-      }
-    }
-  }, [project]);
+  const isReadOnly = project?.financialReportStatus === 'Verified';
 
   if (!isMounted) return null;
   if (!project) return null;
 
   const handleUpdateStatus = (status: ClientProject['status']) => {
+    if (isReadOnly) return;
     const updates: Partial<ClientProject> = { status };
     if (status === 'Termination' && !project.termination) {
       updates.termination = {
@@ -100,7 +86,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   };
 
   const handleVerifyPayment = () => {
-    if (verifyingInstallment === null || !txnCode) return;
+    if (verifyingInstallment === null || !txnCode || isReadOnly) return;
     setIsVerifying(true);
     setTimeout(() => {
       const updatedInstallments = [...project.installments];
@@ -117,31 +103,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     }, 1200);
   };
 
-  const handleSaveAudit = () => {
-    if (!project.termination) return;
-    const audit: FinancialAudit = { totalReceived: auditTotalReceived, allocations: auditAllocations, refundAmount: auditRefund, stewardComments: auditComments, isVerified: true };
-    updateClientProject(project.id, { termination: { ...project.termination, audit } });
-    toast({ title: "Financial Audit Synchronized" });
-  };
-
-  const addAllocation = () => {
-    setAuditAllocations([...auditAllocations, { id: Math.random().toString(36).substr(2, 4), category: "", amount: 0, description: "" }]);
-  };
-
-  const updateAllocation = (idx: number, field: keyof AuditAllocation, value: any) => {
-    const updated = [...auditAllocations];
-    (updated[idx] as any)[field] = value;
-    setAuditAllocations(updated);
-  };
-
-  const removeAllocation = (idx: number) => {
-    setAuditAllocations(auditAllocations.filter((_, i) => i !== idx));
-  };
-
-  const totalAllocated = auditAllocations.reduce((sum, a) => sum + a.amount, 0);
-  const netBalance = auditTotalReceived - totalAllocated - auditRefund;
-
   const handleMoveTask = (taskId: string, newStatus: ProjectTask['status']) => {
+    if (isReadOnly) return;
     const updatedTasks = (project.tasks || []).map(task => task.id === taskId ? { ...task, status: newStatus } : task);
     const completed = updatedTasks.filter(t => t.status === 'Done').length;
     const progress = Math.round((completed / Math.max(1, updatedTasks.length)) * 100);
@@ -149,6 +112,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   };
 
   const handleAddTask = (status: ProjectTask['status']) => {
+    if (isReadOnly) return;
     const newTask: ProjectTask = { id: `T-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "New Protocol", status, priority: "Medium", subtasks: [] };
     const updatedTasks = [...(project.tasks || []), newTask];
     const completed = updatedTasks.filter(t => t.status === 'Done').length;
@@ -157,6 +121,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   };
 
   const handleDeleteTask = (taskId: string) => {
+    if (isReadOnly) return;
     const updatedTasks = (project.tasks || []).filter(t => t.id !== taskId);
     const completed = updatedTasks.filter(t => t.status === 'Done').length;
     const progress = Math.round((completed / Math.max(1, updatedTasks.length)) * 100);
@@ -164,6 +129,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   };
 
   const handleAddSubtask = (taskId: string) => {
+    if (isReadOnly) return;
     const updatedTasks = (project.tasks || []).map(task => {
       if (task.id === taskId) {
         const sub: SubTask = { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "Sub-protocol", isCompleted: false };
@@ -175,6 +141,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   };
 
   const handleToggleSubtask = (taskId: string, subId: string) => {
+    if (isReadOnly) return;
     const updatedTasks = (project.tasks || []).map(task => {
       if (task.id === taskId) {
         const subs = (task.subtasks || []).map(s => s.id === subId ? { ...s, isCompleted: !s.isCompleted } : s);
@@ -195,29 +162,53 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <div className={cn("h-2.5 w-2.5 rounded-full", status === 'Todo' ? 'bg-accent/20' : status === 'In Progress' ? 'bg-orange-400' : 'bg-green-500')} />
           <h3 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent/60">{status} ({tasks.length})</h3>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => handleAddTask(status)} className="h-8 w-8 hover:bg-accent/5"><Plus className="h-4.5 w-4.5 opacity-40" /></Button>
+        {!isReadOnly && (
+          <Button variant="ghost" size="icon" onClick={() => handleAddTask(status)} className="h-8 w-8 hover:bg-accent/5">
+            <Plus className="h-4.5 w-4.5 opacity-40" />
+          </Button>
+        )}
       </div>
       <div className="flex flex-col gap-4 flex-1">
         {tasks.map(task => (
-          <motion.div key={task.id} layoutId={task.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="group relative bg-white border border-accent/5 p-6 shadow-sm hover:shadow-xl transition-all space-y-4">
+          <motion.div 
+            key={task.id} 
+            layoutId={task.id} 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className={cn(
+              "group relative bg-white border border-accent/5 p-6 shadow-sm hover:shadow-xl transition-all space-y-4",
+              isReadOnly && "opacity-80 pointer-events-none"
+            )}
+          >
             <div className="flex justify-between items-start">
               <span className="text-[11px] font-bold text-accent/20 uppercase tracking-widest">{task.id}</span>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {status !== 'Todo' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Done' ? 'In Progress' : 'Todo')}><ChevronLeft className="h-4 w-4" /></Button>}
-                {status !== 'Done' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Todo' ? 'In Progress' : 'Done')}><ChevronRight className="h-4 w-4" /></Button>}
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive" onClick={() => handleDeleteTask(task.id)}><Trash2 className="h-4 w-4" /></Button>
-              </div>
+              {!isReadOnly && (
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {status !== 'Todo' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Done' ? 'In Progress' : 'Todo')}><ChevronLeft className="h-4 w-4" /></Button>}
+                  {status !== 'Done' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Todo' ? 'In Progress' : 'Done')}><ChevronRight className="h-4 w-4" /></Button>}
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive" onClick={() => handleDeleteTask(task.id)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              )}
             </div>
             <div className="space-y-3">
               <h4 className="text-base font-bold uppercase tracking-widest leading-tight">{task.title}</h4>
               <Badge variant="outline" className="rounded-none text-[10px] uppercase tracking-widest opacity-40 py-0.5">{task.priority} Priority</Badge>
             </div>
             <div className="pt-4 border-t border-accent/5 space-y-3">
-              <div className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddSubtask(task.id)}><Plus className="h-3.5 w-3.5" /></Button></div>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span>
+                {!isReadOnly && <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddSubtask(task.id)}><Plus className="h-3.5 w-3.5" /></Button>}
+              </div>
               <div className="space-y-2">
                 {(task.subtasks || []).map(sub => (
                   <div key={sub.id} className="flex items-center gap-3 group/sub">
-                    <button onClick={() => handleToggleSubtask(task.id, sub.id)} className={cn("h-4 w-4 border flex items-center justify-center transition-colors", sub.isCompleted ? "bg-accent border-accent" : "border-accent/20 bg-transparent")}>{sub.isCompleted && <Check className="h-2.5 w-2.5 text-white" />}</button>
+                    <button 
+                      onClick={() => !isReadOnly && handleToggleSubtask(task.id, sub.id)} 
+                      disabled={isReadOnly}
+                      className={cn("h-4 w-4 border flex items-center justify-center transition-colors", sub.isCompleted ? "bg-accent border-accent" : "border-accent/20 bg-transparent", isReadOnly && "cursor-default")}
+                    >
+                      {sub.isCompleted && <Check className="h-2.5 w-2.5 text-white" />}
+                    </button>
                     <span className={cn("text-[13px] font-light italic", sub.isCompleted ? "text-accent/30 line-through" : "text-accent/70")}>{sub.title}</span>
                   </div>
                 ))}
@@ -236,6 +227,17 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           <span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Master Registry</span>
         </Link>
+
+        {isReadOnly && (
+          <Alert className="rounded-none border-green-600/20 bg-green-600/[0.02]">
+            <Lock className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-green-600">Dossier Locked — Audit Verified</AlertTitle>
+            <AlertDescription className="text-[13px] font-light italic text-muted-foreground">
+              This commission has been reconciled and verified by **{financialSteward}**. All technical and financial protocols are now read-only.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
           <div className="space-y-2">
             <div className="flex items-center gap-4"><div className="h-px w-8 bg-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Project Terminal</span></div>
@@ -248,7 +250,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <div className="flex flex-wrap items-center gap-4 bg-white p-6 border border-accent/5 shadow-2xl">
             <div className="space-y-1 pr-8 border-r border-accent/10">
               <Label className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label>
-              <Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)}>
+              <Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)} disabled={isReadOnly}>
                 <SelectTrigger className="rounded-none border-none h-8 p-0 text-[13px] font-bold uppercase tracking-widest text-accent focus:ring-0 w-44"><SelectValue /></SelectTrigger>
                 <SelectContent className="rounded-none">
                   <SelectItem value="Planning">Planning</SelectItem><SelectItem value="Execution">Execution</SelectItem><SelectItem value="Completion">Completion</SelectItem><SelectItem value="Termination" className="text-destructive">Termination Hub</SelectItem>
@@ -308,7 +310,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                      <div className={cn("h-14 w-14 rounded-full flex items-center justify-center shrink-0 border", ins.status === 'Paid' ? "bg-green-600/5 border-green-600/20 text-green-600" : "bg-orange-600/5 border-orange-600/20 text-orange-600")}>{ins.status === 'Paid' ? <CheckCircle2 className="h-6 w-6" /> : <Timer className="h-6 w-6 animate-pulse" />}</div>
                      <div className="space-y-1.5"><div className="flex items-center gap-3"><p className="text-base font-bold uppercase tracking-[0.2em]">{ins.label}</p><Badge className={cn("rounded-none text-[10px] uppercase tracking-widest px-2.5 py-1 font-bold", ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white")}>{ins.status}</Badge></div><div className="flex items-center gap-4 text-[12px] text-muted-foreground font-bold uppercase tracking-widest"><span>Ref: {ins.transactionCode || 'Awaiting Sync'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.percentage}% Allocation</span></div></div>
                    </div>
-                   <div className="flex items-center gap-12 justify-between lg:justify-end"><div className="text-right"><p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Value</p><p className="text-4xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p></div>{ins.status === 'Pending' && <Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-14 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"><ShieldCheck className="h-5 w-5" /> Verify Entry</Button>}{ins.status === 'Paid' && <div className="h-14 w-14 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]"><Check className="h-7 w-7" /></div>}</div>
+                   <div className="flex items-center gap-12 justify-between lg:justify-end"><div className="text-right"><p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Value</p><p className="text-4xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p></div>{ins.status === 'Pending' && !isReadOnly && <Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-14 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"><ShieldCheck className="h-5 w-5" /> Verify Entry</Button>}{ins.status === 'Paid' && <div className="h-14 w-14 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]"><Check className="h-7 w-7" /></div>}</div>
                  </div>
                ))}
              </div>
