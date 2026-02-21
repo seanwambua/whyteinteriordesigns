@@ -35,26 +35,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-secondary/10 w-full font-body">
-        <Sidebar className="border-r border-accent/10">
+        <Sidebar collapsible="icon" className="border-r border-accent/10">
           <SidebarHeader className="p-6">
-            <Link href="/" className="group">
-              <span className="text-sm font-headline font-bold tracking-[0.2em] text-accent uppercase block">
+            <Link href="/" className="group flex flex-col">
+              <span className="text-sm font-headline font-bold tracking-[0.2em] text-accent uppercase block truncate">
                 Whyte Interiors
               </span>
-              <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Admin Terminal</span>
+              <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground truncate group-data-[collapsible=icon]:hidden">Admin Terminal</span>
             </Link>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
-              <SidebarGroupLabel className="px-6 text-[10px] uppercase tracking-widest text-accent/40 font-bold mb-4">Management</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[11px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Management</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {mainNav.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={pathname === item.href} className="px-6 h-12 hover:bg-accent/5 rounded-none">
+                      <SidebarMenuButton asChild isActive={pathname === item.href} className="px-6 h-14 hover:bg-accent/5 rounded-none" tooltip={item.title}>
                         <Link href={item.href} className="flex items-center gap-4">
-                          <item.icon className={`h-4 w-4 ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`} />
-                          <span className={`text-[10px] uppercase tracking-widest font-bold ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`}>
+                          <item.icon className={`h-5 w-5 shrink-0 ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`} />
+                          <span className={`text-xs uppercase tracking-widest font-bold truncate ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`}>
                             {item.title}
                           </span>
                         </Link>
@@ -66,15 +66,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarGroup>
 
             <SidebarGroup className="mt-4">
-              <SidebarGroupLabel className="px-6 text-[10px] uppercase tracking-widest text-accent/40 font-bold mb-4">Client Lifecycle</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[11px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Client Lifecycle</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {clientNav.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={pathname === item.href} className="px-6 h-12 hover:bg-accent/5 rounded-none">
+                      <SidebarMenuButton asChild isActive={pathname === item.href} className="px-6 h-14 hover:bg-accent/5 rounded-none" tooltip={item.title}>
                         <Link href={item.href} className="flex items-center gap-4">
-                          <item.icon className={`h-4 w-4 ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`} />
-                          <span className={`text-[10px] uppercase tracking-widest font-bold ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`}>
+                          <item.icon className={`h-5 w-5 shrink-0 ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`} />
+                          <span className={`text-xs uppercase tracking-widest font-bold truncate ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`}>
                             {item.title}
                           </span>
                         </Link>
@@ -86,15 +86,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarGroup>
 
             <SidebarGroup className="mt-4">
-              <SidebarGroupLabel className="px-6 text-[10px] uppercase tracking-widest text-accent/40 font-bold mb-4">Studio Operations</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[11px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Studio Operations</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {operationsNav.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={pathname === item.href} className="px-6 h-12 hover:bg-accent/5 rounded-none">
+                      <SidebarMenuButton asChild isActive={pathname === item.href} className="px-6 h-14 hover:bg-accent/5 rounded-none" tooltip={item.title}>
                         <Link href={item.href} className="flex items-center gap-4">
-                          <item.icon className={`h-4 w-4 ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`} />
-                          <span className={`text-[10px] uppercase tracking-widest font-bold ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`}>
+                          <item.icon className={`h-5 w-5 shrink-0 ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`} />
+                          <span className={`text-xs uppercase tracking-widest font-bold truncate ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`}>
                             {item.title}
                           </span>
                         </Link>
@@ -106,15 +106,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarGroup>
 
             <SidebarGroup className="mt-4">
-              <SidebarGroupLabel className="px-6 text-[10px] uppercase tracking-widest text-accent/40 font-bold mb-4">Network & HR</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[11px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Network & HR</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {hrNav.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={pathname === item.href} className="px-6 h-12 hover:bg-accent/5 rounded-none">
+                      <SidebarMenuButton asChild isActive={pathname === item.href} className="px-6 h-14 hover:bg-accent/5 rounded-none" tooltip={item.title}>
                         <Link href={item.href} className="flex items-center gap-4">
-                          <item.icon className={`h-4 w-4 ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`} />
-                          <span className={`text-[10px] uppercase tracking-widest font-bold ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`}>
+                          <item.icon className={`h-5 w-5 shrink-0 ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`} />
+                          <span className={`text-xs uppercase tracking-widest font-bold truncate ${pathname === item.href ? 'text-accent' : 'text-muted-foreground'}`}>
                             {item.title}
                           </span>
                         </Link>
@@ -127,25 +127,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </SidebarContent>
           <div className="mt-auto p-6 border-t border-accent/10">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold">
+              <div className="h-10 w-10 shrink-0 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold">
                 AD
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-widest truncate">Admin User</p>
-                <p className="text-[8px] text-muted-foreground truncate uppercase">Auth Provisioned</p>
+              <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+                <p className="text-xs font-bold uppercase tracking-widest truncate">Admin User</p>
+                <p className="text-[10px] text-muted-foreground truncate uppercase">Auth Provisioned</p>
               </div>
             </div>
           </div>
         </Sidebar>
         <SidebarInset className="flex flex-col flex-1">
-          <header className="h-16 flex items-center px-8 border-b border-accent/10 bg-white/50 backdrop-blur-md sticky top-0 z-30 justify-between">
+          <header className="h-20 flex items-center px-8 border-b border-accent/10 bg-white/50 backdrop-blur-md sticky top-0 z-30 justify-between">
             <SidebarTrigger className="text-accent" />
             <div className="flex items-center gap-4">
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/60">Nairobi HQ</span>
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
             </div>
           </header>
-          <main className="flex-1 p-8">
+          <main className="flex-1 p-8 lg:p-12">
             {children}
           </main>
         </SidebarInset>
