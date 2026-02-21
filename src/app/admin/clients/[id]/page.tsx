@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use } from "react";
@@ -262,14 +261,14 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     <div className="flex-1 flex flex-col gap-6 min-w-[320px]">
       <div className="flex items-center justify-between pb-4 border-b border-accent/10">
         <div className="flex items-center gap-3">
-          <div className={cn("h-2 w-2 rounded-full", 
+          <div className={cn("h-2.5 w-2.5 rounded-full", 
             status === 'Todo' ? 'bg-accent/20' : 
             status === 'In Progress' ? 'bg-orange-400' : 'bg-green-500'
           )} />
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">{status} ({tasks.length})</h3>
+          <h3 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent/60">{status} ({tasks.length})</h3>
         </div>
         <Button variant="ghost" size="icon" onClick={() => handleAddTask(status)} className="h-8 w-8 hover:bg-accent/5">
-          <Plus className="h-4 w-4 opacity-40" />
+          <Plus className="h-4.5 w-4.5 opacity-40" />
         </Button>
       </div>
       
@@ -283,51 +282,51 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             className="group relative bg-white border border-accent/5 p-6 shadow-sm hover:shadow-xl hover:border-accent/20 transition-all space-y-4"
           >
             <div className="flex justify-between items-start">
-              <span className="text-[9px] font-bold text-accent/20 uppercase tracking-widest">{task.id}</span>
+              <span className="text-[11px] font-bold text-accent/20 uppercase tracking-widest">{task.id}</span>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {status !== 'Todo' && (
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleMoveTask(task.id, status === 'Done' ? 'In Progress' : 'Todo')}>
-                    <ChevronLeft className="h-3 w-3" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Done' ? 'In Progress' : 'Todo')}>
+                    <ChevronLeft className="h-4 w-4" />
                   </Button>
                 )}
                 {status !== 'Done' && (
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleMoveTask(task.id, status === 'Todo' ? 'In Progress' : 'Done')}>
-                    <ChevronRight className="h-3 w-3" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Todo' ? 'In Progress' : 'Done')}>
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 )}
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/40 hover:text-destructive" onClick={() => handleDeleteTask(task.id)}>
-                  <Trash2 className="h-3 w-3" />
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive" onClick={() => handleDeleteTask(task.id)}>
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-sm font-bold uppercase tracking-widest leading-tight">{task.title}</h4>
+              <h4 className="text-base font-bold uppercase tracking-widest leading-tight">{task.title}</h4>
               <div className="flex gap-2">
-                <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest opacity-40">{task.priority} Priority</Badge>
+                <Badge variant="outline" className="rounded-none text-[10px] uppercase tracking-widest opacity-40 py-0.5">{task.priority} Priority</Badge>
               </div>
             </div>
 
             {/* Subtasks */}
-            <div className="pt-4 border-t border-accent/5 space-y-2">
+            <div className="pt-4 border-t border-accent/5 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-[8px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span>
-                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleAddSubtask(task.id)}>
-                  <Plus className="h-3 w-3" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddSubtask(task.id)}>
+                  <Plus className="h-3.5 w-3.5" />
                 </Button>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {(task.subtasks || []).map(sub => (
                   <div key={sub.id} className="flex items-center gap-3 group/sub">
                     <button 
                       onClick={() => handleToggleSubtask(task.id, sub.id)}
-                      className={cn("h-3 w-3 border flex items-center justify-center transition-colors", 
+                      className={cn("h-4 w-4 border flex items-center justify-center transition-colors", 
                         sub.isCompleted ? "bg-accent border-accent" : "border-accent/20 bg-transparent"
                       )}
                     >
-                      {sub.isCompleted && <Check className="h-2 w-2 text-white" />}
+                      {sub.isCompleted && <Check className="h-2.5 w-2.5 text-white" />}
                     </button>
-                    <span className={cn("text-[10px] font-light italic transition-all", 
+                    <span className={cn("text-[13px] font-light italic transition-all", 
                       sub.isCompleted ? "text-accent/30 line-through" : "text-accent/70"
                     )}>
                       {sub.title}
@@ -340,7 +339,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         ))}
         {tasks.length === 0 && (
           <div className="h-32 border border-dashed border-accent/5 flex items-center justify-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-accent/10 italic">Empty Protocol Stack</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-accent/10 italic">Empty Protocol Stack</span>
           </div>
         )}
       </div>
@@ -351,19 +350,19 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     <div className="max-w-7xl mx-auto space-y-12 font-body">
       {/* Header Cockpit */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-        <Button asChild variant="ghost" className="text-accent/40 hover:text-accent p-0 font-bold uppercase tracking-widest text-[10px] h-auto flex items-center gap-2">
-          <Link href="/admin/clients"><ArrowLeft className="h-3 w-3" /> Back to Registry</Link>
+        <Button asChild variant="ghost" className="text-accent/40 hover:text-accent p-0 font-bold uppercase tracking-widest text-[11px] h-auto flex items-center gap-2">
+          <Link href="/admin/clients"><ArrowLeft className="h-4 w-4" /> Back to Registry</Link>
         </Button>
 
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
           <div className="space-y-2">
             <div className="flex items-center gap-4">
               <div className="h-px w-8 bg-accent" />
-              <span className="text-accent text-[11px] font-bold uppercase tracking-[0.4em]">Project Terminal</span>
+              <span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Project Terminal</span>
             </div>
             <h1 className="text-5xl font-headline italic">{project.project}</h1>
-            <div className="flex items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-widest font-bold">
-              <span className="flex items-center gap-2"><User className="h-3.5 w-3.5 opacity-40" /> {project.name}</span>
+            <div className="flex items-center gap-6 text-[13px] text-muted-foreground uppercase tracking-widest font-bold">
+              <span className="flex items-center gap-2"><User className="h-4 w-4 opacity-40" /> {project.name}</span>
               <div className="h-1 w-1 bg-accent/20 rounded-full" />
               <span className="opacity-40">{project.id}</span>
             </div>
@@ -371,9 +370,9 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
           <div className="flex flex-wrap items-center gap-4 bg-white p-6 border border-accent/5 shadow-2xl">
             <div className="space-y-1 pr-8 border-r border-accent/10">
-              <Label className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label>
+              <Label className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label>
               <Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)}>
-                <SelectTrigger className="rounded-none border-none h-8 p-0 text-xs font-bold uppercase tracking-widest text-accent focus:ring-0 w-40">
+                <SelectTrigger className="rounded-none border-none h-8 p-0 text-[13px] font-bold uppercase tracking-widest text-accent focus:ring-0 w-44">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-none">
@@ -385,8 +384,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               </Select>
             </div>
             <div className="px-8 border-r border-accent/10">
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span>
-              <Badge className="rounded-none uppercase tracking-widest text-[9px] bg-accent text-white">{project.tier}</Badge>
+              <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span>
+              <Badge className="rounded-none uppercase tracking-widest text-[11px] bg-accent text-white py-1">{project.tier}</Badge>
             </div>
           </div>
         </div>
@@ -395,18 +394,18 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-12">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto">
           {project.status === 'Termination' && (
-            <TabsTrigger value="dissolution" className="rounded-none border-b-2 border-transparent data-[state=active]:border-destructive data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-4 px-0 flex gap-2 text-destructive">
-              <ShieldAlert className="h-3.5 w-3.5" /> Dissolution Protocol
+            <TabsTrigger value="dissolution" className="rounded-none border-b-2 border-transparent data-[state=active]:border-destructive data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2 text-destructive">
+              <ShieldAlert className="h-4 w-4" /> Dissolution Protocol
             </TabsTrigger>
           )}
-          <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-4 px-0 flex gap-2">
-            <Layout className="h-3.5 w-3.5" /> Overview
+          <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2">
+            <Layout className="h-4 w-4" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-4 px-0 flex gap-2">
-            <PlayCircle className="h-3.5 w-3.5" /> Workflow
+          <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2">
+            <PlayCircle className="h-4 w-4" /> Workflow
           </TabsTrigger>
-          <TabsTrigger value="ledger" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-4 px-0 flex gap-2">
-            <Wallet className="h-3.5 w-3.5" /> Ledger
+          <TabsTrigger value="ledger" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2">
+            <Wallet className="h-4 w-4" /> Ledger
           </TabsTrigger>
         </TabsList>
 
@@ -416,45 +415,45 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               <Card className="rounded-none border-accent/10 bg-white p-10 space-y-8">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <Scale className="h-6 w-6 text-accent" />
+                    <Scale className="h-7 w-7 text-accent" />
                     <h3 className="text-2xl font-headline italic">Steward Financial Audit</h3>
                   </div>
-                  <Badge variant="outline" className="rounded-none border-accent/20 text-[10px] uppercase tracking-widest">Authorized by {financialSteward}</Badge>
+                  <Badge variant="outline" className="rounded-none border-accent/20 text-[11px] uppercase tracking-widest">Authorized by {financialSteward}</Badge>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Cumulative Received (KES)</Label>
-                    <Input type="number" value={auditTotalReceived} onChange={(e) => setAuditTotalReceived(Number(e.target.value))} className="rounded-none h-12" />
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Cumulative Received (KES)</Label>
+                    <Input type="number" value={auditTotalReceived} onChange={(e) => setAuditTotalReceived(Number(e.target.value))} className="rounded-none h-12 text-lg" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Agreed Refund Amount (KES)</Label>
-                    <Input type="number" value={auditRefund} onChange={(e) => setAuditRefund(Number(e.target.value))} className="rounded-none h-12 text-destructive font-bold" />
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Agreed Refund Amount (KES)</Label>
+                    <Input type="number" value={auditRefund} onChange={(e) => setAuditRefund(Number(e.target.value))} className="rounded-none h-12 text-destructive font-bold text-lg" />
                   </div>
                 </div>
 
                 <div className="space-y-6 pt-6 border-t border-accent/5">
                   <div className="flex justify-between items-center">
-                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-accent/40">Fund Allocation Breakdown</h4>
-                    <Button variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-8 text-[10px] uppercase tracking-widest"><Plus className="h-3 w-3 mr-1" /> Add Cost Row</Button>
+                    <h4 className="text-[12px] font-bold uppercase tracking-widest text-accent/40">Fund Allocation Breakdown</h4>
+                    <Button variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-9 text-[11px] uppercase tracking-widest"><Plus className="h-4 w-4 mr-1" /> Add Cost Row</Button>
                   </div>
                   <div className="space-y-4">
                     {auditAllocations.map((a, idx) => (
                       <div key={a.id} className="grid grid-cols-12 gap-4 items-end bg-secondary/5 p-4 border border-accent/5">
                         <div className="col-span-4 space-y-1">
-                          <Label className="text-[9px] uppercase tracking-widest opacity-40">Category</Label>
-                          <Input value={a.category} onChange={(e) => updateAllocation(idx, 'category', e.target.value)} placeholder="e.g., Site Mobilization" className="rounded-none h-10 text-xs" />
+                          <Label className="text-[11px] uppercase tracking-widest opacity-40">Category</Label>
+                          <Input value={a.category} onChange={(e) => updateAllocation(idx, 'category', e.target.value)} placeholder="e.g., Site Mobilization" className="rounded-none h-10 text-sm" />
                         </div>
                         <div className="col-span-3 space-y-1">
-                          <Label className="text-[9px] uppercase tracking-widest opacity-40">Amount (KES)</Label>
-                          <Input type="number" value={a.amount} onChange={(e) => updateAllocation(idx, 'amount', Number(e.target.value))} className="rounded-none h-10 text-xs" />
+                          <Label className="text-[11px] uppercase tracking-widest opacity-40">Amount (KES)</Label>
+                          <Input type="number" value={a.amount} onChange={(e) => updateAllocation(idx, 'amount', Number(e.target.value))} className="rounded-none h-10 text-sm" />
                         </div>
                         <div className="col-span-4 space-y-1">
-                          <Label className="text-[9px] uppercase tracking-widest opacity-40">Notes</Label>
-                          <Input value={a.description} onChange={(e) => updateAllocation(idx, 'description', e.target.value)} placeholder="Technical details..." className="rounded-none h-10 text-xs" />
+                          <Label className="text-[11px] uppercase tracking-widest opacity-40">Notes</Label>
+                          <Input value={a.description} onChange={(e) => updateAllocation(idx, 'description', e.target.value)} placeholder="Technical details..." className="rounded-none h-10 text-sm" />
                         </div>
                         <div className="col-span-1">
-                          <Button variant="ghost" size="icon" onClick={() => removeAllocation(idx)} className="h-10 w-10 text-destructive/40"><Trash2 className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => removeAllocation(idx)} className="h-10 w-10 text-destructive/40"><Trash2 className="h-5 w-5" /></Button>
                         </div>
                       </div>
                     ))}
@@ -462,7 +461,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                 </div>
 
                 <div className="p-8 bg-black text-white space-y-4">
-                  <div className="flex justify-between items-center text-[11px] uppercase tracking-[0.3em]">
+                  <div className="flex justify-between items-center text-[12px] uppercase tracking-[0.3em] font-bold">
                     <span>Reconciliation Summary</span>
                     <span className={cn(netBalance === 0 ? "text-green-400" : "text-orange-400")}>
                       {netBalance === 0 ? "Perfectly Balanced" : "Balance Mismatch"}
@@ -470,61 +469,61 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                   </div>
                   <div className="grid grid-cols-3 gap-8 pt-4 border-t border-white/10">
                     <div>
-                      <p className="text-[9px] opacity-40 uppercase tracking-widest mb-1">Total Costs</p>
-                      <p className="text-xl font-headline italic">KES {totalAllocated.toLocaleString()}</p>
+                      <p className="text-[11px] opacity-40 uppercase tracking-widest mb-1">Total Costs</p>
+                      <p className="text-2xl font-headline italic">KES {totalAllocated.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-[9px] opacity-40 uppercase tracking-widest mb-1">Total Refund</p>
-                      <p className="text-xl font-headline italic">KES {auditRefund.toLocaleString()}</p>
+                      <p className="text-[11px] opacity-40 uppercase tracking-widest mb-1">Total Refund</p>
+                      <p className="text-2xl font-headline italic">KES {auditRefund.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-[9px] opacity-40 uppercase tracking-widest mb-1">Final Balance</p>
-                      <p className="text-xl font-headline italic">KES {netBalance.toLocaleString()}</p>
+                      <p className="text-[11px] opacity-40 uppercase tracking-widest mb-1">Final Balance</p>
+                      <p className="text-2xl font-headline italic">KES {netBalance.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Steward's Closing Comments</Label>
-                  <Textarea value={auditComments} onChange={(e) => setAuditComments(e.target.value)} className="min-h-[100px] rounded-none italic font-light" />
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Steward's Closing Comments</Label>
+                  <Textarea value={auditComments} onChange={(e) => setAuditComments(e.target.value)} className="min-h-[100px] rounded-none italic font-light text-lg" />
                 </div>
 
-                <Button onClick={handleSaveAudit} className="w-full bg-accent text-white h-14 rounded-none uppercase tracking-widest text-[11px] font-bold">Synchronize Financial Transparency</Button>
+                <Button onClick={handleSaveAudit} className="w-full bg-accent text-white h-14 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-xl">Synchronize Financial Transparency</Button>
               </Card>
             </div>
 
             <div className="lg:col-span-4 space-y-8">
               <Card className="rounded-none border-destructive/20 bg-white p-8 space-y-8">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.4em] text-destructive/60">Execution Agreement</h3>
+                <h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-destructive/60">Execution Agreement</h3>
                 <div className="space-y-6">
                   <div className={cn("p-6 border flex items-center justify-between", project.termination?.studioAgreed ? "border-green-600/20 bg-green-600/5" : "border-destructive/10")}>
                     <div className="space-y-1">
-                      <p className="text-[11px] uppercase tracking-widest font-bold">Studio Agreement</p>
-                      <p className="text-xs font-light italic">{project.termination?.studioAgreed ? "Signed & Authorized" : "Signature Required"}</p>
+                      <p className="text-[12px] uppercase tracking-widest font-bold">Studio Agreement</p>
+                      <p className="text-sm font-light italic">{project.termination?.studioAgreed ? "Signed & Authorized" : "Signature Required"}</p>
                     </div>
-                    {project.termination?.studioAgreed ? <CheckCircle2 className="h-5 w-5 text-green-600" /> : <FileText className="h-5 w-5 text-destructive/20" />}
+                    {project.termination?.studioAgreed ? <CheckCircle2 className="h-6 w-6 text-green-600" /> : <FileText className="h-6 w-6 text-destructive/20" />}
                   </div>
                   <div className={cn("p-6 border flex items-center justify-between", project.termination?.clientAgreed ? "border-green-600/20 bg-green-600/5" : "border-destructive/10")}>
                     <div className="space-y-1">
-                      <p className="text-[11px] uppercase tracking-widest font-bold">Client Agreement</p>
-                      <p className="text-xs font-light italic">{project.termination?.clientAgreed ? "Signed & Confirmed" : "Awaiting Client Review"}</p>
+                      <p className="text-[12px] uppercase tracking-widest font-bold">Client Agreement</p>
+                      <p className="text-sm font-light italic">{project.termination?.clientAgreed ? "Signed & Confirmed" : "Awaiting Client Review"}</p>
                     </div>
-                    {project.termination?.clientAgreed ? <CheckCircle2 className="h-5 w-5 text-green-600" /> : <FileText className="h-5 w-5 text-destructive/20" />}
+                    {project.termination?.clientAgreed ? <CheckCircle2 className="h-6 w-6 text-green-600" /> : <FileText className="h-6 w-6 text-destructive/20" />}
                   </div>
 
-                  <Button onClick={handleStudioAgreeTermination} disabled={project.termination?.studioAgreed || !project.termination?.audit} className="w-full h-14 bg-destructive text-white rounded-none uppercase tracking-widest text-[11px] font-bold">Authorize Studio Resolution</Button>
+                  <Button onClick={handleStudioAgreeTermination} disabled={project.termination?.studioAgreed || !project.termination?.audit} className="w-full h-14 bg-destructive text-white rounded-none uppercase tracking-widest text-[12px] font-bold">Authorize Studio Resolution</Button>
 
                   {project.termination?.studioAgreed && project.termination?.clientAgreed && (
-                    <Button onClick={handleFinalizeTermination} className="w-full h-14 bg-black text-white rounded-none uppercase tracking-widest text-[11px] font-bold">Execute Final Dissolution</Button>
+                    <Button onClick={handleFinalizeTermination} className="w-full h-14 bg-black text-white rounded-none uppercase tracking-widest text-[12px] font-bold">Execute Final Dissolution</Button>
                   )}
                 </div>
               </Card>
               
               <div className="p-6 bg-secondary/10 border border-dashed border-accent/20 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Transparency Link</p>
-                <p className="text-[11px] font-light italic leading-relaxed">Share this specialized financial link with the client for independent verification.</p>
-                <Button asChild variant="outline" className="w-full h-10 rounded-none text-[10px] uppercase tracking-widest border-accent/10">
-                  <Link href={`/transparency/${project.id}`} target="_blank" className="flex gap-2 justify-center">View Transparency Portal <ExternalLink className="h-3 w-3" /></Link>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-accent/40">Transparency Link</p>
+                <p className="text-[13px] font-light italic leading-relaxed">Share this specialized financial link with the client for independent verification.</p>
+                <Button asChild variant="outline" className="w-full h-10 rounded-none text-[11px] uppercase tracking-widest border-accent/10 font-bold">
+                  <Link href={`/transparency/${project.id}`} target="_blank" className="flex gap-2 justify-center">View Transparency Portal <ExternalLink className="h-4 w-4" /></Link>
                 </Button>
               </div>
             </div>
@@ -535,19 +534,19 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
            <Card className="rounded-none border-accent/5 p-10 space-y-8">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                <div className="space-y-6">
-                 <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-accent/40">Architectural Brief</h3>
-                 <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || project.workScope}"</p>
+                 <h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Architectural Brief</h3>
+                 <p className="text-xl font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || project.workScope}"</p>
                </div>
                <div className="space-y-6">
-                 <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-accent/40">Temporal Status</h3>
+                 <h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Temporal Status</h3>
                  <div className="grid grid-cols-2 gap-8">
                    <div className="space-y-1">
-                     <p className="text-[10px] uppercase tracking-widest opacity-40">Start Date</p>
-                     <p className="font-headline italic text-xl">{project.startDate}</p>
+                     <p className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Start Date</p>
+                     <p className="font-headline italic text-2xl">{project.startDate}</p>
                    </div>
                    <div className="space-y-1">
-                     <p className="text-[10px] uppercase tracking-widest opacity-40">Authorized Deadline</p>
-                     <p className="font-headline italic text-xl">{project.endDate}</p>
+                     <p className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Authorized Deadline</p>
+                     <p className="font-headline italic text-2xl">{project.endDate}</p>
                    </div>
                  </div>
                </div>
@@ -570,8 +569,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group hover:border-accent/30 transition-all">
                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-16 w-16" /></div>
                  <div className="space-y-4 relative z-10">
-                   <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p>
-                   <p className="text-3xl font-headline italic">KES {(project.totalBudget || 0).toLocaleString()}</p>
+                   <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p>
+                   <p className="text-4xl font-headline italic">KES {(project.totalBudget || 0).toLocaleString()}</p>
                    <div className="h-1 w-12 bg-accent/20" />
                  </div>
                </Card>
@@ -580,8 +579,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group hover:border-accent/30 transition-all">
                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><ShieldCheck className="h-16 w-16" /></div>
                  <div className="space-y-4 relative z-10">
-                   <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p>
-                   <p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p>
+                   <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p>
+                   <p className="text-4xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p>
                    <div className="h-1 w-12 bg-green-600/20" />
                  </div>
                </Card>
@@ -590,8 +589,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group hover:border-accent/30 transition-all">
                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><History className="h-16 w-16" /></div>
                  <div className="space-y-4 relative z-10">
-                   <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-orange-600/60">Outstanding Balance</p>
-                   <p className="text-3xl font-headline italic text-orange-600">KES {remainingBalance.toLocaleString()}</p>
+                   <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-orange-600/60">Outstanding Balance</p>
+                   <p className="text-4xl font-headline italic text-orange-600">KES {remainingBalance.toLocaleString()}</p>
                    <div className="h-1 w-12 bg-orange-600/20" />
                  </div>
                </Card>
@@ -601,10 +600,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
            {/* Transaction Registry */}
            <Card className="rounded-none border-accent/5 p-0 bg-white shadow-2xl overflow-hidden">
              <div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center">
-               <h3 className="text-xs font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3">
-                 <CreditCard className="h-4 w-4" /> Architectural Installment Registry
+               <h3 className="text-[13px] font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3">
+                 <CreditCard className="h-5 w-5" /> Architectural Installment Registry
                </h3>
-               <Badge variant="outline" className="rounded-none text-[9px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">
+               <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">
                  Stewardship Verified
                </Badge>
              </div>
@@ -621,27 +620,27 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                    <div className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8">
                      <div className="flex items-center gap-8">
                        <div className={cn(
-                         "h-12 w-12 rounded-full flex items-center justify-center shrink-0 border",
+                         "h-14 w-14 rounded-full flex items-center justify-center shrink-0 border",
                          ins.status === 'Paid' ? "bg-green-600/5 border-green-600/20 text-green-600" : "bg-orange-600/5 border-orange-600/20 text-orange-600"
                        )}>
-                         {ins.status === 'Paid' ? <CheckCircle2 className="h-5 w-5" /> : <Timer className="h-5 w-5 animate-pulse" />}
+                         {ins.status === 'Paid' ? <CheckCircle2 className="h-6 w-6" /> : <Timer className="h-6 w-6 animate-pulse" />}
                        </div>
                        <div className="space-y-1.5">
                          <div className="flex items-center gap-3">
-                           <p className="text-sm font-bold uppercase tracking-[0.2em]">{ins.label}</p>
+                           <p className="text-base font-bold uppercase tracking-[0.2em]">{ins.label}</p>
                            <Badge className={cn(
-                             "rounded-none text-[8px] uppercase tracking-widest px-2 py-0.5 font-bold",
+                             "rounded-none text-[10px] uppercase tracking-widest px-2.5 py-1 font-bold",
                              ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white"
                            )}>
                              {ins.status}
                            </Badge>
                          </div>
-                         <div className="flex items-center gap-4 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                         <div className="flex items-center gap-4 text-[12px] text-muted-foreground font-bold uppercase tracking-widest">
                            <span className="flex items-center gap-1.5">
-                             <FileText className="h-3 w-3 opacity-40" /> 
+                             <FileText className="h-4 w-4 opacity-40" /> 
                              {ins.transactionCode ? `Ref: ${ins.transactionCode}` : 'Awaiting Studio Verification'}
                            </span>
-                           <div className="h-1 w-1 rounded-full bg-accent/10" />
+                           <div className="h-1.5 w-1.5 rounded-full bg-accent/10" />
                            <span className="opacity-40">{ins.percentage}% Allocation</span>
                          </div>
                        </div>
@@ -649,22 +648,22 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
                      <div className="flex items-center gap-12 justify-between lg:justify-end">
                        <div className="text-right">
-                         <p className="text-[9px] font-bold uppercase tracking-widest text-accent/30 mb-1">Installment Value</p>
-                         <p className="text-3xl font-headline italic text-accent tracking-tight">KES {ins.amount.toLocaleString()}</p>
+                         <p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Installment Value</p>
+                         <p className="text-4xl font-headline italic text-accent tracking-tight">KES {ins.amount.toLocaleString()}</p>
                        </div>
                        
                        {ins.status === 'Pending' && (
                          <Button 
                           onClick={() => setVerifyingInstallment(i)}
                           variant="outline" 
-                          className="rounded-none h-14 px-8 border-accent/20 text-[10px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"
+                          className="rounded-none h-14 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"
                          >
-                           <ShieldCheck className="h-4 w-4 transition-transform group-hover/btn:scale-110" /> Verify Ledger Entry
+                           <ShieldCheck className="h-5 w-5 transition-transform group-hover/btn:scale-110" /> Verify Ledger Entry
                          </Button>
                        )}
                        {ins.status === 'Paid' && (
                          <div className="h-14 w-14 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]">
-                           <Check className="h-6 w-6" />
+                           <Check className="h-7 w-7" />
                          </div>
                        )}
                      </div>
@@ -675,13 +674,13 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
              <div className="p-10 bg-secondary/10 border-t border-accent/5 flex items-center justify-between">
                <div className="flex items-center gap-4">
-                 <Lock className="h-4 w-4 text-accent/30" />
-                 <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40 italic">
+                 <Lock className="h-5 w-5 text-accent/30" />
+                 <p className="text-[12px] font-bold uppercase tracking-widest text-accent/40 italic">
                    All transactions are recorded in the studio's encrypted financial archives.
                  </p>
                </div>
-               <Button variant="ghost" className="text-[10px] font-bold uppercase tracking-widest text-accent/40 hover:text-accent gap-2">
-                 Export Ledger <ArrowUpRight className="h-3 w-3" />
+               <Button variant="ghost" className="text-[12px] font-bold uppercase tracking-widest text-accent/40 hover:text-accent gap-2">
+                 Export Ledger <ArrowUpRight className="h-4 w-4" />
                </Button>
              </div>
            </Card>
@@ -695,44 +694,44 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <div className="p-10 space-y-8">
             <DialogHeader className="space-y-4">
               <div className="flex items-center gap-3">
-                <Lock className="h-4 w-4 text-accent" />
-                <span className="text-accent text-[11px] font-bold uppercase tracking-[0.4em]">Stewardship Protocol</span>
+                <Lock className="h-5 w-5 text-accent" />
+                <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Stewardship Protocol</span>
               </div>
               <DialogTitle className="text-3xl font-headline italic">Verify Transaction</DialogTitle>
-              <DialogDescription className="font-light italic text-muted-foreground text-sm leading-relaxed">
+              <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">
                 Confirming receipt of the <strong>{verifyingInstallment !== null ? project.installments[verifyingInstallment].label : ""}</strong>. This record will be synchronized with the client's transparency portal.
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-8">
               <div className="p-8 bg-secondary/30 border border-accent/5 space-y-4 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-12 w-12" /></div>
+                <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-14 w-14" /></div>
                 <div className="flex justify-between items-end relative z-10">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-accent/40">Authorized Amount</span>
-                  <span className="text-2xl font-headline italic text-accent">KES {verifyingInstallment !== null ? project.installments[verifyingInstallment].amount.toLocaleString() : 0}</span>
+                  <span className="text-[11px] uppercase tracking-widest font-bold text-accent/40">Authorized Amount</span>
+                  <span className="text-3xl font-headline italic text-accent">KES {verifyingInstallment !== null ? project.installments[verifyingInstallment].amount.toLocaleString() : 0}</span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">External Transaction Reference</Label>
+                <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">External Transaction Reference</Label>
                 <Input 
                   placeholder="E.g., TRX-9921-WHYTE" 
-                  className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent uppercase tracking-[0.2em] font-medium"
+                  className="rounded-none border-accent/20 h-14 text-xl focus:ring-accent uppercase tracking-[0.2em] font-medium"
                   value={txnCode}
                   onChange={(e) => setTxnCode(e.target.value)}
                 />
-                <p className="text-[9px] uppercase tracking-widest text-muted-foreground italic">Input the exact reference from the financial institution.</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground italic">Input the exact reference from the financial institution.</p>
               </div>
             </div>
 
             <DialogFooter className="pt-4">
               <Button 
-                className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl disabled:opacity-50 transition-all hover:tracking-[0.2em]"
+                className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl disabled:opacity-50 transition-all hover:tracking-[0.2em]"
                 onClick={handleVerifyPayment}
                 disabled={isVerifying || !txnCode}
               >
                 {isVerifying ? (
-                  <span className="flex items-center gap-2 font-bold"><Loader2 className="h-4 w-4 animate-spin" /> Finalizing Synchronization...</span>
+                  <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Finalizing Synchronization...</span>
                 ) : "Authorize Entry Verification"}
               </Button>
             </DialogFooter>

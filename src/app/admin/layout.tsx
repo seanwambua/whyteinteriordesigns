@@ -43,8 +43,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const handleClick = () => {
       if (isMobile) {
         setOpenMobile(false);
-      } else {
-        setOpen(false);
       }
     };
 
@@ -59,7 +57,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           <Link href={item.href} className="flex items-center gap-4">
             <item.icon className={`h-5 w-5 shrink-0 ${active ? 'text-accent' : 'text-muted-foreground'}`} />
-            <span className={`text-xs uppercase tracking-widest font-bold truncate group-data-[collapsible=icon]:hidden ${active ? 'text-accent' : 'text-muted-foreground'}`}>
+            <span className={`text-[13px] uppercase tracking-widest font-bold truncate group-data-[collapsible=icon]:hidden ${active ? 'text-accent' : 'text-muted-foreground'}`}>
               {item.title}
             </span>
           </Link>
@@ -70,19 +68,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-secondary/10 w-full font-body text-xs">
+      <div className="flex min-h-screen bg-secondary/10 w-full font-body text-sm">
         <Sidebar collapsible="icon" className="border-r border-accent/10 bg-white">
           <SidebarHeader className="p-6">
             <Link href="/" className="group flex flex-col">
-              <span className="text-sm font-headline font-bold tracking-[0.2em] text-accent uppercase block truncate">
+              <span className="text-base font-headline font-bold tracking-[0.2em] text-accent uppercase block truncate">
                 Whyte Interiors
               </span>
-              <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground truncate group-data-[collapsible=icon]:hidden">Admin Terminal</span>
+              <span className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground truncate group-data-[collapsible=icon]:hidden">Admin Terminal</span>
             </Link>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
-              <SidebarGroupLabel className="px-6 text-[11px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Studio Management</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Studio Management</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {mainNav.map((item) => (
@@ -93,7 +91,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarGroup>
 
             <SidebarGroup className="mt-4">
-              <SidebarGroupLabel className="px-6 text-[11px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Client Lifecycle</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Client Lifecycle</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {clientNav.map((item) => (
@@ -104,7 +102,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarGroup>
 
             <SidebarGroup className="mt-4">
-              <SidebarGroupLabel className="px-6 text-[11px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Site Operations</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Site Operations</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {operationsNav.map((item) => (
@@ -115,7 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarGroup>
 
             <SidebarGroup className="mt-4">
-              <SidebarGroupLabel className="px-6 text-[11px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Network & HR</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Network & HR</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {hrNav.map((item) => (
@@ -131,8 +129,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 AD
               </div>
               <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                <p className="text-[10px] font-bold uppercase tracking-widest truncate">Senior Partner</p>
-                <p className="text-[8px] text-muted-foreground truncate uppercase">Admin Authorized</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest truncate">Senior Partner</p>
+                <p className="text-[9px] text-muted-foreground truncate uppercase">Admin Authorized</p>
               </div>
             </div>
           </div>
@@ -141,7 +139,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <header className="h-20 flex items-center px-8 border-b border-accent/10 bg-white/50 backdrop-blur-md sticky top-0 z-30 justify-between">
             <SidebarTrigger className="text-accent" />
             <div className="flex items-center gap-4">
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/60">Nairobi Studio HQ</span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Nairobi Studio HQ</span>
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
             </div>
           </header>

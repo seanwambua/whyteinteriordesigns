@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -46,7 +45,7 @@ export default function ProjectImplementationPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-4">
             <div className="h-px w-8 bg-accent" />
-            <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Operations Hub</span>
+            <span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Operations Hub</span>
           </div>
           <h1 className="text-5xl font-headline italic">Live <span className="not-italic">Implementation.</span></h1>
         </div>
@@ -54,25 +53,25 @@ export default function ProjectImplementationPage() {
         <div className="bg-white border border-accent/5 shadow-xl flex p-1">
           <Button 
             variant={view === 'grid' ? 'secondary' : 'ghost'} 
-            className={`rounded-none h-10 px-4 flex gap-2 uppercase tracking-widest text-[9px] font-bold ${view === 'grid' ? 'bg-accent text-white' : ''}`}
+            className={`rounded-none h-10 px-4 flex gap-2 uppercase tracking-widest text-[11px] font-bold ${view === 'grid' ? 'bg-accent text-white' : ''}`}
             onClick={() => setView('grid')}
           >
-            <LayoutGrid className="h-3.5 w-3.5" /> Deployment Grid
+            <LayoutGrid className="h-4 w-4" /> Deployment Grid
           </Button>
           <Button 
             variant={view === 'list' ? 'secondary' : 'ghost'} 
-            className={`rounded-none h-10 px-4 flex gap-2 uppercase tracking-widest text-[9px] font-bold ${view === 'list' ? 'bg-accent text-white' : ''}`}
+            className={`rounded-none h-10 px-4 flex gap-2 uppercase tracking-widest text-[11px] font-bold ${view === 'list' ? 'bg-accent text-white' : ''}`}
             onClick={() => setView('list')}
           >
-            <List className="h-3.5 w-3.5" /> Site Index
+            <List className="h-4 w-4" /> Site Index
           </Button>
         </div>
       </motion.div>
 
       <Alert className="rounded-none border-accent/10 bg-accent/[0.02]">
-        <Info className="h-4 w-4 text-accent" />
-        <AlertTitle className="text-[10px] font-bold uppercase tracking-widest text-accent">Deployment Logic</AlertTitle>
-        <AlertDescription className="text-xs font-light italic text-muted-foreground">
+        <Info className="h-5 w-5 text-accent" />
+        <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-accent">Deployment Logic</AlertTitle>
+        <AlertDescription className="text-sm font-light italic text-muted-foreground">
           Showing all commissions currently in active site deployment. Archived projects are filtered from this tactile operational view.
         </AlertDescription>
       </Alert>
@@ -87,35 +86,35 @@ export default function ProjectImplementationPage() {
             >
               <Card className="rounded-none border-accent/5 shadow-xl bg-white group hover:shadow-2xl transition-all overflow-hidden">
                 <div className="flex flex-col">
-                  <div className="bg-accent/5 h-1 w-full" />
+                  <div className="bg-accent/5 h-1.5 w-full" />
                   <CardContent className="p-8 space-y-8">
                     <div className="flex items-start justify-between">
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
                           <h3 className="text-2xl font-headline italic">{p.project}</h3>
-                          <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest font-bold">{p.status}</Badge>
+                          <Badge variant="outline" className="rounded-none text-[10px] uppercase tracking-widest font-bold py-0.5">{p.status}</Badge>
                         </div>
-                        <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold">Client: {p.name} • {p.id}</p>
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-bold">Client: {p.name} • {p.id}</p>
                       </div>
                       <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/5 group-hover:bg-accent group-hover:text-white transition-all">
-                        <Link href={`/admin/clients/${p.id}`}><ArrowRight className="h-5 w-5" /></Link>
+                        <Link href={`/admin/clients/${p.id}`}><ArrowRight className="h-6 w-6" /></Link>
                       </Button>
                     </div>
 
                     <div className="space-y-4">
-                      <div className="flex justify-between text-[9px] uppercase tracking-widest font-bold text-accent/40">
+                      <div className="flex justify-between text-[11px] uppercase tracking-widest font-bold text-accent/40">
                         <span>Implementation Velocity</span>
                         <span>{p.progress}%</span>
                       </div>
-                      <Progress value={p.progress} className="h-1 bg-secondary rounded-none" />
+                      <Progress value={p.progress} className="h-1.5 bg-secondary rounded-none" />
                     </div>
 
                     <div className="flex items-center justify-between pt-4 border-t border-accent/5">
-                      <div className="flex items-center gap-2 text-[9px] uppercase tracking-widest text-muted-foreground font-bold">
-                        <PlayCircle className="h-3.5 w-3.5 text-accent/40" /> 
+                      <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
+                        <PlayCircle className="h-4 w-4 text-accent/40" /> 
                         {p.tasks?.length || 0} Site Tasks Logged
                       </div>
-                      <p className="text-[10px] font-light italic text-accent/60 truncate max-w-[200px]">{p.lastActivity}</p>
+                      <p className="text-[12px] font-light italic text-accent/60 truncate max-w-[200px]">{p.lastActivity}</p>
                     </div>
                   </CardContent>
                 </div>
@@ -125,8 +124,8 @@ export default function ProjectImplementationPage() {
         </div>
       ) : (
         <div className="text-center py-32 border border-dashed border-accent/10 bg-secondary/5 space-y-6">
-          <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No active implementation projects prioritized</p>
-          <Button asChild variant="outline" className="rounded-none uppercase tracking-widest text-[10px]">
+          <p className="text-base font-light italic text-muted-foreground uppercase tracking-[0.3em]">No active implementation projects prioritized</p>
+          <Button asChild variant="outline" className="rounded-none uppercase tracking-widest text-[11px] font-bold shadow-sm">
             <Link href="/admin/operations/planning">View Planning Briefs</Link>
           </Button>
         </div>

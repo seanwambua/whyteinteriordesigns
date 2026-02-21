@@ -293,12 +293,12 @@ export default function ProjectPlanningPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-4">
             <div className="h-px w-8 bg-accent" />
-            <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Operations Hub</span>
+            <span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Operations Hub</span>
           </div>
           <h1 className="text-5xl font-headline italic">Project <span className="not-italic">Briefings.</span></h1>
         </div>
-        <Button asChild className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[10px] font-bold flex gap-2">
-          <Link href="/admin/clients/add"><Plus className="h-4 w-4" /> Initialize Briefing</Link>
+        <Button asChild className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold flex gap-2 shadow-xl">
+          <Link href="/admin/clients/add"><Plus className="h-5 w-5" /> Initialize Briefing</Link>
         </Button>
       </motion.div>
 
@@ -310,31 +310,31 @@ export default function ProjectPlanningPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className={`rounded-none border-accent/10 shadow-lg hover:border-accent/30 transition-all bg-white overflow-hidden group ${!project.isActivated ? 'border-l-4 border-l-orange-400' : ''}`}>
+            <Card className={cn("rounded-none border-accent/10 shadow-lg hover:border-accent/30 transition-all bg-white overflow-hidden group", !project.isActivated && 'border-l-4 border-l-orange-400')}>
               <div className="flex flex-col md:flex-row items-stretch">
-                <div className="p-8 border-b md:border-b-0 md:border-r border-accent/5 flex flex-col justify-center min-w-[200px] bg-secondary/5">
-                  <span className="text-[10px] font-bold text-accent/40 uppercase tracking-[0.4em] mb-2">{project.id}</span>
-                  <Badge className="bg-accent text-white rounded-none uppercase tracking-widest text-[8px] w-fit">
+                <div className="p-8 border-b md:border-b-0 md:border-r border-accent/5 flex flex-col justify-center min-w-[220px] bg-secondary/5">
+                  <span className="text-[11px] font-bold text-accent/40 uppercase tracking-[0.4em] mb-2">{project.id}</span>
+                  <Badge className="bg-accent text-white rounded-none uppercase tracking-widest text-[10px] w-fit font-bold py-1">
                     {project.tier} Tier
                   </Badge>
                   {!project.isActivated && (
-                    <div className="mt-4 flex items-center gap-2 text-[8px] font-bold text-orange-600 uppercase tracking-widest">
-                      <Banknote className="h-3 w-3" /> Awaiting Deposit
+                    <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-orange-600 uppercase tracking-widest">
+                      <Banknote className="h-4 w-4" /> Awaiting Deposit
                     </div>
                   )}
                 </div>
                 <div className="flex-1 p-8 flex flex-col md:flex-row items-center justify-between gap-8">
                   <div className="space-y-4">
                     <div className="space-y-1">
-                      <h3 className="text-2xl font-headline italic">{project.project}</h3>
+                      <h3 className="text-3xl font-headline italic">{project.project}</h3>
                       <div className="flex flex-wrap gap-6">
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <User className="h-3 w-3" />
-                          <span className="text-[10px] uppercase tracking-widest">Client: {project.name}</span>
+                          <User className="h-4 w-4" />
+                          <span className="text-[12px] font-bold uppercase tracking-widest">Client: {project.name}</span>
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <CalendarIcon className="h-3 w-3" />
-                          <span className="text-[10px] uppercase tracking-widest">Target: {project.endDate}</span>
+                          <CalendarIcon className="h-4 w-4" />
+                          <span className="text-[12px] font-bold uppercase tracking-widest">Target: {project.endDate}</span>
                         </div>
                       </div>
                     </div>
@@ -343,17 +343,17 @@ export default function ProjectPlanningPage() {
                         variant="outline" 
                         size="sm" 
                         onClick={() => handleOpenEdit(project)}
-                        className="rounded-none h-8 text-[9px] uppercase tracking-widest font-bold border-accent/10 hover:bg-accent hover:text-white"
+                        className="rounded-none h-9 text-[11px] uppercase tracking-widest font-bold border-accent/10 hover:bg-accent hover:text-white"
                       >
-                        <Edit2 className="h-3 w-3 mr-1.5" /> Comprehensive Edit
+                        <Edit2 className="h-4 w-4 mr-1.5" /> Comprehensive Edit
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => setDeleteId(project.id)}
-                        className="rounded-none h-8 text-[9px] uppercase tracking-widest font-bold text-destructive/40 hover:text-destructive hover:bg-destructive/5"
+                        className="rounded-none h-9 text-[11px] uppercase tracking-widest font-bold text-destructive/40 hover:text-destructive hover:bg-destructive/5"
                       >
-                        <Trash2 className="h-3 w-3 mr-1.5" /> Cancel Brief
+                        <Trash2 className="h-4 w-4 mr-1.5" /> Cancel Brief
                       </Button>
                     </div>
                   </div>
@@ -361,27 +361,27 @@ export default function ProjectPlanningPage() {
                   <div className="flex items-center gap-12">
                     {!project.isActivated ? (
                       <div className="text-right">
-                        <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Required Deposit</span>
-                        <span className="text-xs font-bold uppercase tracking-widest text-orange-600">KES {getDepositRequired(project)}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Required Deposit</span>
+                        <span className="text-sm font-bold uppercase tracking-widest text-orange-600">KES {getDepositRequired(project)}</span>
                       </div>
                     ) : (
                       <div className="text-right">
-                        <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Milestone</span>
-                        <span className="text-xs font-bold uppercase tracking-widest text-accent">{project.status}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Milestone</span>
+                        <span className="text-sm font-bold uppercase tracking-widest text-accent">{project.status}</span>
                       </div>
                     )}
                     
                     {!project.isActivated ? (
                       <Button 
                         onClick={() => setActivationProject(project)}
-                        className="h-12 px-6 rounded-none bg-orange-600 text-white uppercase tracking-widest text-[9px] font-bold hover:bg-orange-700 transition-all flex gap-2 shadow-lg"
+                        className="h-12 px-6 rounded-none bg-orange-600 text-white uppercase tracking-widest text-[11px] font-bold hover:bg-orange-700 transition-all flex gap-2 shadow-lg"
                       >
-                        <ShieldCheck className="h-3.5 w-3.5" /> Activate Journey
+                        <ShieldCheck className="h-4 w-4" /> Activate Journey
                       </Button>
                     ) : (
                       <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/10 group-hover:bg-accent group-hover:text-white transition-all">
                         <Link href={`/admin/clients/${project.id}`}>
-                          <ArrowRight className="h-4 w-4" />
+                          <ArrowRight className="h-5 w-5" />
                         </Link>
                       </Button>
                     )}
@@ -393,7 +393,7 @@ export default function ProjectPlanningPage() {
         ))}
         {pendingPlanning.length === 0 && (
           <div className="text-center py-24 border border-dashed border-accent/10 bg-secondary/5">
-            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No project briefings currently in the planning phase</p>
+            <p className="text-base font-light italic text-muted-foreground uppercase tracking-[0.3em]">No project briefings currently in the planning phase</p>
           </div>
         )}
       </div>
@@ -403,44 +403,44 @@ export default function ProjectPlanningPage() {
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md">
           <DialogHeader className="space-y-4">
             <div className="flex items-center gap-3">
-              <ShieldCheck className="h-4 w-4 text-orange-600" />
-              <span className="text-orange-600 text-[10px] font-bold uppercase tracking-[0.4em]">Financial Protocol Required</span>
+              <ShieldCheck className="h-5 w-5 text-orange-600" />
+              <span className="text-orange-600 text-[12px] font-bold uppercase tracking-[0.4em]">Financial Protocol Required</span>
             </div>
             <DialogTitle className="text-3xl font-headline italic">Activate {activationProject?.id}</DialogTitle>
-            <DialogDescription className="font-light italic text-muted-foreground">
+            <DialogDescription className="font-light italic text-muted-foreground text-base">
               Confirm the initial deposit transaction to move this commission into the active implementation deck.
             </DialogDescription>
           </DialogHeader>
           <div className="py-8 space-y-8">
             <div className="p-6 bg-secondary/30 border border-accent/5 space-y-4">
-              <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-bold">
+              <div className="flex justify-between items-center text-[12px] uppercase tracking-widest font-bold">
                 <span className="text-accent/40">Commission Tier</span>
                 <span className="text-accent">{activationProject?.tier}</span>
               </div>
-              <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-bold">
+              <div className="flex justify-between items-center text-[12px] uppercase tracking-widest font-bold">
                 <span className="text-accent/40">Initial Deposit Required</span>
                 <span className="text-orange-600">KES {activationProject ? getDepositRequired(activationProject) : 0}</span>
               </div>
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Initial Installment Transaction Code</Label>
+              <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Initial Installment Transaction Code</Label>
               <Input 
                 value={depositCode}
                 onChange={(e) => setDepositCode(e.target.value)}
                 placeholder="E.g., TRX-8821-WHYTE"
-                className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent uppercase tracking-widest"
+                className="rounded-none border-accent/20 h-14 text-xl tracking-widest uppercase"
               />
             </div>
           </div>
           <DialogFooter>
             <Button 
-              className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[10px] font-bold"
+              className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl"
               onClick={handleActivateJourney}
               disabled={isActivating || !depositCode}
             >
               {isActivating ? (
-                <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Verifying Protocols...</span>
+                <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Verifying Protocols...</span>
               ) : "Authorize Journey Activation"}
             </Button>
           </DialogFooter>
@@ -452,52 +452,52 @@ export default function ProjectPlanningPage() {
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
           <DialogHeader className="p-8 pb-4 space-y-4">
             <div className="flex items-center gap-3">
-              <FileText className="h-4 w-4 text-accent" />
-              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Comprehensive Protocol Synchronization</span>
+              <FileText className="h-5 w-5 text-accent" />
+              <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Comprehensive Protocol Synchronization</span>
             </div>
             <DialogTitle className="text-4xl font-headline italic">Edit Dossier: {editProject?.id}</DialogTitle>
-            <DialogDescription className="font-light italic text-muted-foreground">
+            <DialogDescription className="font-light italic text-muted-foreground text-base">
               Modify the architectural, financial, and operational frameworks for this commission.
             </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="identity" className="flex-1 overflow-hidden flex flex-col px-8">
             <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-8 mb-6">
-              <TabsTrigger value="identity" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[9px] font-bold pb-3 px-0">Identity & Brief</TabsTrigger>
-              <TabsTrigger value="financials" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[9px] font-bold pb-3 px-0">Timeline & Financials</TabsTrigger>
-              <TabsTrigger value="milestones" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[9px] font-bold pb-3 px-0">Milestones</TabsTrigger>
-              <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[9px] font-bold pb-3 px-0">Workflow</TabsTrigger>
-              <TabsTrigger value="network" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[9px] font-bold pb-3 px-0">Network Matrix</TabsTrigger>
+              <TabsTrigger value="identity" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-3 px-0">Identity & Brief</TabsTrigger>
+              <TabsTrigger value="financials" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-3 px-0">Timeline & Financials</TabsTrigger>
+              <TabsTrigger value="milestones" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-3 px-0">Milestones</TabsTrigger>
+              <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-3 px-0">Workflow</TabsTrigger>
+              <TabsTrigger value="network" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-3 px-0">Network Matrix</TabsTrigger>
             </TabsList>
 
             <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar pb-8">
               <TabsContent value="identity" className="m-0 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Client Full Name</Label>
-                    <Input value={editFormData.name} onChange={(e) => setEditFormData({...editFormData, name: e.target.value})} className="rounded-none h-12" />
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Client Full Name</Label>
+                    <Input value={editFormData.name} onChange={(e) => setEditFormData({...editFormData, name: e.target.value})} className="rounded-none h-12 text-base" />
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Contact Email</Label>
-                    <Input value={editFormData.email} onChange={(e) => setEditFormData({...editFormData, email: e.target.value})} className="rounded-none h-12" />
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Contact Email</Label>
+                    <Input value={editFormData.email} onChange={(e) => setEditFormData({...editFormData, email: e.target.value})} className="rounded-none h-12 text-base" />
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Project Title</Label>
-                  <Input value={editFormData.project} onChange={(e) => setEditFormData({...editFormData, project: e.target.value})} className="rounded-none h-12" />
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Title</Label>
+                  <Input value={editFormData.project} onChange={(e) => setEditFormData({...editFormData, project: e.target.value})} className="rounded-none h-12 text-base" />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Architectural Brief</Label>
-                  <Textarea value={editFormData.description} onChange={(e) => setEditFormData({...editFormData, description: e.target.value})} className="min-h-[150px] rounded-none p-4 font-light italic" />
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Brief</Label>
+                  <Textarea value={editFormData.description} onChange={(e) => setEditFormData({...editFormData, description: e.target.value})} className="min-h-[150px] rounded-none p-4 font-light italic text-lg" />
                 </div>
               </TabsContent>
 
               <TabsContent value="financials" className="m-0 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
                     <Select value={editFormData.tier} onValueChange={(v: any) => setEditFormData({...editFormData, tier: v})}>
-                      <SelectTrigger className="rounded-none h-12"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="rounded-none h-12 text-base font-bold"><SelectValue /></SelectTrigger>
                       <SelectContent className="rounded-none">
                         <SelectItem value="Premium">Premium (50/30/20)</SelectItem>
                         <SelectItem value="Deluxe">Deluxe (60/20/20)</SelectItem>
@@ -506,25 +506,25 @@ export default function ProjectPlanningPage() {
                     </Select>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Total Budget (KES)</Label>
-                    <Input type="number" value={editFormData.totalBudget} onChange={(e) => setEditFormData({...editFormData, totalBudget: Number(e.target.value)})} className="rounded-none h-12" />
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Total Budget (KES)</Label>
+                    <Input type="number" value={editFormData.totalBudget} onChange={(e) => setEditFormData({...editFormData, totalBudget: Number(e.target.value)})} className="rounded-none h-12 text-lg font-bold" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Commencement Date</Label>
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Date</Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full h-12 rounded-none justify-start"><CalendarIcon className="mr-2 h-4 w-4 opacity-40" />{format(editFormData.startDate, "PPP")}</Button>
+                        <Button variant="outline" className="w-full h-12 rounded-none justify-start text-base"><CalendarIcon className="mr-2 h-5 w-5 opacity-40" />{format(editFormData.startDate, "PPP")}</Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={editFormData.startDate} onSelect={(d) => d && setEditFormData({...editFormData, startDate: d})} initialFocus /></PopoverContent>
                     </Popover>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Authorized Deadline</Label>
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Authorized Deadline</Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full h-12 rounded-none justify-start"><CalendarIcon className="mr-2 h-4 w-4 opacity-40" />{format(editFormData.endDate, "PPP")}</Button>
+                        <Button variant="outline" className="w-full h-12 rounded-none justify-start text-base"><CalendarIcon className="mr-2 h-5 w-5 opacity-40" />{format(editFormData.endDate, "PPP")}</Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={editFormData.endDate} onSelect={(d) => d && setEditFormData({...editFormData, endDate: d})} initialFocus /></PopoverContent>
                     </Popover>
@@ -534,23 +534,23 @@ export default function ProjectPlanningPage() {
 
               <TabsContent value="milestones" className="m-0 space-y-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-40">Strategic Delivery Targets</h4>
-                  <Button variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-8 text-[9px] uppercase tracking-widest font-bold"><Plus className="h-3 w-3 mr-1.5" /> Append Target</Button>
+                  <h4 className="text-[12px] font-bold uppercase tracking-widest opacity-40">Strategic Delivery Targets</h4>
+                  <Button variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-9 text-[11px] uppercase tracking-widest font-bold"><Plus className="h-4 w-4 mr-1.5" /> Append Target</Button>
                 </div>
                 <div className="space-y-4">
                   {editFormData.milestones.map((m, idx) => (
                     <div key={m.id} className="p-6 border border-accent/10 bg-secondary/5 space-y-4 relative group">
-                      <Button variant="ghost" size="icon" onClick={() => removeMilestone(idx)} className="absolute top-2 right-2 h-8 w-8 text-destructive/40 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => removeMilestone(idx)} className="absolute top-2 right-2 h-8 w-8 text-destructive/40 hover:text-destructive"><Trash2 className="h-5 w-5" /></Button>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <Label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Milestone Identity</Label>
-                          <Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-10 text-xs font-bold uppercase tracking-widest" />
+                          <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Milestone Identity</Label>
+                          <Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-10 text-sm font-bold uppercase tracking-widest" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Target Sync Date</Label>
+                          <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Target Sync Date</Label>
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button variant="outline" className="w-full h-10 rounded-none justify-start text-xs"><CalendarIcon className="mr-2 h-3.5 w-3.5 opacity-40" />{m.date}</Button>
+                              <Button variant="outline" className="w-full h-10 rounded-none justify-start text-sm"><CalendarIcon className="mr-2 h-4 w-4 opacity-40" />{m.date}</Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={parse(m.date, "MMM dd, yyyy", new Date())} onSelect={(d) => d && updateMilestone(idx, 'date', format(d, "MMM dd, yyyy"))} initialFocus /></PopoverContent>
                           </Popover>
@@ -563,22 +563,22 @@ export default function ProjectPlanningPage() {
 
               <TabsContent value="workflow" className="m-0 space-y-8">
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-40">Operational Implementation Protocols</h4>
-                  <Button variant="outline" size="sm" onClick={addTask} className="rounded-none h-8 text-[9px] uppercase tracking-widest font-bold"><Plus className="h-3 w-3 mr-1.5" /> Add Task</Button>
+                  <h4 className="text-[12px] font-bold uppercase tracking-widest opacity-40">Operational Protocols</h4>
+                  <Button variant="outline" size="sm" onClick={addTask} className="rounded-none h-9 text-[11px] uppercase tracking-widest font-bold"><Plus className="h-4 w-4 mr-1.5" /> Add Task</Button>
                 </div>
                 <div className="space-y-8">
                   {editFormData.tasks.map((task, idx) => (
                     <div key={task.id} className="p-8 border border-accent/10 bg-white shadow-sm space-y-6 relative group">
-                      <Button variant="ghost" size="icon" onClick={() => removeTask(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => removeTask(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive"><Trash2 className="h-5 w-5" /></Button>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <Label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Primary Task Identity</Label>
-                          <Input value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest" />
+                          <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Primary Task Identity</Label>
+                          <Input value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} className="rounded-none h-12 text-base font-bold uppercase tracking-widest" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Urgency Protocol</Label>
+                          <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Urgency Protocol</Label>
                           <Select value={task.priority} onValueChange={(v: any) => updateTask(idx, 'priority', v)}>
-                            <SelectTrigger className="rounded-none h-12 text-xs font-bold uppercase tracking-widest"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="rounded-none h-12 text-sm font-bold uppercase tracking-widest"><SelectValue /></SelectTrigger>
                             <SelectContent className="rounded-none">
                               <SelectItem value="Low">Low Priority</SelectItem>
                               <SelectItem value="Medium">Medium Priority</SelectItem>
@@ -589,13 +589,13 @@ export default function ProjectPlanningPage() {
                       </div>
                       
                       <div className="space-y-4 pt-4 border-t border-accent/5">
-                        <div className="flex justify-between items-center"><Label className="text-[8px] uppercase tracking-[0.3em] font-bold opacity-40">Sub-task Protocol</Label><Button variant="ghost" size="sm" onClick={() => addSubtask(idx)} className="h-6 text-[8px] uppercase tracking-widest font-bold text-accent hover:bg-accent/5 p-0"><Plus className="h-2.5 w-2.5 mr-1" /> Append Sub-task</Button></div>
+                        <div className="flex justify-between items-center"><Label className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40">Sub-task Protocol</Label><Button variant="ghost" size="sm" onClick={() => addSubtask(idx)} className="h-6 text-[10px] uppercase tracking-widest font-bold text-accent hover:bg-accent/5 p-0"><Plus className="h-3 w-3 mr-1" /> Append Sub-task</Button></div>
                         <div className="space-y-2">
                           {task.subtasks?.map((sub, sIdx) => (
                             <div key={sub.id} className="flex gap-3 items-center group/sub">
-                              <div className="h-1.5 w-1.5 rounded-full bg-accent/20" />
-                              <Input placeholder="Sub-task objective..." value={sub.title} onChange={(e) => updateSubtask(idx, sIdx, e.target.value)} className="h-8 rounded-none border-none text-xs italic focus:ring-0 p-0" />
-                              <Button variant="ghost" size="icon" onClick={() => removeSubtask(idx, sIdx)} className="h-6 w-6 text-destructive/20 hover:text-destructive opacity-0 group-hover/sub:opacity-100 transition-opacity"><Trash2 className="h-3 w-3" /></Button>
+                              <div className="h-2 w-2 rounded-full bg-accent/20" />
+                              <Input placeholder="Sub-task objective..." value={sub.title} onChange={(e) => updateSubtask(idx, sIdx, e.target.value)} className="h-8 rounded-none border-none text-sm italic focus:ring-0 p-0" />
+                              <Button variant="ghost" size="icon" onClick={() => removeSubtask(idx, sIdx)} className="h-6 w-6 text-destructive/20 hover:text-destructive opacity-0 group-hover/sub:opacity-100 transition-opacity"><Trash2 className="h-4 w-4" /></Button>
                             </div>
                           ))}
                         </div>
@@ -607,16 +607,16 @@ export default function ProjectPlanningPage() {
 
               <TabsContent value="network" className="m-0 space-y-8">
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-40">Network Resource Allocation</h4>
-                  <Button variant="outline" size="sm" onClick={addVendor} className="rounded-none h-8 text-[9px] uppercase tracking-widest font-bold"><Plus className="h-3 w-3 mr-1.5" /> Allocate Partner</Button>
+                  <h4 className="text-[12px] font-bold uppercase tracking-widest opacity-40">Network Resource Allocation</h4>
+                  <Button variant="outline" size="sm" onClick={addVendor} className="rounded-none h-9 text-[11px] uppercase tracking-widest font-bold"><Plus className="h-4 w-4 mr-1.5" /> Allocate Partner</Button>
                 </div>
                 <div className="space-y-6">
                   {editFormData.vendorAllocations.map((v, idx) => (
                     <div key={v.id} className="p-8 border border-accent/10 bg-white shadow-sm space-y-6 relative group">
-                      <Button variant="ghost" size="icon" onClick={() => removeVendor(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => removeVendor(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive"><Trash2 className="h-5 w-5" /></Button>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <Label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Partner Identity</Label>
+                          <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Partner Identity</Label>
                           <Select value={v.vendorName} onValueChange={(val) => updateVendor(idx, 'vendorName', val)}>
                             <SelectTrigger className="rounded-none h-12 text-sm font-bold uppercase tracking-widest"><SelectValue placeholder="Select Partner" /></SelectTrigger>
                             <SelectContent className="rounded-none">
@@ -626,15 +626,15 @@ export default function ProjectPlanningPage() {
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Role in Commission</Label>
+                          <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Role in Commission</Label>
                           <Input placeholder="E.g., Fine Joinery" className="rounded-none h-12 text-sm" value={v.role} onChange={(e) => updateVendor(idx, 'role', e.target.value)} />
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                          <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Cost Model</Label>
+                          <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Cost Model</Label>
                           <Select value={v.costType} onValueChange={(val: any) => updateVendor(idx, 'costType', val)}>
-                            <SelectTrigger className="rounded-none h-12 text-xs font-bold uppercase tracking-widest"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="rounded-none h-12 text-[11px] font-bold uppercase tracking-widest"><SelectValue /></SelectTrigger>
                             <SelectContent className="rounded-none">
                               <SelectItem value="Fixed">Fixed Fee</SelectItem>
                               <SelectItem value="Daily">Daily Rate</SelectItem>
@@ -643,19 +643,19 @@ export default function ProjectPlanningPage() {
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Model Value</Label>
-                          <Input type="number" className="rounded-none h-12" value={v.costValue} onChange={(e) => updateVendor(idx, 'costValue', Number(e.target.value))} />
+                          <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Model Value</Label>
+                          <Input type="number" className="rounded-none h-12 text-sm" value={v.costValue} onChange={(e) => updateVendor(idx, 'costValue', Number(e.target.value))} />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Projected Days</Label>
-                          <Input type="number" className="rounded-none h-12" value={v.timelineDays} onChange={(e) => updateVendor(idx, 'timelineDays', Number(e.target.value))} />
+                          <Label className="text-[11px] uppercase tracking-widest opacity-40 font-bold">Projected Days</Label>
+                          <Input type="number" className="rounded-none h-12 text-sm" value={v.timelineDays} onChange={(e) => updateVendor(idx, 'timelineDays', Number(e.target.value))} />
                         </div>
                       </div>
                     </div>
                   ))}
                   {editFormData.vendorAllocations.length === 0 && (
                     <div className="py-12 text-center border border-dashed border-accent/10">
-                      <p className="text-[10px] font-light italic text-muted-foreground uppercase tracking-widest">No partners allocated to this brief matrix.</p>
+                      <p className="text-[12px] font-light italic text-muted-foreground uppercase tracking-widest">No partners allocated to this brief matrix.</p>
                     </div>
                   )}
                 </div>
@@ -664,9 +664,9 @@ export default function ProjectPlanningPage() {
           </Tabs>
 
           <DialogFooter className="p-8 border-t border-accent/5 bg-secondary/5">
-            <Button variant="outline" onClick={() => setEditProject(null)} className="rounded-none h-14 px-10 uppercase tracking-widest text-[10px] font-bold border-accent/10">Abort Sync</Button>
-            <Button onClick={handleSaveEdit} className="bg-accent text-white hover:bg-accent/90 rounded-none h-14 px-12 uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-2xl">
-              Authorize Comprehensive Sync <ChevronRight className="h-4 w-4" />
+            <Button variant="outline" onClick={() => setEditProject(null)} className="rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold border-accent/10 shadow-sm">Abort Sync</Button>
+            <Button onClick={handleSaveEdit} className="bg-accent text-white hover:bg-accent/90 rounded-none h-14 px-12 uppercase tracking-widest text-[12px] font-bold flex gap-3 shadow-2xl">
+              Authorize Comprehensive Sync <ChevronRight className="h-5 w-5" />
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -677,19 +677,19 @@ export default function ProjectPlanningPage() {
         <AlertDialogContent className="rounded-none border-accent/20 font-body">
           <AlertDialogHeader className="space-y-4">
             <div className="flex items-center gap-3">
-              <XCircle className="h-4 w-4 text-destructive" />
-              <span className="text-destructive text-[10px] font-bold uppercase tracking-[0.3em]">Irreversible Protocol</span>
+              <XCircle className="h-5 w-5 text-destructive" />
+              <span className="text-destructive text-[12px] font-bold uppercase tracking-[0.3em]">Irreversible Protocol</span>
             </div>
             <AlertDialogTitle className="text-2xl font-headline italic text-destructive">Cancel Project Briefing?</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed">
+            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-base">
               This will permanently purge project brief **{deleteId}** from the studio registry. This action cannot be reversed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-6">
-            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[10px] font-bold h-12 border-accent/10">Abort Cancellation</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[11px] font-bold h-12 border-accent/10">Abort Cancellation</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete}
-              className="bg-destructive text-white rounded-none uppercase tracking-widest text-[10px] font-bold h-12 hover:bg-destructive/90"
+              className="bg-destructive text-white rounded-none uppercase tracking-widest text-[11px] font-bold h-12 hover:bg-destructive/90"
             >
               Confirm Cancellation
             </AlertDialogAction>
