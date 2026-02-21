@@ -22,6 +22,7 @@
       "type": "object",
       "properties": {
         "title": { "type": "string" },
+        "planType": { "type": "string", "enum": ["Genesis", "Full Commission"] },
         "status": { "type": "string", "enum": ["Consultation", "Planning", "Procurement", "Execution", "Styling", "Completed"] },
         "progress": { "type": "number" },
         "description": { "type": "string" },
@@ -34,7 +35,8 @@
             "properties": {
               "label": { "type": "string" },
               "date": { "type": "string" },
-              "isCompleted": { "type": "boolean" }
+              "isCompleted": { "type": "boolean" },
+              "description": { "type": "string" }
             }
           }
         }
@@ -42,11 +44,13 @@
     },
     "Inquiry": {
       "title": "Client Inquiry",
-      "description": "A lead from the service inquiry form",
+      "description": "A lead or project-specific support request",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
         "email": { "type": "string" },
+        "projectId": { "type": "string" },
+        "type": { "type": "string", "enum": ["new_business", "project_support", "complaint"] },
         "serviceType": { "type": "string", "enum": ["design", "decor", "bundle"] },
         "message": { "type": "string" },
         "status": { "type": "string", "enum": ["new", "contacted", "closed"], "default": "new" },
@@ -81,7 +85,7 @@
     },
     "/inquiries/{inquiryId}": {
       "schema": "Inquiry",
-      "description": "Client leads and inquiries"
+      "description": "Client leads and project support requests"
     },
     "/feedback/{feedbackId}": {
       "schema": "Feedback",
