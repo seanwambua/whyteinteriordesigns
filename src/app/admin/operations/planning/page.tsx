@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, Plus, Calendar, User, ArrowRight, Banknote, ShieldCheck, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
