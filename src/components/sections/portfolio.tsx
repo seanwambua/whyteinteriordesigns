@@ -1,9 +1,8 @@
-
 "use client";
 
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Badge } from "@/components/ui/badge";
+import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function Portfolio() {
