@@ -15,7 +15,8 @@ import {
   CheckCircle2,
   Circle,
   AlertCircle,
-  Flag
+  Flag,
+  XCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -24,6 +25,7 @@ import { ClientSupportDialog } from "@/components/dashboard/client-support-dialo
 export default function ClientDashboardPage() {
   const [isOnboarded, setIsOnboarded] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request">("project_support");
 
   const activeProject = {
     title: "The Muthaiga Residence",
@@ -43,8 +45,13 @@ export default function ClientDashboardPage() {
     ]
   };
 
+  const openSupport = (type: "project_support" | "complaint" | "termination_request") => {
+    setSupportType(type);
+    setIsSupportOpen(true);
+  };
+
   return (
-    <div className="max-w-6xl mx-auto space-y-16 pb-24">
+    <div className="max-w-6xl mx-auto space-y-16 pb-24 font-body">
       {/* Onboarding Banner */}
       {!isOnboarded && (
         <motion.div
@@ -103,8 +110,10 @@ export default function ClientDashboardPage() {
                     <span className="text-[10px] font-bold text-accent/40 uppercase tracking-[0.5em] block mb-2">{activeProject.id}</span>
                     <CardTitle className="text-4xl font-headline italic">{activeProject.title}</CardTitle>
                   </div>
-                  <div className="text-[10px] font-bold text-accent border border-accent/20 px-6 py-2 uppercase tracking-[0.3em] bg-accent/5">
-                    Live Execution
+                  <div className={`text-[10px] font-bold border px-6 py-2 uppercase tracking-[0.3em] ${
+                    activeProject.status.includes('Termination') ? 'text-destructive border-destructive/20 bg-destructive/5' : 'text-accent border-accent/20 bg-accent/5'
+                  }`}>
+                    {activeProject.status}
                   </div>
                 </div>
               </CardHeader>
@@ -174,7 +183,7 @@ export default function ClientDashboardPage() {
             
             <div className="space-y-4">
               <Button 
-                onClick={() => setIsSupportOpen(true)}
+                onClick={() => openSupport("project_support")}
                 variant="outline"
                 className="w-full h-20 rounded-none border-accent/20 bg-white hover:bg-accent hover:text-white group flex items-center justify-start px-6 gap-4 transition-all"
               >
@@ -188,16 +197,30 @@ export default function ClientDashboardPage() {
               </Button>
 
               <Button 
-                onClick={() => setIsSupportOpen(true)}
+                onClick={() => openSupport("complaint")}
                 variant="outline"
-                className="w-full h-20 rounded-none border-destructive/10 bg-white hover:bg-destructive hover:text-white group flex items-center justify-start px-6 gap-4 transition-all"
+                className="w-full h-20 rounded-none border-orange-200 bg-white hover:bg-orange-600 hover:text-white group flex items-center justify-start px-6 gap-4 transition-all"
               >
-                <div className="h-10 w-10 flex items-center justify-center border border-destructive/10 rounded-full group-hover:border-white/20 text-destructive group-hover:text-white">
+                <div className="h-10 w-10 flex items-center justify-center border border-orange-100 rounded-full group-hover:border-white/20 text-orange-600 group-hover:text-white">
                   <AlertCircle className="h-4 w-4" />
                 </div>
                 <div className="text-left">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em]">Report Site Issue</p>
                   <p className="text-[8px] opacity-60 uppercase tracking-widest font-light mt-1">Urgent Attention Required</p>
+                </div>
+              </Button>
+
+              <Button 
+                onClick={() => openSupport("termination_request")}
+                variant="outline"
+                className="w-full h-20 rounded-none border-destructive/10 bg-white hover:bg-destructive hover:text-white group flex items-center justify-start px-6 gap-4 transition-all"
+              >
+                <div className="h-10 w-10 flex items-center justify-center border border-destructive/10 rounded-full group-hover:border-white/20 text-destructive group-hover:text-white">
+                  <XCircle className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em]">Terminate Project</p>
+                  <p className="text-[8px] opacity-60 uppercase tracking-widest font-light mt-1">Formal Contract Dissolution</p>
                 </div>
               </Button>
             </div>
@@ -223,6 +246,7 @@ export default function ClientDashboardPage() {
         isOpen={isSupportOpen} 
         onClose={() => setIsSupportOpen(false)} 
         projectId={activeProject.id}
+        defaultType={supportType}
       />
     </div>
   );
