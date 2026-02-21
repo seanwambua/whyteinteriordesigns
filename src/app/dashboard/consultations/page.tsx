@@ -117,8 +117,10 @@ export default function ClientConsultationsPage() {
             <div className="h-12 w-12 bg-accent/5 rounded-full flex items-center justify-center mx-auto">
               <LifeBuoy className="h-6 w-6 text-accent/20" />
             </div>
-            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No communication history found in the digital vault</p>
-            <Button onClick={() => setIsSupportOpen(true)} variant="outline" className="rounded-none uppercase tracking-widest text-[10px] border-accent/20">
+            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">
+              Requests should be tracked from here
+            </p>
+            <Button onClick={() => setIsSupportOpen(true)} variant="outline" className="rounded-none uppercase tracking-widest text-[10px]">
               Initiate Primary Request
             </Button>
           </div>
