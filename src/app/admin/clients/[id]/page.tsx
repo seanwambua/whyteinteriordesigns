@@ -38,7 +38,8 @@ import {
   FileText,
   Trash2,
   CheckCircle2,
-  Scale
+  Scale,
+  ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -52,13 +53,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
   
-  // Termination Agreement State
-  const [resTerms, setResTerms] = useState("");
-  const [finSum, setFinSum] = useState("");
-  const [projSum, setProjSum] = useState("");
-
   // Audit State
   const [auditTotalReceived, setAuditTotalReceived] = useState(0);
   const [auditRefund, setAuditRefund] = useState(0);
@@ -73,17 +68,12 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   useEffect(() => {
     if (project?.termination) {
-      setResTerms(project.termination.resolutionTerms || "");
-      setFinSum(project.termination.financialSummary || "");
-      setProjSum(project.termination.projectSummary || "");
-      
       if (project.termination.audit) {
         setAuditTotalReceived(project.termination.audit.totalReceived);
         setAuditRefund(project.termination.audit.refundAmount);
         setAuditAllocations(project.termination.audit.allocations);
         setAuditComments(project.termination.audit.stewardComments);
       } else {
-        // Pre-fill total received from installments
         const paid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
         setAuditTotalReceived(paid);
       }
@@ -335,22 +325,68 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                 <p className="text-[9px] font-bold uppercase tracking-widest text-accent/40">Transparency Link</p>
                 <p className="text-[10px] font-light italic leading-relaxed">Share this specialized financial link with the client for independent verification.</p>
                 <Button asChild variant="outline" className="w-full h-10 rounded-none text-[9px] uppercase tracking-widest border-accent/10">
-                  <Link href={`/transparency/${project.id}`} target="_blank">View Transparency Portal</Link>
+                  <Link href={`/transparency/${project.id}`} target="_blank" className="flex gap-2 justify-center">View Transparency Portal <ExternalLink className="h-3 w-3" /></Link>
                 </Button>
               </div>
             </div>
           </div>
         </TabsContent>
 
-        {/* Existing Overview, Workflow, Ledger tabs OMITTED for brevity but preserved */}
         <TabsContent value="overview">
-           <Card className="rounded-none p-10"><p>Overview Data Preserved.</p></Card>
+           <Card className="rounded-none p-10 space-y-8">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+               <div className="space-y-6">
+                 <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-accent/40">Architectural Brief</h3>
+                 <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || project.workScope}"</p>
+               </div>
+               <div className="space-y-6">
+                 <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-accent/40">Temporal Status</h3>
+                 <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-1">
+                     <p className="text-[9px] uppercase tracking-widest opacity-40">Start Date</p>
+                     <p className="font-headline italic text-xl">{project.startDate}</p>
+                   </div>
+                   <div className="space-y-1">
+                     <p className="text-[9px] uppercase tracking-widest opacity-40">Authorized Deadline</p>
+                     <p className="font-headline italic text-xl">{project.endDate}</p>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </Card>
         </TabsContent>
         <TabsContent value="workflow">
-           <Card className="rounded-none p-10"><p>Workflow Data Preserved.</p></Card>
+           <Card className="rounded-none p-10">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               {(project.tasks || []).map(task => (
+                 <div key={task.id} className="p-6 border border-accent/5 bg-secondary/5 space-y-4">
+                   <div className="flex justify-between items-start">
+                     <span className="text-[8px] font-bold text-accent/30 uppercase tracking-widest">{task.id}</span>
+                     <Badge variant="outline" className="text-[8px] uppercase tracking-widest">{task.status}</Badge>
+                   </div>
+                   <h4 className="text-sm font-bold uppercase tracking-widest">{task.title}</h4>
+                 </div>
+               ))}
+             </div>
+           </Card>
         </TabsContent>
         <TabsContent value="ledger">
-           <Card className="rounded-none p-10"><p>Ledger Data Preserved.</p></Card>
+           <Card className="rounded-none p-10">
+             <div className="space-y-4">
+               {project.installments.map((ins, i) => (
+                 <div key={i} className="flex justify-between items-center p-6 border border-accent/5">
+                   <div className="space-y-1">
+                     <p className="text-xs font-bold uppercase tracking-widest">{ins.label}</p>
+                     <p className="text-[9px] text-muted-foreground uppercase">{ins.transactionCode ? `Ref: ${ins.transactionCode}` : 'Awaiting Reference'}</p>
+                   </div>
+                   <div className="text-right">
+                     <p className="text-lg font-headline italic">KES {ins.amount.toLocaleString()}</p>
+                     <Badge className={cn("rounded-none text-[8px] uppercase tracking-widest", ins.status === 'Paid' ? 'bg-green-600' : 'bg-orange-600')}>{ins.status}</Badge>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           </Card>
         </TabsContent>
       </Tabs>
     </div>

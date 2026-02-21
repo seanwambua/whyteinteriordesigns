@@ -29,7 +29,10 @@ import {
   BookOpen,
   ShieldAlert,
   FileText,
-  Handshake
+  Handshake,
+  Scale,
+  Building2,
+  ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -41,7 +44,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ClientDashboardPage() {
-  const { clientProjects, updateClientProject } = useWhyteStore();
+  const { clientProjects, updateClientProject, financialSteward } = useWhyteStore();
   const [verifiedProjectId, setVerifiedProjectId] = useState<string | null>(null);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request">("project_support");
@@ -111,6 +114,9 @@ export default function ClientDashboardPage() {
     : Math.round((completedTasksCount / Math.max(1, activeProject.tasks?.length || 1)) * 100);
 
   if (activeProject.status === 'Termination') {
+    const audit = activeProject.termination?.audit;
+    const totalAllocated = audit?.allocations.reduce((sum, a) => sum + a.amount, 0) || 0;
+
     return (
       <div className="max-w-6xl mx-auto space-y-12 font-body pb-24">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
@@ -150,6 +156,47 @@ export default function ClientDashboardPage() {
                 </div>
               </div>
             </Card>
+
+            {/* Audited Accounts Section */}
+            {audit && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="rounded-none border-accent/10 bg-black text-white p-10 space-y-10 shadow-2xl overflow-hidden relative">
+                  <div className="absolute top-0 right-0 p-4 opacity-5"><Scale className="h-40 w-40" /></div>
+                  
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <FileCheck className="h-5 w-5 text-green-400" />
+                        <h3 className="text-2xl font-headline italic">Audited Financial Statement</h3>
+                      </div>
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-white/40">Verified by {financialSteward}</p>
+                    </div>
+                    <Button asChild variant="outline" className="rounded-none border-white/20 text-white hover:bg-white hover:text-black h-12 uppercase tracking-widest text-[9px]">
+                      <Link href={`/transparency/${activeProject.id}`} target="_blank" className="flex gap-2">View Full Dossier <ExternalLink className="h-3 w-3" /></Link>
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-10 border-t border-white/10 relative z-10">
+                    <div className="space-y-1">
+                      <p className="text-[9px] uppercase tracking-widest text-white/40">Cumulative Funds</p>
+                      <p className="text-2xl font-headline italic text-green-400">KES {audit.totalReceived.toLocaleString()}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[9px] uppercase tracking-widest text-white/40">Verified Site Costs</p>
+                      <p className="text-2xl font-headline italic text-orange-400">KES {totalAllocated.toLocaleString()}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[9px] uppercase tracking-widest text-white/40">Authorized Refund</p>
+                      <p className="text-2xl font-headline italic">KES {audit.refundAmount.toLocaleString()}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-white/5 border-l-2 border-white/20 italic text-sm text-white/70 relative z-10">
+                    "{audit.stewardComments}"
+                  </div>
+                </Card>
+              </motion.div>
+            )}
 
             <div className="space-y-8">
               <h2 className="text-2xl font-headline italic flex items-center gap-3">
