@@ -18,7 +18,9 @@ import {
   HardHat,
   MapPin,
   Star,
-  ExternalLink
+  ExternalLink,
+  Zap,
+  Briefcase
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -47,8 +49,8 @@ export default function AdminHRPage() {
   const [partnerForm, setPartnerPartnerForm] = useState({
     name: "",
     specialty: "",
-    studioType: "Boutique Studio",
-    reach: "Local",
+    entityType: "Design Firm",
+    influence: "Boutique",
     contact: "",
   });
 
@@ -78,15 +80,15 @@ export default function AdminHRPage() {
       contact: partnerForm.contact,
       rating: 5.0,
       status: 'active',
-      type: `${partnerForm.studioType} — ${partnerForm.reach}`
+      type: `${partnerForm.entityType} — ${partnerForm.influence}`
     };
 
     setTimeout(() => {
       addCollaborator(newPartner);
       setIsSubmitting(false);
       setActiveDialog(null);
-      setPartnerPartnerForm({ name: "", specialty: "", studioType: "Boutique Studio", reach: "Local", contact: "" });
-      toast({ title: "Partner Synchronized", description: `${newPartner.name} authorized in design network.` });
+      setPartnerPartnerForm({ name: "", specialty: "", entityType: "Design Firm", influence: "Boutique", contact: "" });
+      toast({ title: "Partner Synchronized", description: `${newPartner.name} authorized in creative network.` });
     }, 1200);
   };
 
@@ -110,7 +112,7 @@ export default function AdminHRPage() {
       setIsSubmitting(false);
       setActiveDialog(null);
       setVendorForm({ name: "", trade: "", location: "", capacity: "Individual Artisan", contact: "" });
-      toast({ title: "Vendor Synchronized", description: `${newVendor.name} authorized in trade registry.` });
+      toast({ title: "Trade Registered", description: `${newVendor.name} authorized in site trade registry.` });
     }, 1200);
   };
 
@@ -139,13 +141,13 @@ export default function AdminHRPage() {
             variant="outline" 
             className="rounded-none h-14 border-accent/20 uppercase tracking-widest text-[9px] flex gap-2 hover:bg-accent/5"
           >
-            <Compass className="h-3.5 w-3.5" /> Register Design Partner
+            <Zap className="h-3.5 w-3.5" /> Register Creative Partner
           </Button>
           <Button 
             onClick={() => setActiveDialog("vendor")}
             className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-[0.2em] text-[10px] flex gap-2"
           >
-            <Plus className="h-4 w-4" /> Add Trade Vendor
+            <Plus className="h-4 w-4" /> Add Trade Specialist
           </Button>
         </div>
       </motion.div>
@@ -164,7 +166,7 @@ export default function AdminHRPage() {
                   col.category === 'Collaborator' ? 'bg-accent text-white' : 'bg-secondary/30 text-accent/40'
                 }`}>
                    {col.category === 'Collaborator' ? <Compass className="h-8 w-8 mb-1" /> : <HardHat className="h-8 w-8 mb-1" />}
-                   <span className="text-[7px] uppercase font-black tracking-widest">{col.category}</span>
+                   <span className="text-[7px] uppercase font-black tracking-widest">{col.category === 'Collaborator' ? 'Creative' : 'Trade'}</span>
                 </div>
                 
                 <div className="flex-1 space-y-4">
@@ -213,66 +215,67 @@ export default function AdminHRPage() {
         ))}
       </div>
 
-      {/* DESIGN PARTNER DIALOG */}
+      {/* CREATIVE PARTNER DIALOG */}
       <Dialog open={activeDialog === 'partner'} onOpenChange={() => setActiveDialog(null)}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg">
           <DialogHeader className="space-y-4">
             <div className="flex items-center gap-3">
-              <Compass className="h-4 w-4 text-accent" />
-              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Architecture & Design Network</span>
+              <Zap className="h-4 w-4 text-accent" />
+              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Creative & Influence Network</span>
             </div>
-            <DialogTitle className="text-3xl font-headline italic">New Design Partner</DialogTitle>
+            <DialogTitle className="text-3xl font-headline italic">New Creative Partner</DialogTitle>
             <DialogDescription className="font-light italic text-muted-foreground">
-              Register a consulting architect, interior stylist, or creative partner.
+              Register a design firm, interior influencer, or creative consultant.
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-8 space-y-6">
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Professional Identity</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Identity Name</Label>
               <Input 
                 value={partnerForm.name}
                 onChange={(e) => setPartnerPartnerForm({...partnerForm, name: e.target.value})}
-                placeholder="Partner or Studio Name"
+                placeholder="E.g., Studio Vibe or Jane Influence"
                 className="rounded-none border-accent/20 h-12"
               />
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Design specialty</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Creative focus</Label>
                 <Input 
                   value={partnerForm.specialty}
                   onChange={(e) => setPartnerPartnerForm({...partnerForm, specialty: e.target.value})}
-                  placeholder="E.g., Minimalism"
+                  placeholder="E.g., Social Influence, Styling"
                   className="rounded-none border-accent/20 h-12"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Studio Type</Label>
-                <Select value={partnerForm.studioType} onValueChange={(v) => setPartnerPartnerForm({...partnerForm, studioType: v})}>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Entity Type</Label>
+                <Select value={partnerForm.entityType} onValueChange={(v) => setPartnerPartnerForm({...partnerForm, entityType: v})}>
                   <SelectTrigger className="rounded-none border-accent/20 h-12">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-none">
-                    <SelectItem value="Individual Architect">Individual Architect</SelectItem>
-                    <SelectItem value="Boutique Studio">Boutique Studio</SelectItem>
-                    <SelectItem value="Design Collective">Design Collective</SelectItem>
-                    <SelectItem value="Global Firm">Global Firm</SelectItem>
+                    <SelectItem value="Individual Influencer">Individual Influencer</SelectItem>
+                    <SelectItem value="Design Firm">Design Firm</SelectItem>
+                    <SelectItem value="Content Agency">Content Agency</SelectItem>
+                    <SelectItem value="Creative Collective">Creative Collective</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Operational Reach</Label>
-                <Select value={partnerForm.reach} onValueChange={(v) => setPartnerPartnerForm({...partnerForm, reach: v})}>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Influence Scale</Label>
+                <Select value={partnerForm.influence} onValueChange={(v) => setPartnerPartnerForm({...partnerForm, influence: v})}>
                   <SelectTrigger className="rounded-none border-accent/20 h-12">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-none">
-                    <SelectItem value="Local (Kenya)">Local (Kenya)</SelectItem>
-                    <SelectItem value="Regional (East Africa)">Regional (East Africa)</SelectItem>
-                    <SelectItem value="Global">Global Reach</SelectItem>
+                    <SelectItem value="Boutique">Boutique / Niche</SelectItem>
+                    <SelectItem value="Mid-Scale">Mid-Scale Reach</SelectItem>
+                    <SelectItem value="Macro">Macro Influence</SelectItem>
+                    <SelectItem value="Global Firm">Global Firm</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -281,7 +284,7 @@ export default function AdminHRPage() {
                 <Input 
                   value={partnerForm.contact}
                   onChange={(e) => setPartnerPartnerForm({...partnerForm, contact: e.target.value})}
-                  placeholder="Email or Phone"
+                  placeholder="Email or Social Handle"
                   className="rounded-none border-accent/20 h-12"
                 />
               </div>
@@ -294,33 +297,33 @@ export default function AdminHRPage() {
               onClick={handleAddPartner}
               disabled={isSubmitting || !partnerForm.name}
             >
-              {isSubmitting ? "Authorizing Identity..." : "Authorize Partner Registration"}
+              {isSubmitting ? "Authorizing Creative..." : "Authorize Creative Registration"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* TRADE VENDOR DIALOG */}
+      {/* TRADE SPECIALIST DIALOG */}
       <Dialog open={activeDialog === 'vendor'} onOpenChange={() => setActiveDialog(null)}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg">
           <DialogHeader className="space-y-4">
             <div className="flex items-center gap-3">
               <HardHat className="h-4 w-4 text-accent" />
-              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Site & Material Registry</span>
+              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Site & Implementation Trades</span>
             </div>
-            <DialogTitle className="text-3xl font-headline italic">Add Trade Vendor</DialogTitle>
+            <DialogTitle className="text-3xl font-headline italic">Add Trade Specialist</DialogTitle>
             <DialogDescription className="font-light italic text-muted-foreground">
-              Register a specialist trade, material workshop, or site contractor.
+              Register technical experts like masons, painters, or site contractors.
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-8 space-y-6">
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Workshop/Company Identity</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Workshop or Contractor Name</Label>
               <Input 
                 value={vendorForm.name}
                 onChange={(e) => setVendorForm({...vendorForm, name: e.target.value})}
-                placeholder="Business Name"
+                placeholder="E.g., Nairobi Masonry Pros"
                 className="rounded-none border-accent/20 h-12"
               />
             </div>
@@ -330,7 +333,7 @@ export default function AdminHRPage() {
                 <Input 
                   value={vendorForm.trade}
                   onChange={(e) => setVendorForm({...vendorForm, trade: e.target.value})}
-                  placeholder="E.g., Fine Joinery"
+                  placeholder="E.g., Masonry, Painting, Plumbing"
                   className="rounded-none border-accent/20 h-12"
                 />
               </div>
@@ -342,20 +345,19 @@ export default function AdminHRPage() {
                   </SelectTrigger>
                   <SelectContent className="rounded-none">
                     <SelectItem value="Individual Artisan">Individual Artisan</SelectItem>
-                    <SelectItem value="Small Workshop">Small Workshop (2-5)</SelectItem>
-                    <SelectItem value="Medium Contractor">Medium Contractor (5-20)</SelectItem>
-                    <SelectItem value="Industrial Partner">Industrial Partner</SelectItem>
+                    <SelectItem value="Small Team">Small Team (2-5)</SelectItem>
+                    <SelectItem value="Industrial Contractor">Industrial Contractor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Primary Location</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Mobilization Base</Label>
                 <Input 
                   value={vendorForm.location}
                   onChange={(e) => setVendorForm({...vendorForm, location: e.target.value})}
-                  placeholder="E.g., Nairobi Industrial Area"
+                  placeholder="E.g., Nairobi West"
                   className="rounded-none border-accent/20 h-12"
                 />
               </div>
@@ -377,7 +379,7 @@ export default function AdminHRPage() {
               onClick={handleAddVendor}
               disabled={isSubmitting || !vendorForm.name}
             >
-              {isSubmitting ? "Registering Trade..." : "Authorize Trade Registration"}
+              {isSubmitting ? "Registering Specialist..." : "Authorize Trade Registration"}
             </Button>
           </DialogFooter>
         </DialogContent>
