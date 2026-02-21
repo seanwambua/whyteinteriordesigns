@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use } from "react";
@@ -39,7 +38,8 @@ import {
   Circle,
   Zap,
   BookOpen,
-  Archive
+  Archive,
+  Banknote
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -47,6 +47,7 @@ import { useState, useEffect } from "react";
 import { format, differenceInDays, parse, isAfter } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -57,6 +58,11 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
   const [isExtending, setIsExtending] = useState(false);
   const [newDeadline, setNewDeadline] = useState<Date | undefined>(new Date());
+
+  // Payment Verification State
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [verifyingIdx, setVerifyingIdx] = useState<number | null>(null);
+  const [transactionCode, setTransactionCode] = useState("");
 
   useEffect(() => {
     setIsMounted(true);
@@ -192,9 +198,53 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   };
 
   const handleToggleInstallment = (idx: number) => {
+    const ins = project.installments[idx];
+    if (ins.status === 'Paid') {
+      // Revoking payment
+      const updated = [...project.installments];
+      updated[idx] = { ...updated[idx], status: 'Pending', transactionCode: undefined };
+      updateClientProject(project.id, { 
+        installments: updated,
+        lastActivity: `Financial Entry Revoked: ${ins.label}`
+      });
+      toast({
+        title: "Payment Revoked",
+        description: `${ins.label} has been returned to Pending state.`,
+      });
+    } else {
+      // Verifying payment (restricted to index 1 and 2 for manual entry)
+      if (idx === 0) {
+        toast({
+          title: "Protocol Restriction",
+          description: "Initial deposit is verified via the Journey Activation protocol.",
+          variant: "destructive"
+        });
+        return;
+      }
+      setVerifyingIdx(idx);
+      setTransactionCode("");
+      setIsVerifyingPayment(true);
+    }
+  };
+
+  const confirmVerification = () => {
+    if (verifyingIdx === null || !transactionCode) return;
     const updated = [...project.installments];
-    updated[idx] = { ...updated[idx], status: updated[idx].status === 'Paid' ? 'Pending' : 'Paid' };
-    updateClientProject(project.id, { installments: updated });
+    updated[verifyingIdx] = { 
+      ...updated[verifyingIdx], 
+      status: 'Paid', 
+      transactionCode: transactionCode 
+    };
+    updateClientProject(project.id, { 
+      installments: updated,
+      lastActivity: `Payment Verified: ${updated[verifyingIdx].label} (Ref: ${transactionCode})`
+    });
+    setIsVerifyingPayment(false);
+    setVerifyingIdx(null);
+    toast({
+      title: "Payment Synchronized",
+      description: "Financial ledger updated with transaction reference.",
+    });
   };
 
   const handleVerifyAudit = () => {
@@ -624,11 +674,26 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                           <Badge className={`rounded-none uppercase tracking-widest text-[8px] ${ins.status === 'Paid' ? 'bg-green-600 text-white' : 'bg-accent/10 text-accent border-accent/20'}`}>{ins.status}</Badge>
                         </div>
                         <p className="text-2xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p>
+                        {ins.transactionCode && (
+                          <div className="flex items-center gap-2 text-[9px] uppercase tracking-widest text-muted-foreground font-bold italic">
+                            <Banknote className="h-3 w-3" /> Ref: {ins.transactionCode}
+                          </div>
+                        )}
                       </div>
-                      {!project.isArchived && (
-                        <Button variant="outline" onClick={() => handleToggleInstallment(i)} className="rounded-none h-12 uppercase tracking-widest text-[10px] border-accent/20">
-                          {ins.status === 'Paid' ? 'Revoke Payment' : 'Verify Receipt'}
-                        </Button>
+                      {!project.isArchived && project.isActivated && (
+                        <div className="flex items-center gap-4">
+                          {i === 0 ? (
+                            <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest opacity-40">System Verified</Badge>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              onClick={() => handleToggleInstallment(i)} 
+                              className="rounded-none h-12 uppercase tracking-widest text-[10px] border-accent/20"
+                            >
+                              {ins.status === 'Paid' ? 'Revoke Payment' : 'Verify Receipt'}
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </div>
                   ))}
@@ -681,6 +746,48 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           </div>
         </PopoverContent>
       </Popover>
+
+      {/* Payment Verification Dialog */}
+      <Dialog open={isVerifyingPayment} onOpenChange={setIsVerifyingPayment}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md">
+          <DialogHeader className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Banknote className="h-4 w-4 text-accent" />
+              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Financial Reconciliation</span>
+            </div>
+            <DialogTitle className="text-3xl font-headline italic">Verify Receipt</DialogTitle>
+            <DialogDescription className="font-light italic text-muted-foreground">
+              Authorize the {verifyingIdx !== null ? project.installments[verifyingIdx].label : 'installment'} into the studio ledger.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 space-y-6">
+            <div className="p-6 bg-secondary/30 border border-accent/5 space-y-2">
+              <p className="text-[10px] uppercase tracking-widest font-bold opacity-40">Value Expected</p>
+              <p className="text-2xl font-headline italic text-accent">
+                KES {verifyingIdx !== null ? project.installments[verifyingIdx].amount.toLocaleString() : '0'}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Transaction Reference Code</Label>
+              <Input 
+                value={transactionCode}
+                onChange={(e) => setTransactionCode(e.target.value)}
+                placeholder="E.g., TRX-9982-KCB"
+                className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent uppercase tracking-widest"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[10px] font-bold"
+              onClick={confirmVerification}
+              disabled={!transactionCode}
+            >
+              Authorize Ledger Entry
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

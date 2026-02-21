@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -111,7 +110,7 @@ export default function ProjectPlanningPage() {
     setIsActivating(true);
     setTimeout(() => {
       const updatedInstallments = activationProject.installments.map(ins => 
-        ins.label.includes('Deposit') ? { ...ins, status: 'Paid' as const } : ins
+        ins.label.includes('Deposit') ? { ...ins, status: 'Paid' as const, transactionCode: depositCode } : ins
       );
 
       updateClientProject(activationProject.id, {
