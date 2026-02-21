@@ -6,10 +6,12 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Hammer, Ruler, Box, PencilRuler, ArrowRight } from "lucide-react";
+import { Hammer, Ruler, Box, PencilRuler } from "lucide-react";
+import { useState } from "react";
+import { ServiceInquiryDialog } from "@/components/service-inquiry-dialog";
 
 export default function InteriorDesignPage() {
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const serviceImage = PlaceHolderImages.find(img => img.id === "service-build");
 
   const features = [
@@ -120,14 +122,22 @@ export default function InteriorDesignPage() {
               <p className="text-white/70 max-w-xl mx-auto font-light text-lg">
                 Schedule a consultation to discuss the structural potential of your home or commercial environment.
               </p>
-              <Button asChild size="lg" className="bg-white text-accent hover:bg-white/90 rounded-none h-14 px-12 uppercase tracking-[0.2em] transition-all hover:tracking-[0.3em]">
-                <Link href="/#contact">Book Consultation</Link>
+              <Button 
+                onClick={() => setIsInquiryOpen(true)}
+                className="bg-white text-accent hover:bg-white/90 rounded-none h-14 px-12 uppercase tracking-[0.2em] transition-all hover:tracking-[0.3em]"
+              >
+                Request Design Quote
               </Button>
             </motion.div>
           </div>
         </section>
       </main>
       <Footer />
+      <ServiceInquiryDialog 
+        isOpen={isInquiryOpen} 
+        onClose={() => setIsInquiryOpen(false)} 
+        defaultService="design" 
+      />
     </div>
   );
 }
