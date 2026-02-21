@@ -14,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
 import { 
   ArrowLeft, 
   User, 
@@ -45,7 +44,11 @@ import {
   Lock,
   Loader2,
   MoreVertical,
-  Check
+  Check,
+  CreditCard,
+  History,
+  TrendingUp,
+  ArrowUpRight
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -193,7 +196,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       task.id === taskId ? { ...task, status: newStatus } : task
     );
     
-    // Recalculate progress
     const completed = updatedTasks.filter(t => t.status === 'Done').length;
     const progress = Math.round((completed / Math.max(1, updatedTasks.length)) * 100);
 
@@ -251,6 +253,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     });
     updateClientProject(project.id, { tasks: updatedTasks });
   };
+
+  // FINANCIALS LOGIC
+  const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
+  const remainingBalance = (project.totalBudget || 0) - totalPaid;
 
   const KanbanColumn = ({ status, tasks }: { status: ProjectTask['status'], tasks: ProjectTask[] }) => (
     <div className="flex-1 flex flex-col gap-6 min-w-[320px]">
@@ -557,34 +563,126 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
            </div>
         </TabsContent>
 
-        <TabsContent value="ledger" className="m-0">
-           <Card className="rounded-none border-accent/5 p-10">
-             <div className="space-y-4">
-               {project.installments.map((ins, i) => (
-                 <div key={i} className="flex justify-between items-center p-6 border border-accent/5 bg-white shadow-sm hover:border-accent/20 transition-all">
-                   <div className="space-y-1">
-                     <p className="text-sm font-bold uppercase tracking-widest">{ins.label}</p>
-                     <p className="text-[11px] text-muted-foreground uppercase">{ins.transactionCode ? `Ref: ${ins.transactionCode}` : 'Awaiting Reference'}</p>
-                   </div>
-                   <div className="flex items-center gap-12">
-                     <div className="text-right">
-                       <p className="text-2xl font-headline italic">KES {ins.amount.toLocaleString()}</p>
-                       <Badge className={cn("rounded-none text-[10px] uppercase tracking-widest px-4 py-1", ins.status === 'Paid' ? 'bg-green-600' : 'bg-orange-600')}>
-                         {ins.status}
-                       </Badge>
-                     </div>
-                     {ins.status === 'Pending' && (
-                       <Button 
-                        onClick={() => setVerifyingInstallment(i)}
-                        variant="outline" 
-                        className="rounded-none h-12 px-6 border-accent/20 text-[10px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-2"
-                       >
-                         <ShieldCheck className="h-4 w-4" /> Verify Payment
-                       </Button>
-                     )}
-                   </div>
+        <TabsContent value="ledger" className="m-0 space-y-12">
+           {/* Financial Summary Deck */}
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+               <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group hover:border-accent/30 transition-all">
+                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-16 w-16" /></div>
+                 <div className="space-y-4 relative z-10">
+                   <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p>
+                   <p className="text-3xl font-headline italic">KES {(project.totalBudget || 0).toLocaleString()}</p>
+                   <div className="h-1 w-12 bg-accent/20" />
                  </div>
+               </Card>
+             </motion.div>
+             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+               <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group hover:border-accent/30 transition-all">
+                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><ShieldCheck className="h-16 w-16" /></div>
+                 <div className="space-y-4 relative z-10">
+                   <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p>
+                   <p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p>
+                   <div className="h-1 w-12 bg-green-600/20" />
+                 </div>
+               </Card>
+             </motion.div>
+             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+               <Card className="rounded-none border-accent/10 bg-white p-8 relative overflow-hidden group hover:border-accent/30 transition-all">
+                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><History className="h-16 w-16" /></div>
+                 <div className="space-y-4 relative z-10">
+                   <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-orange-600/60">Outstanding Balance</p>
+                   <p className="text-3xl font-headline italic text-orange-600">KES {remainingBalance.toLocaleString()}</p>
+                   <div className="h-1 w-12 bg-orange-600/20" />
+                 </div>
+               </Card>
+             </motion.div>
+           </div>
+
+           {/* Transaction Registry */}
+           <Card className="rounded-none border-accent/5 p-0 bg-white shadow-2xl overflow-hidden">
+             <div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center">
+               <h3 className="text-xs font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3">
+                 <CreditCard className="h-4 w-4" /> Architectural Installment Registry
+               </h3>
+               <Badge variant="outline" className="rounded-none text-[9px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">
+                 Stewardship Verified
+               </Badge>
+             </div>
+             
+             <div className="divide-y divide-accent/5">
+               {project.installments.map((ins, i) => (
+                 <motion.div 
+                   key={i} 
+                   initial={{ opacity: 0 }} 
+                   animate={{ opacity: 1 }}
+                   transition={{ delay: i * 0.1 }}
+                   className="group hover:bg-secondary/5 transition-colors"
+                 >
+                   <div className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8">
+                     <div className="flex items-center gap-8">
+                       <div className={cn(
+                         "h-12 w-12 rounded-full flex items-center justify-center shrink-0 border",
+                         ins.status === 'Paid' ? "bg-green-600/5 border-green-600/20 text-green-600" : "bg-orange-600/5 border-orange-600/20 text-orange-600"
+                       )}>
+                         {ins.status === 'Paid' ? <CheckCircle2 className="h-5 w-5" /> : <Timer className="h-5 w-5 animate-pulse" />}
+                       </div>
+                       <div className="space-y-1.5">
+                         <div className="flex items-center gap-3">
+                           <p className="text-sm font-bold uppercase tracking-[0.2em]">{ins.label}</p>
+                           <Badge className={cn(
+                             "rounded-none text-[8px] uppercase tracking-widest px-2 py-0.5 font-bold",
+                             ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white"
+                           )}>
+                             {ins.status}
+                           </Badge>
+                         </div>
+                         <div className="flex items-center gap-4 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                           <span className="flex items-center gap-1.5">
+                             <FileText className="h-3 w-3 opacity-40" /> 
+                             {ins.transactionCode ? `Ref: ${ins.transactionCode}` : 'Awaiting Studio Verification'}
+                           </span>
+                           <div className="h-1 w-1 rounded-full bg-accent/10" />
+                           <span className="opacity-40">{ins.percentage}% Allocation</span>
+                         </div>
+                       </div>
+                     </div>
+
+                     <div className="flex items-center gap-12 justify-between lg:justify-end">
+                       <div className="text-right">
+                         <p className="text-[9px] font-bold uppercase tracking-widest text-accent/30 mb-1">Installment Value</p>
+                         <p className="text-3xl font-headline italic text-accent tracking-tight">KES {ins.amount.toLocaleString()}</p>
+                       </div>
+                       
+                       {ins.status === 'Pending' && (
+                         <Button 
+                          onClick={() => setVerifyingInstallment(i)}
+                          variant="outline" 
+                          className="rounded-none h-14 px-8 border-accent/20 text-[10px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"
+                         >
+                           <ShieldCheck className="h-4 w-4 transition-transform group-hover/btn:scale-110" /> Verify Ledger Entry
+                         </Button>
+                       )}
+                       {ins.status === 'Paid' && (
+                         <div className="h-14 w-14 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]">
+                           <Check className="h-6 w-6" />
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 </motion.div>
                ))}
+             </div>
+
+             <div className="p-10 bg-secondary/10 border-t border-accent/5 flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                 <Lock className="h-4 w-4 text-accent/30" />
+                 <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40 italic">
+                   All transactions are recorded in the studio's encrypted financial archives.
+                 </p>
+               </div>
+               <Button variant="ghost" className="text-[10px] font-bold uppercase tracking-widest text-accent/40 hover:text-accent gap-2">
+                 Export Ledger <ArrowUpRight className="h-3 w-3" />
+               </Button>
              </div>
            </Card>
         </TabsContent>
@@ -592,48 +690,53 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
       {/* Payment Verification Dialog */}
       <Dialog open={verifyingInstallment !== null} onOpenChange={(open) => !open && setVerifyingInstallment(null)}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md">
-          <DialogHeader className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Lock className="h-4 w-4 text-accent" />
-              <span className="text-accent text-[11px] font-bold uppercase tracking-[0.4em]">Payment Verification Protocol</span>
-            </div>
-            <DialogTitle className="text-3xl font-headline italic">Verify Installment</DialogTitle>
-            <DialogDescription className="font-light italic text-muted-foreground">
-              Confirming receipt of <strong>{verifyingInstallment !== null ? project.installments[verifyingInstallment].label : ""}</strong>. This action is recorded in the financial audit trail.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-8 space-y-6">
-            <div className="p-6 bg-secondary/30 border border-accent/5 space-y-4">
-              <div className="flex justify-between text-[11px] uppercase tracking-widest font-bold text-accent/40">
-                <span>Authorized Amount</span>
-                <span className="text-accent">KES {verifyingInstallment !== null ? project.installments[verifyingInstallment].amount.toLocaleString() : 0}</span>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden">
+          <div className="bg-accent h-1.5 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Lock className="h-4 w-4 text-accent" />
+                <span className="text-accent text-[11px] font-bold uppercase tracking-[0.4em]">Stewardship Protocol</span>
+              </div>
+              <DialogTitle className="text-3xl font-headline italic">Verify Transaction</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-sm leading-relaxed">
+                Confirming receipt of the <strong>{verifyingInstallment !== null ? project.installments[verifyingInstallment].label : ""}</strong>. This record will be synchronized with the client's transparency portal.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-8">
+              <div className="p-8 bg-secondary/30 border border-accent/5 space-y-4 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-12 w-12" /></div>
+                <div className="flex justify-between items-end relative z-10">
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-accent/40">Authorized Amount</span>
+                  <span className="text-2xl font-headline italic text-accent">KES {verifyingInstallment !== null ? project.installments[verifyingInstallment].amount.toLocaleString() : 0}</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">External Transaction Reference</Label>
+                <Input 
+                  placeholder="E.g., TRX-9921-WHYTE" 
+                  className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent uppercase tracking-[0.2em] font-medium"
+                  value={txnCode}
+                  onChange={(e) => setTxnCode(e.target.value)}
+                />
+                <p className="text-[9px] uppercase tracking-widest text-muted-foreground italic">Input the exact reference from the financial institution.</p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">External Transaction Reference</Label>
-              <Input 
-                placeholder="E.g., TRX-9921-WHYTE" 
-                className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent uppercase tracking-widest"
-                value={txnCode}
-                onChange={(e) => setTxnCode(e.target.value)}
-              />
-            </div>
+            <DialogFooter className="pt-4">
+              <Button 
+                className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl disabled:opacity-50 transition-all hover:tracking-[0.2em]"
+                onClick={handleVerifyPayment}
+                disabled={isVerifying || !txnCode}
+              >
+                {isVerifying ? (
+                  <span className="flex items-center gap-2 font-bold"><Loader2 className="h-4 w-4 animate-spin" /> Finalizing Synchronization...</span>
+                ) : "Authorize Entry Verification"}
+              </Button>
+            </DialogFooter>
           </div>
-
-          <DialogFooter>
-            <Button 
-              className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl disabled:opacity-50"
-              onClick={handleVerifyPayment}
-              disabled={isVerifying || !txnCode}
-            >
-              {isVerifying ? (
-                <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Synchronizing Ledger...</span>
-              ) : "Authorize Payment Verification"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
