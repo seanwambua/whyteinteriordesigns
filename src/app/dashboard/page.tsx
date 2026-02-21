@@ -5,10 +5,14 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Calendar, ChevronRight, MessageSquare, Clock, Layout } from "lucide-react";
+import { Briefcase, Calendar, ChevronRight, MessageSquare, Clock, Layout, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function ClientDashboardPage() {
+  // Simulating an onboarding check
+  const [isOnboarded, setIsOnboarded] = useState(false);
+
   const activeProject = {
     title: "The Muthaiga Residence",
     id: "WP-0082",
@@ -21,6 +25,29 @@ export default function ClientDashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-16">
+      {/* Onboarding Banner for existing clients */}
+      {!isOnboarded && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-accent text-white p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 border-l-4 border-white"
+        >
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 mb-2">
+              <Sparkles className="h-5 w-5 text-white/60" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/40">Digital Welcome</span>
+            </div>
+            <h3 className="text-3xl font-headline italic">Complete Your Digital Transition.</h3>
+            <p className="text-white/70 font-light max-w-xl text-sm leading-relaxed">
+              Activate your full suite of studio tools to track real-time architectural progress and site logistics.
+            </p>
+          </div>
+          <Button asChild className="bg-white text-accent hover:bg-white/90 rounded-none h-14 px-10 uppercase tracking-[0.2em] shrink-0">
+            <Link href="/dashboard/onboarding">Start Onboarding</Link>
+          </Button>
+        </motion.div>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
