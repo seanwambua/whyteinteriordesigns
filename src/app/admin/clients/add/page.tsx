@@ -19,11 +19,13 @@ import {
   Activity,
   ClipboardList,
   Calendar as CalendarIcon,
-  Flag
+  Flag,
+  Users,
+  HardHat
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone, VendorAllocation } from "@/store/use-whyte-store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
@@ -35,7 +37,7 @@ import { cn } from "@/lib/utils";
 export default function AddClientPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { addClientProject } = useWhyteStore();
+  const { addClientProject, collaborators } = useWhyteStore();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   
@@ -58,10 +60,11 @@ export default function AddClientPage() {
         status: "Todo" as const,
         subtasks: [] as SubTask[]
       }
-    ] as (Omit<ProjectTask, 'id'>)[]
+    ] as (Omit<ProjectTask, 'id'>)[],
+    vendorAllocations: [] as Omit<VendorAllocation, 'id'>[]
   });
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const progress = (step / totalSteps) * 100;
 
   const handleNext = () => setStep(prev => prev + 1);
@@ -130,6 +133,24 @@ export default function AddClientPage() {
     setFormData({ ...formData, tasks: updated });
   };
 
+  // Vendor Handlers
+  const addVendorAllocation = () => {
+    setFormData({
+      ...formData,
+      vendorAllocations: [...formData.vendorAllocations, { vendorName: "", role: "", category: "Vendor", costType: "Fixed", costValue: 0, timelineDays: 0, materials: [] }]
+    });
+  };
+
+  const updateVendorAllocation = (index: number, field: keyof Omit<VendorAllocation, 'id'>, value: any) => {
+    const updated = [...formData.vendorAllocations];
+    (updated[index] as any)[field] = value;
+    setFormData({ ...formData, vendorAllocations: updated });
+  };
+
+  const removeVendorAllocation = (index: number) => {
+    setFormData({ ...formData, vendorAllocations: formData.vendorAllocations.filter((_, i) => i !== index) });
+  };
+
   const getInstallmentPlan = (tier: ClientProject['tier'], budget: number) => {
     if (tier === 'Premium') return [
       { label: "Initial Deposit (50%)", percentage: 50, amount: budget * 0.5, status: 'Pending' as const },
@@ -156,12 +177,18 @@ export default function AddClientPage() {
     
     const tasksWithIds: ProjectTask[] = formData.tasks.map((t, idx) => ({
       ...t,
-      id: `T-${id}-${idx + 1}`
+      id: `T-${id}-${idx + 1}`,
+      status: 'Todo'
     }));
 
     const milestonesWithFormattedDates: Milestone[] = formData.milestones.map(m => ({
       ...m,
       date: format(m.date, "MMM dd, yyyy")
+    }));
+
+    const vendorsWithIds: VendorAllocation[] = formData.vendorAllocations.map((v, idx) => ({
+      ...v,
+      id: `VA-${id}-${idx + 1}`
     }));
 
     const newProject: ClientProject = {
@@ -181,6 +208,7 @@ export default function AddClientPage() {
       totalBudget: budget,
       milestones: milestonesWithFormattedDates,
       tasks: tasksWithIds,
+      vendorAllocations: vendorsWithIds,
       installments: getInstallmentPlan(formData.tier, budget),
       description: formData.description
     };
@@ -202,6 +230,7 @@ export default function AddClientPage() {
     if (step === 3) return formData.totalBudget && Number(formData.totalBudget) > 0;
     if (step === 4) return formData.milestones.every(m => m.label);
     if (step === 5) return formData.tasks.length > 0 && formData.tasks.every(t => t.title.trim() !== "" && t.priority);
+    if (step === 6) return true; // Optional step
     return true;
   };
 
@@ -393,6 +422,64 @@ export default function AddClientPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 6 && (
+                <motion.div key="step6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4"><Users className="h-5 w-5 text-accent/40" /><h3 className="text-xl font-headline italic">Network Matrix</h3></div>
+                    <Button type="button" onClick={addVendorAllocation} variant="outline" className="rounded-none h-10 uppercase tracking-widest text-[9px] flex gap-2"><Plus className="h-3.5 w-3.5" /> Allocate Partner</Button>
+                  </div>
+                  <div className="space-y-6 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+                    {formData.vendorAllocations.map((v, idx) => (
+                      <div key={idx} className="p-8 border border-accent/10 bg-white relative space-y-6 shadow-sm group">
+                        <Button type="button" variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive" onClick={() => removeVendorAllocation(idx)}><Trash2 className="h-4 w-4" /></Button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Partner Identity</Label>
+                            <Select value={v.vendorName} onValueChange={(val) => updateVendorAllocation(idx, 'vendorName', val)}>
+                              <SelectTrigger className="rounded-none h-12 text-sm font-bold uppercase tracking-widest"><SelectValue placeholder="Select Partner" /></SelectTrigger>
+                              <SelectContent className="rounded-none">
+                                {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                                <SelectItem value="Manual Partner">Manual Entry (N/A)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Role in Commission</Label>
+                            <Input placeholder="E.g., Structural Architect" className="rounded-none h-12 text-sm" value={v.role} onChange={(e) => updateVendorAllocation(idx, 'role', e.target.value)} />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="space-y-2">
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Cost Model</Label>
+                            <Select value={v.costType} onValueChange={(val: any) => updateVendorAllocation(idx, 'costType', val)}>
+                              <SelectTrigger className="rounded-none h-12 text-xs font-bold uppercase tracking-widest"><SelectValue /></SelectTrigger>
+                              <SelectContent className="rounded-none">
+                                <SelectItem value="Fixed">Fixed Fee</SelectItem>
+                                <SelectItem value="Daily">Daily Rate</SelectItem>
+                                <SelectItem value="Percentage">Studio Percentage</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Model Value</Label>
+                            <Input type="number" className="rounded-none h-12" value={v.costValue} onChange={(e) => updateVendorAllocation(idx, 'costValue', Number(e.target.value))} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Projected Days</Label>
+                            <Input type="number" className="rounded-none h-12" value={v.timelineDays} onChange={(e) => updateVendorAllocation(idx, 'timelineDays', Number(e.target.value))} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {formData.vendorAllocations.length === 0 && (
+                      <div className="py-12 text-center border border-dashed border-accent/10">
+                        <p className="text-xs font-light italic text-muted-foreground uppercase tracking-widest">No partners currently allocated to this brief.</p>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}

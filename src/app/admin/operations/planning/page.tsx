@@ -20,11 +20,13 @@ import {
   Flag,
   Activity,
   ChevronRight,
-  Info
+  Info,
+  Users,
+  HardHat
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { useWhyteStore, ClientProject, ProjectTask, Milestone, SubTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, Milestone, SubTask, VendorAllocation } from "@/store/use-whyte-store";
 import { useEffect, useState } from "react";
 import { 
   Dialog, 
@@ -62,7 +64,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
 export default function ProjectPlanningPage() {
-  const { clientProjects, updateClientProject, removeClientProject } = useWhyteStore();
+  const { clientProjects, updateClientProject, removeClientProject, collaborators } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   
@@ -83,7 +85,8 @@ export default function ProjectPlanningPage() {
     startDate: new Date(),
     endDate: new Date(),
     milestones: [] as Milestone[],
-    tasks: [] as ProjectTask[]
+    tasks: [] as ProjectTask[],
+    vendorAllocations: [] as VendorAllocation[]
   });
 
   // Delete State
@@ -143,7 +146,8 @@ export default function ProjectPlanningPage() {
       startDate: parse(project.startDate, "MMM dd, yyyy", new Date()),
       endDate: parse(project.endDate, "MMM dd, yyyy", new Date()),
       milestones: [...(project.milestones || [])],
-      tasks: [...(project.tasks || [])].map(t => ({ ...t, subtasks: [...(t.subtasks || [])] }))
+      tasks: [...(project.tasks || [])].map(t => ({ ...t, subtasks: [...(t.subtasks || [])] })),
+      vendorAllocations: [...(project.vendorAllocations || [])]
     });
   };
 
@@ -202,6 +206,24 @@ export default function ProjectPlanningPage() {
     setEditFormData(prev => ({ ...prev, tasks: updated }));
   };
 
+  // Vendor Handlers
+  const addVendor = () => {
+    setEditFormData(prev => ({
+      ...prev,
+      vendorAllocations: [...prev.vendorAllocations, { id: `VA-${Math.random().toString(36).substr(2, 4)}`, vendorName: "", role: "", category: "Vendor", costType: "Fixed", costValue: 0, timelineDays: 0, materials: [] }]
+    }));
+  };
+
+  const updateVendor = (idx: number, field: keyof VendorAllocation, value: any) => {
+    const updated = [...editFormData.vendorAllocations];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setEditFormData(prev => ({ ...prev, vendorAllocations: updated }));
+  };
+
+  const removeVendor = (idx: number) => {
+    setEditFormData(prev => ({ ...prev, vendorAllocations: prev.vendorAllocations.filter((_, i) => i !== idx) }));
+  };
+
   const handleSaveEdit = () => {
     if (!editProject) return;
     
@@ -234,6 +256,7 @@ export default function ProjectPlanningPage() {
       endDate: format(editFormData.endDate, "MMM dd, yyyy"),
       milestones: editFormData.milestones,
       tasks: editFormData.tasks,
+      vendorAllocations: editFormData.vendorAllocations,
       installments: getInstallmentPlan(editFormData.tier, budget),
       lastActivity: "Comprehensive Protocol Synchronization"
     });
@@ -440,6 +463,7 @@ export default function ProjectPlanningPage() {
               <TabsTrigger value="financials" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[9px] font-bold pb-3 px-0">Timeline & Financials</TabsTrigger>
               <TabsTrigger value="milestones" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[9px] font-bold pb-3 px-0">Milestones</TabsTrigger>
               <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[9px] font-bold pb-3 px-0">Workflow</TabsTrigger>
+              <TabsTrigger value="network" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[9px] font-bold pb-3 px-0">Network Matrix</TabsTrigger>
             </TabsList>
 
             <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar pb-8">
@@ -574,6 +598,62 @@ export default function ProjectPlanningPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="network" className="m-0 space-y-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-40">Network Resource Allocation</h4>
+                  <Button variant="outline" size="sm" onClick={addVendor} className="rounded-none h-8 text-[9px] uppercase tracking-widest font-bold"><Plus className="h-3 w-3 mr-1.5" /> Allocate Partner</Button>
+                </div>
+                <div className="space-y-6">
+                  {editFormData.vendorAllocations.map((v, idx) => (
+                    <div key={v.id} className="p-8 border border-accent/10 bg-white shadow-sm space-y-6 relative group">
+                      <Button variant="ghost" size="icon" onClick={() => removeVendor(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Partner Identity</Label>
+                          <Select value={v.vendorName} onValueChange={(val) => updateVendor(idx, 'vendorName', val)}>
+                            <SelectTrigger className="rounded-none h-12 text-sm font-bold uppercase tracking-widest"><SelectValue placeholder="Select Partner" /></SelectTrigger>
+                            <SelectContent className="rounded-none">
+                              {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                              <SelectItem value="Manual Entry">Manual Entry (N/A)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Role in Commission</Label>
+                          <Input placeholder="E.g., Fine Joinery" className="rounded-none h-12 text-sm" value={v.role} onChange={(e) => updateVendor(idx, 'role', e.target.value)} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                          <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Cost Model</Label>
+                          <Select value={v.costType} onValueChange={(val: any) => updateVendor(idx, 'costType', val)}>
+                            <SelectTrigger className="rounded-none h-12 text-xs font-bold uppercase tracking-widest"><SelectValue /></SelectTrigger>
+                            <SelectContent className="rounded-none">
+                              <SelectItem value="Fixed">Fixed Fee</SelectItem>
+                              <SelectItem value="Daily">Daily Rate</SelectItem>
+                              <SelectItem value="Percentage">Studio Percentage</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Model Value</Label>
+                          <Input type="number" className="rounded-none h-12" value={v.costValue} onChange={(e) => updateVendor(idx, 'costValue', Number(e.target.value))} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[9px] uppercase tracking-widest opacity-40 font-bold">Projected Days</Label>
+                          <Input type="number" className="rounded-none h-12" value={v.timelineDays} onChange={(e) => updateVendor(idx, 'timelineDays', Number(e.target.value))} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {editFormData.vendorAllocations.length === 0 && (
+                    <div className="py-12 text-center border border-dashed border-accent/10">
+                      <p className="text-[10px] font-light italic text-muted-foreground uppercase tracking-widest">No partners allocated to this brief matrix.</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </div>
