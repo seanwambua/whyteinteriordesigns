@@ -52,7 +52,7 @@ export default function ProjectClosingPage() {
 
   if (!isMounted) return null;
 
-  // RECONCILIATION: Only activated, non-archived projects in active/late phases can be reconciled
+  // RECONCILIATION: Only activated, non-archived projects in Execution or Completion phases
   const relevantProjects = clientProjects.filter(p => 
     !p.isArchived && p.isActivated && (p.status === 'Execution' || p.status === 'Completion')
   );
@@ -97,7 +97,8 @@ export default function ProjectClosingPage() {
     setTimeout(() => {
       updateClientProject(projectId, { 
         isArchived: true,
-        lastActivity: "Commission Transferred to Studio Archives"
+        status: 'Completion',
+        lastActivity: "Commission Transferred to Studio Archives — Project Deactivated"
       });
       toast({
         title: "Commission Archived",
@@ -147,7 +148,7 @@ export default function ProjectClosingPage() {
         <Info className="h-4 w-4 text-accent" />
         <AlertTitle className="text-[10px] font-bold uppercase tracking-widest text-accent">Lifecycle Enforcement</AlertTitle>
         <AlertDescription className="text-xs font-light italic text-muted-foreground">
-          Reconciliation protocols are exclusively available for **Active Journeys** currently in the Execution or Completion phases. Successfully reconciled projects can be retired to the archives.
+          Reconciliation protocols are exclusively available for **Active Journeys**. Successfully reconciled projects are retired from implementation and moved to the **Master Archives**.
         </AlertDescription>
       </Alert>
 
@@ -174,7 +175,7 @@ export default function ProjectClosingPage() {
                             {project.status}
                           </Badge>
                           <Badge className="bg-green-600/10 text-green-600 border-green-600/20 rounded-none text-[8px] uppercase tracking-widest px-2">
-                            Active
+                            Active Journey
                           </Badge>
                         </div>
                         <h3 className="text-3xl font-headline italic">{project.project}</h3>

@@ -3,7 +3,7 @@
 
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, MessageSquare, Star, TrendingUp, ArrowUpRight, RefreshCcw, ShieldAlert } from "lucide-react";
+import { Briefcase, MessageSquare, Star, TrendingUp, ArrowUpRight, RefreshCcw, ShieldAlert, Archive, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useWhyteStore } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 export default function AdminDashboardPage() {
   const { toast } = useToast();
@@ -32,11 +33,14 @@ export default function AdminDashboardPage() {
 
   if (!isMounted) return null;
 
+  const activeJourneys = clientProjects.filter(p => p.isActivated && !p.isArchived);
+  const archivedJourneys = clientProjects.filter(p => p.isArchived);
+
   const stats = [
-    { title: "Active Client Journeys", value: clientProjects.length.toString(), icon: Briefcase, color: "text-accent" },
+    { title: "Active Journeys", value: activeJourneys.length.toString(), icon: Briefcase, color: "text-accent" },
+    { title: "Archived Projects", value: archivedJourneys.length.toString(), icon: Archive, color: "text-muted-foreground" },
     { title: "Open Inquiries", value: inquiries.filter(i => i.status === 'new').length.toString(), icon: MessageSquare, color: "text-accent" },
-    { title: "Client Feedback", value: feedback.length.toString(), icon: Star, color: "text-amber-500" },
-    { title: "Project Velocity", value: "+12%", icon: TrendingUp, color: "text-green-500" },
+    { title: "Client Sentiment", value: feedback.length.toString(), icon: Star, color: "text-amber-500" },
   ];
 
   const handleReset = () => {
@@ -116,39 +120,68 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        <Card className="lg:col-span-2 rounded-none border-accent/10 shadow-2xl bg-white overflow-hidden">
-          <div className="bg-accent h-1 w-full" />
-          <CardHeader className="flex flex-row items-center justify-between p-8">
-            <CardTitle className="text-sm font-bold uppercase tracking-[0.3em] text-accent">Recent Activity</CardTitle>
-            <Link href="/admin/inquiries" className="text-[10px] font-bold uppercase tracking-widest text-accent/40 hover:text-accent flex items-center gap-2 transition-colors">
-              View All Pipeline <ArrowUpRight className="h-3 w-3" />
-            </Link>
-          </CardHeader>
-          <CardContent className="p-8 pt-0">
-            <div className="space-y-4">
-              {inquiries.slice(0, 3).map((inquiry) => (
-                <div key={inquiry.id} className="flex items-center justify-between p-6 border border-accent/5 hover:border-accent/10 transition-all bg-secondary/10 group cursor-pointer">
-                  <div className="space-y-1">
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] group-hover:text-accent transition-colors">{inquiry.name}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-light italic">
-                      {inquiry.date} — {inquiry.serviceType}
-                    </p>
+        <div className="lg:col-span-2 space-y-12">
+          <Card className="rounded-none border-accent/10 shadow-2xl bg-white overflow-hidden">
+            <div className="bg-accent h-1 w-full" />
+            <CardHeader className="flex flex-row items-center justify-between p-8">
+              <CardTitle className="text-sm font-bold uppercase tracking-[0.3em] text-accent">Recent Inquiries</CardTitle>
+              <Link href="/admin/inquiries" className="text-[10px] font-bold uppercase tracking-widest text-accent/40 hover:text-accent flex items-center gap-2 transition-colors">
+                View All Pipeline <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            </CardHeader>
+            <CardContent className="p-8 pt-0">
+              <div className="space-y-4">
+                {inquiries.slice(0, 3).map((inquiry) => (
+                  <div key={inquiry.id} className="flex items-center justify-between p-6 border border-accent/5 hover:border-accent/10 transition-all bg-secondary/10 group cursor-pointer">
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] group-hover:text-accent transition-colors">{inquiry.name}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-light italic">
+                        {inquiry.date} — {inquiry.serviceType}
+                      </p>
+                    </div>
+                    <div className={`text-[9px] font-bold border px-4 py-1.5 uppercase tracking-widest ${
+                      inquiry.status === 'new' ? 'text-accent border-accent/20 bg-accent/5' : 'text-muted-foreground border-border'
+                    }`}>
+                      {inquiry.status}
+                    </div>
                   </div>
-                  <div className={`text-[9px] font-bold border px-4 py-1.5 uppercase tracking-widest ${
-                    inquiry.status === 'new' ? 'text-accent border-accent/20 bg-accent/5' : 'text-muted-foreground border-border'
-                  }`}>
-                    {inquiry.status}
+                ))}
+                {inquiries.length === 0 && (
+                  <div className="text-center py-12 text-[10px] uppercase tracking-widest text-muted-foreground italic">
+                    No active pipeline entries
                   </div>
-                </div>
-              ))}
-              {inquiries.length === 0 && (
-                <div className="text-center py-12 text-[10px] uppercase tracking-widest text-muted-foreground italic">
-                  No active pipeline entries
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-none border-accent/10 shadow-xl bg-white overflow-hidden">
+            <CardHeader className="p-8">
+              <CardTitle className="text-sm font-bold uppercase tracking-[0.3em] text-accent flex items-center gap-3">
+                <Archive className="h-4 w-4 opacity-40" /> Recently Retired Projects
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 pt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {archivedJourneys.slice(0, 4).map((p) => (
+                  <Link key={p.id} href={`/admin/clients/${p.id}`} className="group p-6 border border-accent/5 hover:border-accent/20 bg-secondary/5 flex flex-col justify-between h-32 transition-all">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[8px] font-bold text-accent/30 uppercase tracking-[0.4em]">{p.id}</span>
+                      <Badge className="bg-black text-white rounded-none text-[7px] uppercase tracking-widest px-1.5 py-0">Retired</Badge>
+                    </div>
+                    <h4 className="text-sm font-headline italic text-accent/80 group-hover:text-accent transition-colors">{p.project}</h4>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold">{p.name}</p>
+                  </Link>
+                ))}
+                {archivedJourneys.length === 0 && (
+                  <div className="col-span-full py-8 text-center border border-dashed border-accent/10">
+                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground italic">No commissions in the master archives yet</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="space-y-8">
           <Card className="rounded-none border-accent/10 shadow-xl bg-white p-8">
@@ -179,7 +212,10 @@ export default function AdminDashboardPage() {
             <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 mb-4">System Log</h4>
             <ul className="space-y-3">
               <li className="text-[9px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <div className="h-1 w-1 bg-green-500 rounded-full" /> {clientProjects.length} projects active
+                <div className="h-1 w-1 bg-green-500 rounded-full" /> {activeJourneys.length} active journeys
+              </li>
+              <li className="text-[9px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <div className="h-1 w-1 bg-black rounded-full" /> {archivedJourneys.length} commissions retired
               </li>
               <li className="text-[9px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <div className="h-1 w-1 bg-accent rounded-full" /> {inquiries.length} inquiries logged

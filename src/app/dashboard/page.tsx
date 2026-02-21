@@ -22,7 +22,9 @@ import {
   HardHat,
   FileCheck,
   Calendar as CalendarIcon,
-  Timer
+  Timer,
+  Archive,
+  History
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -47,7 +49,10 @@ export default function ClientDashboardPage() {
 
   if (!isMounted) return null;
 
-  const activeProject = clientProjects.find(p => p.id === verifiedProjectId) || clientProjects.find(p => p.isActivated);
+  // Prioritize verified project, then fallback to first active or first archived if nothing else found
+  const activeProject = clientProjects.find(p => p.id === verifiedProjectId) 
+    || clientProjects.find(p => p.isActivated && !p.isArchived)
+    || clientProjects.find(p => p.isArchived);
 
   if (!activeProject) {
     return (
@@ -75,8 +80,6 @@ export default function ClientDashboardPage() {
   const completedTasksCount = (activeProject.tasks || []).filter(t => t.status === 'Done').length;
 
   // Temporal Logic for Client View
-  // Safety check for endDate to avoid runtime errors on undefined values
-  const hasEndDate = !!activeProject.endDate;
   const deadlineStr = activeProject.endDate || format(new Date(), "MMM dd, yyyy");
   const deadline = parse(deadlineStr, "MMM dd, yyyy", new Date());
   const today = new Date();
@@ -88,29 +91,63 @@ export default function ClientDashboardPage() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <div className="flex items-center gap-4">
           <div className="h-px w-12 bg-accent" />
-          <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Client Workspace</span>
+          <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">
+            {activeProject.isArchived ? "Commission Archive" : "Client Workspace"}
+          </span>
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-2">
-            <h1 className="text-6xl font-headline">The <span className="italic">Evolution.</span></h1>
-            <p className="text-muted-foreground font-light italic">Synchronized with Nairobi Studio HQ</p>
+            <h1 className="text-6xl font-headline">
+              {activeProject.isArchived ? "The Historical Record." : "The Evolution."}
+            </h1>
+            <p className="text-muted-foreground font-light italic">
+              {activeProject.isArchived 
+                ? "Archived Architectural Dossier — Nairobi Studio HQ" 
+                : "Synchronized with Nairobi Studio HQ"}
+            </p>
           </div>
           <div className="text-right">
             <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span>
             <span className="text-lg font-headline italic text-accent">{activeProject.tier} Commission</span>
-            <Badge variant="outline" className="rounded-none uppercase tracking-widest text-[8px] border-accent/20 text-accent/60 mt-2">
-              Status: {activeProject.status}
-            </Badge>
+            <div className="flex flex-col items-end gap-2 mt-2">
+              <Badge variant="outline" className={`rounded-none uppercase tracking-widest text-[8px] border-accent/20 text-accent/60`}>
+                Phase: {activeProject.status}
+              </Badge>
+              {activeProject.isArchived && (
+                <Badge className="bg-black text-white rounded-none uppercase tracking-widest text-[8px] py-1 px-3 flex gap-2">
+                  <Archive className="h-3 w-3" /> Historical Archive
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>
+
+      {activeProject.isArchived && (
+        <div className="p-8 border border-accent/10 bg-accent/[0.03] flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex items-center gap-6">
+            <div className="h-14 w-14 bg-accent/5 rounded-full flex items-center justify-center text-accent">
+              <History className="h-7 w-7" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-xl font-headline italic text-accent">Commission Retired</h3>
+              <p className="text-sm font-light text-muted-foreground italic leading-relaxed">
+                This project has been successfully reconciled and retired to the studio archives. All implementation data is now read-only.
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" className="rounded-none border-accent/20 text-accent uppercase tracking-widest text-[10px] h-12 px-8">
+            Download Completion Cert
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         <div className="lg:col-span-8 space-y-12">
           {/* Main Status Card */}
           <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-            <Card className="rounded-none border-accent/10 shadow-2xl overflow-hidden bg-white">
-              <div className="bg-accent h-1.5 w-full" />
+            <Card className={cn("rounded-none border-accent/10 shadow-2xl overflow-hidden bg-white", activeProject.isArchived && "opacity-80")}>
+              <div className={cn("h-1.5 w-full", activeProject.isArchived ? "bg-black" : "bg-accent")} />
               <CardHeader className="p-10 pb-6">
                 <div className="flex justify-between items-start mb-6">
                   <div>
@@ -118,7 +155,7 @@ export default function ClientDashboardPage() {
                     <CardTitle className="text-4xl font-headline italic">{activeProject.project}</CardTitle>
                   </div>
                   <div className="flex gap-3">
-                    {activeProject.isExtended && (
+                    {activeProject.isExtended && !activeProject.isArchived && (
                       <Badge className="bg-orange-500 text-white rounded-none uppercase tracking-widest text-[8px] py-1.5">Timeline Extended</Badge>
                     )}
                     {activeProject.financialReportStatus === 'Verified' && (
@@ -148,18 +185,22 @@ export default function ClientDashboardPage() {
                     </p>
                   </div>
 
-                  <div className={cn("p-8 border-l-2 italic", isOverdue ? "bg-destructive/5 border-destructive" : "bg-accent/5 border-accent")}>
+                  <div className={cn("p-8 border-l-2 italic", activeProject.isArchived ? "bg-secondary/50 border-black" : isOverdue ? "bg-destructive/5 border-destructive" : "bg-accent/5 border-accent")}>
                     <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold opacity-40 flex items-center gap-2 mb-4">
                       <Timer className="h-3 w-3" /> Delivery Framework
                     </h4>
                     <div className="space-y-2">
-                      <p className="text-xs font-bold uppercase tracking-widest opacity-60">Estimated Handover</p>
-                      <p className={cn("text-2xl font-headline font-bold", isOverdue ? "text-destructive" : "text-accent")}>
+                      <p className="text-xs font-bold uppercase tracking-widest opacity-60">
+                        {activeProject.isArchived ? "Completed On" : "Estimated Handover"}
+                      </p>
+                      <p className={cn("text-2xl font-headline font-bold", !activeProject.isArchived && isOverdue ? "text-destructive" : "text-accent")}>
                         {activeProject.endDate || "Pending Schedule"}
                       </p>
-                      <p className="text-[10px] uppercase tracking-widest opacity-40">
-                        {isOverdue ? "Authorized timeline extension pending" : `${daysRemaining} days until scheduled completion`}
-                      </p>
+                      {!activeProject.isArchived && (
+                        <p className="text-[10px] uppercase tracking-widest opacity-40">
+                          {isOverdue ? "Authorized timeline extension pending" : `${daysRemaining} days until scheduled completion`}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -170,16 +211,16 @@ export default function ClientDashboardPage() {
           {/* Operational Workflow (Tasks) */}
           <div className="space-y-8">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4"><Activity className="h-4 w-4 text-accent" /><h2 className="text-2xl font-headline italic">Live Site Workflow</h2></div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">{completedTasksCount} Tasks Completed</span>
+              <div className="flex items-center gap-4"><Activity className="h-4 w-4 text-accent" /><h2 className="text-2xl font-headline italic">Project Workflow Recap</h2></div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">{completedTasksCount} Tasks Logged</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {(activeProject.tasks || []).slice(0, 4).map((task) => (
-                <div key={task.id} className="p-6 border border-accent/5 bg-white shadow-sm flex flex-col justify-between min-h-[140px] group hover:border-accent/20 transition-all">
+                <div key={task.id} className="p-6 border border-accent/5 bg-white shadow-sm flex flex-col justify-between min-h-[140px] group transition-all">
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <span className="text-[8px] font-bold text-accent/30 uppercase tracking-widest">{task.id}</span>
-                      <Badge variant="ghost" className={`text-[8px] uppercase tracking-widest p-0 h-auto ${task.status === 'Done' ? 'text-green-600' : task.status === 'In Progress' ? 'text-accent' : 'text-orange-500'}`}>{task.status}</Badge>
+                      <Badge variant="ghost" className={`text-[8px] uppercase tracking-widest p-0 h-auto ${task.status === 'Done' ? 'text-green-600' : 'text-accent'}`}>{task.status}</Badge>
                     </div>
                     <h4 className="text-sm font-bold uppercase tracking-widest leading-tight group-hover:text-accent transition-colors">{task.title}</h4>
                   </div>
@@ -201,10 +242,15 @@ export default function ClientDashboardPage() {
                 </div>
               ))}
             </div>
-            <div className="pt-6 border-t border-accent/5"><Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[9px] font-bold">Raise Studio Inquiry</Button></div>
+            {!activeProject.isArchived && (
+              <div className="pt-6 border-t border-accent/5">
+                <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[9px] font-bold">Raise Studio Inquiry</Button>
+              </div>
+            )}
           </Card>
+          
           <Card className="rounded-none border-accent/5 bg-secondary/30 p-8 space-y-6">
-            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><HardHat className="h-3 w-3" /> Allocated Network</h4>
+            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><HardHat className="h-3 w-3" /> Historical Network</h4>
             <div className="space-y-4">
               {(activeProject.vendorAllocations || []).map((vendor, vIdx) => (
                 <div key={vIdx} className="flex items-center justify-between">
