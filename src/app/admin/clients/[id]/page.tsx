@@ -350,9 +350,13 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     <div className="max-w-7xl mx-auto space-y-12 font-body">
       {/* Header Cockpit */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-        <Button asChild variant="ghost" className="text-accent/40 hover:text-accent p-0 font-bold uppercase tracking-widest text-[11px] h-auto flex items-center gap-2">
-          <Link href="/admin/clients"><ArrowLeft className="h-4 w-4" /> Back to Registry</Link>
-        </Button>
+        <Link 
+          href="/admin/clients" 
+          className="inline-flex items-center gap-2 text-accent/40 hover:text-accent transition-all group"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          <span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Master Registry</span>
+        </Link>
 
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
           <div className="space-y-2">
