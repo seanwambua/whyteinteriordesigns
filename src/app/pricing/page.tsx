@@ -10,7 +10,7 @@ import { ChevronRight, Check } from "lucide-react";
 export default function PricingPage() {
   const tiers = [
     {
-      name: "The Advisory",
+      name: "The Genesis",
       price: "KES 5,000",
       description: "An initial consultation where the designer gets an idea of what the client is looking towards and allows them to gauge the feasibility of the project.",
       features: [
@@ -26,7 +26,7 @@ export default function PricingPage() {
       price: "Project-Based",
       description: "An end-to-end journey from raw space to a masterfully curated residence or commercial environment.",
       features: [
-        "Everything in 'The Advisory'",
+        "Everything in 'The Genesis'",
         "Full architectural blueprints & 3D renders",
         "Bespoke furniture & lighting design",
         "Global procurement & white-glove delivery",
@@ -89,7 +89,7 @@ export default function PricingPage() {
                   </h3>
                   <div className="mb-8">
                     <span className="text-5xl font-headline">{tier.price}</span>
-                    {tier.name === "The Advisory" && <span className={`text-sm ml-2 ${tier.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>Initial Fee</span>}
+                    {tier.name === "The Genesis" && <span className={`text-sm ml-2 ${tier.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>Initial Fee</span>}
                   </div>
                   <p className={`text-lg mb-12 font-light leading-relaxed ${tier.highlight ? 'text-white/80 italic' : 'text-muted-foreground'}`}>
                     {tier.description}
