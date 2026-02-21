@@ -2,8 +2,8 @@
 "use client";
 
 import { use } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, Milestone, VendorAllocation } from "@/store/use-whyte-store";
+import { motion } from "framer-motion";
+import { useWhyteStore, ClientProject, VendorAllocation } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,20 +17,15 @@ import {
   ArrowLeft, 
   CheckCircle2, 
   Circle, 
-  Calendar, 
   User, 
-  Briefcase, 
-  Sparkles, 
   Plus, 
   Trash2, 
-  Save,
   Activity,
   Wallet,
   Layout,
   HardHat,
-  Package,
   Clock,
-  Hammer
+  Users
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -74,32 +69,33 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
     updateClientProject(project.id, { 
       milestones: updatedMilestones,
       progress: newProgress,
-      lastActivity: `Milestone "${updatedMilestones[index].label}" status updated.`
+      lastActivity: `Milestone "${updatedMilestones[index].label}" synchronized.`
     });
 
     toast({
-      title: "Roadmap Synchronized",
-      description: `Milestone "${updatedMilestones[index].label}" is now ${updatedMilestones[index].isCompleted ? 'Verified' : 'Pending'}.`,
+      title: "Roadmap Updated",
+      description: `Milestone "${updatedMilestones[index].label}" status verified.`,
     });
   };
 
   const handleUpdateStatus = (status: ClientProject['status']) => {
     updateClientProject(project.id, { 
       status,
-      lastActivity: `Project status transitioned to ${status}.`
+      lastActivity: `Lifecycle transitioned to ${status}.`
     });
     toast({
-      title: "Lifecycle Transition",
-      description: `Commission ${project.id} is now in the ${status} phase.`,
+      title: "Phase Transition",
+      description: `Commission is now in the ${status} phase.`,
     });
   };
 
-  const addVendorAllocation = () => {
+  const addPartnerAllocation = () => {
     const newAllocation: VendorAllocation = {
       id: `VA-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
       vendorName: "",
       role: "",
-      costType: "Daily",
+      category: 'Vendor',
+      costType: 'Daily',
       costValue: 0,
       timelineDays: 1,
       materials: []
@@ -111,6 +107,20 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
 
   const updatePlanning = (field: keyof ClientProject, value: any) => {
     updateClientProject(project.id, { [field]: value });
+  };
+
+  const handlePartnerSelection = (idx: number, partnerName: string) => {
+    const selectedPartner = collaborators.find(c => c.name === partnerName);
+    if (!selectedPartner) return;
+
+    const updated = [...(project.vendorAllocations || [])];
+    updated[idx] = {
+      ...updated[idx],
+      vendorName: partnerName,
+      category: selectedPartner.category,
+      costType: selectedPartner.category === 'Collaborator' ? 'Percentage' : 'Daily'
+    };
+    updatePlanning('vendorAllocations', updated);
   };
 
   return (
@@ -144,7 +154,7 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
                 <SelectTrigger className="rounded-none border-none h-8 p-0 text-xs font-bold uppercase tracking-widest text-accent focus:ring-0">
                   <SelectValue placeholder="Select Status" />
                 </SelectTrigger>
-                <SelectContent className="rounded-none border-accent/10">
+                <SelectContent className="rounded-none">
                   <SelectItem value="Planning">Planning</SelectItem>
                   <SelectItem value="Procurement">Procurement</SelectItem>
                   <SelectItem value="Execution">Execution</SelectItem>
@@ -175,7 +185,6 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
         <TabsContent value="overview" className="space-y-12 m-0">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div className="lg:col-span-8 space-y-12">
-              {/* Progress Overview */}
               <Card className="rounded-none border-accent/5 shadow-2xl bg-white overflow-hidden">
                 <div className="bg-accent h-1.5 w-full" />
                 <CardContent className="p-10 space-y-10">
@@ -193,13 +202,10 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
                 </CardContent>
               </Card>
 
-              {/* Roadmap Management */}
               <div className="space-y-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Activity className="h-5 w-5 text-accent" />
-                    <h2 className="text-2xl font-headline italic">Architectural Roadmap</h2>
-                  </div>
+                <div className="flex items-center gap-4">
+                  <Activity className="h-5 w-5 text-accent" />
+                  <h2 className="text-2xl font-headline italic">Architectural Roadmap</h2>
                 </div>
 
                 <div className="space-y-4">
@@ -301,10 +307,10 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <HardHat className="h-5 w-5 text-accent" />
-                  <h2 className="text-2xl font-headline italic">Trade & Vendor Matrix</h2>
+                  <h2 className="text-2xl font-headline italic">Network Matrix</h2>
                 </div>
-                <Button onClick={addVendorAllocation} variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[9px] flex gap-2">
-                  <Plus className="h-4 w-4" /> Allocate Trade
+                <Button onClick={addPartnerAllocation} variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[9px] flex gap-2">
+                  <Plus className="h-4 w-4" /> Allocate Network Partner
                 </Button>
               </div>
 
@@ -322,17 +328,20 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
                           <Label className="text-[9px] font-bold uppercase tracking-widest opacity-40">Partner Identity</Label>
                           <Select 
                             value={allocation.vendorName} 
-                            onValueChange={(v) => {
-                              const updated = [...(project.vendorAllocations || [])];
-                              updated[idx].vendorName = v;
-                              updatePlanning('vendorAllocations', updated);
-                            }}
+                            onValueChange={(v) => handlePartnerSelection(idx, v)}
                           >
                             <SelectTrigger className="rounded-none border-accent/10 h-10">
-                              <SelectValue placeholder="Select Collaborator" />
+                              <SelectValue placeholder="Select from Studio Network" />
                             </SelectTrigger>
                             <SelectContent className="rounded-none">
-                              {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                              {collaborators.map(c => (
+                                <SelectItem key={c.id} value={c.name}>
+                                  <div className="flex items-center justify-between w-full min-w-[200px]">
+                                    <span>{c.name}</span>
+                                    <Badge variant="ghost" className="text-[8px] uppercase tracking-widest ml-2 opacity-40">{c.category}</Badge>
+                                  </div>
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -358,28 +367,38 @@ export default function ProjectManagementPage({ params }: { params: Promise<{ id
                       <div className="space-y-2">
                         <Label className="text-[9px] font-bold uppercase tracking-widest opacity-40">Compensation Model</Label>
                         <div className="flex gap-2">
-                          <Button 
-                            variant={allocation.costType === 'Daily' ? 'default' : 'outline'}
-                            onClick={() => {
-                              const updated = [...(project.vendorAllocations || [])];
-                              updated[idx].costType = 'Daily';
-                              updatePlanning('vendorAllocations', updated);
-                            }}
-                            className="rounded-none flex-1 h-10 text-[9px] uppercase tracking-widest"
-                          >Daily</Button>
-                          <Button 
-                            variant={allocation.costType === 'Percentage' ? 'default' : 'outline'}
-                            onClick={() => {
-                              const updated = [...(project.vendorAllocations || [])];
-                              updated[idx].costType = 'Percentage';
-                              updatePlanning('vendorAllocations', updated);
-                            }}
-                            className="rounded-none flex-1 h-10 text-[9px] uppercase tracking-widest"
-                          >% Project</Button>
+                          {allocation.category === 'Collaborator' ? (
+                            <Badge className="rounded-none h-10 w-full flex items-center justify-center bg-accent text-white uppercase tracking-widest text-[9px]">
+                              Percentage (%) Only
+                            </Badge>
+                          ) : (
+                            <>
+                              <Button 
+                                variant={allocation.costType === 'Daily' ? 'default' : 'outline'}
+                                onClick={() => {
+                                  const updated = [...(project.vendorAllocations || [])];
+                                  updated[idx].costType = 'Daily';
+                                  updatePlanning('vendorAllocations', updated);
+                                }}
+                                className="rounded-none flex-1 h-10 text-[9px] uppercase tracking-widest"
+                              >Daily</Button>
+                              <Button 
+                                variant={allocation.costType === 'Fixed' ? 'default' : 'outline'}
+                                onClick={() => {
+                                  const updated = [...(project.vendorAllocations || [])];
+                                  updated[idx].costType = 'Fixed';
+                                  updatePlanning('vendorAllocations', updated);
+                                }}
+                                className="rounded-none flex-1 h-10 text-[9px] uppercase tracking-widest"
+                              >Fixed</Button>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-bold uppercase tracking-widest opacity-40">Rate / Percentage</Label>
+                        <Label className="text-[9px] font-bold uppercase tracking-widest opacity-40">
+                          {allocation.costType === 'Percentage' ? 'Percentage (%)' : 'Rate (KES)'}
+                        </Label>
                         <Input 
                           type="number"
                           value={allocation.costValue} 

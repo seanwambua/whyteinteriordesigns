@@ -1,7 +1,7 @@
 
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -11,11 +11,8 @@ import {
   Phone, 
   Plus, 
   Filter, 
-  Trash2, 
-  ShieldAlert, 
-  Briefcase,
-  User,
-  Loader2
+  Loader2,
+  Users
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -34,7 +31,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminHRPage() {
-  const { collaborators, addCollaborator, updateClientProject, clientProjects } = useWhyteStore();
+  const { collaborators, addCollaborator, removeCollaborator } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -42,6 +39,7 @@ export default function AdminHRPage() {
 
   const [formData, setFormData] = useState({
     name: "",
+    category: "Vendor" as Collaborator['category'],
     specialty: "",
     contact: "",
     type: "Local Specialist",
@@ -61,6 +59,7 @@ export default function AdminHRPage() {
     const newPartner: Collaborator = {
       id: `C-${Math.floor(Math.random() * 9000) + 1000}`,
       name: formData.name,
+      category: formData.category,
       specialty: formData.specialty,
       contact: formData.contact,
       rating: 5.0,
@@ -74,6 +73,7 @@ export default function AdminHRPage() {
       setIsAddOpen(false);
       setFormData({
         name: "",
+        category: "Vendor",
         specialty: "",
         contact: "",
         type: "Local Specialist",
@@ -81,17 +81,15 @@ export default function AdminHRPage() {
       });
       toast({
         title: "Network Expanded",
-        description: `${newPartner.name} has been synchronized with the Studio Collaborator registry.`,
+        description: `${newPartner.name} has been synchronized with the Studio registry.`,
       });
     }, 1200);
   };
 
-  const removePartner = (id: string) => {
-    // This is a simplified remove. In the store it should filter.
-    // For now we'll just show a toast as removal requires store update which we have in clearAllData but not a specific removeCollaborator.
-    // I will assume we should handle it gracefully.
+  const handleRemove = (id: string) => {
+    removeCollaborator(id);
     toast({
-      title: "Collaborator Archived",
+      title: "Profile Archived",
       description: "Partner profile has been moved to the studio archives.",
     });
   };
@@ -108,7 +106,7 @@ export default function AdminHRPage() {
             <div className="h-px w-8 bg-accent" />
             <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Network Ecosystem</span>
           </div>
-          <h1 className="text-5xl font-headline italic">Studio <span className="not-italic">Collaborators.</span></h1>
+          <h1 className="text-5xl font-headline italic">Studio <span className="not-italic">Network.</span></h1>
         </div>
         <div className="flex gap-4">
           <Button variant="outline" className="rounded-none h-14 border-accent/20 uppercase tracking-widest text-[9px] flex gap-2">
@@ -118,7 +116,7 @@ export default function AdminHRPage() {
             onClick={() => setIsAddOpen(true)}
             className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-[0.2em] text-[10px] flex gap-2"
           >
-            <Plus className="h-4 w-4" /> Add Trade Partner
+            <Plus className="h-4 w-4" /> Add Partner
           </Button>
         </div>
       </motion.div>
@@ -133,8 +131,10 @@ export default function AdminHRPage() {
           >
             <Card className={`rounded-none border-accent/10 shadow-lg bg-white overflow-hidden group hover:border-accent/30 transition-all ${col.status === 'on_hold' ? 'opacity-60' : ''}`}>
               <div className="p-8 flex flex-col md:flex-row items-center gap-12">
-                <div className="h-20 w-20 rounded-none bg-secondary/30 flex items-center justify-center shrink-0 border border-accent/5">
-                   {col.type.includes('Global') ? <Globe className="h-8 w-8 text-accent/40" /> : <Hammer className="h-8 w-8 text-accent/40" />}
+                <div className={`h-20 w-20 rounded-none flex items-center justify-center shrink-0 border border-accent/5 ${
+                  col.category === 'Collaborator' ? 'bg-accent/5' : 'bg-secondary/30'
+                }`}>
+                   {col.category === 'Collaborator' ? <Users className="h-8 w-8 text-accent" /> : <Hammer className="h-8 w-8 text-accent/40" />}
                 </div>
                 
                 <div className="flex-1 space-y-4">
@@ -142,12 +142,15 @@ export default function AdminHRPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-3">
                         <h3 className="text-2xl font-headline italic">{col.name}</h3>
+                        <Badge variant="outline" className="rounded-none uppercase tracking-widest text-[8px] border-accent/20 text-accent/60">
+                          {col.category}
+                        </Badge>
                         <BadgeCheck className="h-4 w-4 text-accent" />
                       </div>
                       <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{col.specialty} — {col.type}</p>
                     </div>
                     <div className="text-right">
-                       <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Collaboration Quality</span>
+                       <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Network Integrity</span>
                        <span className="text-lg font-headline italic">{col.rating}/5.0</span>
                     </div>
                   </div>
@@ -165,13 +168,13 @@ export default function AdminHRPage() {
                 </div>
 
                 <div className="flex md:flex-col gap-3 min-w-[150px]">
-                   <Button variant="outline" className="rounded-none border-accent/20 h-10 uppercase tracking-widest text-[9px] w-full">View History</Button>
+                   <Button variant="outline" className="rounded-none border-accent/20 h-10 uppercase tracking-widest text-[9px] w-full">View Deployments</Button>
                    <Button 
                     variant="outline" 
                     className="rounded-none border-destructive/10 text-destructive hover:bg-destructive hover:text-white h-10 uppercase tracking-widest text-[9px] w-full"
-                    onClick={() => removePartner(col.id)}
+                    onClick={() => handleRemove(col.id)}
                    >
-                    Archive Profile
+                    Archive
                    </Button>
                 </div>
               </div>
@@ -180,22 +183,21 @@ export default function AdminHRPage() {
         ))}
         {collaborators.length === 0 && (
           <div className="text-center py-24 border border-dashed border-accent/10">
-            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No registered collaborators in the network</p>
+            <p className="text-sm font-light italic text-muted-foreground uppercase tracking-[0.3em]">No registered specialists in the network</p>
           </div>
         )}
       </div>
 
-      {/* Add Partner Dialog */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg">
           <DialogHeader className="space-y-4">
             <div className="flex items-center gap-3">
               <Plus className="h-4 w-4 text-accent" />
-              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Partner Onboarding</span>
+              <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Partner Registration</span>
             </div>
-            <DialogTitle className="text-3xl font-headline italic">New Collaborator</DialogTitle>
+            <DialogTitle className="text-3xl font-headline italic">New Studio Partner</DialogTitle>
             <DialogDescription className="font-light italic text-muted-foreground">
-              Register a new trade partner or specialist vendor into the Studio Ecosystem.
+              Register a new design collaborator or trade vendor into the studio archives.
             </DialogDescription>
           </DialogHeader>
           
@@ -206,29 +208,43 @@ export default function AdminHRPage() {
                 <Input 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="Company or Individual Name"
-                  className="rounded-none border-accent/20 h-12 focus:ring-accent"
+                  placeholder="Identity Name"
+                  className="rounded-none border-accent/20 h-12"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Technical Specialty</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Technical specialty</Label>
                 <Input 
                   value={formData.specialty}
                   onChange={(e) => setFormData({...formData, specialty: e.target.value})}
-                  placeholder="E.g., Fine Joinery, Stone Masonry"
-                  className="rounded-none border-accent/20 h-12 focus:ring-accent"
+                  placeholder="E.g., Fine Joinery"
+                  className="rounded-none border-accent/20 h-12"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Direct Contact</Label>
-              <Input 
-                value={formData.contact}
-                onChange={(e) => setFormData({...formData, contact: e.target.value})}
-                placeholder="+254 XXX XXX XXX"
-                className="rounded-none border-accent/20 h-12 focus:ring-accent"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Category</Label>
+                <Select value={formData.category} onValueChange={(v: any) => setFormData({...formData, category: v})}>
+                  <SelectTrigger className="rounded-none border-accent/20 h-12">
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none">
+                    <SelectItem value="Collaborator">Collaborator (Percentage)</SelectItem>
+                    <SelectItem value="Vendor">Vendor/Trade (Fixed/Daily)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Direct Contact</Label>
+                <Input 
+                  value={formData.contact}
+                  onChange={(e) => setFormData({...formData, contact: e.target.value})}
+                  placeholder="+254 XXX XXX XXX"
+                  className="rounded-none border-accent/20 h-12"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -238,7 +254,7 @@ export default function AdminHRPage() {
                   <SelectTrigger className="rounded-none border-accent/20 h-12">
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-accent/20">
+                  <SelectContent className="rounded-none">
                     <SelectItem value="Local Specialist">Local Specialist</SelectItem>
                     <SelectItem value="Materials Partner">Materials Partner</SelectItem>
                     <SelectItem value="Global Import Partner">Global Import Partner</SelectItem>
@@ -247,14 +263,14 @@ export default function AdminHRPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Onboarding Status</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Status</Label>
                 <Select value={formData.status} onValueChange={(v: any) => setFormData({...formData, status: v})}>
                   <SelectTrigger className="rounded-none border-accent/20 h-12">
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-accent/20">
-                    <SelectItem value="active">Active (Deployable)</SelectItem>
-                    <SelectItem value="on_hold">On Hold (Verification Pending)</SelectItem>
+                  <SelectContent className="rounded-none">
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="on_hold">On Hold</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -269,7 +285,7 @@ export default function AdminHRPage() {
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Authorizing Profile...</span>
-              ) : "Initialize Partnership"}
+              ) : "Authorize Registration"}
             </Button>
           </DialogFooter>
         </DialogContent>

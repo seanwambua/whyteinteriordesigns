@@ -31,7 +31,8 @@ export interface VendorAllocation {
   id: string;
   vendorName: string;
   role: string;
-  costType: 'Daily' | 'Percentage';
+  category: 'Collaborator' | 'Vendor';
+  costType: 'Daily' | 'Percentage' | 'Fixed';
   costValue: number;
   timelineDays: number;
   materials: string[];
@@ -88,6 +89,7 @@ export interface Feedback {
 export interface Collaborator {
   id: string;
   name: string;
+  category: 'Collaborator' | 'Vendor';
   specialty: string;
   contact: string;
   rating: number;
@@ -118,6 +120,7 @@ interface WhyteState {
   removeFeedback: (id: string) => void;
   
   addCollaborator: (collaborator: Collaborator) => void;
+  removeCollaborator: (id: string) => void;
   
   setFinancialSteward: (steward: string) => void;
   
@@ -175,6 +178,7 @@ const initialClientProjects: ClientProject[] = [
       {
         id: "V-001",
         vendorName: "Artisanal Woodworks KE",
+        category: "Vendor",
         role: "Primary Joinery",
         costType: "Percentage",
         costValue: 12,
@@ -186,8 +190,9 @@ const initialClientProjects: ClientProject[] = [
 ];
 
 const initialCollaborators: Collaborator[] = [
-  { id: "C-1", name: "Artisanal Woodworks KE", specialty: "Joinery & Custom Fabrication", contact: "+254 700 000 000", rating: 4.8, status: 'active', type: 'Local Specialist' },
-  { id: "C-2", name: "Nairobi Marble & Tile", specialty: "Stone Masonry", contact: "+254 711 111 111", rating: 4.9, status: 'active', type: 'Materials Partner' }
+  { id: "C-1", name: "Artisanal Woodworks KE", category: 'Vendor', specialty: "Joinery & Custom Fabrication", contact: "+254 700 000 000", rating: 4.8, status: 'active', type: 'Local Specialist' },
+  { id: "C-2", name: "Nairobi Marble & Tile", category: 'Vendor', specialty: "Stone Masonry", contact: "+254 711 111 111", rating: 4.9, status: 'active', type: 'Materials Partner' },
+  { id: "C-3", name: "Sarah Studio", category: 'Collaborator', specialty: "Interior Styling", contact: "+254 722 000 000", rating: 5.0, status: 'active', type: 'Consulting Architect' }
 ];
 
 export const useWhyteStore = create<WhyteState>()(
@@ -220,6 +225,7 @@ export const useWhyteStore = create<WhyteState>()(
       removeFeedback: (id) => set((state) => ({ feedback: state.feedback.filter(fb => fb.id !== id) })),
 
       addCollaborator: (col) => set((state) => ({ collaborators: [...state.collaborators, col] })),
+      removeCollaborator: (id) => set((state) => ({ collaborators: state.collaborators.filter(c => c.id !== id) })),
 
       setFinancialSteward: (steward) => set({ financialSteward: steward }),
 

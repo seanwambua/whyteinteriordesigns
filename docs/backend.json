@@ -28,6 +28,9 @@
         "description": { "type": "string" },
         "clientEmail": { "type": "string" },
         "startDate": { "type": "string", "format": "date" },
+        "roomsCount": { "type": "number" },
+        "workScope": { "type": "string" },
+        "operationalBudget": { "type": "number" },
         "milestones": {
           "type": "array",
           "items": {
@@ -37,6 +40,20 @@
               "date": { "type": "string" },
               "isCompleted": { "type": "boolean" },
               "description": { "type": "string" }
+            }
+          }
+        },
+        "vendorAllocations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "vendorName": { "type": "string" },
+              "category": { "type": "string", "enum": ["Collaborator", "Vendor"] },
+              "role": { "type": "string" },
+              "costType": { "type": "string", "enum": ["Daily", "Percentage", "Fixed"] },
+              "costValue": { "type": "number" },
+              "timelineDays": { "type": "number" }
             }
           }
         }
@@ -71,16 +88,17 @@
       }
     },
     "Collaborator": {
-      "title": "Studio Collaborator",
+      "title": "Studio Collaborator or Vendor",
       "description": "A trade person, vendor, or specialist partner",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["Collaborator", "Vendor"] },
         "specialty": { "type": "string" },
         "contact": { "type": "string" },
         "rating": { "type": "number" },
         "status": { "type": "string", "enum": ["active", "on_hold", "blacklisted"] },
-        "projects": { "type": "array", "items": { "type": "string" } }
+        "type": { "type": "string" }
       }
     }
   },
