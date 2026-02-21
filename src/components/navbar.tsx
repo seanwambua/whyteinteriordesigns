@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -8,6 +7,9 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { useState } from "react";
 
@@ -63,6 +65,10 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigation Menu</SheetTitle>
+                <SheetDescription>Access studio services and portfolio</SheetDescription>
+              </SheetHeader>
               <div className="flex flex-col gap-6 mt-12">
                 {navItems.map((item) => (
                   <Link
