@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Search, 
-  Filter, 
   Mail, 
   Calendar,
   ChevronRight,
@@ -13,19 +12,15 @@ import {
   Clock,
   Activity,
   UserPlus,
-  Users,
-  Info,
   Archive,
-  ShieldAlert,
   Trash2,
   RefreshCcw,
   MoreVertical,
   XCircle,
-  FileText
+  FileText,
+  Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -37,7 +32,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
@@ -52,6 +46,7 @@ import { useWhyteStore } from "@/store/use-whyte-store";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 
 export default function ClientDirectoryPage() {
   const { clientProjects, removeClientProject, updateClientProject } = useWhyteStore();
@@ -72,20 +67,18 @@ export default function ClientDirectoryPage() {
     p.id.toLowerCase().includes(search.toLowerCase())
   );
 
-  // LIFECYCLE FILTERS
-  const totalActiveRegistry = filteredProjects.filter(p => !p.isArchived);
-  const pendingProjects = totalActiveRegistry.filter(p => !p.isActivated && p.status === 'Planning');
+  const pendingProjects = filteredProjects.filter(p => !p.isActivated && p.status === 'Planning' && !p.isArchived);
+  const activeCommissions = filteredProjects.filter(p => p.isActivated && !p.isArchived);
   const archivedProjects = filteredProjects.filter(p => p.isArchived);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Termination': return "bg-destructive text-white border-destructive shadow-sm";
+      case 'Termination': return "bg-destructive text-white border-destructive";
       case 'Terminated': return "bg-black text-white border-black";
       case 'Execution': return "bg-green-500/10 text-green-600 border-green-500/20";
       case 'Planning': return "bg-accent/10 text-accent border-accent/20";
       case 'Completion': return "bg-primary text-white";
-      case 'Styling': return "bg-purple-500/10 text-purple-600 border-purple-500/20";
-      default: return "bg-secondary text-muted-foreground border-border";
+      default: return "bg-secondary text-muted-foreground";
     }
   };
 
@@ -93,54 +86,41 @@ export default function ClientDirectoryPage() {
     updateClientProject(id, { isArchived: !currentStatus });
     toast({
       title: !currentStatus ? "Commission Archived" : "Commission Restored",
-      description: `Project ${id} has been ${!currentStatus ? 'transferred to historical records' : 'restored to the active registry'}.`,
+      description: `Project ${id} has been transitioned.`,
     });
   };
 
   const handleDelete = () => {
     if (!deleteId) return;
     removeClientProject(deleteId);
-    toast({
-      title: "Dossier Purged",
-      description: `Project brief ${deleteId} has been permanently removed from the studio archives.`,
-      variant: "destructive"
-    });
+    toast({ title: "Dossier Purged", variant: "destructive" });
     setDeleteId(null);
   };
 
   const ClientCard = ({ client }: { client: any }) => (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-    >
-      <Card className={cn("rounded-none border-accent/5 shadow-xl hover:shadow-2xl transition-all bg-white dark:bg-zinc-900 group overflow-hidden", client.isArchived && "opacity-70 grayscale-[0.5]")}>
+    <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+      <Card className={cn("rounded-none border-accent/5 shadow-xl hover:shadow-2xl transition-all bg-white group overflow-hidden", client.isArchived && "opacity-70 grayscale-[0.5]")}>
         <div className="flex flex-col lg:flex-row min-h-[200px]">
-          <div className={cn("w-1.5 shrink-0 transition-colors", 
+          <div className={cn("w-1.5 shrink-0", 
             client.isArchived ? 'bg-black' :
             client.status === 'Termination' ? 'bg-destructive' :
-            client.tier === 'Golden' ? 'bg-accent' : 
-            client.tier === 'Deluxe' ? 'bg-accent/60' : 'bg-accent/20'
+            client.tier === 'Golden' ? 'bg-accent' : 'bg-accent/20'
           )} />
           
           <div className="flex-1 p-8 flex flex-col gap-8">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="flex items-center gap-6">
-                <div className="h-16 w-16 rounded-full bg-secondary/30 dark:bg-zinc-800 flex items-center justify-center text-accent/40 font-headline italic text-2xl border border-accent/5 shrink-0">
+                <div className="h-16 w-16 rounded-full bg-secondary/30 flex items-center justify-center text-accent/40 font-headline italic text-2xl border border-accent/5 shrink-0">
                   {client.name.split(' ').map((n: string) => n[0]).join('')}
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
                     <h3 className="text-3xl font-headline italic">{client.name}</h3>
-                    <Badge variant="outline" className={cn("rounded-none uppercase tracking-[0.2em] text-[11px] font-bold px-3 py-1", getStatusColor(client.status))}>
+                    <Badge variant="outline" className={cn("rounded-none uppercase tracking-[0.2em] text-[12px] font-bold px-3 py-1", getStatusColor(client.status))}>
                       {client.status}
                     </Badge>
-                    {client.isArchived && (
-                      <Badge className="bg-black text-white rounded-none uppercase tracking-widest text-[11px] font-bold px-2 py-1 flex gap-1.5">
-                        <Archive className="h-3.5 w-3.5" /> Archived
-                      </Badge>
-                    )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground uppercase tracking-widest font-bold">
+                  <div className="flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground uppercase tracking-widest font-bold">
                     <span className="flex items-center gap-1.5"><Mail className="h-4 w-4 opacity-40" /> {client.email}</span>
                     <div className="h-1.5 w-1.5 bg-accent/20 rounded-full" />
                     <span className="flex items-center gap-1.5"><Activity className="h-4 w-4 opacity-40" /> {client.project}</span>
@@ -161,9 +141,7 @@ export default function ClientDirectoryPage() {
                  
                  <div className="flex items-center gap-3">
                     <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/5 group-hover:bg-accent group-hover:text-white transition-all p-0">
-                      <Link href={`/admin/clients/${client.id}`}>
-                        <ChevronRight className="h-5 w-5" />
-                      </Link>
+                      <Link href={`/admin/clients/${client.id}`}><ChevronRight className="h-5 w-5" /></Link>
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -171,20 +149,14 @@ export default function ClientDirectoryPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="rounded-none border-accent/10 w-56">
                         <DropdownMenuLabel className="text-[11px] uppercase tracking-widest opacity-40">Tactical Control</DropdownMenuLabel>
-                        <DropdownMenuItem asChild className="text-xs uppercase tracking-widest font-bold py-3 cursor-pointer">
+                        <DropdownMenuItem asChild className="text-[12px] uppercase tracking-widest font-bold py-3 cursor-pointer">
                           <Link href={`/admin/clients/${client.id}`} className="flex gap-2"><FileText className="h-4 w-4" /> Project Terminal</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleToggleArchive(client.id, client.isArchived)}
-                          className="text-xs uppercase tracking-widest font-bold py-3 cursor-pointer flex gap-2"
-                        >
+                        <DropdownMenuItem onClick={() => handleToggleArchive(client.id, client.isArchived)} className="text-[12px] uppercase tracking-widest font-bold py-3 cursor-pointer flex gap-2">
                           {client.isArchived ? <><RefreshCcw className="h-4 w-4" /> Restore Registry</> : <><Archive className="h-4 w-4" /> Move to Archive</>}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => setDeleteId(client.id)}
-                          className="text-xs uppercase tracking-widest font-bold py-3 cursor-pointer text-destructive focus:text-destructive flex gap-2"
-                        >
+                        <DropdownMenuItem onClick={() => setDeleteId(client.id)} className="text-[12px] uppercase tracking-widest font-bold py-3 cursor-pointer text-destructive focus:text-destructive flex gap-2">
                           <Trash2 className="h-4 w-4" /> Purge Dossier
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -217,13 +189,9 @@ export default function ClientDirectoryPage() {
                  {client.isArchived ? (
                    <span className="text-[11px] uppercase tracking-[0.3em] font-bold text-black/40">Commission Retired</span>
                  ) : !client.isActivated ? (
-                   <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 rounded-none text-[11px] uppercase tracking-widest px-4 py-1.5">
-                     Briefing Awaiting Funds
-                   </Badge>
+                   <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 rounded-none text-[11px] uppercase tracking-widest px-4 py-1.5">Awaiting Funds</Badge>
                  ) : (
-                   <Badge className="bg-green-600/10 text-green-600 border-green-500/20 rounded-none text-[11px] uppercase tracking-widest px-4 py-1.5">
-                     Active Journey
-                   </Badge>
+                   <Badge className="bg-green-600/10 text-green-600 border-green-500/20 rounded-none text-[11px] uppercase tracking-widest px-4 py-1.5">Active Journey</Badge>
                  )}
               </div>
             </div>
@@ -235,11 +203,7 @@ export default function ClientDirectoryPage() {
 
   return (
     <div className="space-y-12 max-w-7xl mx-auto font-body">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-end justify-between gap-6"
-      >
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-4">
             <div className="h-px w-8 bg-accent" />
@@ -252,7 +216,7 @@ export default function ClientDirectoryPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input 
               placeholder="Search Identity..." 
-              className="w-full pl-11 pr-4 rounded-none border border-accent/10 h-12 text-sm uppercase tracking-widest bg-white dark:bg-zinc-900 focus:outline-none focus:border-accent/40"
+              className="w-full pl-11 pr-4 rounded-none border border-accent/10 h-12 text-[12px] uppercase tracking-widest bg-white focus:outline-none focus:border-accent/40"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -267,66 +231,43 @@ export default function ClientDirectoryPage() {
         <Info className="h-4 w-4 text-accent" />
         <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent">Registration Intelligence</AlertTitle>
         <AlertDescription className="text-sm font-light italic text-muted-foreground">
-          Showing active commissions and project briefings. Successfully reconciled projects are transitioned to the **Master Archives**.
+          Showing active commissions and project briefings. Archived projects are transitioned to the **Master Archives**.
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="pending" className="space-y-8">
+      <Tabs defaultValue="active" className="space-y-8">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-10">
+          <TabsTrigger value="active" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0">Active Commissions ({activeCommissions.length})</TabsTrigger>
           <TabsTrigger value="pending" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0">Pending Briefings ({pendingProjects.length})</TabsTrigger>
-          <TabsTrigger value="archives" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0 flex gap-2">
-            <Archive className="h-4 w-4" /> Project Archives ({archivedProjects.length})
-          </TabsTrigger>
+          <TabsTrigger value="archives" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-4 px-0 flex gap-2"><Archive className="h-4 w-4" /> Master Archives ({archivedProjects.length})</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="active" className="space-y-6">
+          {activeCommissions.map((client) => <ClientCard key={client.id} client={client} />)}
+          {activeCommissions.length === 0 && <div className="text-center py-24 border border-dashed border-accent/10 italic text-muted-foreground uppercase tracking-[0.3em]">No active commissions found</div>}
+        </TabsContent>
+
         <TabsContent value="pending" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            {pendingProjects.map((client) => (
-              <ClientCard key={client.id} client={client} />
-            ))}
-            {pendingProjects.length === 0 && (
-              <div className="text-center py-24 border border-dashed border-accent/10">
-                <p className="text-base font-light italic text-muted-foreground uppercase tracking-[0.3em]">All project briefings have transitioned to active states</p>
-              </div>
-            )}
-          </div>
+          {pendingProjects.map((client) => <ClientCard key={client.id} client={client} />)}
+          {pendingProjects.length === 0 && <div className="text-center py-24 border border-dashed border-accent/10 italic text-muted-foreground uppercase tracking-[0.3em]">No pending briefings found</div>}
         </TabsContent>
 
         <TabsContent value="archives" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            {archivedProjects.map((client) => (
-              <ClientCard key={client.id} client={client} />
-            ))}
-            {archivedProjects.length === 0 && (
-              <div className="text-center py-24 border border-dashed border-accent/10">
-                <p className="text-base font-light italic text-muted-foreground uppercase tracking-[0.3em]">No commissions have been transitioned to the master archives</p>
-              </div>
-            )}
-          </div>
+          {archivedProjects.map((client) => <ClientCard key={client.id} client={client} />)}
+          {archivedProjects.length === 0 && <div className="text-center py-24 border border-dashed border-accent/10 italic text-muted-foreground uppercase tracking-[0.3em]">No archived dossiers found</div>}
         </TabsContent>
       </Tabs>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent className="rounded-none border-accent/20 font-body">
           <AlertDialogHeader className="space-y-4">
-            <div className="flex items-center gap-3">
-              <XCircle className="h-4 w-4 text-destructive" />
-              <span className="text-destructive text-[12px] font-bold uppercase tracking-[0.3em]">Critical Protocol</span>
-            </div>
+            <div className="flex items-center gap-3"><XCircle className="h-4 w-4 text-destructive" /><span className="text-destructive text-[12px] font-bold uppercase tracking-[0.3em]">Critical Protocol</span></div>
             <AlertDialogTitle className="text-2xl font-headline italic text-destructive">Confirm Permanent Purge?</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed">
-              This will permanently remove client dossier **{deleteId}** and all associated site logs from the studio registry. This action cannot be reversed.
-            </AlertDialogDescription>
+            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed">This will permanently remove client dossier **{deleteId}** and all associated logs. This action cannot be reversed.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-6">
-            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[11px] font-bold h-12 border-accent/10">Abort Cancellation</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete}
-              className="bg-destructive text-white rounded-none uppercase tracking-widest text-[11px] font-bold h-12 hover:bg-destructive/90"
-            >
-              Authorize Purge
-            </AlertDialogAction>
+            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[11px] font-bold h-12 border-accent/10">Abort</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white rounded-none uppercase tracking-widest text-[11px] font-bold h-12 hover:bg-destructive/90">Authorize Purge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
