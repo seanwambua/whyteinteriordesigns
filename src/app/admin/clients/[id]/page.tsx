@@ -30,7 +30,11 @@ import {
   CreditCard,
   History,
   TrendingUp,
-  Timer
+  Timer,
+  Clock,
+  Calendar as CalendarIcon,
+  AlertTriangle,
+  Hourglass
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +42,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import { parse, differenceInDays, isValid, format } from "date-fns";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -142,6 +147,37 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
   const remainingBalance = (project.totalBudget || 0) - totalPaid;
+
+  const getTemporalData = () => {
+    const start = parse(project.startDate, "MMM dd, yyyy", new Date());
+    const end = parse(project.endDate, "MMM dd, yyyy", new Date());
+    const now = new Date();
+    
+    if (!isValid(start) || !isValid(end)) return null;
+
+    const totalDays = differenceInDays(end, start);
+    
+    if (project.status === 'Planning') {
+      return { label: "Commencement Awaited", value: "Sync Pending", icon: <Clock className="h-5 w-5" />, sub: "Initial Deposit Required" };
+    }
+    
+    if (project.status === 'Completion' || project.status === 'Terminated') {
+      return { label: "Lifecycle Status", value: "Concluded", icon: <CheckCircle2 className="h-5 w-5" />, sub: "Historical Registry Entry" };
+    }
+
+    const remaining = differenceInDays(end, now);
+    const isOverdue = remaining < 0;
+
+    return { 
+      label: isOverdue ? "Overdue Protocol" : "Days to Handover", 
+      value: Math.abs(remaining).toString(), 
+      icon: isOverdue ? <AlertTriangle className="h-5 w-5 text-destructive" /> : <Hourglass className="h-5 w-5" />,
+      sub: `${totalDays} Day Total Timeline`,
+      isUrgent: isOverdue
+    };
+  };
+
+  const temporal = getTemporalData();
 
   const KanbanColumn = ({ status, tasks }: { status: ProjectTask['status'], tasks: ProjectTask[] }) => (
     <div className="flex-1 flex flex-col gap-6 min-w-[320px]">
@@ -269,11 +305,26 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
            <Card className="rounded-none border-accent/5 p-10 space-y-8">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                <div className="space-y-6"><h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Architectural Brief</h3><p className="text-xl font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || project.workScope}"</p></div>
-               <div className="space-y-6"><h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Temporal Status</h3>
-                 <div className="grid grid-cols-2 gap-8">
-                   <div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Start Date</p><p className="font-headline italic text-2xl">{project.startDate}</p></div>
-                   <div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Deadline</p><p className="font-headline italic text-2xl">{project.endDate}</p></div>
+               <div className="space-y-6">
+                 <h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Temporal Protocol</h3>
+                 <div className="grid grid-cols-2 gap-8 border-b border-accent/5 pb-8">
+                   <div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Commencement</p><p className="font-headline italic text-2xl">{project.startDate}</p></div>
+                   <div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Delivery Target</p><p className="font-headline italic text-2xl">{project.endDate}</p></div>
                  </div>
+                 {temporal && (
+                   <div className={cn("p-6 flex items-center justify-between", temporal.isUrgent ? "bg-destructive/5 text-destructive" : "bg-accent/5 text-accent")}>
+                     <div className="flex items-center gap-4">
+                       <div className="h-10 w-10 rounded-full bg-white/50 flex items-center justify-center shrink-0">
+                         {temporal.icon}
+                       </div>
+                       <div className="space-y-0.5">
+                         <p className="text-[11px] font-bold uppercase tracking-widest opacity-60">{temporal.label}</p>
+                         <p className="text-[12px] font-bold uppercase tracking-widest">{temporal.sub}</p>
+                       </div>
+                     </div>
+                     <p className="text-4xl font-headline italic">{temporal.value}</p>
+                   </div>
+                 )}
                </div>
              </div>
            </Card>
@@ -375,7 +426,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                 </div>
               </div>
               <div className="space-y-3">
-                <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label>
+                <Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label>
                 <Input placeholder="E.g., TRX-9921-WHYTE" className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] font-medium" value={txnCode} onChange={(e) => setTxnCode(e.target.value)} />
               </div>
             </div>
