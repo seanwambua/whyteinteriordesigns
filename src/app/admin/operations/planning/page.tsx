@@ -22,7 +22,8 @@ import {
   Zap,
   Calculator,
   Briefcase,
-  Mail
+  Mail,
+  Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -63,6 +64,7 @@ import { format, parse, isValid } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ProjectPlanningPage() {
   const { clientProjects, updateClientProject, removeClientProject, collaborators } = useWhyteStore();
@@ -167,14 +169,6 @@ export default function ProjectPlanningPage() {
     }));
   };
 
-  const updateSubtask = (taskIdx: number, subIdx: number, title: string) => {
-    const updated = [...editFormData.tasks];
-    if (updated[taskIdx].subtasks) {
-      updated[taskIdx].subtasks![subIdx].title = title;
-      setEditFormData(prev => ({ ...prev, tasks: updated }));
-    }
-  };
-
   const addMilestone = () => {
     setEditFormData(prev => ({
       ...prev,
@@ -235,8 +229,6 @@ export default function ProjectPlanningPage() {
   const handleSaveEdit = () => {
     if (!editProject) return;
     const budget = Number(editFormData.totalBudget) || 0;
-    
-    // Auto-recalculate installments if budget or tier changed
     const installments = getInstallmentPlan(editFormData.tier, budget);
 
     updateClientProject(editProject.id, {
@@ -252,7 +244,7 @@ export default function ProjectPlanningPage() {
   };
 
   return (
-    <div className="space-y-12 max-w-7xl mx-auto font-body">
+    <div className="space-y-12 max-w-7xl mx-auto font-body pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-2">
           <div className="flex items-center gap-4"><div className="h-px w-8 bg-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Operations Hub</span></div>
@@ -261,38 +253,57 @@ export default function ProjectPlanningPage() {
         <Button asChild className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold shadow-xl hover:tracking-[0.25em] transition-all"><Link href="/admin/clients/add"><Plus className="h-5 w-5" /> Initialize Briefing</Link></Button>
       </motion.div>
 
+      <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
+        <Info className="h-5 w-5 text-accent" />
+        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Authorization Guardrail</AlertTitle>
+        <AlertDescription className="text-base font-light italic text-muted-foreground leading-relaxed">
+          Pending briefings require a verified initial deposit to transition to the **Implementation** phase. Review all strategic milestones and site protocols before authorization.
+        </AlertDescription>
+      </Alert>
+
       <div className="grid grid-cols-1 gap-8">
         {pendingPlanning.map((project, index) => (
           <motion.div key={project.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
-            <Card className="rounded-none border-accent/10 shadow-xl bg-white overflow-hidden group min-h-[300px] border-l-4 border-l-orange-400">
+            <Card className="rounded-none border-accent/5 shadow-2xl bg-white overflow-hidden group min-h-[300px] border-l-4 border-l-orange-500/40">
               <div className="flex flex-col md:flex-row items-stretch h-full">
-                <div className="p-10 border-b md:border-b-0 md:border-r border-accent/5 flex flex-col justify-between min-w-[280px] bg-secondary/10">
-                  <div className="space-y-4">
-                    <span className="text-[12px] font-bold text-accent/40 uppercase tracking-[0.4em] block">{project.id}</span>
-                    <Badge className="bg-accent text-white rounded-none uppercase tracking-widest text-[11px] font-bold py-1.5 px-4">{project.tier} Tier</Badge>
+                <div className="p-10 border-b md:border-b-0 md:border-r border-accent/5 flex flex-col justify-between min-w-[300px] bg-secondary/5">
+                  <div className="space-y-6">
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-bold text-accent/40 uppercase tracking-[0.4em] block">{project.id}</span>
+                      <Badge className="bg-accent text-white rounded-none uppercase tracking-widest text-[10px] font-bold py-1.5 px-4">{project.tier} Commission</Badge>
+                    </div>
+                    <div className="space-y-3 pt-4 border-t border-accent/5">
+                      <p className="text-[10px] font-bold text-accent/30 uppercase tracking-[0.3em]">Temporal Frame</p>
+                      <div className="flex items-center gap-3 text-[12px] font-bold uppercase tracking-widest text-muted-foreground">
+                        <CalendarIcon className="h-3.5 w-3.5 opacity-40" /> {project.startDate} — {project.endDate}
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    <p className="text-[11px] font-bold text-orange-600/60 uppercase tracking-widest">Protocol Status</p>
-                    <div className="flex items-center gap-3 text-[13px] font-bold text-orange-600 uppercase tracking-widest"><Banknote className="h-4 w-4" /> Awaiting Deposit</div>
+                  <div className="space-y-3 pt-10">
+                    <p className="text-[10px] font-bold text-orange-600/60 uppercase tracking-[0.3em]">Authorization Status</p>
+                    <div className="flex items-center gap-3 text-[12px] font-bold text-orange-600 uppercase tracking-widest"><Banknote className="h-4 w-4" /> Awaiting Deposit Sync</div>
                   </div>
                 </div>
-                <div className="flex-1 p-10 flex flex-col justify-between">
-                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
-                    <div className="space-y-6">
-                      <h3 className="text-4xl font-headline italic leading-tight text-accent">{project.project}</h3>
-                      <p className="text-base font-light italic text-accent/60 leading-relaxed border-l-2 border-accent/10 pl-6 max-w-2xl line-clamp-2">"{project.description || project.workScope}"</p>
+                <div className="flex-1 p-10 md:p-12 flex flex-col justify-between">
+                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-12">
+                    <div className="space-y-6 flex-1">
+                      <div className="space-y-1">
+                        <h3 className="text-4xl font-headline italic leading-tight text-accent">{project.project}</h3>
+                        <p className="text-[12px] uppercase tracking-widest font-bold text-muted-foreground opacity-60">Valued Client: {project.name}</p>
+                      </div>
+                      <p className="text-base font-light italic text-accent/60 leading-relaxed border-l-2 border-accent/10 pl-8 max-w-2xl line-clamp-2">"{project.description || project.workScope || "Architectural narrative pending synchronization."}"</p>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Required Activation</span>
-                      <span className="text-2xl font-headline italic text-orange-600">KES {(project.installments.find(i => i.label.toLowerCase().includes('deposit'))?.amount || 0).toLocaleString()}</span>
+                    <div className="text-right min-w-[200px]">
+                      <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-2">Required Activation</span>
+                      <span className="text-3xl font-headline italic text-orange-600">KES {(project.installments.find(i => i.label.toLowerCase().includes('deposit'))?.amount || 0).toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-8 border-t border-accent/5 mt-8">
-                    <div className="flex gap-4">
-                      <Button variant="outline" onClick={() => handleOpenEdit(project)} className="rounded-none h-12 px-8 text-[11px] uppercase tracking-widest font-bold border-accent/10 hover:bg-accent hover:text-white transition-all"><Settings2 className="h-4 w-4 mr-2" /> Comprehensive Edit</Button>
-                      <Button variant="ghost" onClick={() => setDeleteId(project.id)} className="rounded-none h-12 px-8 text-[11px] uppercase tracking-widest font-bold text-destructive/40 hover:text-destructive hover:bg-destructive/5 transition-all"><Trash2 className="h-4 w-4 mr-2" /> Cancel Brief</Button>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-10 border-t border-accent/5 mt-12">
+                    <div className="flex gap-6">
+                      <Button variant="ghost" onClick={() => handleOpenEdit(project)} className="rounded-none h-12 px-6 text-[11px] uppercase tracking-widest font-bold text-accent/60 hover:text-accent hover:bg-accent/5 transition-all"><Settings2 className="h-4 w-4 mr-2" /> Master Edit</Button>
+                      <Button variant="ghost" onClick={() => setDeleteId(project.id)} className="rounded-none h-12 px-6 text-[11px] uppercase tracking-widest font-bold text-destructive/40 hover:text-destructive hover:bg-destructive/5 transition-all"><Trash2 className="h-4 w-4 mr-2" /> Purge Brief</Button>
                     </div>
-                    <Button onClick={() => setActivationProject(project)} className="h-14 px-10 rounded-none bg-orange-600 text-white uppercase tracking-widest text-[11px] font-bold hover:bg-orange-700 transition-all flex gap-3 shadow-xl hover:tracking-[0.2em]"><ShieldCheck className="h-5 w-5" /> Activate Journey</Button>
+                    <Button onClick={() => setActivationProject(project)} className="h-16 px-12 rounded-none bg-orange-600 text-white uppercase tracking-widest text-[11px] font-bold hover:bg-orange-700 transition-all flex gap-3 shadow-2xl hover:tracking-[0.2em]"><ShieldCheck className="h-5 w-5" /> Authorize Activation</Button>
                   </div>
                 </div>
               </div>
@@ -300,44 +311,44 @@ export default function ProjectPlanningPage() {
           </motion.div>
         ))}
         {pendingPlanning.length === 0 && (
-          <div className="text-center py-32 border border-dashed border-accent/10 bg-secondary/5 italic text-muted-foreground uppercase tracking-[0.3em] font-light">
+          <div className="text-center py-40 border border-dashed border-accent/10 bg-secondary/5 italic text-muted-foreground uppercase tracking-[0.3em] font-light">
             No pending briefings prioritized in current cycle
           </div>
         )}
       </div>
 
       <Dialog open={!!editProject} onOpenChange={(open) => !open && setEditProject(null)}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-6xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-6xl max-h-[90vh] overflow-hidden flex flex-col p-0 bg-white">
           <div className="bg-accent h-1.5 w-full" />
-          <DialogHeader className="p-10 pb-6 space-y-4">
+          <DialogHeader className="p-12 pb-8 space-y-4">
             <div className="flex items-center gap-3"><FileText className="h-5 w-5 text-accent" /><span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Architectural Dossier Synchronization</span></div>
             <DialogTitle className="text-4xl font-headline italic">Edit Briefing: {editProject?.id}</DialogTitle>
           </DialogHeader>
           <Tabs defaultValue="identity" className="flex-1 overflow-hidden flex flex-col">
-            <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-8 mb-8 px-10">
-              <TabsTrigger value="identity" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-4 px-0 flex gap-2"><User className="h-3.5 w-3.5" /> Identity</TabsTrigger>
-              <TabsTrigger value="financials" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-4 px-0 flex gap-2"><Calculator className="h-3.5 w-3.5" /> Framework</TabsTrigger>
-              <TabsTrigger value="milestones" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-4 px-0 flex gap-2"><Flag className="h-3.5 w-3.5" /> Milestones</TabsTrigger>
-              <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-4 px-0 flex gap-2"><Zap className="h-3.5 w-3.5" /> Protocols</TabsTrigger>
-              <TabsTrigger value="network" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[11px] font-bold pb-4 px-0 flex gap-2"><Users className="h-3.5 w-3.5" /> Network</TabsTrigger>
+            <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 mb-8 px-12">
+              <TabsTrigger value="identity" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><User className="h-4 w-4" /> Identity</TabsTrigger>
+              <TabsTrigger value="financials" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><Calculator className="h-4 w-4" /> Framework</TabsTrigger>
+              <TabsTrigger value="milestones" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><Flag className="h-4 w-4" /> Milestones</TabsTrigger>
+              <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><Zap className="h-4 w-4" /> Protocols</TabsTrigger>
+              <TabsTrigger value="network" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><Users className="h-4 w-4" /> Network</TabsTrigger>
             </TabsList>
             
-            <div className="flex-1 overflow-y-auto px-10 pb-10 custom-scrollbar">
-              <TabsContent value="identity" className="m-0 space-y-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Client Full Name</Label><Input value={editFormData.name} onChange={(e) => setEditFormData({...editFormData, name: e.target.value})} className="rounded-none h-14 text-lg border-accent/20" /></div>
-                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Contact Email</Label><Input type="email" value={editFormData.email} onChange={(e) => setEditFormData({...editFormData, email: e.target.value})} className="rounded-none h-14 text-lg border-accent/20" /></div>
+            <div className="flex-1 overflow-y-auto px-12 pb-12 custom-scrollbar">
+              <TabsContent value="identity" className="m-0 space-y-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Client Identity</Label><Input value={editFormData.name} onChange={(e) => setEditFormData({...editFormData, name: e.target.value})} className="rounded-none h-14 text-lg border-accent/20 focus:ring-accent" /></div>
+                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Communication Protocol (Email)</Label><Input type="email" value={editFormData.email} onChange={(e) => setEditFormData({...editFormData, email: e.target.value})} className="rounded-none h-14 text-lg border-accent/20 focus:ring-accent" /></div>
                 </div>
-                <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Designation</Label><Input value={editFormData.project} onChange={(e) => setEditFormData({...editFormData, project: e.target.value})} className="rounded-none h-14 text-2xl font-headline italic border-accent/20" /></div>
-                <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea value={editFormData.description} onChange={(e) => setEditFormData({...editFormData, description: e.target.value})} className="min-h-[200px] rounded-none p-6 font-light italic text-lg border-accent/20 leading-relaxed" /></div>
+                <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Designation</Label><Input value={editFormData.project} onChange={(e) => setEditFormData({...editFormData, project: e.target.value})} className="rounded-none h-14 text-2xl font-headline italic border-accent/20 focus:ring-accent" /></div>
+                <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea value={editFormData.description} onChange={(e) => setEditFormData({...editFormData, description: e.target.value})} className="min-h-[240px] rounded-none p-8 font-light italic text-xl border-accent/20 leading-relaxed focus:ring-accent" /></div>
               </TabsContent>
 
-              <TabsContent value="financials" className="m-0 space-y-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <TabsContent value="financials" className="m-0 space-y-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                   <div className="space-y-3">
                     <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
                     <Select value={editFormData.tier} onValueChange={(v: any) => setEditFormData({...editFormData, tier: v})}>
-                      <SelectTrigger className="rounded-none h-14 border-accent/20 uppercase tracking-widest text-[11px] font-bold"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="rounded-none h-14 border-accent/20 uppercase tracking-widest text-[12px] font-bold focus:ring-accent"><SelectValue /></SelectTrigger>
                       <SelectContent className="rounded-none">
                         <SelectItem value="Premium">Premium (50/30/20 Plan)</SelectItem>
                         <SelectItem value="Deluxe">Deluxe (60/20/20 Plan)</SelectItem>
@@ -345,9 +356,9 @@ export default function ProjectPlanningPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Capital Commitment (KES)</Label><Input type="number" value={editFormData.totalBudget} onChange={(e) => setEditFormData({...editFormData, totalBudget: Number(e.target.value)})} className="rounded-none h-14 text-2xl font-headline italic border-accent/20" /></div>
+                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Capital Commitment (KES)</Label><Input type="number" value={editFormData.totalBudget} onChange={(e) => setEditFormData({...editFormData, totalBudget: Number(e.target.value)})} className="rounded-none h-14 text-3xl font-headline italic border-accent/20 focus:ring-accent" /></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-accent/5">
                   <div className="space-y-3">
                     <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Protocol</Label>
                     <Popover>
@@ -369,14 +380,14 @@ export default function ProjectPlanningPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="milestones" className="m-0 space-y-8">
-                <div className="flex justify-between items-center"><h4 className="text-[12px] font-bold uppercase tracking-widest text-accent">Strategic Milestones</h4><Button variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white"><Plus className="h-4 w-4 mr-2" /> Append Target</Button></div>
+              <TabsContent value="milestones" className="m-0 space-y-10">
+                <div className="flex justify-between items-center pb-6 border-b border-accent/5"><h4 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent/60">Strategic Milestones</h4><Button variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white"><Plus className="h-4 w-4 mr-2" /> Append Target</Button></div>
                 <div className="space-y-6">
                   {editFormData.milestones.map((m, idx) => (
-                    <div key={m.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-6 relative group hover:bg-white hover:shadow-xl transition-all">
+                    <div key={m.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-6 relative group hover:bg-white hover:shadow-2xl transition-all">
                       <Button variant="ghost" size="icon" onClick={() => removeMilestone(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        <div className="space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Target Label</Label><Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-accent/10" /></div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div className="space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Target Label</Label><Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-accent/10 focus:ring-accent" /></div>
                         <div className="space-y-2">
                           <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Sync Date</Label>
                           <Popover>
@@ -392,18 +403,18 @@ export default function ProjectPlanningPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="workflow" className="m-0 space-y-8">
-                <div className="flex justify-between items-center"><h4 className="text-[12px] font-bold uppercase tracking-widest text-accent">Site Protocols</h4><Button variant="outline" size="sm" onClick={addTask} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white"><Plus className="h-4 w-4 mr-2" /> Initialize Protocol</Button></div>
-                <div className="space-y-10">
+              <TabsContent value="workflow" className="m-0 space-y-10">
+                <div className="flex justify-between items-center pb-6 border-b border-accent/5"><h4 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent/60">Site Protocols</h4><Button variant="outline" size="sm" onClick={addTask} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white"><Plus className="h-4 w-4 mr-2" /> Initialize Protocol</Button></div>
+                <div className="space-y-8">
                   {editFormData.tasks.map((task, idx) => (
-                    <div key={task.id} className="p-10 border border-accent/5 bg-white shadow-lg space-y-8 relative">
+                    <div key={task.id} className="p-10 border border-accent/5 bg-white shadow-xl space-y-10 relative">
                       <Button variant="ghost" size="icon" onClick={() => removeTask(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                        <div className="lg:col-span-8 space-y-3"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Protocol Identity</Label><Input value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} className="rounded-none h-14 text-xl font-bold uppercase tracking-widest border-accent/10" /></div>
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                        <div className="lg:col-span-8 space-y-3"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Protocol Identity</Label><Input value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} className="rounded-none h-14 text-xl font-bold uppercase tracking-widest border-accent/10 focus:ring-accent" /></div>
                         <div className="lg:col-span-4 space-y-3">
                           <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Urgency</Label>
                           <Select value={task.priority} onValueChange={(v: any) => updateTask(idx, 'priority', v)}>
-                            <SelectTrigger className="rounded-none h-14 text-[11px] font-bold uppercase"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="rounded-none h-14 text-[11px] font-bold uppercase focus:ring-accent"><SelectValue /></SelectTrigger>
                             <SelectContent className="rounded-none"><SelectItem value="Low">Low Priority</SelectItem><SelectItem value="Medium">Medium Priority</SelectItem><SelectItem value="High">High Urgency</SelectItem></SelectContent>
                           </Select>
                         </div>
@@ -413,27 +424,27 @@ export default function ProjectPlanningPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="network" className="m-0 space-y-8">
-                <div className="flex justify-between items-center"><h4 className="text-[12px] font-bold uppercase tracking-widest text-accent">Partner Matrix</h4><Button variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white"><Plus className="h-4 w-4 mr-2" /> Link Resource</Button></div>
+              <TabsContent value="network" className="m-0 space-y-10">
+                <div className="flex justify-between items-center pb-6 border-b border-accent/5"><h4 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent/60">Partner Matrix</h4><Button variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white"><Plus className="h-4 w-4 mr-2" /> Link Resource</Button></div>
                 <div className="space-y-6">
                   {(editFormData.vendorAllocations || []).map((alloc, idx) => (
-                    <div key={alloc.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-8 relative group hover:bg-white hover:shadow-xl transition-all">
+                    <div key={alloc.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-8 relative group hover:bg-white hover:shadow-2xl transition-all">
                       <Button variant="ghost" size="icon" onClick={() => removeAllocation(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         <div className="space-y-2">
                           <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Registry Resource</Label>
                           <Select value={alloc.vendorName} onValueChange={(v) => updateAllocation(idx, 'vendorName', v)}>
-                            <SelectTrigger className="rounded-none h-12 text-[12px] font-bold uppercase border-accent/10"><SelectValue placeholder="SELECT FROM REGISTRY" /></SelectTrigger>
+                            <SelectTrigger className="rounded-none h-12 text-[12px] font-bold uppercase border-accent/10 focus:ring-accent"><SelectValue placeholder="SELECT FROM REGISTRY" /></SelectTrigger>
                             <SelectContent className="rounded-none">{collaborators.map(c => <SelectItem key={c.id} value={c.name} className="uppercase text-[10px] font-bold tracking-widest">{c.name} ({c.specialty})</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Professional Role</Label><Input value={alloc.role} onChange={(e) => updateAllocation(idx, 'role', e.target.value)} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-accent/10" /></div>
+                        <div className="space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Professional Role</Label><Input value={alloc.role} onChange={(e) => updateAllocation(idx, 'role', e.target.value)} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-accent/10 focus:ring-accent" /></div>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-6 border-t border-accent/5">
                         <div className="space-y-2">
                           <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Cost Model</Label>
                           <Select value={alloc.costType} onValueChange={(v: any) => updateAllocation(idx, 'costType', v)}>
-                            <SelectTrigger className="rounded-none h-12 text-[11px] font-bold uppercase border-accent/10"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="rounded-none h-12 text-[11px] font-bold uppercase border-accent/10 focus:ring-accent"><SelectValue /></SelectTrigger>
                             <SelectContent className="rounded-none"><SelectItem value="Fixed">Fixed Contract</SelectItem><SelectItem value="Daily">Daily Rate</SelectItem><SelectItem value="Percentage">Percentage Split</SelectItem></SelectContent>
                           </Select>
                         </div>
@@ -446,34 +457,43 @@ export default function ProjectPlanningPage() {
               </TabsContent>
             </div>
           </Tabs>
-          <DialogFooter className="p-10 border-t border-accent/5 bg-secondary/5 flex justify-between">
+          <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between">
             <Button variant="ghost" onClick={() => setEditProject(null)} className="rounded-none h-14 px-8 uppercase tracking-widest text-[12px] font-bold text-accent/40">Abort Protocol Sync</Button>
-            <Button onClick={handleSaveEdit} className="bg-accent text-white rounded-none h-16 px-12 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all flex gap-4">Authorize Synchronization <ChevronRight className="h-5 w-5" /></Button>
+            <Button onClick={handleSaveEdit} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all flex gap-4 hover:tracking-[0.2em]">Authorize Synchronization <ChevronRight className="h-5 w-5" /></Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="rounded-none border-accent/20 font-body p-10">
-          <AlertDialogHeader className="space-y-6"><div className="flex items-center gap-3"><XCircle className="h-6 w-6 text-destructive" /><span className="text-destructive text-[13px] font-bold uppercase tracking-[0.3em]">Critical Protocol Interruption</span></div><AlertDialogTitle className="text-3xl font-headline italic text-destructive">Confirm Dossier Purge?</AlertDialogTitle><AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">This will permanently remove project briefing **{deleteId}** and all associated data.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter className="pt-10"><AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 border-accent/10">Abort Cancellation</AlertDialogCancel><AlertDialogAction onClick={() => { if(deleteId) { removeClientProject(deleteId); setDeleteId(null); toast({title: "Briefing Purged"}); } }} className="bg-destructive text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-12 hover:bg-destructive/90 shadow-xl">Confirm Purge</AlertDialogAction></AlertDialogFooter>
+        <AlertDialogContent className="rounded-none border-accent/20 font-body p-12 bg-white">
+          <AlertDialogHeader className="space-y-6"><div className="flex items-center gap-3"><XCircle className="h-6 w-6 text-destructive" /><span className="text-destructive text-[13px] font-bold uppercase tracking-[0.3em]">Critical Protocol Interruption</span></div><AlertDialogTitle className="text-3xl font-headline italic text-destructive">Confirm Dossier Purge?</AlertDialogTitle><AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">This will permanently remove project briefing **{deleteId}** and all associated architectural and financial data from the studio registry.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter className="pt-12"><AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 border-accent/10">Abort Cancellation</AlertDialogCancel><AlertDialogAction onClick={() => { if(deleteId) { removeClientProject(deleteId); setDeleteId(null); toast({title: "Briefing Purged"}); } }} className="bg-destructive text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-12 hover:bg-destructive/90 shadow-xl">Authorize Purge</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <Dialog open={activationProject !== null} onOpenChange={(open) => !open && setActivationProject(null)}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden">
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden bg-white">
           <div className="bg-orange-600 h-1.5 w-full" />
-          <div className="p-10 space-y-8">
+          <div className="p-12 space-y-10">
             <DialogHeader className="space-y-4">
               <div className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-orange-600" /><span className="text-orange-600 text-[12px] font-bold uppercase tracking-[0.4em]">Activation Protocol</span></div>
-              <DialogTitle className="text-3xl font-headline italic">Verify Initial Transaction</DialogTitle>
-              <DialogDescription className="font-light italic text-muted-foreground text-base">To transition <strong>{activationProject?.project}</strong> to execution, verify the initial capital commitment.</DialogDescription>
+              <DialogTitle className="text-3xl font-headline italic">Verify Commitment</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">Transitioning <strong>{activationProject?.project}</strong> to site implementation requires formal verification of the initial capital commitment.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-8">
-              <div className="p-8 bg-orange-500/5 border border-orange-500/10 space-y-4 relative overflow-hidden"><div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-14 w-14" /></div><div className="flex justify-between items-end relative z-10"><span className="text-[12px] uppercase tracking-widest font-bold text-orange-600/60">Authorized Deposit</span><span className="text-3xl font-headline italic text-orange-600">KES {activationProject ? (activationProject.installments.find(i => i.label.toLowerCase().includes('deposit'))?.amount || 0).toLocaleString() : 0}</span></div></div>
-              <div className="space-y-3"><Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label><Input placeholder="E.g., TRX-9921-WHYTE" className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] font-medium" value={depositCode} onChange={(e) => setDepositCode(e.target.value)} /></div>
+            <div className="space-y-10">
+              <div className="p-10 bg-orange-500/5 border border-orange-500/10 space-y-4 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-16 w-16" /></div>
+                <div className="flex flex-col gap-1 relative z-10">
+                  <span className="text-[11px] uppercase tracking-widest font-bold text-orange-600/60">Authorized Deposit Value</span>
+                  <span className="text-3xl font-headline italic text-orange-600">KES {activationProject ? (activationProject.installments.find(i => i.label.toLowerCase().includes('deposit'))?.amount || 0).toLocaleString() : 0}</span>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label>
+                <Input placeholder="E.g., TRX-9921-WHYTE" className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] font-medium focus:ring-orange-600" value={depositCode} onChange={(e) => setDepositCode(e.target.value)} />
+              </div>
             </div>
-            <DialogFooter className="pt-4"><Button className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all" onClick={handleActivateJourney} disabled={isActivating || !depositCode}>{isActivating ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Syncing...</span> : "Authorize Activation"}</Button></DialogFooter>
+            <DialogFooter className="pt-6"><Button className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em]" onClick={handleActivateJourney} disabled={isActivating || !depositCode}>{isActivating ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span> : "Authorize Commission Activation"}</Button></DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
