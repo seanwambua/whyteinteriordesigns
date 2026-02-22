@@ -19,11 +19,15 @@ import {
   Flag,
   CheckCircle2,
   Clock,
-  Zap
+  Zap,
+  Users,
+  ShieldCheck,
+  XCircle,
+  Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone, VendorAllocation } from "@/store/use-whyte-store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
@@ -31,13 +35,24 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function AddClientPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { addClientProject } = useWhyteStore();
+  const { addClientProject, collaborators } = useWhyteStore();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -53,10 +68,11 @@ export default function AddClientPage() {
     ] as (Omit<Milestone, 'date'> & { date: Date })[],
     tasks: [
       { id: 'T-1', title: "Site Measurement Verification", priority: "High" as const, status: "Todo" as const, subtasks: [] as SubTask[] }
-    ] as ProjectTask[]
+    ] as ProjectTask[],
+    vendorAllocations: [] as VendorAllocation[]
   });
 
-  const totalSteps = 6;
+  const totalSteps = 7;
   const progress = (step / totalSteps) * 100;
 
   const handleNext = () => setStep(prev => prev + 1);
@@ -88,6 +104,22 @@ export default function AddClientPage() {
     setFormData({ ...formData, tasks: updated }); 
   };
 
+  const addAllocation = () => setFormData({
+    ...formData,
+    vendorAllocations: [...formData.vendorAllocations, { id: `VA-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, vendorName: "", role: "", category: "Vendor", costType: "Fixed", costValue: 0, timelineDays: 0, materials: [] }]
+  });
+
+  const removeAllocation = (idx: number) => setFormData({
+    ...formData,
+    vendorAllocations: formData.vendorAllocations.filter((_, i) => i !== idx)
+  });
+
+  const updateAllocation = (idx: number, field: keyof VendorAllocation, value: any) => {
+    const updated = [...formData.vendorAllocations];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setFormData({ ...formData, vendorAllocations: updated });
+  };
+
   const getInstallmentPlan = (tier: ClientProject['tier'], budget: number) => {
     if (tier === 'Premium') return [ 
       { label: "Initial Deposit (50%)", percentage: 50, amount: budget * 0.5, status: 'Pending' as const }, 
@@ -105,8 +137,7 @@ export default function AddClientPage() {
     ];
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const executeFinalSubmit = () => {
     setLoading(true);
     const id = `WP-${Math.floor(Math.random() * 9000) + 1000}`;
     const budget = Number(formData.totalBudget) || 0;
@@ -128,7 +159,8 @@ export default function AddClientPage() {
       milestones: formData.milestones.map(m => ({ ...m, date: format(m.date, "MMM dd, yyyy") })), 
       tasks: formData.tasks.map((t, i) => ({ ...t, id: t.id || `T-${id}-${i + 1}`, status: 'Todo' })), 
       installments: getInstallmentPlan(formData.tier, budget), 
-      description: formData.description 
+      description: formData.description,
+      vendorAllocations: formData.vendorAllocations
     };
 
     setTimeout(() => { 
@@ -146,6 +178,7 @@ export default function AddClientPage() {
     if (step === 4) return formData.startDate && formData.endDate;
     if (step === 5) return formData.milestones.length > 0 && formData.milestones.every(m => m.label);
     if (step === 6) return formData.tasks.length > 0 && formData.tasks.every(t => t.title);
+    if (step === 7) return true; // Optional linking
     return true; 
   };
 
@@ -172,7 +205,7 @@ export default function AddClientPage() {
 
       <Card className="rounded-none border-accent/10 shadow-2xl bg-white overflow-hidden">
         <CardContent className="p-10 md:p-16">
-          <form onSubmit={handleSubmit} className="space-y-12">
+          <form onSubmit={(e) => { e.preventDefault(); if(step === totalSteps) setIsConfirmOpen(true); else handleNext(); }} className="space-y-12">
             <AnimatePresence mode="wait">
               {step === 1 && (
                 <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
@@ -199,7 +232,7 @@ export default function AddClientPage() {
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
                       <Select onValueChange={(v: any) => setFormData({...formData, tier: v})} defaultValue={formData.tier}>
-                        <SelectTrigger className="rounded-none border-accent/20 h-14 text-sm font-bold uppercase tracking-widest focus:ring-accent">
+                        <SelectTrigger className="rounded-none border-accent/20 h-14 text-[12px] font-bold uppercase tracking-widest focus:ring-accent">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-none">
@@ -225,7 +258,7 @@ export default function AddClientPage() {
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Protocol</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-base border-accent/20 uppercase tracking-widest font-bold">
+                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-accent/20 uppercase tracking-widest font-bold">
                             <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
                             {format(formData.startDate, "MMM dd, yyyy")}
                           </Button>
@@ -239,7 +272,7 @@ export default function AddClientPage() {
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Projected Delivery Target</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-base border-accent/20 uppercase tracking-widest font-bold">
+                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-accent/20 uppercase tracking-widest font-bold">
                             <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
                             {format(formData.endDate, "MMM dd, yyyy")}
                           </Button>
@@ -279,7 +312,7 @@ export default function AddClientPage() {
                             <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Sync Date</Label>
                             <Popover>
                               <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full h-12 rounded-none justify-start text-sm border-accent/10 font-bold uppercase tracking-widest">
+                                <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-accent/10 font-bold uppercase tracking-widest">
                                   <CalendarIcon className="mr-3 h-4 w-4 opacity-40" />
                                   {format(m.date, "MMM dd, yyyy")}
                                 </Button>
@@ -337,6 +370,72 @@ export default function AddClientPage() {
                   </div>
                 </motion.div>
               )}
+
+              {step === 7 && (
+                <motion.div key="s7" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                  <div className="flex items-center justify-between gap-4 mb-2">
+                    <div className="flex items-center gap-4">
+                      <Users className="h-5 w-5 text-accent/40" />
+                      <h3 className="text-2xl font-headline italic">Network Matrix</h3>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white transition-all">
+                      <Plus className="h-4 w-4 mr-2" /> Link Partner
+                    </Button>
+                  </div>
+                  <div className="space-y-6">
+                    {formData.vendorAllocations.map((alloc, idx) => (
+                      <div key={alloc.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-8 relative group transition-all hover:bg-white hover:shadow-xl">
+                        <Button variant="ghost" size="icon" onClick={() => removeAllocation(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive transition-all">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-2">
+                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Registry Resource</Label>
+                            <Select value={alloc.vendorName} onValueChange={(v) => updateAllocation(idx, 'vendorName', v)}>
+                              <SelectTrigger className="rounded-none h-12 text-[12px] font-bold uppercase border-accent/10">
+                                <SelectValue placeholder="SELECT FROM REGISTRY" />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-none">
+                                {collaborators.map(c => <SelectItem key={c.id} value={c.name} className="uppercase text-[10px] font-bold tracking-widest">{c.name} ({c.specialty})</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Professional Role</Label>
+                            <Input value={alloc.role} onChange={(e) => updateAllocation(idx, 'role', e.target.value)} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-accent/10 focus:ring-accent" placeholder="E.g., Structural Consultant" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
+                          <div className="space-y-2">
+                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Cost Model</Label>
+                            <Select value={alloc.costType} onValueChange={(v: any) => updateAllocation(idx, 'costType', v)}>
+                              <SelectTrigger className="rounded-none h-12 text-[11px] font-bold uppercase border-accent/10"><SelectValue /></SelectTrigger>
+                              <SelectContent className="rounded-none">
+                                <SelectItem value="Fixed">Fixed Contract</SelectItem>
+                                <SelectItem value="Daily">Daily Rate</SelectItem>
+                                <SelectItem value="Percentage">Percentage Split</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Allocation Value</Label>
+                            <Input type="number" value={alloc.costValue} onChange={(e) => updateAllocation(idx, 'costValue', Number(e.target.value))} className="rounded-none h-12 text-sm font-bold border-accent/10" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Engagement Days</Label>
+                            <Input type="number" value={alloc.timelineDays} onChange={(e) => updateAllocation(idx, 'timelineDays', Number(e.target.value))} className="rounded-none h-12 text-sm font-bold border-accent/10" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {formData.vendorAllocations.length === 0 && (
+                      <div className="text-center py-12 border border-dashed border-accent/10 bg-secondary/5 italic text-muted-foreground uppercase tracking-[0.3em] font-light text-[11px]">
+                        Optional: Link registry resources to this briefing dossier
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
 
             <div className="pt-12 flex items-center justify-between border-t border-accent/5">
@@ -347,22 +446,34 @@ export default function AddClientPage() {
               ) : <div />}
               
               {step < totalSteps ? (
-                <Button type="button" onClick={handleNext} disabled={!isStepValid()} className="bg-accent text-white rounded-none h-16 px-12 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em] flex gap-3">
+                <Button type="submit" disabled={!isStepValid()} className="bg-accent text-white rounded-none h-16 px-12 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em] flex gap-3">
                   Continue Onboarding <ChevronRight className="h-5 w-5" />
                 </Button>
               ) : (
-                <Button type="submit" disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em] flex gap-3">
-                  {loading ? (
-                    <><Zap className="h-5 w-5 animate-pulse" /> Synchronizing...</>
-                  ) : (
-                    <><CheckCircle2 className="h-5 w-5" /> Authorize Commission</>
-                  )}
+                <Button type="button" onClick={() => setIsConfirmOpen(true)} disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em] flex gap-3">
+                  <CheckCircle2 className="h-5 w-5" /> Authorize Commission
                 </Button>
               )}
             </div>
           </form>
         </CardContent>
       </Card>
+
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogContent className="rounded-none border-accent/20 font-body p-10">
+          <AlertDialogHeader className="space-y-6">
+            <div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Governance Protocol</span></div>
+            <AlertDialogTitle className="text-3xl font-headline italic">Confirm Commission Initialization?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">
+              This will register the dossier for <strong>{formData.project}</strong> in the Master Registry. The initial strategic milestones and site protocols will be synchronized immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="pt-10">
+            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-accent/10">Abort Initialization</AlertDialogCancel>
+            <AlertDialogAction onClick={executeFinalSubmit} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 hover:bg-accent/90 shadow-xl">Authorize Dossier</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
