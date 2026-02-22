@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 export default function ProjectImplementationPage() {
   const { clientProjects } = useWhyteStore();
   const [isMounted, setIsMounted] = useState(false);
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<"grid" | "list">("list");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
