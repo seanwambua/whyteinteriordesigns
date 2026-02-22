@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -108,14 +107,6 @@ export default function ProjectImplementationPage() {
           </div>
         </div>
       </motion.div>
-
-      <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
-        <Info className="h-5 w-5 text-accent" />
-        <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-accent mb-1">Deployment Logic Protocol</AlertTitle>
-        <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
-          Showing {filteredProjects.length} commission(s) currently in active site deployment. Technical metadata is calibrated to the **12px-13px** panel standard for professional density.
-        </AlertDescription>
-      </Alert>
 
       <AnimatePresence mode="wait">
         {filteredProjects.length > 0 ? (
