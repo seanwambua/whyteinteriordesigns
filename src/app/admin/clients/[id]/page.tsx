@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { motion } from "framer-motion";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Inquiry } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +34,10 @@ import {
   Clock,
   Calendar as CalendarIcon,
   AlertTriangle,
-  Hourglass
+  Hourglass,
+  MessageSquare,
+  Mail,
+  ShieldAlert
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -46,7 +49,7 @@ import { parse, differenceInDays, isValid, format } from "date-fns";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { clientProjects, updateClientProject, financialSteward } = useWhyteStore();
+  const { clientProjects, updateClientProject, financialSteward, inquiries, updateInquiryStatus } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -60,6 +63,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   }, []);
 
   const project = clientProjects.find((p) => p.id === id);
+  const projectInquiries = inquiries.filter(inq => inq.projectId === id);
   const isReadOnly = project?.financialReportStatus === 'Verified';
 
   if (!isMounted) return null;
@@ -143,6 +147,11 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       return task;
     });
     updateClientProject(project.id, { tasks: updatedTasks });
+  };
+
+  const handleInquiryStatusChange = (inqId: string, status: Inquiry['status']) => {
+    updateInquiryStatus(inqId, status);
+    toast({ title: "Pipeline Synchronized", description: `Inquiry status updated to ${status}.` });
   };
 
   const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
@@ -298,6 +307,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto">
           <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><Layout className="h-4 w-4" /> Overview</TabsTrigger>
           <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><PlayCircle className="h-4 w-4" /> Workflow</TabsTrigger>
+          <TabsTrigger value="communications" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><MessageSquare className="h-4 w-4" /> Communications</TabsTrigger>
           <TabsTrigger value="ledger" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><Wallet className="h-4 w-4" /> Ledger</TabsTrigger>
         </TabsList>
 
@@ -331,6 +341,61 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         </TabsContent>
 
         <TabsContent value="workflow" className="m-0"><div className="flex gap-8 overflow-x-auto pb-8 custom-scrollbar"><KanbanColumn status="Todo" tasks={(project.tasks || []).filter(t => t.status === 'Todo')} /><KanbanColumn status="In Progress" tasks={(project.tasks || []).filter(t => t.status === 'In Progress')} /><KanbanColumn status="Done" tasks={(project.tasks || []).filter(t => t.status === 'Done')} /></div></TabsContent>
+
+        <TabsContent value="communications" className="m-0 space-y-8">
+          <div className="grid grid-cols-1 gap-6">
+            {projectInquiries.map((inq) => (
+              <Card key={inq.id} className={cn("rounded-none border-accent/5 p-8 bg-white shadow-lg overflow-hidden group relative", inq.urgency === 'critical' && "border-l-4 border-l-destructive")}>
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                  <div className="space-y-4 flex-1">
+                    <div className="flex items-center gap-4">
+                      <span className="text-[11px] font-bold text-accent/40 uppercase tracking-widest">{inq.id}</span>
+                      <Badge variant="outline" className={cn("rounded-none uppercase tracking-widest text-[9px] font-bold px-2 py-0.5", inq.urgency === 'critical' ? 'text-destructive border-destructive/20 bg-destructive/5' : inq.urgency === 'high' ? 'text-orange-600 border-orange-500/20 bg-orange-50' : 'text-accent border-accent/20 bg-accent/5')}>
+                        {inq.urgency} Urgency
+                      </Badge>
+                      <Badge className={cn("rounded-none uppercase tracking-widest text-[9px] font-bold px-2 py-0.5", inq.status === 'new' ? 'bg-accent text-white' : inq.status === 'contacted' ? 'bg-orange-500 text-white' : 'bg-green-600 text-white')}>
+                        {inq.status}
+                      </Badge>
+                    </div>
+                    <p className="text-base font-light italic text-accent/80 leading-relaxed border-l-2 border-accent/10 pl-6">
+                      "{inq.message}"
+                    </p>
+                    <div className="flex items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-[0.2em] font-bold">
+                      <span className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> {inq.email}</span>
+                      <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> {inq.date}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3 min-w-[200px]">
+                    <Label className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40 mb-1">Pipeline Sync</Label>
+                    <Select value={inq.status} onValueChange={(v: any) => handleInquiryStatusChange(inq.id, v)}>
+                      <SelectTrigger className="rounded-none border-accent/10 h-10 text-[11px] font-bold uppercase tracking-widest focus:ring-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-none">
+                        <SelectItem value="new">Mark as New</SelectItem>
+                        <SelectItem value="contacted">In Review</SelectItem>
+                        <SelectItem value="closed">Resolved</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" className="rounded-none h-10 border-accent/10 uppercase tracking-widest text-[10px] font-bold hover:bg-accent hover:text-white transition-all">
+                      Open Log
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+            {projectInquiries.length === 0 && (
+              <div className="text-center py-24 border border-dashed border-accent/10 bg-secondary/5 space-y-4">
+                <div className="h-16 w-16 bg-accent/5 rounded-full flex items-center justify-center mx-auto">
+                  <MessageSquare className="h-8 w-8 text-accent/20" />
+                </div>
+                <p className="text-[13px] font-light italic text-muted-foreground uppercase tracking-[0.3em]">
+                  No consultations currently logged for this dossier
+                </p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
 
         <TabsContent value="ledger" className="m-0 space-y-12">
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
