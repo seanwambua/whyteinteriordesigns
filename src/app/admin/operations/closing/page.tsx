@@ -17,7 +17,9 @@ import {
   Star,
   ExternalLink,
   Eye,
-  Lock
+  Lock,
+  AlertTriangle,
+  CircleDollarSign
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -35,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function ProjectClosingPage() {
   const { toast } = useToast();
@@ -111,80 +114,119 @@ export default function ProjectClosingPage() {
 
       <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
         <Info className="h-5 w-5 text-accent" />
-        <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-accent mb-1">Lifecycle Enforcement Protocol</AlertTitle>
+        <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-accent mb-1">Audit Authorization Protocol</AlertTitle>
         <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
-          Reconciliation protocols are exclusively available for commissions currently in the **Completion** phase. Verified audits are immutable and serve as the final financial record prior to dossier archival.
+          Reconciliation protocols require **100% site implementation** and **complete ledger liquidation**. Audits cannot be authorized if any installments remain synchronized as pending.
         </AlertDescription>
       </Alert>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-8">
           <div className="space-y-6">
-            {relevantProjects.map((project, index) => (
-              <motion.div key={project.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.1 }}>
-                <Card className="rounded-none border-accent/5 shadow-xl bg-white group overflow-hidden">
-                  <div className="flex flex-col md:flex-row items-center">
-                    <div className={cn("h-full w-2 self-stretch", project.financialReportStatus === 'Verified' ? 'bg-green-600' : 'bg-accent opacity-20')} />
-                    <CardContent className="p-10 flex-1 flex flex-col md:flex-row items-center justify-between gap-10">
-                      <div className="space-y-4 flex-1">
-                        <div className="flex items-center gap-4">
-                          <span className="text-[12px] font-bold text-accent/40 uppercase tracking-widest">{project.id}</span>
-                          <Badge variant="outline" className="rounded-none text-[11px] font-bold uppercase tracking-widest px-3 py-1 border-accent/20 text-accent">
-                            {project.status}
-                          </Badge>
-                          {project.financialReportStatus === 'Verified' && (
-                            <div className="flex items-center gap-2 text-green-600">
-                              <Lock className="h-3.5 w-3.5" />
-                              <span className="text-[11px] font-bold uppercase tracking-widest">Dossier Locked</span>
+            {relevantProjects.map((project, index) => {
+              const allInstallmentsPaid = project.installments.every(i => i.status === 'Paid');
+              const isVerified = project.financialReportStatus === 'Verified';
+
+              return (
+                <motion.div key={project.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.1 }}>
+                  <Card className="rounded-none border-accent/5 shadow-xl bg-white group overflow-hidden">
+                    <div className="flex flex-col md:flex-row items-stretch">
+                      <div className={cn("w-2 shrink-0", isVerified ? 'bg-green-600' : allInstallmentsPaid ? 'bg-accent/40' : 'bg-orange-400')} />
+                      <CardContent className="p-10 flex-1 flex flex-col md:flex-row items-center justify-between gap-10">
+                        <div className="space-y-6 flex-1">
+                          <div className="flex flex-wrap items-center gap-4">
+                            <span className="text-[12px] font-bold text-accent/40 uppercase tracking-widest">{project.id}</span>
+                            <Badge variant="outline" className="rounded-none text-[11px] font-bold uppercase tracking-widest px-3 py-1 border-accent/20 text-accent">
+                              Phase: {project.status}
+                            </Badge>
+                            {isVerified ? (
+                              <div className="flex items-center gap-2 text-green-600">
+                                <Lock className="h-3.5 w-3.5" />
+                                <span className="text-[11px] font-bold uppercase tracking-widest">Dossier Locked</span>
+                              </div>
+                            ) : !allInstallmentsPaid && (
+                              <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-1 border border-orange-100">
+                                <AlertTriangle className="h-3 w-3" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Liquidation Pending</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <h3 className="text-3xl font-headline italic">{project.project}</h3>
+                            <p className="text-[12px] uppercase tracking-widest font-bold text-muted-foreground opacity-60">Valued Client: {project.name}</p>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-accent/5">
+                            <div className="space-y-2">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Ledger Sync</p>
+                              <div className="flex items-center gap-3">
+                                <div className={cn("h-2 w-2 rounded-full", allInstallmentsPaid ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
+                                <span className={cn("text-[12px] font-bold uppercase tracking-widest", allInstallmentsPaid ? "text-accent" : "text-orange-600")}>
+                                  {allInstallmentsPaid ? "All Installments Liquidated" : "Awaiting Client Payment"}
+                                </span>
+                              </div>
                             </div>
+                            <div className="space-y-2">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Handover Protocol</p>
+                              <div className="flex items-center gap-3">
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                <span className="text-[12px] font-bold uppercase tracking-widest text-accent">Site Keys Synchronized</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          {isVerified ? (
+                            <>
+                              <Button asChild variant="outline" className="h-14 px-8 rounded-none border-accent/10 hover:bg-accent/5 flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-sm">
+                                <Link href={`/transparency/${project.id}`} target="_blank">
+                                  <Eye className="h-4.5 w-4.5" /> View Audited Breakdown
+                                </Link>
+                              </Button>
+                              <Button 
+                                onClick={() => handleArchiveProject(project.id)} 
+                                disabled={archivingId === project.id} 
+                                variant="outline" 
+                                className="h-14 w-14 rounded-full hover:bg-black hover:text-white transition-all p-0 shadow-sm border-black/10 group/archive"
+                                title="Archive Dossier"
+                              >
+                                {archivingId === project.id ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6 group-hover/archive:scale-110 transition-transform" />}
+                              </Button>
+                            </>
+                          ) : (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="inline-block">
+                                    <Button 
+                                      onClick={() => handleVerifyReport(project.id)} 
+                                      disabled={!allInstallmentsPaid}
+                                      className={cn(
+                                        "h-16 px-10 rounded-none flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-xl",
+                                        allInstallmentsPaid ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
+                                      )}
+                                    >
+                                      <FileCheck className="h-5 w-5" /> Authorize Audit
+                                    </Button>
+                                  </div>
+                                </TooltipTrigger>
+                                {!allInstallmentsPaid && (
+                                  <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl">
+                                    <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Protocol Blocked: Ledger Liquidation Required</p>
+                                  </TooltipContent>
+                                )}
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
-                        <h3 className="text-3xl font-headline italic">{project.project}</h3>
-                        <div className="flex items-center gap-6 pt-4 border-t border-accent/5">
-                          <div className="flex items-center gap-2">
-                            <Wallet className="h-4 w-4 text-accent/30" />
-                            <span className={cn("text-[12px] font-bold uppercase tracking-widest", project.financialReportStatus === 'Verified' ? 'text-green-600' : 'text-orange-500 animate-pulse')}>
-                              Audit: {project.financialReportStatus || 'Pending Sync'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Star className="h-4 w-4 text-accent/20" />
-                            <span className="text-[12px] uppercase tracking-widest font-bold">Client: {project.name}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        {project.financialReportStatus === 'Verified' ? (
-                          <>
-                            <Button asChild variant="outline" className="h-14 px-8 rounded-none border-accent/10 hover:bg-accent/5 flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-sm">
-                              <Link href={`/transparency/${project.id}`} target="_blank">
-                                <Eye className="h-4.5 w-4.5" /> View Audited Breakdown
-                              </Link>
-                            </Button>
-                            <Button 
-                              onClick={() => handleArchiveProject(project.id)} 
-                              disabled={archivingId === project.id} 
-                              variant="outline" 
-                              className="h-14 w-14 rounded-full hover:bg-black hover:text-white transition-all p-0 shadow-sm border-black/10 group/archive"
-                              title="Archive Dossier"
-                            >
-                              {archivingId === project.id ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6 group-hover/archive:scale-110 transition-transform" />}
-                            </Button>
-                          </>
-                        ) : (
-                          <Button 
-                            onClick={() => handleVerifyReport(project.id)} 
-                            className="h-14 px-8 rounded-none bg-accent text-white flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-xl hover:tracking-[0.2em]"
-                          >
-                            <FileCheck className="h-5 w-5" /> Authorize Audit
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
+                      </CardContent>
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            })}
             {relevantProjects.length === 0 && (
               <div className="text-center py-32 border border-dashed border-accent/10 bg-secondary/5 space-y-4">
                 <div className="h-16 w-16 bg-accent/5 rounded-full flex items-center justify-center mx-auto">
@@ -203,24 +245,24 @@ export default function ProjectClosingPage() {
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <ShieldCheck className="h-32 w-32" />
             </div>
-            <h3 className="text-[12px] font-bold uppercase tracking-[0.5em] text-white/40 mb-12 relative z-10">Stewardship Checklist</h3>
+            <h3 className="text-[12px] font-bold uppercase tracking-[0.5em] text-white/40 mb-12 relative z-10">Reconciliation Logic</h3>
             <ul className="space-y-12 relative z-10">
               <li className="flex gap-6">
                 <div className="h-10 w-10 border border-white/20 rounded-full flex items-center justify-center shrink-0">
                   <CheckCircle2 className="h-5 w-5 text-white/60" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[13px] font-bold uppercase tracking-widest">Site Protocol Audit</p>
-                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">100% Implementation Velocity</p>
+                  <p className="text-[13px] font-bold uppercase tracking-widest">Handover Synchronization</p>
+                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">Site Implementation Complete</p>
                 </div>
               </li>
               <li className="flex gap-6">
                 <div className="h-10 w-10 border border-white/20 rounded-full flex items-center justify-center shrink-0">
-                  <Landmark className="h-5 w-5 text-white/60" />
+                  <CircleDollarSign className="h-5 w-5 text-white/60" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[13px] font-bold uppercase tracking-widest">Ledger Reconciliation</p>
-                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">All Installments Verified</p>
+                  <p className="text-[13px] font-bold uppercase tracking-widest">Ledger Liquidation</p>
+                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">100% Funds Received</p>
                 </div>
               </li>
               <li className="flex gap-6">
@@ -228,8 +270,8 @@ export default function ProjectClosingPage() {
                   <FileCheck className="h-5 w-5 text-white/60" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[13px] font-bold uppercase tracking-widest">Client Handover</p>
-                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">Digital Keys Synchronized</p>
+                  <p className="text-[13px] font-bold uppercase tracking-widest">Audit Authorization</p>
+                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">Stewardship Verified Breakdown</p>
                 </div>
               </li>
             </ul>
@@ -237,7 +279,7 @@ export default function ProjectClosingPage() {
 
           <div className="p-10 border border-dashed border-accent/20 bg-secondary/5 text-center">
             <p className="text-[11px] uppercase tracking-[0.4em] font-bold text-accent/40 italic leading-relaxed">
-              Final reconciliation locks the dossier and transitions the commission to the Historical Archives.
+              Dossiers are locked upon audit authorization. Ensure all registry resource payments are also reconciled before final sign-off.
             </p>
           </div>
         </div>
