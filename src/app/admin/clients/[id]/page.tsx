@@ -37,7 +37,8 @@ import {
   Hourglass,
   MessageSquare,
   Mail,
-  ShieldAlert
+  ShieldAlert,
+  ZapOff
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -64,7 +65,11 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   const project = clientProjects.find((p) => p.id === id);
   const projectInquiries = inquiries.filter(inq => inq.projectId === id);
-  const isReadOnly = project?.financialReportStatus === 'Verified';
+  
+  const isAuditVerified = project?.financialReportStatus === 'Verified';
+  const isPendingActivation = project ? !project.isActivated : false;
+  // Global readonly state if audit is done OR if not activated yet
+  const isReadOnly = isAuditVerified || isPendingActivation;
 
   if (!isMounted) return null;
   if (!project) return null;
@@ -158,6 +163,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const remainingBalance = (project.totalBudget || 0) - totalPaid;
 
   const getTemporalData = () => {
+    if (!project.isActivated) {
+      return { label: "Temporal Status", value: "Locked", icon: <ZapOff className="h-5 w-5" />, sub: "Pending Activation Sync" };
+    }
+
     const start = parse(project.startDate, "MMM dd, yyyy", new Date());
     const end = parse(project.endDate, "MMM dd, yyyy", new Date());
     const now = new Date();
@@ -269,12 +278,22 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Master Registry</span>
         </Link>
 
-        {isReadOnly && (
+        {isAuditVerified && (
           <Alert className="rounded-none border-green-600/20 bg-green-600/[0.02]">
             <Lock className="h-4 w-4 text-green-600" />
             <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-green-600">Dossier Locked — Audit Verified</AlertTitle>
             <AlertDescription className="text-[13px] font-light italic text-muted-foreground">
               This commission has been reconciled and verified by **{financialSteward}**. All technical and financial protocols are now read-only.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isPendingActivation && (
+          <Alert className="rounded-none border-orange-500/20 bg-orange-500/[0.02]">
+            <ShieldAlert className="h-4 w-4 text-orange-600" />
+            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Activation Pending — Terminal Functions Restricted</AlertTitle>
+            <AlertDescription className="text-[13px] font-light italic text-muted-foreground">
+              This dossier has not been activated. Site implementation tasks and financial entries are locked until the initial deposit is authorized in the **Initialization** hub.
             </AlertDescription>
           </Alert>
         )}
@@ -340,7 +359,24 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
            </Card>
         </TabsContent>
 
-        <TabsContent value="workflow" className="m-0"><div className="flex gap-8 overflow-x-auto pb-8 custom-scrollbar"><KanbanColumn status="Todo" tasks={(project.tasks || []).filter(t => t.status === 'Todo')} /><KanbanColumn status="In Progress" tasks={(project.tasks || []).filter(t => t.status === 'In Progress')} /><KanbanColumn status="Done" tasks={(project.tasks || []).filter(t => t.status === 'Done')} /></div></TabsContent>
+        <TabsContent value="workflow" className="m-0">
+          {isPendingActivation ? (
+            <div className="text-center py-32 border border-dashed border-accent/10 bg-secondary/5 space-y-6">
+              <div className="h-16 w-16 bg-accent/5 rounded-full flex items-center justify-center mx-auto">
+                <ShieldAlert className="h-8 w-8 text-accent/20" />
+              </div>
+              <p className="text-[13px] font-light italic text-muted-foreground uppercase tracking-[0.3em]">
+                Implementation Workflow Locked — Authorize Initialization to Unlock
+              </p>
+            </div>
+          ) : (
+            <div className="flex gap-8 overflow-x-auto pb-8 custom-scrollbar">
+              <KanbanColumn status="Todo" tasks={(project.tasks || []).filter(t => t.status === 'Todo')} />
+              <KanbanColumn status="In Progress" tasks={(project.tasks || []).filter(t => t.status === 'In Progress')} />
+              <KanbanColumn status="Done" tasks={(project.tasks || []).filter(t => t.status === 'Done')} />
+            </div>
+          )}
+        </TabsContent>
 
         <TabsContent value="communications" className="m-0 space-y-8">
           <div className="grid grid-cols-1 gap-6">
@@ -486,7 +522,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               <div className="p-8 bg-secondary/30 border border-accent/5 space-y-4 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-14 w-14" /></div>
                 <div className="flex justify-between items-end relative z-10">
-                  <span className="text-[11px] uppercase tracking-widest font-bold text-accent/40">Authorized Amount</span>
+                  <span className="text-[12px] uppercase tracking-widest font-bold text-accent/40">Authorized Amount</span>
                   <span className="text-2xl font-headline italic text-accent">KES {verifyingInstallment !== null ? project.installments[verifyingInstallment].amount.toLocaleString() : 0}</span>
                 </div>
               </div>
