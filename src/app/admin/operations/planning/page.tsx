@@ -256,7 +256,7 @@ export default function ProjectPlanningPage() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-2">
           <div className="flex items-center gap-4"><div className="h-px w-8 bg-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Operations Hub</span></div>
-          <h1 className="text-5xl font-headline italic">Project <span className="not-italic">Briefings.</span></h1>
+          <h1 className="text-5xl font-headline italic">Commission <span className="not-italic">Initialization.</span></h1>
         </div>
         <Button asChild className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold shadow-xl hover:tracking-[0.25em] transition-all"><Link href="/admin/clients/add"><Plus className="h-5 w-5" /> Initialize Briefing</Link></Button>
       </motion.div>
