@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +39,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const { clientProjects } = useWhyteStore();
   const { toast } = useToast();
@@ -50,6 +50,10 @@ export default function OnboardingPage() {
     email: "",
     notifications: true
   });
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const totalSteps = 3;
   const progress = (step / totalSteps) * 100;
@@ -90,6 +94,8 @@ export default function OnboardingPage() {
   };
 
   const handleBack = () => setStep(step - 1);
+
+  if (!isMounted) return null;
 
   if (showSuccess) {
     return (
@@ -212,7 +218,7 @@ export default function OnboardingPage() {
           <Progress value={progress} className="h-1 bg-accent/10 rounded-none" />
         </div>
 
-        <Card className="rounded-none border-accent/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] bg-white overflow-hidden">
+        <Card className="rounded-none border-accent/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.15)] bg-white overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}

@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -21,6 +20,7 @@ export function StyleQuiz() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<StyleResult | null>(null);
   const [step, setStep] = useState(1);
+  const [isMounted, setIsMounted] = useState(false);
 
   const [formData, setFormData] = useState({
     roomType: "Living Room",
@@ -29,6 +29,10 @@ export function StyleQuiz() {
     roomAmbiance: "Cozy and Inviting",
     budgetPreference: "Mid-range"
   });
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const furnitureOptions = ["Mid-century Modern", "Minimalist", "Bohemian", "Industrial", "Art Deco", "Scandi"];
 
@@ -39,7 +43,6 @@ export function StyleQuiz() {
     e.preventDefault();
     setLoading(true);
     
-    // Rule-based logic replacing previous AI integration
     setTimeout(() => {
       const styles: Record<string, StyleResult> = {
         "Mid-century Modern": {
@@ -84,6 +87,8 @@ export function StyleQuiz() {
         : [...prev.furnitureStyles, style]
     }));
   };
+
+  if (!isMounted) return null;
 
   if (result) {
     return (

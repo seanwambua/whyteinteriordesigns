@@ -11,10 +11,15 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const navItems = [
     { name: "Services", href: "/#services" },
@@ -58,43 +63,49 @@ export function Navbar() {
 
         {/* Mobile Nav */}
         <div className="md:hidden">
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right">
-              <SheetHeader className="sr-only">
-                <SheetTitle>Navigation Menu</SheetTitle>
-                <SheetDescription>Access studio services and portfolio</SheetDescription>
-              </SheetHeader>
-              <div className="flex flex-col gap-6 mt-12">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className="text-lg font-medium uppercase tracking-widest"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-                
-                <Link 
-                  href="/dashboard" 
-                  onClick={() => setIsOpen(false)}
-                  className="text-lg font-bold uppercase tracking-widest text-accent border-t pt-6"
-                >
-                  Client Portal
-                </Link>
-
-                <Button asChild className="mt-4 rounded-none uppercase tracking-widest text-xs" onClick={() => setIsOpen(false)}>
-                  <Link href="/#contact">Book Consultation</Link>
+          {isMounted ? (
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
                 </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+              </SheetTrigger>
+              <SheetContent side="right">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Navigation Menu</SheetTitle>
+                  <SheetDescription>Access studio services and portfolio</SheetDescription>
+                </SheetHeader>
+                <div className="flex flex-col gap-6 mt-12">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className="text-lg font-medium uppercase tracking-widest"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                  
+                  <Link 
+                    href="/dashboard" 
+                    onClick={() => setIsOpen(false)}
+                    className="text-lg font-bold uppercase tracking-widest text-accent border-t pt-6"
+                  >
+                    Client Portal
+                  </Link>
+
+                  <Button asChild className="mt-4 rounded-none uppercase tracking-widest text-xs" onClick={() => setIsOpen(false)}>
+                    <Link href="/#contact">Book Consultation</Link>
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          ) : (
+            <Button variant="ghost" size="icon">
+              <Menu className="h-6 w-6" />
+            </Button>
+          )}
         </div>
       </div>
     </nav>
