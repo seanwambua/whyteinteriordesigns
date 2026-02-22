@@ -19,7 +19,8 @@ import {
   XCircle,
   FileText,
   Info,
-  Lock
+  Lock,
+  Settings2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -156,9 +157,19 @@ export default function ClientDirectoryPage() {
                         <DropdownMenuItem asChild className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer focus:bg-accent focus:text-white mb-1">
                           <Link href={`/admin/clients/${client.id}`} className="flex gap-3"><FileText className="h-4 w-4" /> Project Terminal</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleArchive(client.id, client.isArchived)} className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer flex gap-3 focus:bg-accent focus:text-white mb-1">
-                          {client.isArchived ? <><RefreshCcw className="h-4 w-4" /> Restore Registry</> : <><Archive className="h-4 w-4" /> Move to Archive</>}
-                        </DropdownMenuItem>
+                        
+                        {!client.isActivated && (
+                          <DropdownMenuItem asChild className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer focus:bg-accent focus:text-white mb-1">
+                            <Link href="/admin/operations/planning" className="flex gap-3"><Settings2 className="h-4 w-4" /> Comprehensive Edit</Link>
+                          </DropdownMenuItem>
+                        )}
+
+                        {client.isActivated && (
+                          <DropdownMenuItem onClick={() => handleToggleArchive(client.id, client.isArchived)} className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer flex gap-3 focus:bg-accent focus:text-white mb-1">
+                            {client.isArchived ? <><RefreshCcw className="h-4 w-4" /> Restore Registry</> : <><Archive className="h-4 w-4" /> Move to Archive</>}
+                          </DropdownMenuItem>
+                        )}
+
                         <DropdownMenuSeparator className="my-2 bg-accent/5" />
                         <DropdownMenuItem onClick={() => setDeleteId(client.id)} className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer text-destructive focus:bg-destructive focus:text-white flex gap-3">
                           <Trash2 className="h-4 w-4" /> Purge Dossier
