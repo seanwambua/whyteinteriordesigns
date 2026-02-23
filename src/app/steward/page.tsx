@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -16,22 +15,30 @@ import {
   AlertCircle,
   TrendingUp,
   Landmark,
-  BadgeCheck
+  BadgeCheck,
+  Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function StewardDashboardPage() {
   const { clientProjects } = useWhyteStore();
   const [search, setSearch] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
 
+  // AUTOMATED ONBOARDING INITIALIZATION
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    const onboarded = localStorage.getItem("whyte_steward_onboarded") === "true";
+    if (isMounted && !onboarded) {
+      router.replace("/steward/onboarding");
+    }
+  }, [isMounted, router]);
 
   const relevantProjects = useMemo(() => {
     // Stewards see projects in Completion phase or Termination Pending
@@ -51,7 +58,14 @@ export default function StewardDashboardPage() {
   const totalCapitalUnderReview = relevantProjects.reduce((sum, p) => sum + p.totalBudget, 0);
   const pendingAuditsCount = relevantProjects.filter(p => p.financialReportStatus !== 'Verified').length;
 
-  if (!isMounted) return null;
+  if (!isMounted) {
+    return (
+      <div className="flex flex-col items-center justify-center py-48 space-y-6">
+        <Loader2 className="h-10 w-10 text-slate-200 animate-spin" />
+        <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-slate-400">Synchronizing Audit Terminal...</p>
+      </div>
+    );
+  }
 
   const stats = [
     { label: "Dossiers in Queue", value: pendingAuditsCount.toString(), icon: Clock, sub: "Requires Verification" },

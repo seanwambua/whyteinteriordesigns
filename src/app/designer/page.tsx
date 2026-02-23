@@ -16,7 +16,8 @@ import {
   Zap,
   MapPin,
   FilePlus,
-  ArrowUpRight
+  ArrowUpRight,
+  Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -30,13 +31,14 @@ export default function DesignerDashboardPage() {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
+  // AUTOMATED ONBOARDING INITIALIZATION
   useEffect(() => {
     setIsMounted(true);
     const onboarded = localStorage.getItem("whyte_designer_onboarded") === "true";
-    if (!onboarded) {
-      router.push("/designer/onboarding");
+    if (isMounted && !onboarded) {
+      router.replace("/designer/onboarding");
     }
-  }, [router]);
+  }, [isMounted, router]);
 
   const activeDossiers = useMemo(() => 
     clientProjects.filter(p => !p.isArchived && p.isActivated && p.status === 'Execution'),
@@ -60,7 +62,14 @@ export default function DesignerDashboardPage() {
     return tasks.slice(0, 5);
   }, [activeDossiers]);
 
-  if (!isMounted) return null;
+  if (!isMounted) {
+    return (
+      <div className="flex flex-col items-center justify-center py-48 space-y-6">
+        <Loader2 className="h-10 w-10 text-accent/20 animate-spin" />
+        <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Synchronizing Workbench...</p>
+      </div>
+    );
+  }
 
   const stats = [
     { label: "Active Site Protocols", value: activeDossiers.length.toString(), icon: Briefcase, sub: "In Execution" },
