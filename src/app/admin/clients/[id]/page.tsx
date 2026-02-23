@@ -54,11 +54,14 @@ import {
   FileEdit,
   Coins,
   FileText,
-  Handshake
+  Handshake,
+  Compass,
+  FileSearch,
+  LayoutList
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
@@ -79,7 +82,8 @@ interface KanbanColumnProps {
   handleUpdateSubtask: (taskId: string, subId: string, title: string) => void;
 }
 
-const KanbanColumn = ({ 
+// Extracted to memoized component to prevent re-rendering focus issues
+const KanbanColumn = memo(({ 
   status, 
   tasks, 
   isReadOnly, 
@@ -150,7 +154,8 @@ const KanbanColumn = ({
       ))}
     </div>
   </div>
-);
+));
+KanbanColumn.displayName = "KanbanColumn";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -481,7 +486,47 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <TabsTrigger value="ledger" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><Wallet className="h-4 w-4" /> Ledger</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="m-0"><Card className="rounded-none border-accent/5 p-10 space-y-8"><div className="grid grid-cols-1 md:grid-cols-2 gap-12"><div className="space-y-6"><h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Architectural Brief</h3><p className="text-xl font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || project.workScope}"</p></div><div className="space-y-6"><h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Temporal Protocol</h3><div className="grid grid-cols-2 gap-8 border-b border-accent/5 pb-8"><div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Commencement</p><p className="font-headline italic text-2xl">{project.startDate}</p></div><div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Delivery Target</p><p className="font-headline italic text-2xl">{project.endDate}</p></div></div>{temporal && (<div className={cn("p-6 flex items-center justify-between", temporal.isUrgent ? "bg-destructive/5 text-destructive" : "bg-accent/5 text-accent")}><div className="flex items-center gap-4"><div className="h-10 w-10 rounded-full bg-white/50 flex items-center justify-center shrink-0">{temporal.icon}</div><div className="space-y-0.5"><p className="text-[11px] font-bold uppercase tracking-widest opacity-60">{temporal.label}</p><p className="text-[12px] font-bold uppercase tracking-widest">{temporal.sub}</p></div></div><p className="text-4xl font-headline italic">{temporal.value}</p></div>)}</div></div></Card></TabsContent>
+        <TabsContent value="overview" className="m-0">
+          <Card className="rounded-none border-accent/5 p-10 space-y-12 shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              <div className="lg:col-span-2 space-y-10">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3"><FileText className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Architectural Narrative</h3></div>
+                  <p className="text-2xl font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || "Narrative pending synchronization."}"</p>
+                </div>
+                <div className="space-y-6 pt-10 border-t border-accent/5">
+                  <div className="flex items-center gap-3"><LayoutList className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Technical Scope of Works</h3></div>
+                  <p className="text-lg font-light italic leading-relaxed text-accent/70 border-l-2 border-accent/10 pl-8">"{project.workScope || "Technical scope defined in contract archives."}"</p>
+                </div>
+              </div>
+              <div className="space-y-10 border-l border-accent/5 pl-12">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3"><Compass className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Spatial Metrics</h3></div>
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="bg-secondary/30 p-6 border border-accent/5">
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-accent/40 mb-1">Capacity</p>
+                      <p className="text-3xl font-headline italic">{project.roomsCount || 'N/A'} Primary Rooms</p>
+                    </div>
+                    <div className="bg-secondary/30 p-6 border border-accent/5">
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-accent/40 mb-1">Classification</p>
+                      <p className="text-2xl font-headline italic">{project.tier} Service Level</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-6 pt-10 border-t border-accent/5">
+                  <div className="flex items-center gap-3"><Clock className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Temporal Protocol</h3></div>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest opacity-40 font-bold">Commencement</p><p className="text-lg font-headline italic">{project.startDate}</p></div>
+                      <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest opacity-40 font-bold">Delivery Target</p><p className="text-lg font-headline italic">{project.endDate}</p></div>
+                    </div>
+                    {temporal && (<div className={cn("p-4 flex items-center justify-between", temporal.isUrgent ? "bg-destructive/5 text-destructive" : "bg-accent/5 text-accent")}><div className="flex items-center gap-3"><div className="h-8 w-8 rounded-full bg-white/50 flex items-center justify-center shrink-0">{temporal.icon}</div><div><p className="text-[9px] font-bold uppercase tracking-widest opacity-60">{temporal.label}</p><p className="text-[10px] font-bold uppercase tracking-widest">{temporal.sub}</p></div></div><p className="text-2xl font-headline italic">{temporal.value}</p></div>)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="workflow" className="m-0">
           {isPendingActivation ? (

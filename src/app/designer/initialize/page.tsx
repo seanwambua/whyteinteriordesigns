@@ -25,7 +25,9 @@ import {
   ShieldCheck,
   Loader2,
   FilePlus,
-  Info
+  Info,
+  Compass,
+  LayoutList
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -68,6 +70,8 @@ export default function DesignerInitializePage() {
     project: "",
     tier: "Premium" as ClientProject['tier'],
     description: "",
+    workScope: "",
+    roomsCount: "",
     totalBudget: "",
     startDate: new Date(),
     endDate: new Date(new Date().setMonth(new Date().getMonth() + 6)),
@@ -159,6 +163,8 @@ export default function DesignerInitializePage() {
       isActivated: false, 
       initialDepositPaid: false, 
       totalBudget: budget, 
+      roomsCount: Number(formData.roomsCount) || 0,
+      workScope: formData.workScope,
       milestones: formData.milestones.map(m => ({ ...m, date: format(m.date, "MMM dd, yyyy") })), 
       tasks: formData.tasks.map((t, i) => ({ ...t, id: t.id || `T-${id}-${i + 1}`, status: 'Todo' })), 
       installments: getInstallmentPlan(formData.tier, budget), 
@@ -177,8 +183,8 @@ export default function DesignerInitializePage() {
 
   const isStepValid = () => { 
     if (step === 1) return formData.name && formData.email; 
-    if (step === 2) return formData.project && formData.description; 
-    if (step === 3) return formData.totalBudget && Number(formData.totalBudget) > 0; 
+    if (step === 2) return formData.project && formData.description && formData.workScope; 
+    if (step === 3) return formData.totalBudget && Number(formData.totalBudget) > 0 && formData.roomsCount; 
     return true; 
   };
 
@@ -231,13 +237,16 @@ export default function DesignerInitializePage() {
                 <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><Briefcase className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Project Scope</h3></div>
                   <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Designation</Label><Input placeholder="E.g., Muthaiga Penthouse Renovation" className="rounded-none border-neutral-200 h-14 text-xl font-headline italic focus:ring-accent" value={formData.project} onChange={(e) => setFormData({...formData, project: e.target.value})} /></div>
-                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea placeholder="Detailed briefing requirements..." className="min-h-[180px] rounded-none border-neutral-200 text-lg p-6 font-light italic leading-relaxed focus:ring-accent bg-neutral-50/30" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} /></div>
+                  <div className="grid grid-cols-1 gap-8">
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea placeholder="Creative briefing summary..." className="min-h-[120px] rounded-none border-neutral-200 text-lg p-6 font-light italic leading-relaxed focus:ring-accent bg-neutral-50/30" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><LayoutList className="h-3.5 w-3.5" /> Technical Scope of Works</Label><Textarea placeholder="Structural and implementation requirements..." className="min-h-[120px] rounded-none border-neutral-200 text-base p-6 font-light italic leading-relaxed focus:ring-accent bg-neutral-50/10" value={formData.workScope} onChange={(e) => setFormData({...formData, workScope: e.target.value})} /></div>
+                  </div>
                 </motion.div>
               )}
 
               {step === 3 && (
                 <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
-                  <div className="flex items-center gap-4 mb-2"><Calculator className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Financial Framework</h3></div>
+                  <div className="flex items-center gap-4 mb-2"><Calculator className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Framework & Spatial</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
@@ -256,6 +265,10 @@ export default function DesignerInitializePage() {
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Estimated Commitment (KES)</Label>
                       <Input type="number" placeholder="5,000,000" className="rounded-none border-neutral-200 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} />
                     </div>
+                  </div>
+                  <div className="space-y-3 pt-6 border-t border-accent/5">
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><Compass className="h-3.5 w-3.5" /> Spatial Capacity (Rooms)</Label>
+                    <Input type="number" placeholder="E.g., 6" className="rounded-none border-neutral-200 h-14 text-2xl font-headline italic focus:ring-accent max-w-xs" value={formData.roomsCount} onChange={(e) => setFormData({...formData, roomsCount: e.target.value})} />
                   </div>
                 </motion.div>
               )}

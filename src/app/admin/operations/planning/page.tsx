@@ -29,7 +29,9 @@ import {
   Building2,
   Clock,
   ShieldAlert,
-  RefreshCcw
+  RefreshCcw,
+  LayoutList,
+  Compass
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -93,6 +95,8 @@ export default function ProjectPlanningPage() {
     tier: "Premium" as ClientProject['tier'],
     totalBudget: 0,
     description: "",
+    workScope: "",
+    roomsCount: 0,
     assignedStewardId: "",
     startDate: new Date(),
     endDate: new Date(),
@@ -169,7 +173,9 @@ export default function ProjectPlanningPage() {
       project: project.project,
       tier: project.tier,
       totalBudget: project.totalBudget,
-      description: project.description || project.workScope || "",
+      description: project.description || "",
+      workScope: project.workScope || "",
+      roomsCount: project.roomsCount || 0,
       assignedStewardId: project.assignedStewardId || "",
       startDate: startD,
       endDate: endD,
@@ -381,6 +387,7 @@ export default function ProjectPlanningPage() {
           <Tabs defaultValue="identity" className="flex-1 overflow-hidden flex flex-col">
             <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 mb-8 px-12">
               <TabsTrigger value="identity" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><User className="h-4 w-4" /> Identity</TabsTrigger>
+              <TabsTrigger value="briefing" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><LayoutList className="h-4 w-4" /> Scope</TabsTrigger>
               <TabsTrigger value="financials" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><Calculator className="h-4 w-4" /> Framework</TabsTrigger>
               <TabsTrigger value="milestones" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><Flag className="h-4 w-4" /> Milestones</TabsTrigger>
               <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><Zap className="h-4 w-4" /> Protocols</TabsTrigger>
@@ -394,7 +401,39 @@ export default function ProjectPlanningPage() {
                   <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Communication Protocol (Email)</Label><Input type="email" value={editFormData.email} onChange={(e) => setEditFormData({...editFormData, email: e.target.value})} className="rounded-none h-14 text-lg border-accent/20 focus:ring-accent" /></div>
                 </div>
                 <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Designation</Label><Input value={editFormData.project} onChange={(e) => setEditFormData({...editFormData, project: e.target.value})} className="rounded-none h-14 text-2xl font-headline italic border-accent/20 focus:ring-accent" /></div>
-                <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea value={editFormData.description} onChange={(e) => setEditFormData({...editFormData, description: e.target.value})} className="min-h-[240px] rounded-none p-8 font-light italic text-xl border-accent/20 leading-relaxed focus:ring-accent" /></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-accent/5">
+                  <div className="space-y-3">
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Protocol</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-accent/20 uppercase tracking-widest font-bold"><CalendarIcon className="mr-3 h-5 w-5 opacity-40" />{format(editFormData.startDate, "MMM dd, yyyy")}</Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={editFormData.startDate} onSelect={(d) => d && setEditFormData({...editFormData, startDate: d})} initialFocus /></PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Projected Delivery Target</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-accent/20 uppercase tracking-widest font-bold"><CalendarIcon className="mr-3 h-5 w-5 opacity-40" />{format(editFormData.endDate, "MMM dd, yyyy")}</Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={editFormData.endDate} onSelect={(d) => d && setEditFormData({...editFormData, endDate: d})} initialFocus /></PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="briefing" className="m-0 space-y-12">
+                <div className="space-y-8">
+                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea value={editFormData.description} onChange={(e) => setEditFormData({...editFormData, description: e.target.value})} placeholder="Creative briefing summary..." className="min-h-[180px] rounded-none p-8 font-light italic text-xl border-accent/20 leading-relaxed focus:ring-accent" /></div>
+                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Technical Scope of Works</Label><Textarea value={editFormData.workScope} onChange={(e) => setEditFormData({...editFormData, workScope: e.target.value})} placeholder="Structural and implementation requirements..." className="min-h-[180px] rounded-none p-8 font-light italic text-base border-accent/20 leading-relaxed focus:ring-accent bg-secondary/5" /></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-accent/5">
+                    <div className="space-y-3">
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><Compass className="h-3.5 w-3.5" /> Primary Rooms Count</Label>
+                      <Input type="number" value={editFormData.roomsCount} onChange={(e) => setEditFormData({...editFormData, roomsCount: Number(e.target.value)})} className="rounded-none h-14 text-2xl font-headline italic border-accent/20 focus:ring-accent" />
+                    </div>
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="financials" className="m-0 space-y-12">
@@ -418,26 +457,6 @@ export default function ProjectPlanningPage() {
                     <SelectTrigger className="rounded-none border-accent/20 h-14 text-[12px] font-bold uppercase tracking-widest focus:ring-accent"><SelectValue placeholder="Select Steward" /></SelectTrigger>
                     <SelectContent className="rounded-none">{stewards.map(s => <SelectItem key={s.id} value={s.id} className="uppercase text-[11px] font-bold py-3">{s.name}</SelectItem>)}</SelectContent>
                   </Select>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-accent/5">
-                  <div className="space-y-3">
-                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Protocol</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-accent/20 uppercase tracking-widest font-bold"><CalendarIcon className="mr-3 h-5 w-5 opacity-40" />{format(editFormData.startDate, "MMM dd, yyyy")}</Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={editFormData.startDate} onSelect={(d) => d && setEditFormData({...editFormData, startDate: d})} initialFocus /></PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Projected Delivery Target</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-accent/20 uppercase tracking-widest font-bold"><CalendarIcon className="mr-3 h-5 w-5 opacity-40" />{format(editFormData.endDate, "MMM dd, yyyy")}</Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={editFormData.endDate} onSelect={(d) => d && setEditFormData({...editFormData, endDate: d})} initialFocus /></PopoverContent>
-                    </Popover>
-                  </div>
                 </div>
               </TabsContent>
 
@@ -510,7 +529,7 @@ export default function ProjectPlanningPage() {
                           </Select>
                         </div>
                         <div className="space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Allocation Value</Label><Input type="number" value={alloc.costValue} onChange={(e) => updateAllocation(idx, 'costValue', Number(e.target.value))} className="rounded-none h-12 text-sm font-bold border-accent/10" /></div>
-                        <div className="space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Engagement Days</Label><Input type="number" value={editFormData.totalBudget} onChange={(e) => setEditFormData({...editFormData, totalBudget: Number(e.target.value)})} className="rounded-none h-12 text-sm font-bold border-accent/10" /></div>
+                        <div className="space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Engagement Days</Label><Input type="number" value={alloc.timelineDays} onChange={(e) => updateAllocation(idx, 'timelineDays', Number(e.target.value))} className="rounded-none h-12 text-sm font-bold border-accent/10" /></div>
                       </div>
                     </div>
                   ))}
@@ -583,7 +602,7 @@ export default function ProjectPlanningPage() {
                 </div>
                 <div className="space-y-3">
                   <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Assigned Steward</Label>
-                  <Select value={assignedStewardId} onValueChange={setAssignedStewardId}>
+                  <Select value={assignedStewardId} onValueChange={assignedStewardId}>
                     <SelectTrigger className="rounded-none border-accent/20 h-14 text-sm font-bold uppercase tracking-widest focus:ring-orange-600">
                       <SelectValue placeholder="SELECT STEWARD" />
                     </SelectTrigger>

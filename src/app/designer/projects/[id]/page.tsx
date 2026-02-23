@@ -1,7 +1,7 @@
 
 "use client";
 
-import { use, useState, useEffect, useMemo } from "react";
+import { use, useState, useEffect, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWhyteStore, ClientProject, ProjectTask, SiteReport, SubTask, Inquiry } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,9 @@ import {
   Archive,
   FileCheck,
   UserCheck,
-  ShieldAlert
+  ShieldAlert,
+  Compass,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -71,7 +73,8 @@ interface KanbanColumnProps {
   handleUpdateSubtask: (taskId: string, subId: string, title: string) => void;
 }
 
-const KanbanColumn = ({ 
+// Memoized to prevent input focus loss during character entry
+const KanbanColumn = memo(({ 
   status, 
   tasks, 
   isReadOnly, 
@@ -142,7 +145,8 @@ const KanbanColumn = ({
       ))}
     </div>
   </div>
-);
+));
+KanbanColumn.displayName = "KanbanColumn";
 
 export default function DesignerProjectWorkbench({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -450,26 +454,42 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
           <TabsTrigger value="handover" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-3"><Handshake className="h-4 w-4" /> Handover</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="m-0 space-y-12">
+        <TabsContent value="overview" className="m-0">
           <Card className="rounded-none border-neutral-100 bg-white p-12 space-y-12 shadow-xl">
-            <div className="space-y-6">
-              <h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/40">The Architectural Brief</h3>
-              <p className="text-3xl font-light italic leading-relaxed text-accent/80 border-l-4 border-accent/10 pl-12">"{project.description || project.workScope || "Brief pending synchronization."}"</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-12 border-t border-neutral-50">
-              <div className="space-y-6">
-                <h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Temporal Protocol</h3>
-                <div className="grid grid-cols-2 gap-8 border-b border-neutral-50 pb-8">
-                  <div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Commencement</p><p className="font-headline italic text-2xl">{project.startDate}</p></div>
-                  <div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Delivery Target</p><p className="font-headline italic text-2xl">{project.endDate}</p></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              <div className="lg:col-span-2 space-y-10">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3"><FileText className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/40">Architectural Narrative</h3></div>
+                  <p className="text-2xl font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || "Brief pending synchronization."}"</p>
                 </div>
-                {temporal && (<div className={cn("p-6 flex items-center justify-between", temporal.isUrgent ? "bg-destructive/5 text-destructive" : "bg-accent/5 text-accent")}><div className="flex items-center gap-4"><div className="h-10 w-10 rounded-full bg-white/50 flex items-center justify-center shrink-0">{temporal.icon}</div><div className="space-y-0.5"><p className="text-[11px] font-bold uppercase tracking-widest opacity-60">{temporal.label}</p><p className="text-[12px] font-bold uppercase tracking-widest">{temporal.sub}</p></div></div><p className="text-4xl font-headline italic">{temporal.value}</p></div>)}
+                <div className="space-y-6 pt-10 border-t border-neutral-50">
+                  <div className="flex items-center gap-3"><LayoutList className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/40">Technical Scope of Works</h3></div>
+                  <p className="text-lg font-light italic leading-relaxed text-accent/70 border-l-2 border-accent/10 pl-8">"{project.workScope || "Detailed implementation protocols defined in planning."}"</p>
+                </div>
               </div>
-              <div className="space-y-6">
-                <h3 className="text-base font-bold uppercase tracking-[0.3em] text-accent/40">Spatial Parameters</h3>
-                <div className="grid grid-cols-2 gap-8">
-                  <div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Capacity</p><p className="text-2xl font-headline italic">{project.roomsCount || 'N/A'} Rooms</p></div>
-                  <div className="space-y-1"><p className="text-[12px] uppercase tracking-widest opacity-40 font-bold">Commission Tier</p><p className="text-2xl font-headline italic">{project.tier}</p></div>
+              <div className="space-y-10 border-l border-neutral-100 pl-12">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3"><Compass className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/40">Spatial Parameters</h3></div>
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="bg-neutral-50/50 p-6 border border-neutral-100">
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-accent/40 mb-1">Capacity</p>
+                      <p className="text-3xl font-headline italic">{project.roomsCount || 'N/A'} Primary Rooms</p>
+                    </div>
+                    <div className="bg-neutral-50/50 p-6 border border-neutral-100">
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-accent/40 mb-1">Service Tier</p>
+                      <p className="text-2xl font-headline italic">{project.tier}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-6 pt-10 border-t border-neutral-100">
+                  <div className="flex items-center gap-3"><Clock className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/40">Temporal Protocol</h3></div>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest opacity-40 font-bold">Commencement</p><p className="text-lg font-headline italic">{project.startDate}</p></div>
+                      <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest opacity-40 font-bold">Handover Target</p><p className="text-lg font-headline italic">{project.endDate}</p></div>
+                    </div>
+                    {temporal && (<div className={cn("p-4 flex items-center justify-between", temporal.isUrgent ? "bg-destructive/5 text-destructive" : "bg-accent/5 text-accent")}><div className="flex items-center gap-3"><div className="h-8 w-8 rounded-full bg-white/50 flex items-center justify-center shrink-0">{temporal.icon}</div><div><p className="text-[9px] font-bold uppercase tracking-widest opacity-60">{temporal.label}</p><p className="text-[10px] font-bold uppercase tracking-widest">{temporal.sub}</p></div></div><p className="text-2xl font-headline italic">{temporal.value}</p></div>)}
+                  </div>
                 </div>
               </div>
             </div>
