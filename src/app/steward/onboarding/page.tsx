@@ -246,13 +246,14 @@ export default function StewardOnboardingPage() {
                     <div className="space-y-6">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Professional Mandates</Label>
-                        <ScrollArea className="h-40 w-full border border-slate-100 p-5 bg-slate-50/50">
+                        <ScrollArea className="h-48 w-full border border-slate-100 p-5 bg-slate-50/50">
                           <div className="text-[11px] font-light leading-relaxed text-slate-600 space-y-3 italic">
                             <p><strong>1. Forensic Integrity:</strong> The Steward must perform all audits with uncompromising accuracy and professional skepticism.</p>
                             <p><strong>2. Conflict of Interest:</strong> Stewards must declare any commercial interest in site trade partners or material suppliers.</p>
                             <p><strong>3. Confidentiality Commitment:</strong> All financial data, client identities, and site cost allocations are proprietary.</p>
                             <p><strong>4. Data Sovereignty:</strong> No data extracted may be reproduced or transmitted outside the authorized reconciliation cycle.</p>
                             <p><strong>5. Impasse Resolution:</strong> Any discrepancies must be escalated to the Senior Partner panel for immediate resolution.</p>
+                            <p><strong>6. Non-Compete Protocol:</strong> The Steward is prohibited from providing independent financial advisory or audit services to studio-authorized trade partners or clients outside the Whyte Interior Designs ecosystem for the duration of the active commission cycle.</p>
                           </div>
                         </ScrollArea>
                       </div>
