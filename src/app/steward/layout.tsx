@@ -3,7 +3,7 @@
 
 import { motion } from "framer-motion";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { Landmark, Scale, ShieldCheck, LayoutDashboard, History, Building2, ExternalLink, LogOut, FileText, Activity, BarChart3, Wallet } from "lucide-react";
+import { LayoutDashboard, History, LogOut, Activity } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useWhyteStore } from "@/store/use-whyte-store";
@@ -35,12 +35,7 @@ export default function StewardLayout({ children }: { children: React.ReactNode 
 
   const navItems = [
     { title: "Audit Terminal", icon: LayoutDashboard, href: "/steward" },
-    { title: "Fiscal Insights", icon: BarChart3, href: "/steward/insights" },
     { title: "Audit History", icon: History, href: "/steward/history" },
-  ];
-
-  const treasuryNav = [
-    { title: "Fiscal Management", icon: Landmark, href: "/steward/management/fiscal" },
   ];
 
   return (
@@ -61,31 +56,6 @@ export default function StewardLayout({ children }: { children: React.ReactNode 
               <SidebarGroupContent>
                 <SidebarMenu>
                   {navItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton 
-                        asChild 
-                        isActive={pathname === item.href} 
-                        className="px-6 h-12 hover:bg-slate-50 rounded-none" 
-                        tooltip={item.title}
-                      >
-                        <Link href={item.href} className="flex items-center gap-4">
-                          <item.icon className={`h-4 w-4 shrink-0 ${pathname === item.href ? 'text-slate-900' : 'text-slate-400'}`} />
-                          <span className={`text-[12px] uppercase tracking-widest font-bold truncate group-data-[collapsible=icon]:hidden ${pathname === item.href ? 'text-slate-900' : 'text-slate-400'}`}>
-                            {item.title}
-                          </span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarGroup className="mt-4">
-              <SidebarGroupLabel className="px-6 text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-4 group-data-[collapsible=icon]:hidden">Treasury Control</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {treasuryNav.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild 
