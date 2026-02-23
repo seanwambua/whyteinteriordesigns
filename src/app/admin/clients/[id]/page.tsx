@@ -47,7 +47,8 @@ import {
   Building2,
   TrendingDown,
   Scale,
-  RefreshCcw
+  RefreshCcw,
+  Landmark
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -216,10 +217,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const remainingBalance = project.totalBudget - totalPaid;
   const isLegerSynchronized = Math.abs(remainingBalance) < 1;
   const isOverpaid = remainingBalance < -1;
-
-  // Plan Integrity Check: Sum of (Paid Actuals + Pending Projected) vs Total Budget
-  const totalPlanValue = project.installments.reduce((sum, i) => sum + i.amount, 0);
-  const hasPlanDiscrepancy = Math.abs(totalPlanValue - project.totalBudget) > 1;
 
   const temporal = (() => {
     if (!project.isActivated) return { label: "Temporal Status", value: "Locked", icon: <ZapOff className="h-5 w-5" />, sub: "Pending Activation" };
@@ -403,54 +400,45 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         </TabsContent>
 
         <TabsContent value="ledger" className="m-0 space-y-12">
-           {hasPlanDiscrepancy && (
-             <Alert variant="destructive" className="rounded-none border-destructive/20 bg-destructive/5 mb-8">
-               <AlertCircle className="h-4 w-4" />
-               <AlertTitle className="text-[11px] font-bold uppercase tracking-widest">Registry Synchronization Required</AlertTitle>
-               <AlertDescription className="text-[12px] font-light italic">
-                 The current payment plan total (KES {totalPlanValue.toLocaleString()}) does not match the commission's Capital Commitment (KES {project.totalBudget.toLocaleString()}). Recalibration is advised following verified variances.
-               </AlertDescription>
-             </Alert>
-           )}
+           <Card className="rounded-none border-accent/10 bg-white p-10 shadow-2xl relative overflow-hidden group">
+             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><Landmark className="h-24 w-24" /></div>
+             <div className="relative z-10 space-y-8">
+               <div className="flex items-center gap-4">
+                 <Scale className="h-5 w-5 text-accent/40" />
+                 <h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Financial Reconciliation Index</h3>
+               </div>
+               
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-12 items-end">
+                 <div className="space-y-2">
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Capital Commitment</p>
+                   <p className="text-3xl font-headline italic">KES {(project.totalBudget || 0).toLocaleString()}</p>
+                 </div>
+                 <div className="space-y-2">
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-green-600/60">Liquidated Funds</p>
+                   <p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p>
+                 </div>
+                 <div className={cn(
+                   "p-6 border-l-2 space-y-2", 
+                   isOverpaid ? "bg-green-50 border-green-500" : isLegerSynchronized ? "bg-accent/5 border-accent" : "bg-orange-50 border-orange-500"
+                 )}>
+                   <p className={cn("text-[10px] font-bold uppercase tracking-widest", isOverpaid ? "text-green-600" : isLegerSynchronized ? "text-accent" : "text-orange-600")}>
+                     {isOverpaid ? "Surplus Balance" : "Net Balance Due"}
+                   </p>
+                   <p className={cn("text-4xl font-headline italic", isOverpaid ? "text-green-600" : isLegerSynchronized ? "text-accent" : "text-orange-600")}>
+                     KES {Math.abs(remainingBalance).toLocaleString()}
+                   </p>
+                 </div>
+               </div>
 
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-             <Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-12 w-12" /></div>
-               <div className="space-y-4 relative z-10">
-                 <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p>
-                 <p className="text-3xl font-headline italic text-accent">KES {(project.totalBudget || 0).toLocaleString()}</p>
+               <div className="space-y-2">
+                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-accent/40">
+                   <span>Liquidation Velocity</span>
+                   <span>{Math.min(100, Math.round((totalPaid / (project.totalBudget || 1)) * 100))}%</span>
+                 </div>
+                 <Progress value={(totalPaid / (project.totalBudget || 1)) * 100} className="h-1 bg-accent/5 rounded-none" />
                </div>
-             </Card>
-             <Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-12 w-12" /></div>
-               <div className="space-y-4 relative z-10">
-                 <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p>
-                 <p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p>
-               </div>
-             </Card>
-             <Card className={cn(
-               "rounded-none p-10 relative overflow-hidden group transition-all", 
-               isLegerSynchronized ? "bg-white border-accent/10" : isOverpaid ? "bg-green-50 border-green-500/20 shadow-xl" : "bg-orange-50 border-orange-500/20 shadow-xl"
-             )}>
-               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
-                 {isOverpaid ? <Scale className="h-12 w-12" /> : <History className="h-12 w-12" />}
-               </div>
-               <div className="space-y-4 relative z-10">
-                 <p className={cn(
-                   "text-[11px] font-bold uppercase tracking-[0.4em]", 
-                   isLegerSynchronized ? "text-accent/40" : isOverpaid ? "text-green-600/60" : "text-orange-600/60"
-                 )}>
-                   {isOverpaid ? "Surplus Balance" : "Outstanding Balance"}
-                 </p>
-                 <p className={cn(
-                   "text-3xl font-headline italic", 
-                   isLegerSynchronized ? "text-accent" : isOverpaid ? "text-green-600" : "text-orange-600"
-                 )}>
-                   KES {Math.abs(remainingBalance).toLocaleString()}
-                 </p>
-               </div>
-             </Card>
-           </div>
+             </div>
+           </Card>
 
            <Card className="rounded-none border-accent/5 p-0 bg-white shadow-2xl overflow-hidden">
              <div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center">
