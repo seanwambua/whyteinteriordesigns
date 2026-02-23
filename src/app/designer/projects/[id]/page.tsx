@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use, useState, useEffect, useMemo, memo } from "react";
@@ -99,11 +98,11 @@ const KanbanColumn = memo(({
     </div>
     <div className="flex flex-col gap-4 flex-1">
       {tasks.map(task => (
-        <motion.div key={task.id} layoutId={task.id} className={cn("group relative bg-white border border-neutral-100 p-6 shadow-sm hover:shadow-xl transition-all space-y-4", isReadOnly && "opacity-80")}>
+        <motion.div key={task.id} layoutId={task.id} className={cn("group relative bg-white border border-neutral-100 p-6 shadow-sm hover:shadow-xl space-y-4", isReadOnly && "opacity-80")}>
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold text-accent/20 uppercase tracking-widest">{task.id}</span>
             {!isReadOnly && (
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100">
                 {status !== 'Todo' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Done' ? 'In Progress' : 'Todo')}><ChevronLeft className="h-4 w-4" /></Button>}
                 {status !== 'Done' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Todo' ? 'In Progress' : 'Done')}><ChevronRight className="h-4 w-4" /></Button>}
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive" onClick={() => handleDeleteTask(task.id)}><Trash2 className="h-4 w-4" /></Button>
@@ -124,7 +123,7 @@ const KanbanColumn = memo(({
             <div className="space-y-2">
               {(task.subtasks || []).map(sub => (
                 <div key={sub.id} className="flex items-center gap-3">
-                  <button onClick={() => !isReadOnly && handleToggleSubtask(task.id, sub.id)} disabled={isReadOnly} className={cn("h-4 w-4 border flex items-center justify-center transition-colors", sub.isCompleted ? "bg-accent border-accent" : "border-neutral-200")}>
+                  <button onClick={() => !isReadOnly && handleToggleSubtask(task.id, sub.id)} disabled={isReadOnly} className={cn("h-4 w-4 border flex items-center justify-center", sub.isCompleted ? "bg-accent border-accent" : "border-neutral-200")}>
                     {sub.isCompleted && <Check className="h-2.5 w-2.5 text-white" />}
                   </button>
                   <Input 
@@ -336,7 +335,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-24 font-body">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-        <Link href="/designer/projects" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[11px] font-bold uppercase tracking-[0.3em]">Back to Registry</span></Link>
+        <Link href="/designer/projects" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 group-hover:-translate-x-1" /><span className="text-[11px] font-bold uppercase tracking-[0.3em]">Back to Registry</span></Link>
         
         {!isAssignedLead && (
           <Alert className="rounded-none border-orange-500/20 bg-orange-50 p-8 shadow-xl">
@@ -354,11 +353,11 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
                 onClick={handleRequestAccess}
                 disabled={isRequestingAccess || hasPendingRequest}
                 className={cn(
-                  "rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-lg transition-all",
+                  "rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-lg",
                   hasPendingRequest ? "bg-orange-200 text-orange-800 cursor-default" : "bg-orange-600 text-white hover:bg-orange-700"
                 )}
               >
-                {isRequestingAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : hasPendingRequest ? <><Clock className="h-4 w-4" /> Authorization Pending</> : <><UserCheck className="h-4 w-4" /> Request Implementation Lead</>}
+                {isRequestingAccess ? <Loader2 className="h-4 w-4" /> : hasPendingRequest ? <><Clock className="h-4 w-4" /> Authorization Pending</> : <><UserCheck className="h-4 w-4" /> Request Implementation Lead</>}
               </Button>
             </div>
           </Alert>
@@ -381,7 +380,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
         {project.handoverStatus === 'Pending' && (
           <div className="p-6 bg-accent text-white border border-accent/10 flex items-center justify-between shadow-xl">
             <div className="flex items-center gap-4">
-              <ShieldCheck className="h-6 w-6 animate-pulse" />
+              <ShieldCheck className="h-6 w-6" />
               <div className="space-y-0.5">
                 <p className="text-[11px] font-bold uppercase tracking-widest">Handover Pending Authorization</p>
                 <p className="text-[12px] text-white/70 italic font-light">Dossier is currently locked for quality verification by Senior Partners.</p>
@@ -416,7 +415,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
             )}
             <div className="flex gap-4">
               <Badge className={cn(
-                "rounded-none uppercase tracking-[0.3em] text-[11px] font-bold py-2 px-6",
+                "rounded-none uppercase tracking-[0.3em] text-[11px] font-bold py-2 px-6 shadow-xl",
                 project.isArchived ? "bg-neutral-400 text-white" : project.handoverStatus === 'Pending' ? "bg-accent/40 text-white" : "bg-accent text-white"
               )}>
                 {project.isArchived ? "Dossier Archived" : project.handoverStatus === 'Pending' ? "Awaiting Sync" : "Execution Active"}
@@ -614,7 +613,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
             </Card>
           ) : (
             <Card className={cn(
-              "rounded-none border-dashed p-12 flex flex-col md:flex-row items-center justify-between gap-12 transition-all bg-accent/[0.02] border-accent/20 shadow-2xl"
+              "rounded-none border-dashed p-12 flex flex-col md:flex-row items-center justify-between gap-12 bg-accent/[0.02] border-accent/20 shadow-2xl"
             )}>
               <div className="space-y-6 max-w-2xl">
                 <div className="flex items-center gap-4">
@@ -628,7 +627,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
               <Button 
                 onClick={handleInitiateHandover}
                 disabled={isHandoverSyncing || project.handoverStatus === 'Pending' || isReadOnly}
-                className="rounded-none h-20 px-16 bg-accent text-white uppercase tracking-[0.3em] text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.4em] flex gap-4"
+                className="rounded-none h-20 px-16 bg-accent text-white uppercase tracking-[0.3em] text-[12px] font-bold shadow-2xl flex gap-4"
               >
                 {isHandoverSyncing ? (
                   <span className="flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span>
@@ -686,7 +685,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
                 <Textarea value={newReport.content} onChange={(e) => setNewReport({...newReport, content: e.target.value})} placeholder="Specific architectural observations..." className="min-h-[150px] rounded-none border-neutral-200 p-6 font-light italic leading-relaxed focus:ring-accent bg-neutral-50/30" />
               </div>
             </div>
-            <DialogFooter><Button onClick={handleAddReport} disabled={!newReport.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all">Transmit to Registry</Button></DialogFooter>
+            <DialogFooter><Button onClick={handleAddReport} disabled={!newReport.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl">Transmit to Registry</Button></DialogFooter>
           </div>
         </DialogContent>
       </Dialog>

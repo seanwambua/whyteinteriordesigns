@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -281,7 +280,7 @@ export default function ProjectPlanningPage() {
           <div className="flex items-center gap-4"><div className="h-px w-8 bg-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Operations Hub</span></div>
           <h1 className="text-5xl font-headline italic">Commission <span className="not-italic">Initialization.</span></h1>
         </div>
-        <Button asChild className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold shadow-xl hover:tracking-[0.25em] transition-all"><Link href="/admin/clients/add"><Plus className="h-5 w-5" /> Initialize Briefing</Link></Button>
+        <Button asChild className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold shadow-xl"><Link href="/admin/clients/add"><Plus className="h-5 w-5" /> Initialize Briefing</Link></Button>
       </motion.div>
 
       <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
@@ -352,10 +351,10 @@ export default function ProjectPlanningPage() {
                     </div>
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-10 border-t border-accent/5 mt-12">
                       <div className="flex gap-6">
-                        <Button variant="ghost" onClick={() => handleOpenEdit(project)} className="rounded-none h-12 px-6 text-[11px] uppercase tracking-widest font-bold text-accent/60 hover:text-accent hover:bg-accent/5 transition-all"><Settings2 className="h-4 w-4 mr-2" /> Master Edit</Button>
-                        <Button variant="ghost" onClick={() => setDeleteId(project.id)} className="rounded-none h-12 px-6 text-[11px] uppercase tracking-widest font-bold text-destructive/40 hover:text-destructive hover:bg-destructive/5 transition-all"><Trash2 className="h-4 w-4 mr-2" /> Purge Brief</Button>
+                        <Button variant="ghost" onClick={() => handleOpenEdit(project)} className="rounded-none h-12 px-6 text-[11px] uppercase tracking-widest font-bold text-accent/60 hover:text-accent hover:bg-accent/5"><Settings2 className="h-4 w-4 mr-2" /> Master Edit</Button>
+                        <Button variant="ghost" onClick={() => setDeleteId(project.id)} className="rounded-none h-12 px-6 text-[11px] uppercase tracking-widest font-bold text-destructive/40 hover:text-destructive hover:bg-destructive/5"><Trash2 className="h-4 w-4 mr-2" /> Purge Brief</Button>
                       </div>
-                      <Button onClick={() => setActivationProject(project)} className="h-16 px-12 rounded-none bg-orange-600 text-white uppercase tracking-widest text-[11px] font-bold hover:bg-orange-700 transition-all flex gap-3 shadow-2xl hover:tracking-[0.2em]">
+                      <Button onClick={() => setActivationProject(project)} className="h-16 px-12 rounded-none bg-orange-600 text-white uppercase tracking-widest text-[11px] font-bold hover:bg-orange-700 flex gap-3 shadow-2xl">
                         {isAwaitingSteward ? <><RefreshCcw className="h-5 w-5" /> Update Receipt Details</> : <><ShieldCheck className="h-5 w-5" /> Confirm Receipt for Steward</>}
                       </Button>
                     </div>
@@ -459,7 +458,7 @@ export default function ProjectPlanningPage() {
                 <div className="flex justify-between items-center pb-6 border-b border-accent/5"><h4 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent/60">Strategic Milestones</h4><Button variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white"><Plus className="h-3.5 w-3.5 mr-2" /> Append Target</Button></div>
                 <div className="space-y-6">
                   {editFormData.milestones.map((m, idx) => (
-                    <div key={m.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-6 relative group hover:bg-white hover:shadow-xl transition-all">
+                    <div key={m.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-6 relative group hover:bg-white hover:shadow-xl">
                       <Button variant="ghost" size="icon" onClick={() => removeMilestone(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         <div className="space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Target Label</Label><Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-accent/10 focus:ring-accent" /></div>
@@ -503,7 +502,7 @@ export default function ProjectPlanningPage() {
                 <div className="flex justify-between items-center pb-6 border-b border-accent/5"><h4 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent/60">Partner Matrix</h4><Button variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white"><Plus className="h-4 w-4 mr-2" /> Link Resource</Button></div>
                 <div className="space-y-6">
                   {(editFormData.vendorAllocations || []).map((alloc, idx) => (
-                    <div key={alloc.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-8 relative group hover:bg-white hover:shadow-xl transition-all">
+                    <div key={alloc.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-8 relative group hover:bg-white hover:shadow-xl">
                       <Button variant="ghost" size="icon" onClick={() => removeAllocation(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         <div className="space-y-2">
@@ -534,7 +533,7 @@ export default function ProjectPlanningPage() {
           </Tabs>
           <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between">
             <Button variant="ghost" onClick={() => setEditProject(null)} className="rounded-none h-14 px-8 uppercase tracking-widest text-[12px] font-bold text-accent/40">Abort Protocol Sync</Button>
-            <Button onClick={handleSaveEdit} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all flex gap-4 hover:tracking-[0.2em]">Authorize Synchronization <ChevronRight className="h-5 w-5" /></Button>
+            <Button onClick={handleSaveEdit} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-2xl flex gap-4">Authorize Synchronization <ChevronRight className="h-5 w-5" /></Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -610,7 +609,7 @@ export default function ProjectPlanningPage() {
             </div>
             <DialogFooter className="pt-6">
               <Button 
-                className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em]" 
+                className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl flex gap-3" 
                 onClick={handleTransmitToSteward} 
                 disabled={isActivating || !depositCode || !assignedStewardId}
               >

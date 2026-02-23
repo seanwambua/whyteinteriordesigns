@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use } from "react";
@@ -108,11 +107,11 @@ const KanbanColumn = memo(({
     </div>
     <div className="flex flex-col gap-4 flex-1">
       {tasks.map(task => (
-        <motion.div key={task.id} layoutId={task.id} className={cn("group relative bg-white border border-accent/5 p-6 shadow-sm hover:shadow-xl transition-all space-y-4", isReadOnly && "opacity-80")}>
+        <motion.div key={task.id} layoutId={task.id} className={cn("group relative bg-white border border-accent/5 p-6 shadow-sm hover:shadow-xl space-y-4", isReadOnly && "opacity-80")}>
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold text-accent/20 uppercase tracking-widest">{task.id}</span>
             {!isReadOnly && (
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100">
                 {status !== 'Todo' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Done' ? 'In Progress' : 'Todo')}><ChevronLeft className="h-4 w-4" /></Button>}
                 {status !== 'Done' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Todo' ? 'In Progress' : 'Done')}><ChevronRight className="h-4 w-4" /></Button>}
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive" onClick={() => handleDeleteTask(task.id)}><Trash2 className="h-4 w-4" /></Button>
@@ -422,7 +421,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   return (
     <div className="max-w-7xl mx-auto space-y-12 font-body pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-        <Link href="/admin/clients" className="inline-flex items-center gap-2 text-accent/40 hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Master Registry</span></Link>
+        <Link href="/admin/clients" className="inline-flex items-center gap-2 text-accent/40 hover:text-accent group"><ArrowLeft className="h-4 w-4 group-hover:-translate-x-1" /><span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Master Registry</span></Link>
         {isAuditVerified && (<Alert className="rounded-none border-green-600/20 bg-green-600/[0.02]"><Lock className="h-4 w-4 text-green-600" /><AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-green-600">Dossier Locked — Audit Verified</AlertTitle><AlertDescription className="text-[13px] font-light italic">This commission has been reconciled and verified. All protocols are now read-only.</AlertDescription></Alert>)}
         {project.reorganization?.status === 'Requested' && (
           <Alert className="rounded-none border-orange-500/20 bg-orange-50 p-6 shadow-xl">
@@ -432,7 +431,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                 <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Financing Protocol Review Requested</AlertTitle>
                 <AlertDescription className="text-[13px] font-light italic text-orange-600/80">The client has requested a formal review of the current payout schedule. Open the Financing Protocol Workbench to initialize a new proposal.</AlertDescription>
               </div>
-              <Button onClick={() => setIsReorganizingPlan(true)} className="bg-orange-600 text-white rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold shadow-lg hover:bg-orange-700 transition-all flex gap-3"><FileEdit className="h-4 w-4" /> Initialize Review</Button>
+              <Button onClick={() => setIsReorganizingPlan(true)} className="bg-orange-600 text-white rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold shadow-lg flex gap-3"><FileEdit className="h-4 w-4" /> Initialize Review</Button>
             </div>
           </Alert>
         )}
@@ -490,7 +489,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                   <p className="text-2xl font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || "Narrative pending synchronization."}"</p>
                 </div>
                 <div className="space-y-6 pt-10 border-t border-accent/5">
-                  <div className="flex items-center gap-3"><LayoutList className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Scope of Works</h3></div>
+                  <div className="flex items-center gap-3"><LayoutList className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/40">Scope of Works</h3></div>
                   <p className="text-lg font-light italic leading-relaxed text-accent/70 border-l-2 border-accent/10 pl-8">"{project.workScope || "Technical scope defined in contract archives."}"</p>
                 </div>
               </div>
@@ -581,8 +580,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                   <div className="space-y-4 flex-1">
                     <div className="flex items-center gap-4">
                       <span className="text-[11px] font-bold text-accent/40 uppercase tracking-widest">{inq.id}</span>
-                      <Badge variant="outline" className={cn("rounded-none text-[9px] font-bold", inq.urgency === 'critical' ? 'text-destructive' : 'text-accent')}>{inq.urgency} Urgency</Badge>
-                      <Badge className="rounded-none text-[9px] bg-accent text-white">{inq.status}</Badge>
+                      <Badge variant="outline" className={cn("rounded-none text-[9px] font-bold uppercase tracking-widest", inq.urgency === 'critical' ? 'text-destructive border-destructive/20 bg-destructive/5' : 'text-accent border-accent/20 bg-accent/5')}>
+                        {inq.urgency} Urgency
+                      </Badge>
+                      <Badge className="rounded-none text-[9px] bg-accent text-white uppercase tracking-widest font-bold px-3 py-1">{inq.status}</Badge>
                     </div>
                     <p className="text-base font-light italic text-accent/80 leading-relaxed border-l-2 border-accent/10 pl-6">"{inq.message}"</p>
                     <div className="flex items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-widest font-bold">
@@ -642,7 +643,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
         <TabsContent value="ledger" className="m-0 space-y-12">
            <Card className="rounded-none border-accent/10 bg-white p-10 shadow-2xl relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><Landmark className="h-24 w-24" /></div>
+             <div className="absolute top-0 right-0 p-4 opacity-5"><Landmark className="h-24 w-24" /></div>
              <div className="relative z-10 space-y-8">
                <div className="flex items-center justify-between">
                  <div className="flex items-center gap-4">
@@ -660,7 +661,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                         onClick={() => setIsReorganizingPlan(true)} 
                         disabled={reorganizationFinalized}
                         variant="ghost" 
-                        className="h-10 px-6 rounded-none text-accent uppercase tracking-widest text-[10px] font-bold border border-accent/10 hover:bg-accent hover:text-white transition-all shadow-sm"
+                        className="h-10 px-6 rounded-none text-accent uppercase tracking-widest text-[10px] font-bold border border-accent/10 hover:bg-accent hover:text-white shadow-sm"
                       >
                        <Settings2 className="h-4 w-4 mr-2" /> 
                        {reorganizationFinalized ? 'Reorganization Locked' : project.reorganization?.status === 'Pending_Agreement' ? 'Review Proposal' : 'Reorganize Financing'}
@@ -715,7 +716,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                  const hasVariance = ins.status === 'Paid' && Math.abs(variance) > 1;
 
                  return (
-                   <div key={i} className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8 hover:bg-accent/[0.01] transition-colors">
+                   <div key={i} className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8 hover:bg-accent/[0.01]">
                      <div className="flex items-center gap-8">
                        <div className={cn(
                          "h-12 w-12 rounded-full flex items-center justify-center shrink-0 border", 
@@ -758,7 +759,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                          )}
                        </div>
                        {ins.status === 'Pending' && !isAuditVerified && (
-                         <Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-12 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn">
+                         <Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-12 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white shadow-sm group/btn">
                            <ShieldCheck className="h-4 w-4" /> Verify Entry
                          </Button>
                        )}
@@ -819,7 +820,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                 <Textarea value={newReport.content} onChange={(e) => setNewReport({...newReport, content: e.target.value})} placeholder="Administrative site notes..." className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic leading-relaxed focus:ring-accent bg-secondary/10" />
               </div>
             </div>
-            <DialogFooter><Button onClick={handleAddReport} disabled={!newReport.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[10px] font-bold shadow-2xl transition-all">Transmit to Registry</Button></DialogFooter>
+            <DialogFooter><Button onClick={handleAddReport} disabled={!newReport.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[10px] font-bold shadow-2xl">Transmit to Registry</Button></DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
@@ -874,7 +875,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               </div>
             </div>
             <DialogFooter className="pt-4">
-              <Button className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all" onClick={handleVerifyPayment} disabled={isVerifying || !txnCode || verifiedAmount <= 0}>
+              <Button className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl" onClick={handleVerifyPayment} disabled={isVerifying || !txnCode || verifiedAmount <= 0}>
                 {isVerifying ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Syncing...</span> : "Authorize Entry"}
               </Button>
             </DialogFooter>
@@ -930,7 +931,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
               <div className="flex items-center justify-between border-b border-accent/5 pb-4">
                 <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Proposed Payout Schedule</h4>
-                <Button onClick={handleAddTempInstallment} variant="outline" className="h-10 px-6 rounded-none text-[10px] uppercase font-bold tracking-widest border-accent/10 hover:bg-accent hover:text-white transition-all">
+                <Button onClick={handleAddTempInstallment} variant="outline" className="h-10 px-6 rounded-none text-[10px] uppercase font-bold tracking-widest border-accent/10 hover:bg-accent hover:text-white">
                   <Plus className="h-3.5 w-3.5 mr-2" /> Append Installment
                 </Button>
               </div>
@@ -938,7 +939,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               <div className="space-y-4">
                 {tempInstallments.map((ins, idx) => (
                   <div key={idx} className={cn(
-                    "p-6 border flex flex-col md:flex-row items-center gap-6 transition-all",
+                    "p-6 border flex flex-col md:flex-row items-center gap-6",
                     ins.status === 'Paid' ? "bg-green-50/50 border-green-600/10" : "bg-white border-accent/5 hover:border-accent/20"
                   )}>
                     <div className="flex-1 space-y-4 w-full">
@@ -991,7 +992,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               <Button 
                 onClick={handleProposeReorganization} 
                 disabled={Math.abs(tempVariance) > 1 || !reorgTerms}
-                className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-3 hover:tracking-[0.2em]"
+                className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-widest text-[11px] font-bold shadow-2xl flex gap-3"
               >
                 Propose for Agreement <ChevronRight className="h-4 w-4" />
               </Button>
