@@ -1,7 +1,7 @@
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { LayoutDashboard, Briefcase, MessageSquare, Star, Settings, User, ClipboardList, PlayCircle, CheckCircle2, UserPlus, Users, HardHat, ShieldCheck, Handshake, HeartHandshake, Globe, BarChart3, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Briefcase, MessageSquare, Star, Settings, User, ClipboardList, PlayCircle, CheckCircle2, UserPlus, Users, HardHat, ShieldCheck, Handshake, HeartHandshake, Globe, BarChart3, ShieldAlert, PencilRuler } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -28,6 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const clientNav = [
     { title: "Client Directory", icon: Users, href: "/admin/clients" },
+    { title: "Designer Registry", icon: PencilRuler, href: "/admin/designers" },
   ];
 
   const operationsNav = [

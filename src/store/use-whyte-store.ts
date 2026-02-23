@@ -91,6 +91,16 @@ export interface TerminationDetails {
   audit?: FinancialAudit;
 }
 
+export interface Designer {
+  id: string;
+  name: string;
+  email: string;
+  specialty: string;
+  accessToken: string;
+  status: 'Active' | 'On Leave' | 'Inactive';
+  joinedDate: string;
+}
+
 export interface ClientProject {
   id: string;
   name: string;
@@ -121,6 +131,7 @@ export interface ClientProject {
   termination?: TerminationDetails;
   auditDetails?: FinancialAudit;
   initializedBy?: 'Admin' | 'Designer';
+  assignedDesignerId?: string;
   handoverStatus?: 'Pending' | 'Failed' | 'Passed' | null;
   handoverNotes?: string;
 }
@@ -170,6 +181,7 @@ export interface BusinessTargets {
 interface WhyteState {
   projects: Project[];
   clientProjects: ClientProject[];
+  designers: Designer[];
   inquiries: Inquiry[];
   feedback: Feedback[];
   collaborators: Collaborator[];
@@ -182,6 +194,10 @@ interface WhyteState {
   addClientProject: (clientProject: ClientProject) => void;
   updateClientProject: (id: string, updates: Partial<ClientProject>) => void;
   removeClientProject: (id: string) => void;
+
+  addDesigner: (designer: Designer) => void;
+  updateDesigner: (id: string, updates: Partial<Designer>) => void;
+  removeDesigner: (id: string) => void;
   
   addInquiry: (inquiry: Inquiry) => void;
   updateInquiryStatus: (id: string, status: Inquiry['status']) => void;
@@ -282,7 +298,20 @@ const initialClientProjects: ClientProject[] = [
         materials: ["Sustainably Sourced Teak", "Brass Inlays"]
       }
     ],
-    initializedBy: 'Admin'
+    initializedBy: 'Admin',
+    assignedDesignerId: 'DES-01'
+  }
+];
+
+const initialDesigners: Designer[] = [
+  {
+    id: 'DES-01',
+    name: 'Elena Vibe',
+    email: 'elena@whyte.design',
+    specialty: 'Architectural Interior Design',
+    accessToken: 'WHYTE-LEAD-01',
+    status: 'Active',
+    joinedDate: 'Jan 01, 2023'
   }
 ];
 
@@ -297,6 +326,7 @@ export const useWhyteStore = create<WhyteState>()(
     (set) => ({
       projects: initialProjects,
       clientProjects: initialClientProjects,
+      designers: initialDesigners,
       inquiries: [],
       feedback: [],
       collaborators: initialCollaborators,
@@ -316,6 +346,14 @@ export const useWhyteStore = create<WhyteState>()(
       })),
       removeClientProject: (id) => set((state) => ({
         clientProjects: state.clientProjects.filter(p => p.id !== id)
+      })),
+
+      addDesigner: (designer) => set((state) => ({ designers: [...state.designers, designer] })),
+      updateDesigner: (id, updates) => set((state) => ({
+        designers: state.designers.map(d => d.id === id ? { ...d, ...updates } : d)
+      })),
+      removeDesigner: (id) => set((state) => ({
+        designers: state.designers.filter(d => d.id !== id)
       })),
 
       addInquiry: (inquiry) => set((state) => ({ inquiries: [inquiry, ...state.inquiries] })),
@@ -352,6 +390,7 @@ export const useWhyteStore = create<WhyteState>()(
         set({
           projects: [],
           clientProjects: [],
+          designers: [],
           inquiries: [],
           feedback: [],
           collaborators: [],
