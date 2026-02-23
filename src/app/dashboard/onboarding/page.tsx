@@ -60,7 +60,6 @@ export default function OnboardingPage() {
 
   const handleNext = () => {
     if (step === 1) {
-      // Real verification against the store
       const project = clientProjects.find(p => p.id.toUpperCase() === formData.projectRef.toUpperCase());
       if (project) {
         setFormData({
@@ -80,7 +79,6 @@ export default function OnboardingPage() {
       setStep(step + 1);
     } else {
       setLoading(true);
-      // Simulate finalization
       setTimeout(() => {
         localStorage.setItem("whyte_onboarded", "true");
         localStorage.setItem("whyte_verified_project_id", formData.projectRef.toUpperCase());
@@ -103,7 +101,7 @@ export default function OnboardingPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center space-y-8 max-w-2xl"
+          className="text-center space-y-6 max-w-2xl"
         >
           <motion.div
             initial={{ y: 20, opacity: 0 }}
@@ -111,17 +109,17 @@ export default function OnboardingPage() {
             transition={{ delay: 0.2 }}
             className="flex justify-center"
           >
-            <div className="h-24 w-24 rounded-full border border-white/20 flex items-center justify-center bg-white/5 relative">
+            <div className="h-20 w-20 rounded-full border border-white/20 flex items-center justify-center bg-white/5 relative">
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
                 className="absolute inset-0 rounded-full border border-white/40"
               />
-              <Trophy className="h-10 w-10 text-white" />
+              <Trophy className="h-8 w-8 text-white" />
             </div>
           </motion.div>
           
-          <div className="space-y-4">
+          <div className="space-y-2">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -137,7 +135,7 @@ export default function OnboardingPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              className="text-5xl md:text-6xl font-headline text-white italic"
+              className="text-4xl md:text-5xl font-headline text-white italic"
             >
               Welcome to the <br /> <span className="not-italic">Inner Circle.</span>
             </motion.h2>
@@ -146,7 +144,7 @@ export default function OnboardingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.2 }}
-              className="text-white/60 font-light text-lg italic leading-relaxed max-w-md mx-auto"
+              className="text-white/60 font-light text-base italic leading-relaxed max-w-md mx-auto"
             >
               Your project archives are now unlocked. Transitioning you to your private command center...
             </motion.p>
@@ -166,12 +164,12 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary/5 flex flex-col items-center justify-center p-6 font-body">
-      <div className="w-full max-w-4xl flex justify-end mb-8">
+    <div className="min-h-screen bg-secondary/5 flex flex-col items-center justify-center p-4 md:p-8 font-body">
+      <div className="w-full max-w-3xl flex justify-end mb-4">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="ghost" className="text-accent/40 hover:text-accent hover:bg-transparent flex items-center gap-2 group">
-              <span className="text-[10px] font-bold uppercase tracking-widest">Exit Onboarding</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">Exit Session</span>
               <X className="h-4 w-4 transition-transform group-hover:rotate-90" />
             </Button>
           </AlertDialogTrigger>
@@ -199,52 +197,52 @@ export default function OnboardingPage() {
         </AlertDialog>
       </div>
 
-      <div className="max-w-4xl w-full">
-        <div className="mb-12 text-center space-y-4">
-          <div className="flex justify-center items-center gap-4 mb-2">
+      <div className="max-w-3xl w-full">
+        <div className="mb-8 text-center space-y-2">
+          <div className="flex justify-center items-center gap-4 mb-1">
             <div className="h-px w-8 bg-accent/20" />
             <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Digital Transition</span>
             <div className="h-px w-8 bg-accent/20" />
           </div>
-          <h1 className="text-5xl font-headline italic">Welcome to the <span className="not-italic">Studio.</span></h1>
-          <p className="text-muted-foreground font-light text-lg italic">Let's synchronize your existing project with our digital command center.</p>
+          <h1 className="text-4xl md:text-5xl font-headline italic">Welcome to the <span className="not-italic">Studio.</span></h1>
+          <p className="text-muted-foreground font-light text-base italic">Let's synchronize your existing project with our digital command center.</p>
         </div>
 
-        <div className="mb-8 max-w-md mx-auto">
-          <div className="flex justify-between text-[10px] uppercase tracking-widest font-bold text-accent/40 mb-2">
+        <div className="mb-6 max-w-sm mx-auto">
+          <div className="flex justify-between text-[9px] uppercase tracking-widest font-bold text-accent/40 mb-1.5">
             <span>Step {step} of {totalSteps}</span>
-            <span>{Math.round(progress)}% Complete</span>
+            <span>{Math.round(progress)}%</span>
           </div>
           <Progress value={progress} className="h-1 bg-accent/10 rounded-none" />
         </div>
 
-        <Card className="rounded-none border-accent/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.15)] bg-white overflow-hidden">
+        <Card className="rounded-none border-accent/10 shadow-xl bg-white overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.4 }}
             >
-              <CardContent className="p-12 md:p-20">
+              <CardContent className="p-8 md:p-12 lg:p-16">
                 {step === 1 && (
-                  <div className="space-y-12">
-                    <div className="space-y-4">
-                      <div className="h-12 w-12 bg-accent/5 flex items-center justify-center text-accent mb-6">
-                        <Briefcase className="h-6 w-6" />
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <div className="h-10 w-10 bg-accent/5 flex items-center justify-center text-accent mb-4">
+                        <Briefcase className="h-5 w-5" />
                       </div>
-                      <h2 className="text-3xl font-headline">Project Verification</h2>
-                      <p className="text-muted-foreground font-light leading-relaxed">
+                      <h2 className="text-2xl font-headline">Project Verification</h2>
+                      <p className="text-muted-foreground font-light text-sm leading-relaxed">
                         Enter the unique Project Reference ID found on your initial design contract (e.g., WP-0082) to securely link your journey.
                       </p>
                     </div>
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Project Reference ID</Label>
                         <Input 
                           placeholder="WP-XXXX" 
-                          className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] focus:ring-accent uppercase"
+                          className="rounded-none border-accent/20 h-12 text-xl tracking-[0.2em] focus:ring-accent uppercase font-bold"
                           value={formData.projectRef}
                           onChange={(e) => setFormData({...formData, projectRef: e.target.value})}
                         />
@@ -254,17 +252,17 @@ export default function OnboardingPage() {
                 )}
 
                 {step === 2 && (
-                  <div className="space-y-12">
-                    <div className="space-y-4">
-                      <div className="h-12 w-12 bg-accent/5 flex items-center justify-center text-accent mb-6">
-                        <User className="h-6 w-6" />
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <div className="h-10 w-10 bg-accent/5 flex items-center justify-center text-accent mb-4">
+                        <User className="h-5 w-5" />
                       </div>
-                      <h2 className="text-3xl font-headline">Identity Sync</h2>
-                      <p className="text-muted-foreground font-light leading-relaxed">
+                      <h2 className="text-2xl font-headline">Identity Sync</h2>
+                      <p className="text-muted-foreground font-light text-sm leading-relaxed">
                         Please confirm the details we have on file for your Nairobi residency or commercial property.
                       </p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label>
                         <Input 
@@ -286,36 +284,36 @@ export default function OnboardingPage() {
                 )}
 
                 {step === 3 && (
-                  <div className="space-y-12">
-                    <div className="space-y-4">
-                      <div className="h-12 w-12 bg-accent/5 flex items-center justify-center text-accent mb-6">
-                        <Bell className="h-6 w-6" />
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <div className="h-10 w-10 bg-accent/5 flex items-center justify-center text-accent mb-4">
+                        <Bell className="h-5 w-5" />
                       </div>
-                      <h2 className="text-3xl font-headline">Studio Communications</h2>
-                      <p className="text-muted-foreground font-light leading-relaxed">
+                      <h2 className="text-2xl font-headline">Studio Communications</h2>
+                      <p className="text-muted-foreground font-light text-sm leading-relaxed">
                         Configure how you'd like to receive architectural updates, site reports, and milestone approvals.
                       </p>
                     </div>
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between p-6 border border-accent/10 bg-accent/5">
-                        <div className="space-y-1">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-5 border border-accent/10 bg-accent/5">
+                        <div className="space-y-0.5">
                           <p className="text-sm font-bold uppercase tracking-widest">Real-time Site Updates</p>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Receive SMS/Email for daily progress</p>
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Receive SMS/Email for daily progress</p>
                         </div>
-                        <div className="h-6 w-12 bg-accent rounded-full flex items-center px-1 cursor-pointer">
-                          <div className="h-4 w-4 bg-white rounded-full ml-auto" />
+                        <div className="h-5 w-10 bg-accent rounded-full flex items-center px-1 cursor-pointer">
+                          <div className="h-3 w-3 bg-white rounded-full ml-auto" />
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div className="pt-16 flex items-center justify-between border-t border-accent/5 mt-16">
+                <div className="pt-8 flex items-center justify-between border-t border-accent/5 mt-8">
                   {step > 1 ? (
                     <Button 
                       variant="ghost" 
                       onClick={handleBack}
-                      className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[10px] flex items-center gap-2"
+                      className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[9px] flex items-center gap-2 h-10"
                     >
                       <ArrowLeft className="h-3 w-3" /> Previous Step
                     </Button>
@@ -325,13 +323,13 @@ export default function OnboardingPage() {
                   <Button 
                     onClick={handleNext}
                     disabled={step === 1 && !formData.projectRef}
-                    className="bg-accent text-white hover:bg-accent/90 rounded-none h-14 px-12 uppercase tracking-[0.2em] transition-all min-w-[200px]"
+                    className="bg-accent text-white hover:bg-accent/90 rounded-none h-12 px-10 uppercase tracking-[0.2em] transition-all min-w-[180px] text-[10px] font-bold shadow-lg"
                   >
                     {loading ? (
-                      <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Finalizing synchronization...</span>
+                      <span className="flex items-center gap-2"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Finalizing...</span>
                     ) : (
                       <span className="flex items-center gap-2">
-                        {step === totalSteps ? "Finalize Access" : "Continue"} <ChevronRight className="h-4 w-4" />
+                        {step === totalSteps ? "Finalize Access" : "Continue"} <ChevronRight className="h-3.5 w-3.5" />
                       </span>
                     )}
                   </Button>
@@ -341,7 +339,7 @@ export default function OnboardingPage() {
           </AnimatePresence>
         </Card>
 
-        <p className="text-center mt-12 text-[10px] uppercase tracking-[0.5em] text-accent/30 font-bold">
+        <p className="text-center mt-8 text-[9px] uppercase tracking-[0.5em] text-accent/30 font-bold">
           Exclusively for Whyte Interior Designs Clients
         </p>
       </div>
