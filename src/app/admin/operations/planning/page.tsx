@@ -26,7 +26,8 @@ import {
   Mail,
   Info,
   PencilRuler,
-  Building2
+  Building2,
+  Clock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -78,6 +79,8 @@ export default function ProjectPlanningPage() {
   const [activationProject, setActivationProject] = useState<ClientProject | null>(null);
   const [depositCode, setDepositCode] = useState("");
   const [assignedStewardId, setAssignedStewardId] = useState("");
+  const [activationAmount, setActivationAmount] = useState<number>(0);
+  const [activationDate, setActivationDate] = useState<Date>(new Date());
   const [isActivating, setIsActivating] = useState(false);
 
   const [editProject, setEditProject] = useState<ClientProject | null>(null);
@@ -105,6 +108,9 @@ export default function ProjectPlanningPage() {
   useEffect(() => {
     if (activationProject) {
       setAssignedStewardId(activationProject.assignedStewardId || "");
+      const deposit = activationProject.installments.find(i => i.label.toLowerCase().includes('deposit'));
+      setActivationAmount(deposit?.amount || 0);
+      setActivationDate(new Date());
     }
   }, [activationProject]);
 
@@ -117,7 +123,15 @@ export default function ProjectPlanningPage() {
     setIsActivating(true);
     setTimeout(() => {
       const updatedInstallments = activationProject.installments.map(ins => 
-        ins.label.toLowerCase().includes('deposit') ? { ...ins, status: 'Paid' as const, transactionCode: depositCode } : ins
+        ins.label.toLowerCase().includes('deposit') 
+          ? { 
+              ...ins, 
+              status: 'Paid' as const, 
+              transactionCode: depositCode, 
+              amount: activationAmount,
+              date: format(activationDate, "MMM dd, yyyy")
+            } 
+          : ins
       );
       updateClientProject(activationProject.id, {
         isActivated: true,
@@ -125,7 +139,7 @@ export default function ProjectPlanningPage() {
         depositCode: depositCode,
         assignedStewardId: assignedStewardId,
         status: 'Execution',
-        lastActivity: "Journey Activated — Initial Transaction Verified & Steward Assigned",
+        lastActivity: `Journey Activated — Initial Deposit of KES ${activationAmount.toLocaleString()} Verified by ${stewards.find(s => s.id === assignedStewardId)?.name || 'Authorized Steward'}`,
         installments: updatedInstallments
       });
       setIsActivating(false);
@@ -465,7 +479,7 @@ export default function ProjectPlanningPage() {
                 <div className="flex justify-between items-center pb-6 border-b border-accent/5"><h4 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent/60">Partner Matrix</h4><Button variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white"><Plus className="h-4 w-4 mr-2" /> Link Resource</Button></div>
                 <div className="space-y-6">
                   {(editFormData.vendorAllocations || []).map((alloc, idx) => (
-                    <div key={alloc.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-8 relative group hover:bg-white hover:shadow-2xl transition-all">
+                    <div key={alloc.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-8 relative group hover:bg-white hover:shadow-xl transition-all">
                       <Button variant="ghost" size="icon" onClick={() => removeAllocation(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         <div className="space-y-2">
@@ -504,28 +518,53 @@ export default function ProjectPlanningPage() {
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent className="rounded-none border-accent/20 font-body p-12 bg-white">
           <AlertDialogHeader className="space-y-6"><div className="flex items-center gap-3"><XCircle className="h-6 w-6 text-destructive" /><span className="text-destructive text-[13px] font-bold uppercase tracking-[0.3em]">Critical Protocol Interruption</span></div><AlertDialogTitle className="text-3xl font-headline italic text-destructive">Confirm Dossier Purge?</AlertDialogTitle><AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">This will permanently remove project briefing **{deleteId}** and all associated architectural and financial data from the studio registry.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter className="pt-12"><AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 border-accent/10">Abort Cancellation</AlertDialogCancel><AlertDialogAction onClick={() => { if(deleteId) { removeClientProject(deleteId); setDeleteId(null); toast({title: "Briefing Purged"}); } }} className="bg-destructive text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-12 hover:bg-destructive/90 shadow-xl">Authorize Purge</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter className="pt-12"><AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-10 px-10 border-accent/10">Abort Cancellation</AlertDialogCancel><AlertDialogAction onClick={() => { if(deleteId) { removeClientProject(deleteId); setDeleteId(null); toast({title: "Briefing Purged"}); } }} className="bg-destructive text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-12 hover:bg-destructive/90 shadow-xl">Authorize Purge</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <Dialog open={activationProject !== null} onOpenChange={(open) => !open && setActivationProject(null)}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden bg-white">
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-xl p-0 overflow-hidden bg-white">
           <div className="bg-orange-600 h-1.5 w-full" />
-          <div className="p-12 space-y-10">
+          <div className="p-12 space-y-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
             <DialogHeader className="space-y-4">
               <div className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-orange-600" /><span className="text-orange-600 text-[12px] font-bold uppercase tracking-[0.4em]">Activation Protocol</span></div>
               <DialogTitle className="text-3xl font-headline italic">Verify Commitment</DialogTitle>
               <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">Transitioning <strong>{activationProject?.project}</strong> to site implementation requires formal verification of the initial capital commitment and assigned stewardship.</DialogDescription>
             </DialogHeader>
             <div className="space-y-10">
-              <div className="p-10 bg-orange-500/5 border border-orange-500/10 space-y-4 relative overflow-hidden">
+              <div className="p-8 bg-orange-500/5 border border-orange-500/10 space-y-4 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-16 w-16" /></div>
                 <div className="flex flex-col gap-1 relative z-10">
                   <span className="text-[11px] uppercase tracking-widest font-bold text-orange-600/60">Authorized Deposit Value</span>
                   <span className="text-3xl font-headline italic text-orange-600">KES {activationProject ? (activationProject.installments.find(i => i.label.toLowerCase().includes('deposit'))?.amount || 0).toLocaleString() : 0}</span>
                 </div>
               </div>
-              <div className="space-y-6">
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Verified Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[13px] border-accent/20 font-bold uppercase tracking-widest focus:ring-orange-600">
+                          <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
+                          {format(activationDate, "MMM dd, yyyy")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 rounded-none">
+                        <Calendar mode="single" selected={activationDate} onSelect={(d) => d && setActivationDate(d)} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Verified Amount (KES)</Label>
+                    <Input 
+                      type="number" 
+                      className="rounded-none border-accent/20 h-14 text-xl font-headline italic focus:ring-orange-600" 
+                      value={activationAmount} 
+                      onChange={(e) => setActivationAmount(Number(e.target.value))} 
+                    />
+                  </div>
+                </div>
                 <div className="space-y-3">
                   <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label>
                   <Input placeholder="E.g., TRX-9921-WHYTE" className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] font-medium focus:ring-orange-600" value={depositCode} onChange={(e) => setDepositCode(e.target.value)} />
@@ -537,13 +576,21 @@ export default function ProjectPlanningPage() {
                       <SelectValue placeholder="SELECT STEWARD" />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
-                      {stewards.map(s => <SelectItem key={s.id} value={s.id} className="uppercase tracking-widest text-[10px] font-bold py-3">{s.name}</SelectItem>)}
+                      {stewards.map(s => <SelectItem key={s.id} value={s.id} className="uppercase tracking-widest text-[11px] font-bold py-3">{s.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
             </div>
-            <DialogFooter className="pt-6"><Button className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em]" onClick={handleActivateJourney} disabled={isActivating || !depositCode || !assignedStewardId}>{isActivating ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span> : "Authorize Commission Activation"}</Button></DialogFooter>
+            <DialogFooter className="pt-6">
+              <Button 
+                className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em]" 
+                onClick={handleActivateJourney} 
+                disabled={isActivating || !depositCode || !assignedStewardId}
+              >
+                {isActivating ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span> : "Authorize Commission Activation"}
+              </Button>
+            </DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
