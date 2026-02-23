@@ -11,12 +11,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 
 export function Navbar() {
@@ -29,14 +23,9 @@ export function Navbar() {
 
   const navItems = [
     { name: "Services", href: "/#services" },
+    { name: "Portfolio", href: "/#portfolio" },
     { name: "Investment", href: "/pricing" },
     { name: "Style Quiz", href: "/#quiz" },
-  ];
-
-  const siteLinks = [
-    { name: "Portfolio", href: "/#portfolio" },
-    { name: "Consultations", href: "/#contact" },
-    { name: "Feedback", href: "/feedback" },
   ];
 
   return (
@@ -59,25 +48,6 @@ export function Navbar() {
               {item.name}
             </Link>
           ))}
-
-          {/* Site Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] hover:text-accent transition-colors outline-none">
-              Site <ChevronDown className="h-3 w-3 opacity-40" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="rounded-none border-accent/10 min-w-[180px] p-2 bg-white">
-              {siteLinks.map((link) => (
-                <DropdownMenuItem key={link.name} asChild>
-                  <Link
-                    href={link.href}
-                    className="text-[10px] font-bold uppercase tracking-widest py-3 px-4 cursor-pointer focus:bg-accent focus:text-white"
-                  >
-                    {link.name}
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
           
           <div className="h-4 w-px bg-accent/20 mx-2" />
           
@@ -114,21 +84,6 @@ export function Navbar() {
                       className="text-[13px] font-bold uppercase tracking-[0.3em] px-8 py-6 border-b border-accent/5 hover:bg-accent/5"
                     >
                       {item.name}
-                    </Link>
-                  ))}
-                  
-                  {/* Site links listed individually on mobile for better tap targets */}
-                  <div className="bg-accent/5 px-8 py-4">
-                    <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-accent/40">Site Registry</span>
-                  </div>
-                  {siteLinks.map((link) => (
-                    <Link
-                      key={link.name}
-                      href={link.href}
-                      onClick={() => setIsOpen(false)}
-                      className="text-[13px] font-bold uppercase tracking-[0.3em] px-8 py-6 border-b border-accent/5 hover:bg-accent/5 italic"
-                    >
-                      {link.name}
                     </Link>
                   ))}
                   

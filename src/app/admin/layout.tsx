@@ -1,7 +1,7 @@
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { LayoutDashboard, Briefcase, MessageSquare, Star, Settings, User, ClipboardList, PlayCircle, CheckCircle2, UserPlus, Users, HardHat, ShieldCheck, Handshake, HeartHandshake } from "lucide-react";
+import { LayoutDashboard, Briefcase, MessageSquare, Star, Settings, User, ClipboardList, PlayCircle, CheckCircle2, UserPlus, Users, HardHat, ShieldCheck, Handshake, HeartHandshake, Globe } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -13,9 +13,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return pathname.startsWith(href);
   };
 
-  const mainNav = [
+  const managementNav = [
     { title: "Dashboard", icon: LayoutDashboard, href: "/admin" },
     { title: "CRM", icon: HeartHandshake, href: "/admin/crm" },
+  ];
+
+  const siteRegistryNav = [
     { title: "Portfolio", icon: Briefcase, href: "/admin/projects" },
     { title: "Inquiries", icon: MessageSquare, href: "/admin/inquiries" },
     { title: "Feedback", icon: Star, href: "/admin/feedback" },
@@ -33,7 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   const hrNav = [
-    { title: "Business Partners / Collaborators", icon: Users, href: "/admin/hr" },
+    { title: "Partners & Trades", icon: Users, href: "/admin/hr" },
   ];
 
   const NavItem = ({ item }: { item: { title: string, icon: any, href: string } }) => {
@@ -83,7 +86,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Studio Management</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {mainNav.map((item) => (
+                  {managementNav.map((item) => (
+                    <NavItem key={item.title} item={item} />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="mt-4">
+              <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Site Registry</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {siteRegistryNav.map((item) => (
                     <NavItem key={item.title} item={item} />
                   ))}
                 </SidebarMenu>
@@ -113,7 +127,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarGroup>
 
             <SidebarGroup className="mt-4">
-              <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Network & HR</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Network Matrix</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {hrNav.map((item) => (
