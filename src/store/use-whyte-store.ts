@@ -26,6 +26,7 @@ export interface Installment {
   amount: number;
   status: 'Pending' | 'Paid';
   transactionCode?: string;
+  date?: string;
 }
 
 export interface VendorAllocation {
@@ -261,7 +262,7 @@ const initialClientProjects: ClientProject[] = [
       { id: "M-1", label: "Structural Completion", date: "Apr 15, 2024", isCompleted: true, description: "Foundation and framing verified." }
     ],
     installments: [
-      { label: "Initial Deposit (70%)", percentage: 70, amount: 10500000, status: 'Paid', transactionCode: "AUTH-8821" },
+      { label: "Initial Deposit (70%)", percentage: 70, amount: 10500000, status: 'Paid', transactionCode: "AUTH-8821", date: "Jan 15, 2024" },
       { label: "Final Reconciliation (30%)", percentage: 30, amount: 4500000, status: 'Pending' }
     ],
     tasks: [

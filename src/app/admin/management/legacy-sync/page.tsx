@@ -33,7 +33,9 @@ import {
   Camera,
   Star,
   LayoutList,
-  ShieldAlert
+  ShieldAlert,
+  CreditCard,
+  Banknote
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -43,6 +45,8 @@ import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,6 +82,8 @@ export default function LegacyReconciliationPage() {
     description: "",
     totalBudget: "",
     liquidatedFunds: "",
+    transactionCode: "",
+    settlementDate: new Date(),
     startDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
     endDate: new Date(),
     assignedDesignerId: "",
@@ -142,7 +148,7 @@ export default function LegacyReconciliationPage() {
       email: formData.email, 
       project: formData.project, 
       tier: formData.tier, 
-      status: isArchived ? 'Completion' : 'Execution', 
+      status: isArchived ? 'Completion' : isHandover ? 'Completion' : 'Execution', 
       progress: isArchived ? 100 : isHandover ? 95 : 50, 
       startDate: format(formData.startDate, "MMM dd, yyyy"), 
       endDate: format(formData.endDate, "MMM dd, yyyy"), 
@@ -153,7 +159,20 @@ export default function LegacyReconciliationPage() {
       milestones: isArchived ? [{ id: 'M-HIST', label: "Legacy Conclusion", date: format(formData.endDate, "MMM dd, yyyy"), isCompleted: true, description: "Historical record finalized." }] : formData.milestones, 
       tasks: formData.activeTasks, 
       installments: [
-        { label: "Historical Settlement", percentage: 100, amount: liquidated, status: 'Paid' as const, transactionCode: 'LEGACY-SYNC' }
+        { 
+          label: "Historical Settlement", 
+          percentage: Math.round((liquidated / Math.max(1, budget)) * 100), 
+          amount: liquidated, 
+          status: 'Paid' as const, 
+          transactionCode: formData.transactionCode || 'LEGACY-SYNC',
+          date: format(formData.settlementDate, "MMM dd, yyyy")
+        },
+        ...(liquidated < budget ? [{
+          label: "Outstanding Balance",
+          percentage: Math.round(((budget - liquidated) / budget) * 100),
+          amount: budget - liquidated,
+          status: 'Pending' as const
+        }] : [])
       ], 
       description: formData.description,
       vendorAllocations: allocations,
@@ -183,8 +202,8 @@ export default function LegacyReconciliationPage() {
     if (step === 1) return formData.syncPath;
     if (step === 2) return formData.name && formData.email && formData.project; 
     if (step === 3 && formData.syncPath === 'Handover') return formData.handoverChecklist.length > 0;
-    if (step === 4) return formData.assignedDesignerId !== "";
-    if (step === 5) return formData.totalBudget && formData.liquidatedFunds; 
+    if (step === 4 || (formData.syncPath === 'Archive' && step === 3)) return formData.assignedDesignerId !== "";
+    if (step === 5 || (formData.syncPath === 'Archive' && step === 4)) return formData.totalBudget && formData.liquidatedFunds && formData.transactionCode; 
     return true; 
   };
 
@@ -204,7 +223,7 @@ export default function LegacyReconciliationPage() {
         <ShieldAlert className="h-5 w-5 text-accent" />
         <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Operational Lifecycle Guardrail</AlertTitle>
         <AlertDescription className="text-base font-light italic text-muted-foreground leading-relaxed">
-          Unless a historical item is synchronized directly to the **Master Archives**, it must pass all standard **Handover Protocols** and **Financial Audit** requirements before permanent archival.
+          Historical ledger synchronization requires **Verified Transaction References**. Any identified due amount will be highlighted across all portal registries.
         </AlertDescription>
       </Alert>
 
@@ -372,8 +391,41 @@ export default function LegacyReconciliationPage() {
                     <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Contract Value (KES)</Label><Input type="number" placeholder="Original Budget" className="rounded-none border-accent/20 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} /></div>
                     <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Liquidated Funds (KES)</Label><Input type="number" placeholder="Amount Received" className="rounded-none border-accent/20 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.liquidatedFunds} onChange={(e) => setFormData({...formData, liquidatedFunds: e.target.value})} /></div>
                   </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-3">
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label>
+                      <div className="relative">
+                        <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-accent/20" />
+                        <Input placeholder="E.g., TRX-HIST-9921" className="pl-12 rounded-none border-accent/20 h-14 text-sm font-bold uppercase tracking-widest focus:ring-accent" value={formData.transactionCode} onChange={(e) => setFormData({...formData, transactionCode: e.target.value})} />
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Settlement Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-accent/20 uppercase tracking-widest font-bold">
+                            <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
+                            {format(formData.settlementDate, "MMM dd, yyyy")}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-none">
+                          <Calendar mode="single" selected={formData.settlementDate} onSelect={(d) => d && setFormData({...formData, settlementDate: d})} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
                   <div className="p-8 bg-accent/[0.03] border border-accent/10 space-y-4">
-                    <div className="flex justify-between items-center"><span className="text-[11px] font-bold uppercase tracking-widest text-accent/40">Archival Settlement Margin</span><span className="text-2xl font-headline italic text-accent">KES {(Number(formData.totalBudget) - Number(formData.liquidatedFunds)).toLocaleString()}</span></div>
+                    <div className="flex justify-between items-center">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-accent/40">Historical Due Balance</span>
+                        <p className="text-[10px] text-orange-600 font-bold uppercase tracking-widest italic">Highlighted across portal registries</p>
+                      </div>
+                      <span className={cn("text-3xl font-headline italic", Number(formData.totalBudget) - Number(formData.liquidatedFunds) > 0 ? "text-orange-600" : "text-green-600")}>
+                        KES {(Number(formData.totalBudget) - Number(formData.liquidatedFunds)).toLocaleString()}
+                      </span>
+                    </div>
                     <Progress value={(Number(formData.liquidatedFunds) / Math.max(1, Number(formData.totalBudget))) * 100} className="h-1 bg-accent/5 rounded-none" />
                   </div>
                 </motion.div>
@@ -387,7 +439,7 @@ export default function LegacyReconciliationPage() {
                     <div className="p-8 border border-dashed border-accent/20 flex flex-col md:flex-row items-center justify-between gap-8">
                       <div className="space-y-1">
                         <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Verification Protocol</p>
-                        <p className="text-[13px] italic font-light text-muted-foreground">Confirming all historical site protocols and capital distributions are synchronized.</p>
+                        <p className="text-[13px] italic font-light text-muted-foreground">Confirming all historical site protocols and verified transaction references.</p>
                       </div>
                       <Button type="button" onClick={() => setIsConfirmOpen(true)} className="h-14 px-12 bg-accent text-white rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all hover:tracking-[0.2em] flex gap-3"><ShieldCheck className="h-5 w-5" /> Authorize Sync</Button>
                     </div>

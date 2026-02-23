@@ -78,17 +78,19 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   const project = clientProjects.find(p => p.id === id);
   const projectInquiries = inquiries.filter(inq => inq.projectId === id);
 
-  useEffect(() => {
-    setIsMounted(true);
-    setActiveDesignerId(localStorage.getItem("whyte_active_designer_id"));
-  }, []);
-
+  // CHECK FOR PENDING REQUEST
   const hasPendingRequest = useMemo(() => {
+    if (!project || !activeDesignerId) return false;
     return projectInquiries.some(inq => 
       inq.status === 'new' && 
       inq.message.includes(`Lead Request: Designer ${activeDesignerId}`)
     );
-  }, [projectInquiries, activeDesignerId]);
+  }, [project, projectInquiries, activeDesignerId]);
+
+  useEffect(() => {
+    setIsMounted(true);
+    setActiveDesignerId(localStorage.getItem("whyte_active_designer_id"));
+  }, []);
 
   if (!isMounted || !project) return null;
 
@@ -98,6 +100,9 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   const tasks = project.tasks || [];
   const allTasksDone = tasks.length > 0 && tasks.every(t => t.status === 'Done');
   const pendingTasks = tasks.filter(t => t.status !== 'Done');
+
+  const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
+  const isLegerSynchronized = totalPaid >= project.totalBudget;
 
   const handleRequestAccess = () => {
     if (hasPendingRequest) return;
@@ -303,6 +308,16 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
           </Alert>
         )}
 
+        {!isLegerSynchronized && isAssignedLead && (
+          <Alert className="rounded-none border-orange-500/20 bg-orange-500/[0.02] p-6 shadow-sm">
+            <AlertCircle className="h-5 w-5 text-orange-600" />
+            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600 mb-1">Dossier Alert — Capital Impasse</AlertTitle>
+            <AlertDescription className="text-[13px] font-light italic text-orange-600/80">
+              The studio registry identified an outstanding balance for this commission. Site procurement and trade liquidations may be impacted.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {(project.isArchived || project.status === 'Completion') && (
           <Alert className="rounded-none border-neutral-200 bg-neutral-50 p-6">
             <Archive className="h-5 w-5 text-neutral-400" />
@@ -312,7 +327,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
             <AlertDescription className="text-[13px] font-light italic text-neutral-400">
               {project.isArchived 
                 ? "This commission has been formally concluded and archived." 
-                : "Handover authorized. Dossier is read-only while Admin performs final financial reconciliation."}
+                : "Handover authorized. Project has transitioned to the Reconciliation phase."}
             </AlertDescription>
           </Alert>
         )}
@@ -355,12 +370,10 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
               <span>Dossier: {project.id}</span>
               <div className="h-1 w-1 bg-neutral-200 rounded-full" />
               <span className={cn(project.isArchived && "text-neutral-400")}>Phase: {project.status}</span>
-              {project.financialReportStatus === 'Verified' && (
-                <>
-                  <div className="h-1 w-1 bg-neutral-200 rounded-full" />
-                  <span className="text-green-600 flex items-center gap-2"><FileCheck className="h-3.5 w-3.5" /> Audit Synchronized</span>
-                </>
-              )}
+              <div className="h-1 w-1 bg-neutral-200 rounded-full" />
+              <span className={cn("flex items-center gap-2", isLegerSynchronized ? "text-green-600" : "text-orange-600")}>
+                <Wallet className="h-3.5 w-3.5" /> {isLegerSynchronized ? "Financially Synchronized" : "Capital Balance Identified"}
+              </span>
             </div>
           </div>
           <div className="flex flex-col items-end gap-4">

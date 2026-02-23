@@ -41,7 +41,8 @@ import {
   ZapOff,
   ClipboardList,
   Activity,
-  PencilRuler
+  PencilRuler,
+  AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +61,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   
   const [verifyingInstallment, setVerifyingInstallment] = useState<number | null>(null);
   const [txnCode, setTxnCode] = useState("");
+  const [paymentDate, setPaymentDate] = useState<Date>(new Date());
   const [isVerifying, setIsVerifying] = useState(false);
 
   const [isAddingReport, setIsAddingReport] = useState(false);
@@ -98,7 +100,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       updatedInstallments[verifyingInstallment] = {
         ...updatedInstallments[verifyingInstallment],
         status: 'Paid',
-        transactionCode: txnCode
+        transactionCode: txnCode,
+        date: format(paymentDate, "MMM dd, yyyy")
       };
       updateClientProject(project.id, { installments: updatedInstallments, lastActivity: `Payment Verified: ${updatedInstallments[verifyingInstallment].label}` });
       toast({ title: "Financial Protocol Synchronized", description: `Installment verified with code ${txnCode}.` });
@@ -190,6 +193,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
   const remainingBalance = (project.totalBudget || 0) - totalPaid;
+  const isLegerSynchronized = remainingBalance <= 0;
 
   const temporal = (() => {
     if (!project.isActivated) return { label: "Temporal Status", value: "Locked", icon: <ZapOff className="h-5 w-5" />, sub: "Pending Activation" };
@@ -258,6 +262,15 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         {isAuditVerified && (<Alert className="rounded-none border-green-600/20 bg-green-600/[0.02]"><Lock className="h-4 w-4 text-green-600" /><AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-green-600">Dossier Locked — Audit Verified</AlertTitle><AlertDescription className="text-[13px] font-light italic">This commission has been reconciled and verified. All protocols are now read-only.</AlertDescription></Alert>)}
         {project.status === 'Completion' && !isAuditVerified && (
           <Alert className="rounded-none border-accent/10 bg-accent/[0.02]"><ShieldCheck className="h-4 w-4 text-accent" /><AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent">Reconciliation Phase Active</AlertTitle><AlertDescription className="text-[13px] font-light italic">Site implementation is finalized. Dossier is read-only while undergoing financial stewardship reconciliation.</AlertDescription></Alert>
+        )}
+        {!isLegerSynchronized && (
+          <Alert className="rounded-none border-orange-500/20 bg-orange-500/[0.02] p-6 shadow-sm">
+            <AlertCircle className="h-5 w-5 text-orange-600" />
+            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600 mb-1">Outstanding Capital Commitment</AlertTitle>
+            <AlertDescription className="text-[13px] font-light italic text-orange-600/80">
+              A due balance of **KES {remainingBalance.toLocaleString()}** has been identified. Settlement verification required before final reconciliation.
+            </AlertDescription>
+          </Alert>
         )}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
           <div className="space-y-2">
@@ -359,8 +372,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         </TabsContent>
 
         <TabsContent value="ledger" className="m-0 space-y-12">
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-8"><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p><p className="text-3xl font-headline italic text-accent">KES {(project.totalBudget || 0).toLocaleString()}</p></div></Card><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p><p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p></div></Card><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><History className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-orange-600/60">Outstanding Balance</p><p className="text-3xl font-headline italic text-orange-600">KES {remainingBalance.toLocaleString()}</p></div></Card></div>
-           <Card className="rounded-none border-accent/5 p-0 bg-white shadow-2xl overflow-hidden"><div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center"><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3"><CreditCard className="h-5 w-5" /> Architectural Registry</h3><Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">Stewardship Verified</Badge></div><div className="divide-y divide-accent/5">{project.installments.map((ins, i) => (<div key={i} className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8 hover:bg-accent/[0.01] transition-colors"><div className="flex items-center gap-8"><div className={cn("h-12 w-12 rounded-full flex items-center justify-center shrink-0 border", ins.status === 'Paid' ? "bg-green-600/5 border-green-600/20 text-green-600" : "bg-orange-600/5 border-orange-600/20 text-orange-600")}>{ins.status === 'Paid' ? <CheckCircle2 className="h-5 w-5" /> : <Timer className="h-5 w-5 animate-pulse" />}</div><div className="space-y-1.5"><div className="flex items-center gap-3"><p className="text-base font-bold uppercase tracking-[0.2em]">{ins.label}</p><Badge className={cn("rounded-none text-[10px] uppercase tracking-widest px-2.5 py-0.5 font-bold", ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white")}>{ins.status}</Badge></div><div className="flex items-center gap-4 text-[12px] text-muted-foreground font-bold uppercase tracking-widest"><span>Ref: {ins.transactionCode || 'Awaiting Sync'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.percentage}% Allocation</span></div></div></div><div className="flex items-center gap-12 justify-between lg:justify-end"><div className="text-right"><p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Value</p><p className="text-2xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p></div>{ins.status === 'Pending' && !isAuditVerified && (<Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-12 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"><ShieldCheck className="h-4 w-4" /> Verify Entry</Button>)}{ins.status === 'Paid' && (<div className="h-12 w-12 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]"><Check className="h-6 w-6" /></div>)}</div></div>))}</div></Card>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-8"><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p><p className="text-3xl font-headline italic text-accent">KES {(project.totalBudget || 0).toLocaleString()}</p></div></Card><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p><p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p></div></Card><Card className={cn("rounded-none p-10 relative overflow-hidden group transition-all", isLegerSynchronized ? "bg-white border-accent/10" : "bg-orange-50 border-orange-500/20 shadow-xl")}><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><History className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className={cn("text-[11px] font-bold uppercase tracking-[0.4em]", isLegerSynchronized ? "text-accent/40" : "text-orange-600/60")}>Outstanding Balance</p><p className={cn("text-3xl font-headline italic", isLegerSynchronized ? "text-accent" : "text-orange-600")}>KES {remainingBalance.toLocaleString()}</p></div></Card></div>
+           <Card className="rounded-none border-accent/5 p-0 bg-white shadow-2xl overflow-hidden"><div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center"><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3"><CreditCard className="h-5 w-5" /> Architectural Registry</h3><Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">Stewardship Verified</Badge></div><div className="divide-y divide-accent/5">{project.installments.map((ins, i) => (<div key={i} className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8 hover:bg-accent/[0.01] transition-colors"><div className="flex items-center gap-8"><div className={cn("h-12 w-12 rounded-full flex items-center justify-center shrink-0 border", ins.status === 'Paid' ? "bg-green-600/5 border-green-600/20 text-green-600" : "bg-orange-600/5 border-orange-600/20 text-orange-600")}>{ins.status === 'Paid' ? <CheckCircle2 className="h-5 w-5" /> : <Timer className="h-5 w-5 animate-pulse" />}</div><div className="space-y-1.5"><div className="flex items-center gap-3"><p className="text-base font-bold uppercase tracking-[0.2em]">{ins.label}</p><Badge className={cn("rounded-none text-[10px] uppercase tracking-widest px-2.5 py-0.5 font-bold", ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white")}>{ins.status}</Badge></div><div className="flex items-center gap-4 text-[12px] text-muted-foreground font-bold uppercase tracking-widest"><span>Ref: {ins.transactionCode || 'Awaiting Sync'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.date || 'TBD'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.percentage}% Allocation</span></div></div></div><div className="flex items-center gap-12 justify-between lg:justify-end"><div className="text-right"><p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Value</p><p className={cn("text-2xl font-headline italic", ins.status === 'Pending' ? 'text-orange-600' : 'text-accent')}>KES {ins.amount.toLocaleString()}</p></div>{ins.status === 'Pending' && !isAuditVerified && (<Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-12 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"><ShieldCheck className="h-4 w-4" /> Verify Entry</Button>)}{ins.status === 'Paid' && (<div className="h-12 w-12 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]"><Check className="h-6 w-6" /></div>)}</div></div>))}</div></Card>
         </TabsContent>
       </Tabs>
 
@@ -399,9 +412,25 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                 <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-14 w-14" /></div>
                 <div className="flex justify-between items-end relative z-10"><span className="text-[12px] uppercase tracking-widest font-bold text-accent/40">Authorized Amount</span><span className="text-2xl font-headline italic text-accent">KES {verifyingInstallment !== null ? project.installments[verifyingInstallment].amount.toLocaleString() : 0}</span></div>
               </div>
-              <div className="space-y-3">
-                <Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label>
-                <Input placeholder="E.g., TRX-9921-WHYTE" className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] font-medium" value={txnCode} onChange={(e) => setTxnCode(e.target.value)} />
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label>
+                  <Input placeholder="E.g., TRX-9921-WHYTE" className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] font-medium" value={txnCode} onChange={(e) => setTxnCode(e.target.value)} />
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Verification Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[13px] border-accent/20 font-bold uppercase tracking-widest">
+                        <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
+                        {format(paymentDate, "MMM dd, yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 rounded-none">
+                      <Calendar mode="single" selected={paymentDate} onSelect={(d) => d && setPaymentDate(d)} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </div>
             <DialogFooter className="pt-4">

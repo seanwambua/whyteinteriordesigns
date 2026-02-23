@@ -114,6 +114,10 @@ export default function ClientDashboardPage() {
     ? (activeProject.isExtended ? 88 : 96) 
     : Math.round((completedTasksCount / Math.max(1, activeProject.tasks?.length || 1)) * 100);
 
+  const totalPaid = activeProject.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
+  const dueBalance = activeProject.totalBudget - totalPaid;
+  const hasOutstandingBalance = dueBalance > 0;
+
   if (activeProject.status === 'Termination') {
     const audit = activeProject.termination?.audit;
     const totalAllocated = audit?.allocations.reduce((sum, a) => sum + a.amount, 0) || 0;
@@ -305,6 +309,19 @@ export default function ClientDashboardPage() {
         </div>
       </motion.div>
 
+      {hasOutstandingBalance && (
+        <Alert className="rounded-none border-orange-500/20 bg-orange-500/[0.03] p-8 shadow-xl">
+          <Wallet className="h-6 w-6 text-orange-600" />
+          <div className="ml-4 space-y-2">
+            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Pending Capital Commitment Identified</AlertTitle>
+            <AlertDescription className="text-sm font-light italic text-orange-600/80 leading-relaxed">
+              Our registry indicates an outstanding balance of **KES {dueBalance.toLocaleString()}**. 
+              Please coordinate with your Financial Lead to synchronize final settlements and unlock the handover audit.
+            </AlertDescription>
+          </div>
+        </Alert>
+      )}
+
       {(activeProject.isArchived || activeProject.status === 'Terminated') && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -443,16 +460,28 @@ export default function ClientDashboardPage() {
         </div>
 
         <div className="lg:col-span-4 space-y-8">
-          <Card className="rounded-none border-accent/5 shadow-xl bg-white p-8 space-y-8">
-            <div className="text-center space-y-2"><h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Financial Ledger</h3><p className="text-xs font-light italic text-muted-foreground">Commission Tier: {activeProject.tier}</p></div>
+          <Card className={cn("rounded-none shadow-xl bg-white p-8 space-y-8 transition-all border", hasOutstandingBalance ? "border-orange-500/20 ring-1 ring-orange-500/10" : "border-accent/5")}>
+            <div className="text-center space-y-2">
+              <h3 className={cn("text-[10px] font-bold uppercase tracking-[0.4em]", hasOutstandingBalance ? "text-orange-600" : "text-accent/40")}>Financial Ledger</h3>
+              <p className="text-xs font-light italic text-muted-foreground">Commission Tier: {activeProject.tier}</p>
+            </div>
             <div className="space-y-4">
               {activeProject.installments.map((ins, i) => (
-                <div key={i} className={`p-4 border ${ins.status === 'Paid' ? 'border-green-600/20 bg-green-600/5' : 'border-accent/10 bg-secondary/10'}`}>
-                  <div className="flex justify-between items-center mb-1"><span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{ins.label}</span><span className={`text-[8px] font-bold uppercase tracking-widest ${ins.status === 'Paid' ? 'text-green-600' : 'text-accent/40'}`}>{ins.status}</span></div>
-                  <p className="text-sm font-bold tracking-widest text-accent">KES {ins.amount.toLocaleString()}</p>
+                <div key={i} className={`p-4 border ${ins.status === 'Paid' ? 'border-green-600/20 bg-green-600/5' : 'border-orange-500/10 bg-orange-500/[0.02]'}`}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{ins.label}</span>
+                    <span className={`text-[8px] font-bold uppercase tracking-widest ${ins.status === 'Paid' ? 'text-green-600' : 'text-orange-600'}`}>{ins.status}</span>
+                  </div>
+                  <p className={cn("text-sm font-bold tracking-widest", ins.status === 'Paid' ? 'text-accent' : 'text-orange-600')}>KES {ins.amount.toLocaleString()}</p>
+                  {ins.transactionCode && <p className="text-[8px] uppercase tracking-widest opacity-40 mt-1 font-mono">Ref: {ins.transactionCode}</p>}
                 </div>
               ))}
             </div>
+            {hasOutstandingBalance && (
+              <div className="p-4 bg-orange-600 text-white text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest">Total Due: KES {dueBalance.toLocaleString()}</p>
+              </div>
+            )}
             {!activeProject.isArchived && activeProject.status !== 'Terminated' && (
               <div className="pt-6 border-t border-accent/5">
                 <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[9px] font-bold">Raise Studio Inquiry</Button>
