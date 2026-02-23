@@ -56,7 +56,7 @@ import { Calendar } from "@/components/ui/calendar";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { clientProjects, designers, updateClientProject, financialSteward, inquiries, updateInquiryStatus } = useWhyteStore();
+  const { clientProjects, designers, updateClientProject, inquiries, updateInquiryStatus } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -287,8 +287,23 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-4 bg-white p-6 border border-accent/5 shadow-2xl">
-            <div className="space-y-1 pr-8 border-r border-accent/10"><Label className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label><Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)} disabled={isReadOnly}><SelectTrigger className="rounded-none border-none h-8 p-0 text-[13px] font-bold uppercase tracking-widest text-accent focus:ring-0 w-44"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="Planning">Planning</SelectItem><SelectItem value="Execution">Execution</SelectItem><SelectItem value="Completion">Completion</SelectItem></Select></div>
-            <div className="px-8 border-r border-accent/10"><span className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span><Badge className="rounded-none uppercase tracking-widest text-[12px] bg-accent text-white py-1">{project.tier}</Badge></div>
+            <div className="space-y-1 pr-8 border-r border-accent/10">
+              <Label className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label>
+              <Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)} disabled={isReadOnly}>
+                <SelectTrigger className="rounded-none border-none h-8 p-0 text-[13px] font-bold uppercase tracking-widest text-accent focus:ring-0 w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-none">
+                  <SelectItem value="Planning">Planning</SelectItem>
+                  <SelectItem value="Execution">Execution</SelectItem>
+                  <SelectItem value="Completion">Completion</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="px-8 border-r border-accent/10">
+              <span className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span>
+              <Badge className="rounded-none uppercase tracking-widest text-[12px] bg-accent text-white py-1">{project.tier}</Badge>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -390,10 +405,37 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             </DialogHeader>
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Entry Classification</Label><Select value={newReport.type} onValueChange={(v: any) => setNewReport({...newReport, type: v})}><SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="Progress">Deployment Progress</SelectItem><SelectItem value="Issue">Administrative Directive</SelectItem><SelectItem value="Log">Metadata Log</SelectItem></SelectContent></Select></div>
-                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Urgency Protocol</Label><Select value={newReport.urgency} onValueChange={(v: any) => setNewReport({...newReport, urgency: v})}><SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="Normal">Normal Visibility</SelectItem><SelectItem value="High">High Urgency</SelectItem><SelectItem value="Critical" className="text-red-600">Critical / Impasse</SelectItem></SelectContent></Select></div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Entry Classification</Label>
+                  <Select value={newReport.type} onValueChange={(v: any) => setNewReport({...newReport, type: v})}>
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="Progress">Deployment Progress</SelectItem>
+                      <SelectItem value="Issue">Administrative Directive</SelectItem>
+                      <SelectItem value="Log">Metadata Log</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Urgency Protocol</Label>
+                  <Select value={newReport.urgency} onValueChange={(v: any) => setNewReport({...newReport, urgency: v})}>
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="Normal">Normal Visibility</SelectItem>
+                      <SelectItem value="High">High Urgency</SelectItem>
+                      <SelectItem value="Critical" className="text-red-600">Critical / Impasse</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-2"><Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Log Content</Label><Textarea value={newReport.content} onChange={(e) => setNewReport({...newReport, content: e.target.value})} placeholder="Administrative site notes..." className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic leading-relaxed focus:ring-accent bg-secondary/10" /></div>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Log Content</Label>
+                <Textarea value={newReport.content} onChange={(e) => setNewReport({...newReport, content: e.target.value})} placeholder="Administrative site notes..." className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic leading-relaxed focus:ring-accent bg-secondary/10" />
+              </div>
             </div>
             <DialogFooter><Button onClick={handleAddReport} disabled={!newReport.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[10px] font-bold shadow-2xl transition-all">Transmit to Registry</Button></DialogFooter>
           </div>
