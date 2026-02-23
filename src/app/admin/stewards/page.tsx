@@ -27,7 +27,8 @@ import {
   Zap,
   Activity,
   Banknote,
-  FileSearch
+  FileSearch,
+  History
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
