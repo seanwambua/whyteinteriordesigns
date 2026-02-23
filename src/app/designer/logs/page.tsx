@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useWhyteStore, ClientProject, SiteReport } from "@/store/use-whyte-store";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { 
   ClipboardList, 
   Search, 
@@ -40,7 +41,7 @@ export default function SiteLogRegistryPage() {
         logs.push({ projectId: p.id, projectName: p.project, report: r });
       });
     });
-    // Sort by date (descending - assuming date string format is sortable or simple)
+    // Sort by date (descending)
     return logs.sort((a, b) => new Date(b.report.date).getTime() - new Date(a.report.date).getTime());
   }, [clientProjects]);
 
