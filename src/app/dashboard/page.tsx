@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,8 @@ import {
   Building2,
   ExternalLink,
   Loader2,
-  PencilRuler
+  PencilRuler,
+  X
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -52,6 +53,7 @@ export default function ClientDashboardPage() {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request">("project_support");
   const [isMounted, setIsMounted] = useState(false);
+  const [isBalanceAlertDismissed, setIsBalanceAlertDismissed] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -310,18 +312,44 @@ export default function ClientDashboardPage() {
         </div>
       </motion.div>
 
-      {hasOutstandingBalance && (
-        <Alert className="rounded-none border-orange-500/20 bg-orange-500/[0.03] p-8 shadow-xl">
-          <Wallet className="h-6 w-6 text-orange-600" />
-          <div className="ml-4 space-y-2">
-            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Pending Capital Commitment Identified</AlertTitle>
-            <AlertDescription className="text-sm font-light italic text-orange-600/80 leading-relaxed">
-              Our registry indicates an outstanding balance of **KES {dueBalance.toLocaleString()}**. 
-              Please coordinate with your Financial Lead to synchronize final settlements and unlock the handover audit.
-            </AlertDescription>
-          </div>
-        </Alert>
-      )}
+      <AnimatePresence>
+        {hasOutstandingBalance && !isBalanceAlertDismissed && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -20, height: 0 }}
+            transition={{ duration: 0.5, ease: "circOut" }}
+            className="overflow-hidden"
+          >
+            <Alert className="rounded-none border-orange-500/20 bg-orange-500/[0.03] p-8 shadow-xl relative group">
+              <button 
+                onClick={() => setIsBalanceAlertDismissed(true)}
+                className="absolute top-4 right-4 p-2 text-orange-600/40 hover:text-orange-600 transition-colors"
+                title="Dismiss Protocol"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="flex items-start">
+                <Wallet className="h-6 w-6 text-orange-600 shrink-0" />
+                <div className="ml-4 space-y-2 pr-8">
+                  <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Pending Capital Commitment Identified</AlertTitle>
+                  <AlertDescription className="text-sm font-light italic text-orange-600/80 leading-relaxed">
+                    Our registry indicates an outstanding balance of **KES {dueBalance.toLocaleString()}**. 
+                    Please coordinate with your Financial Lead to synchronize final settlements and unlock the handover audit.
+                  </AlertDescription>
+                  <Button 
+                    variant="link" 
+                    onClick={() => setIsBalanceAlertDismissed(true)}
+                    className="text-[10px] uppercase font-bold tracking-widest text-orange-600/60 hover:text-orange-600 p-0 h-auto"
+                  >
+                    Dismiss Protocol
+                  </Button>
+                </div>
+              </div>
+            </Alert>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {(activeProject.isArchived || activeProject.status === 'Terminated') && (
         <motion.div 
