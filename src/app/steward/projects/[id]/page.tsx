@@ -28,7 +28,9 @@ import {
   Zap,
   TrendingDown,
   TrendingUp,
-  CreditCard
+  CreditCard,
+  Check,
+  ShieldAlert
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -241,7 +243,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               <AlertTitle className="text-[12px] font-bold uppercase tracking-widest">Protocol Sync Check</AlertTitle>
               <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
                 {hasSyncDiscrepancy 
-                  ? `Critical Discrepancy: Verified log (KES ${totalIncomingLogged.toLocaleString()}) does not match Studio Registry (KES ${totalRegistryPaid.toLocaleString()}). authorization locked.`
+                  ? `Critical Discrepancy: Verified log (KES ${totalIncomingLogged.toLocaleString()}) does not match Studio Registry (KES ${totalRegistryPaid.toLocaleString()}). Authorization locked.`
                   : lastSyncTimestamp 
                   ? `Synchronization established at ${lastSyncTimestamp}. All project installments verified against registry.` 
                   : "Establishing a sync check is mandatory before authorizing final capital reconciliation."}
@@ -347,9 +349,11 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                             onClick={() => handleToggleVerifyIncoming(entry.id)}
                             className={cn(
                               "h-12 w-full rounded-none transition-all",
-                              entry.isVerified ? "bg-green-600 hover:bg-green-700 text-white" : "border-slate-200 text-slate-400 hover:text-slate-900"
+                              entry.isVerified 
+                                ? "bg-green-600 hover:bg-green-700 text-white border-green-600" 
+                                : "border-slate-200 text-slate-400 hover:text-slate-900 hover:border-slate-900"
                             )}
-                            title={entry.isVerified ? "Protocol Verified" : "Awaiting Verification"}
+                            title={entry.isVerified ? "Certified Protocol" : "Awaiting Certification"}
                           >
                             {entry.isVerified ? <CheckCircle2 className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
                           </Button>
@@ -505,7 +509,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                 )}
                 {!allFundsVerified && incomingFunds.length > 0 && (
                   <div className="p-4 bg-orange-500/10 border border-orange-500/20 flex gap-3 items-center">
-                    <ShieldCheck className="h-4 w-4 text-orange-400 shrink-0" />
+                    <ShieldAlert className="h-4 w-4 text-orange-400 shrink-0" />
                     <p className="text-[10px] text-orange-200 italic leading-relaxed">Mandatory Verification Required. Certify all incoming entries to unlock authorization.</p>
                   </div>
                 )}
@@ -513,8 +517,10 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   onClick={handleAuthorizeAudit}
                   disabled={isSubmitting || totalIncomingLogged === 0 || !lastSyncTimestamp || hasDiscrepancy || hasSyncDiscrepancy || !allFundsVerified}
                   className={cn(
-                    "w-full h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all flex gap-4",
-                    (!lastSyncTimestamp || hasSyncDiscrepancy || !allFundsVerified) ? "bg-white/5 text-white/40 cursor-not-allowed border-white/10" : "bg-white text-slate-900 hover:bg-slate-100"
+                    "w-full h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all flex gap-4 items-center justify-center",
+                    (!lastSyncTimestamp || hasSyncDiscrepancy || !allFundsVerified) 
+                      ? "bg-white/5 text-white/40 cursor-not-allowed border-white/10" 
+                      : "bg-white text-slate-900 hover:bg-slate-100"
                   )}
                 >
                   {isSubmitting ? (
