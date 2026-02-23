@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   const clientNav = [
-    { title: "Client Directory", icon: Users, href: "/admin/clients" },
+    { title: "Client Registry", icon: Users, href: "/admin/clients" },
     { title: "Designer Registry", icon: PencilRuler, href: "/admin/designers" },
     { title: "Steward Registry", icon: Building2, href: "/admin/stewards" },
   ];

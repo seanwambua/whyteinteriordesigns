@@ -62,7 +62,7 @@ type GroupedClient = {
   projects: ClientProject[];
 };
 
-function ClientDirectoryContent() {
+function ClientRegistryContent() {
   const { clientProjects, designers, removeClientProject, updateClientProject } = useWhyteStore();
   const { toast } = useToast();
   const router = useRouter();
@@ -294,7 +294,7 @@ function ClientDirectoryContent() {
             <div className="h-px w-8 bg-accent" />
             <span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Master Registry</span>
           </div>
-          <h1 className="text-5xl font-headline italic">Client <span className="not-italic">Directory.</span></h1>
+          <h1 className="text-5xl font-headline italic">Client <span className="not-italic">Registry.</span></h1>
         </div>
         <div className="flex gap-4">
           <div className="relative w-80">
@@ -360,10 +360,10 @@ function ClientDirectoryContent() {
   );
 }
 
-export default function ClientDirectoryPage() {
+export default function ClientRegistryPage() {
   return (
     <Suspense fallback={<div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>}>
-      <ClientDirectoryContent />
+      <ClientRegistryContent />
     </Suspense>
   );
 }
