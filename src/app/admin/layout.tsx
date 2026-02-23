@@ -17,6 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { title: "Dashboard", icon: LayoutDashboard, href: "/admin" },
     { title: "Insights", icon: BarChart3, href: "/admin/insights" },
     { title: "CRM", icon: HeartHandshake, href: "/admin/crm" },
+    { title: "System Onboarding", icon: ShieldAlert, href: "/admin/operations/onboarding" },
   ];
 
   const siteRegistryNav = [
@@ -34,7 +35,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { title: "Implementation", icon: PlayCircle, href: "/admin/operations/implementation" },
     { title: "Handover", icon: Handshake, href: "/admin/operations/handover" },
     { title: "Reconciliation", icon: ShieldCheck, href: "/admin/operations/closing" },
-    { title: "System Onboarding", icon: ShieldAlert, href: "/admin/operations/onboarding" },
   ];
 
   const hrNav = [
