@@ -78,7 +78,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   const project = clientProjects.find(p => p.id === id);
   const projectInquiries = inquiries.filter(inq => inq.projectId === id);
 
-  // CHECK FOR PENDING REQUEST - MOVED ABOVE EARLY RETURN
+  // CHECK FOR PENDING REQUEST - MOVED ABOVE EARLY RETURN TO PRESERVE HOOK ORDER
   const hasPendingRequest = useMemo(() => {
     return projectInquiries.some(inq => 
       inq.status === 'new' && 
@@ -572,8 +572,8 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
             </DialogHeader>
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Entry Classification</Label><Select value={newReport.type} onValueChange={(v: any) => setNewReport({...newReport, type: v})}><SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold"><SelectValue /></SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="Progress">Deployment Progress</SelectItem><SelectItem value="Issue">Site Restriction / Issue</SelectItem><SelectItem value="Log">General Metadata Log</SelectItem></SelectContent></Select></div>
-                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Urgency Protocol</Label><Select value={newReport.urgency} onValueChange={(v: any) => setNewReport({...newReport, urgency: v})}><SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold"><SelectValue /></SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="Normal">Normal Visibility</SelectItem><SelectItem value="High">High Urgency</SelectItem><SelectItem value="Critical" className="text-red-600">Critical / Impasse</SelectItem></SelectContent></Select></div>
+                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Entry Classification</Label><Select value={newReport.type} onValueChange={(v: any) => setNewReport({...newReport, type: v})}><SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="Progress">Deployment Progress</SelectItem><SelectItem value="Issue">Site Restriction / Issue</SelectItem><SelectItem value="Log">General Metadata Log</SelectItem></SelectContent></Select></div>
+                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Urgency Protocol</Label><Select value={newReport.urgency} onValueChange={(v: any) => setNewReport({...newReport, urgency: v})}><SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="Normal">Normal Visibility</SelectItem><SelectItem value="High">High Urgency</SelectItem><SelectItem value="Critical" className="text-red-600">Critical / Impasse</SelectItem></SelectContent></Select></div>
               </div>
               <div className="space-y-2"><Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Log Content</Label><Textarea value={newReport.content} onChange={(e) => setNewReport({...newReport, content: e.target.value})} placeholder="Specific architectural observations..." className="min-h-[150px] rounded-none border-neutral-200 p-6 font-light italic leading-relaxed focus:ring-accent bg-neutral-50/30" /></div>
             </div>
