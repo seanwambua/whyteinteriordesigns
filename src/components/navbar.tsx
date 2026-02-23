@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, User } from "lucide-react";
+import { Menu, User, ChevronDown } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -11,6 +11,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 
 export function Navbar() {
@@ -23,9 +29,14 @@ export function Navbar() {
 
   const navItems = [
     { name: "Services", href: "/#services" },
-    { name: "Portfolio", href: "/#portfolio" },
     { name: "Investment", href: "/pricing" },
     { name: "Style Quiz", href: "/#quiz" },
+  ];
+
+  const siteLinks = [
+    { name: "Portfolio", href: "/#portfolio" },
+    { name: "Consultations", href: "/#contact" },
+    { name: "Feedback", href: "/feedback" },
   ];
 
   return (
@@ -43,20 +54,39 @@ export function Navbar() {
             <Link
               key={item.name}
               href={item.href}
-              className="text-xs font-bold uppercase tracking-widest hover:text-accent transition-colors"
+              className="text-[11px] font-bold uppercase tracking-[0.2em] hover:text-accent transition-colors"
             >
               {item.name}
             </Link>
           ))}
+
+          {/* Site Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] hover:text-accent transition-colors outline-none">
+              Site <ChevronDown className="h-3 w-3 opacity-40" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="rounded-none border-accent/10 min-w-[180px] p-2 bg-white">
+              {siteLinks.map((link) => (
+                <DropdownMenuItem key={link.name} asChild>
+                  <Link
+                    href={link.href}
+                    className="text-[10px] font-bold uppercase tracking-widest py-3 px-4 cursor-pointer focus:bg-accent focus:text-white"
+                  >
+                    {link.name}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           <div className="h-4 w-px bg-accent/20 mx-2" />
           
-          <Link href="/dashboard" className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent hover:opacity-70 transition-opacity">
+          <Link href="/dashboard" className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-accent hover:opacity-70 transition-opacity">
             <User className="h-3 w-3" />
             Client Portal
           </Link>
 
-          <Button asChild variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-none h-10 px-6 uppercase tracking-widest text-[10px]">
+          <Button asChild variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-none h-10 px-6 uppercase tracking-widest text-[10px] font-bold">
             <Link href="/#contact">Book Consultation</Link>
           </Button>
         </div>
@@ -70,34 +100,51 @@ export function Navbar() {
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right">
-                <SheetHeader className="sr-only">
-                  <SheetTitle>Navigation Menu</SheetTitle>
-                  <SheetDescription>Access studio services and portfolio</SheetDescription>
+              <SheetContent side="right" className="bg-white border-l border-accent/10 p-0">
+                <SheetHeader className="p-8 border-b border-accent/5">
+                  <SheetTitle className="text-left text-sm uppercase tracking-[0.3em] font-bold text-accent">Studio Menu</SheetTitle>
+                  <SheetDescription className="text-left text-[10px] uppercase tracking-widest opacity-40">Access architectural modules</SheetDescription>
                 </SheetHeader>
-                <div className="flex flex-col gap-6 mt-12">
+                <div className="flex flex-col mt-4">
                   {navItems.map((item) => (
                     <Link
                       key={item.name}
                       href={item.href}
                       onClick={() => setIsOpen(false)}
-                      className="text-lg font-medium uppercase tracking-widest"
+                      className="text-[13px] font-bold uppercase tracking-[0.3em] px-8 py-6 border-b border-accent/5 hover:bg-accent/5"
                     >
                       {item.name}
+                    </Link>
+                  ))}
+                  
+                  {/* Site links listed individually on mobile for better tap targets */}
+                  <div className="bg-accent/5 px-8 py-4">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-accent/40">Site Registry</span>
+                  </div>
+                  {siteLinks.map((link) => (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      onClick={() => setIsOpen(false)}
+                      className="text-[13px] font-bold uppercase tracking-[0.3em] px-8 py-6 border-b border-accent/5 hover:bg-accent/5 italic"
+                    >
+                      {link.name}
                     </Link>
                   ))}
                   
                   <Link 
                     href="/dashboard" 
                     onClick={() => setIsOpen(false)}
-                    className="text-lg font-bold uppercase tracking-widest text-accent border-t pt-6"
+                    className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent px-8 py-8 flex items-center gap-3 bg-secondary/30"
                   >
-                    Client Portal
+                    <User className="h-4 w-4" /> Client Portal
                   </Link>
 
-                  <Button asChild className="mt-4 rounded-none uppercase tracking-widest text-xs" onClick={() => setIsOpen(false)}>
-                    <Link href="/#contact">Book Consultation</Link>
-                  </Button>
+                  <div className="p-8 mt-auto">
+                    <Button asChild className="w-full rounded-none h-14 uppercase tracking-[0.2em] text-[11px] font-bold shadow-xl" onClick={() => setIsOpen(false)}>
+                      <Link href="/#contact">Book Consultation</Link>
+                    </Button>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
