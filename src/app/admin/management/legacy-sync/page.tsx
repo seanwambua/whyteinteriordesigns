@@ -32,7 +32,8 @@ import {
   Key,
   Camera,
   Star,
-  LayoutList
+  LayoutList,
+  ShieldAlert
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -118,7 +119,6 @@ export default function LegacyReconciliationPage() {
     const budget = Number(formData.totalBudget) || 0;
     const liquidated = Number(formData.liquidatedFunds) || 0;
     
-    // Construct linked vendor allocations
     const allocations: VendorAllocation[] = formData.linkedCollaborators.map(cid => {
       const col = collaborators.find(c => c.id === cid);
       return {
@@ -142,7 +142,7 @@ export default function LegacyReconciliationPage() {
       email: formData.email, 
       project: formData.project, 
       tier: formData.tier, 
-      status: isArchived ? 'Completion' : isHandover ? 'Execution' : 'Execution', 
+      status: isArchived ? 'Completion' : 'Execution', 
       progress: isArchived ? 100 : isHandover ? 95 : 50, 
       startDate: format(formData.startDate, "MMM dd, yyyy"), 
       endDate: format(formData.endDate, "MMM dd, yyyy"), 
@@ -174,7 +174,7 @@ export default function LegacyReconciliationPage() {
     setTimeout(() => { 
       addClientProject(legacyDossier); 
       setLoading(false); 
-      toast({ title: "Legacy Sync Authorized", description: `Dossier ${id} has been registered via ${formData.syncPath} protocol.` });
+      toast({ title: "Legacy Sync Authorized", description: `Dossier ${id} registered. ${isArchived ? 'Direct Archive inject complete.' : 'Commission injected into pipeline for audit.'}` });
       router.push("/admin/clients"); 
     }, 1500);
   };
@@ -200,6 +200,14 @@ export default function LegacyReconciliationPage() {
         <h1 className="text-5xl font-headline italic">Legacy <span className="not-italic">Reconciliation.</span></h1>
       </motion.div>
 
+      <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
+        <ShieldAlert className="h-5 w-5 text-accent" />
+        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Operational Lifecycle Guardrail</AlertTitle>
+        <AlertDescription className="text-base font-light italic text-muted-foreground leading-relaxed">
+          Unless a historical item is synchronized directly to the **Master Archives**, it must pass all standard **Handover Protocols** and **Financial Audit** requirements before permanent archival.
+        </AlertDescription>
+      </Alert>
+
       <div className="max-w-md mx-auto mb-12">
         <div className="flex justify-between text-[11px] uppercase tracking-[0.3em] font-bold text-accent/40 mb-3">
           <span>Synchronization Protocol Stage {step} of {totalSteps}</span>
@@ -217,9 +225,9 @@ export default function LegacyReconciliationPage() {
                   <div className="flex items-center gap-4 mb-2"><History className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Protocol Context</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {[
-                      { id: 'Implementation', label: 'Active Implementation', icon: PlayCircle, sub: 'Project is active but needs retroactive logging.' },
-                      { id: 'Handover', label: 'Final Handover', icon: Handshake, sub: 'Project is ready for delivery and audit.' },
-                      { id: 'Archive', label: 'Historical Record', icon: Archive, sub: 'Project is concluded. Direct archive inject.' },
+                      { id: 'Implementation', label: 'Active Implementation', icon: PlayCircle, sub: 'Needs Handover + Audit' },
+                      { id: 'Handover', label: 'Final Handover', icon: Handshake, sub: 'Needs Admin Review + Audit' },
+                      { id: 'Archive', label: 'Historical Record', icon: Archive, sub: 'Bypass Pipeline — Direct Archive' },
                     ].map((path) => (
                       <button
                         key={path.id}
@@ -260,7 +268,7 @@ export default function LegacyReconciliationPage() {
                       <div className="flex items-center gap-4 mb-2"><PlayCircle className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Implementation Protocol</h3></div>
                       <Alert className="rounded-none border-accent/10 bg-accent/[0.02]">
                         <Info className="h-4 w-4" />
-                        <AlertDescription className="text-[12px] font-light italic">Define primary site tasks to initialize active tracking.</AlertDescription>
+                        <AlertDescription className="text-[12px] font-light italic">Define primary site tasks to initialize active tracking. This dossier must pass formal handover review.</AlertDescription>
                       </Alert>
                       <Button type="button" variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[10px] font-bold border-accent/10 hover:bg-accent hover:text-white transition-all" onClick={() => setFormData({...formData, activeTasks: [...formData.activeTasks, { id: `T-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "", status: 'Todo', priority: 'Medium' }]})}><Plus className="h-4 w-4 mr-2" /> Append Protocol</Button>
                       <div className="space-y-4">
@@ -276,6 +284,10 @@ export default function LegacyReconciliationPage() {
                   {formData.syncPath === 'Handover' && (
                     <div className="space-y-10">
                       <div className="flex items-center gap-4 mb-2"><Handshake className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Handover Reconciliation</h3></div>
+                      <Alert className="rounded-none border-accent/10 bg-accent/[0.02] mb-6">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription className="text-[12px] font-light italic">This dossier will be injected directly into the Handover Review queue for Senior Partner verification.</AlertDescription>
+                      </Alert>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {[
                           { id: 'qa', label: 'Site Quality Audit', icon: FileCheck, sub: 'Structural QA Verified' },
@@ -407,7 +419,9 @@ export default function LegacyReconciliationPage() {
             <div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Archival Protocol</span></div>
             <AlertDialogTitle className="text-3xl font-headline italic">Authorize Legacy Sync?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">
-              This will permanently register the historical dossier for <strong>{formData.project}</strong> via the <strong>{formData.syncPath}</strong> path. This action is logged in the studio audit registry.
+              {formData.syncPath === 'Archive' 
+                ? `This will permanently register the historical dossier for ${formData.project} directly into the Master Archives.` 
+                : `This will register the historical dossier for ${formData.project} into the active pipeline. It MUST pass handover authorization and financial audit before permanent archival.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-10">

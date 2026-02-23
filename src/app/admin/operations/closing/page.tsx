@@ -20,7 +20,8 @@ import {
   Lock,
   AlertTriangle,
   CircleDollarSign,
-  MessageSquare
+  MessageSquare,
+  History
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -130,6 +131,7 @@ export default function ProjectClosingPage() {
               const hasPendingInquiries = projectInquiries.length > 0;
               const isVerified = project.financialReportStatus === 'Verified';
               const isBlocked = !allInstallmentsPaid || hasPendingInquiries;
+              const isLegacy = project.id.startsWith('LEG-');
 
               return (
                 <motion.div key={project.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.1 }}>
@@ -140,6 +142,7 @@ export default function ProjectClosingPage() {
                         <div className="space-y-6 flex-1">
                           <div className="flex flex-wrap items-center gap-4">
                             <span className="text-[12px] font-bold text-accent/40 uppercase tracking-widest">{project.id}</span>
+                            {isLegacy && <Badge className="bg-slate-100 text-slate-600 rounded-none text-[9px] border-slate-200">Legacy Sync</Badge>}
                             <Badge variant="outline" className="rounded-none text-[11px] font-bold uppercase tracking-widest px-3 py-1 border-accent/20 text-accent">
                               Phase: {project.status}
                             </Badge>
@@ -167,7 +170,7 @@ export default function ProjectClosingPage() {
                               <div className="flex items-center gap-3">
                                 <div className={cn("h-2 w-2 rounded-full", allInstallmentsPaid ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
                                 <span className={cn("text-[12px] font-bold uppercase tracking-widest", allInstallmentsPaid ? "text-accent" : "text-orange-600")}>
-                                  {allInstallmentsPaid ? "All Installments Liquidated" : "Awaiting Client Payment"}
+                                  {allInstallmentsPaid ? (isLegacy ? "Historical Settlement Verified" : "All Installments Liquidated") : "Awaiting Client Payment"}
                                 </span>
                               </div>
                             </div>
