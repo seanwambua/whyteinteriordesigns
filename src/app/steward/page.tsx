@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion } from "framer-motion";
@@ -57,7 +58,7 @@ export default function StewardDashboardPage() {
   );
 
   const totalCapitalUnderReview = relevantProjects.reduce((sum, p) => sum + p.totalBudget, 0);
-  const pendingAuditsCount = relevantProjects.length;
+  const pendingAuditsCount = relevantProjects.filter(p => p.financialReportStatus !== 'Awaiting Admin').length;
 
   if (!isMounted) {
     return (
@@ -69,7 +70,7 @@ export default function StewardDashboardPage() {
   }
 
   const stats = [
-    { label: "Dossiers in Queue", value: pendingAuditsCount.toString(), icon: Clock, sub: "Requires Verification" },
+    { label: "Pending Review", value: pendingAuditsCount.toString(), icon: Clock, sub: "Requires Action" },
     { label: "Capital Under Review", value: `KES ${(totalCapitalUnderReview / 1000000).toFixed(1)}M`, icon: Landmark, sub: "Total Commitment" },
     { label: "Audit Accuracy", value: "99.8%", icon: BadgeCheck, sub: "Stewardship Integrity" },
   ];
@@ -153,15 +154,15 @@ export default function StewardDashboardPage() {
                   <td className="p-6">
                     <Badge variant="outline" className={cn(
                       "rounded-none uppercase tracking-widest text-[9px] font-bold py-1 px-3",
-                      p.financialReportStatus === 'Verified' ? "bg-green-50 text-green-600 border-green-200" : "bg-orange-50 text-orange-600 border-orange-200"
+                      p.financialReportStatus === 'Awaiting Admin' ? "bg-accent/10 text-accent border-accent/20" : "bg-orange-50 text-orange-600 border-orange-200"
                     )}>
-                      {p.financialReportStatus || 'Awaiting Review'}
+                      {p.financialReportStatus === 'Awaiting Admin' ? 'Findings Submitted' : 'Action Required'}
                     </Badge>
                   </td>
                   <td className="p-6 text-right">
                     <Button asChild variant="ghost" size="sm" className="rounded-none border border-slate-200 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all uppercase tracking-widest text-[10px] font-bold gap-2">
                       <Link href={`/steward/projects/${p.id}`}>
-                        Perform Audit <ArrowRight className="h-3.5 w-3.5" />
+                        {p.financialReportStatus === 'Awaiting Admin' ? 'Review Audit' : 'Perform Audit'} <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
                     </Button>
                   </td>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
@@ -94,7 +95,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
   if (!isMounted || !project) return null;
 
-  const isVerified = project.financialReportStatus === 'Verified';
+  const isVerified = project.financialReportStatus === 'Verified' || project.financialReportStatus === 'Awaiting Admin';
 
   const handleRunSyncCheck = () => {
     setIsSyncingRegistry(true);
@@ -137,7 +138,6 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
     if (isVerified) return;
     setIncomingFunds(incomingFunds.map(f => {
       if (f.id === id) {
-        // Only amendment can be changed if verified
         if (f.isVerified && field !== 'amendment') return f;
         return { ...f, [field]: value };
       }
@@ -173,7 +173,6 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
     if (isVerified) return;
     setAllocations(allocations.map(a => {
       if (a.id === id) {
-        // Only amendment can be changed if verified
         if (a.isVerified && field !== 'amendment') return a;
         return { ...a, [field]: value };
       }
@@ -208,12 +207,12 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
     setTimeout(() => {
       updateClientProject(project.id, {
-        financialReportStatus: 'Verified', // Directly transition to verified for this prototype
+        financialReportStatus: 'Awaiting Admin',
         auditDetails: finalAudit,
-        lastActivity: `Financial Audit Verified & Authorized by ${financialSteward}`
+        lastActivity: `Financial Audit Submitted for Final Authorization by ${financialSteward}`
       });
       setIsSubmitting(false);
-      toast({ title: "Audit Synchronized", description: "Dossier has been locked and authorized in the master registry." });
+      toast({ title: "Audit Transmitted", description: "Findings transmitted to Senior Partners for final authorization." });
     }, 1500);
   };
 
@@ -229,8 +228,8 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
           <div className="p-6 bg-green-50 border border-green-200 flex items-center gap-4 shadow-sm">
             <Lock className="h-5 w-5 text-green-600" />
             <div className="space-y-0.5">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-green-600">Audit Verified — Read-Only Mode</p>
-              <p className="text-[12px] text-green-600/70 italic font-light">This dossier has been Reconciliation-Locked by Stewardship Protocol.</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-green-600">Audit {project.financialReportStatus === 'Verified' ? 'Verified' : 'Submitted'} — Read-Only Mode</p>
+              <p className="text-[12px] text-green-600/70 italic font-light">This dossier is locked while undergoing {project.financialReportStatus === 'Verified' ? 'archival synchronization' : 'administrative authorization'}.</p>
             </div>
           </div>
         )}
@@ -250,9 +249,9 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
           </div>
           <Badge className={cn(
             "rounded-none uppercase tracking-[0.3em] text-[11px] font-bold py-2 px-6",
-            isVerified ? "bg-green-600 text-white" : "bg-slate-900 text-white"
+            project.financialReportStatus === 'Verified' ? "bg-green-600 text-white" : project.financialReportStatus === 'Awaiting Admin' ? "bg-accent/60 text-white" : "bg-slate-900 text-white"
           )}>
-            {isVerified ? "PROTOCOL VERIFIED" : "PENDING AUTHORIZATION"}
+            {project.financialReportStatus === 'Verified' ? "PROTOCOL VERIFIED" : project.financialReportStatus === 'Awaiting Admin' ? "AWAITING ADMIN" : "PENDING AUTHORIZATION"}
           </Badge>
         </div>
       </motion.div>
@@ -290,7 +289,6 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-16">
-          {/* INCOMING FUNDS REGISTRY */}
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-4">
@@ -365,7 +363,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                                 : "border-slate-200 text-slate-400 hover:text-slate-900 hover:border-slate-900"
                             )}
                           >
-                            {entry.isVerified ? <><CheckCircle2 className="h-4 w-4" /> Protocol Certified</> : <><ShieldCheck className="h-4 w-4" /> Certify Entry</>}
+                            {entry.isVerified ? <><CheckCircle2 className="h-4 w-4" /> Certified</> : <><ShieldCheck className="h-4 w-4" /> Certify</>}
                           </Button>
                         </div>
                       </div>
@@ -378,7 +376,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                           <Textarea 
                             value={entry.amendment || ""} 
                             onChange={(e) => updateIncoming(entry.id, 'amendment', e.target.value)}
-                            readOnly={isVerified}
+                            readOnly={project.financialReportStatus === 'Verified'}
                             placeholder="Log amendment or clarification for this verified entry..." 
                             className="min-h-[80px] rounded-none border-slate-100 p-4 font-light italic text-sm focus:ring-slate-900 bg-slate-50/50"
                           />
@@ -388,15 +386,9 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   </Card>
                 </motion.div>
               ))}
-              {incomingFunds.length === 0 && (
-                <div className="py-20 text-center border border-dashed border-slate-200 bg-slate-50">
-                  <p className="text-[11px] uppercase tracking-widest text-slate-400 italic">No incoming payments currently logged for verification</p>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* SITE ALLOCATIONS REGISTRY */}
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-4">
@@ -471,7 +463,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                                 : "border-slate-200 text-slate-400 hover:text-slate-900 hover:border-slate-900"
                             )}
                           >
-                            {alloc.isVerified ? <><CheckCircle2 className="h-4 w-4" /> Protocol Certified</> : <><ShieldCheck className="h-4 w-4" /> Certify Expense</>}
+                            {alloc.isVerified ? <><CheckCircle2 className="h-4 w-4" /> Certified</> : <><ShieldCheck className="h-4 w-4" /> Certify</>}
                           </Button>
                         </div>
                       </div>
@@ -484,7 +476,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                           <Textarea 
                             value={alloc.amendment || ""} 
                             onChange={(e) => updateAllocation(alloc.id, 'amendment', e.target.value)}
-                            readOnly={isVerified}
+                            readOnly={project.financialReportStatus === 'Verified'}
                             placeholder="Log amendment or clarification for this verified expense..." 
                             className="min-h-[80px] rounded-none border-slate-100 p-4 font-light italic text-sm focus:ring-slate-900 bg-slate-50/50"
                           />
@@ -494,11 +486,6 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   </Card>
                 </motion.div>
               ))}
-              {allocations.length === 0 && (
-                <div className="py-20 text-center border border-dashed border-slate-200 bg-slate-50">
-                  <p className="text-[11px] uppercase tracking-widest text-slate-400 italic">No site cost allocations currently synchronized</p>
-                </div>
-              )}
             </div>
           </div>
 
@@ -553,24 +540,6 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
             {!isVerified && (
               <div className="space-y-4 relative z-10 pt-4">
-                {hasDiscrepancy && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/20 flex gap-3 items-center">
-                    <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
-                    <p className="text-[10px] text-red-200 italic leading-relaxed">Capital Deficit identified. Check allocations against synchronized funds.</p>
-                  </div>
-                )}
-                {hasSyncDiscrepancy && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/20 flex gap-3 items-center">
-                    <Zap className="h-4 w-4 text-red-400 shrink-0" />
-                    <p className="text-[10px] text-red-200 italic leading-relaxed">Registry Sync Failed. Logged funds do not match studio records.</p>
-                  </div>
-                )}
-                {(!allFundsVerified || !allAllocationsVerified) && (incomingFunds.length > 0 || allocations.length > 0) && (
-                  <div className="p-4 bg-orange-500/10 border border-orange-500/20 flex gap-3 items-center">
-                    <ShieldAlert className="h-4 w-4 text-orange-400 shrink-0" />
-                    <p className="text-[10px] text-orange-200 italic leading-relaxed">Mandatory Certification. Verify all incoming and expense entries to unlock authorization.</p>
-                  </div>
-                )}
                 <Button 
                   onClick={handleAuthorizeAudit}
                   disabled={isSubmitting || totalIncomingLogged === 0 || !lastSyncTimestamp || hasDiscrepancy || hasSyncDiscrepancy || !allFundsVerified || !allAllocationsVerified}
@@ -584,7 +553,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   {isSubmitting ? (
                     <span className="flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span>
                   ) : (
-                    <><ShieldCheck className="h-6 w-6" /> Authorize Final Audit</>
+                    <><ShieldCheck className="h-6 w-6" /> Transmit to Admin</>
                   )}
                 </Button>
                 {!lastSyncTimestamp && (

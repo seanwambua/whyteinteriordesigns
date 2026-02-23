@@ -11,11 +11,13 @@ import {
   ExternalLink,
   Calendar,
   User,
-  Scale
+  Scale,
+  FileClock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function AuditHistoryPage() {
   const { clientProjects } = useWhyteStore();
@@ -27,7 +29,7 @@ export default function AuditHistoryPage() {
   }, []);
 
   const verifiedProjects = useMemo(() => {
-    return clientProjects.filter(p => p.financialReportStatus === 'Verified');
+    return clientProjects.filter(p => p.financialReportStatus === 'Verified' || p.financialReportStatus === 'Awaiting Admin');
   }, [clientProjects]);
 
   const filtered = verifiedProjects.filter(p => 
@@ -65,17 +67,26 @@ export default function AuditHistoryPage() {
             <Card className="rounded-none border-slate-200 bg-white hover:border-slate-900 transition-all group overflow-hidden">
               <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="flex items-center gap-8 flex-1">
-                  <div className="h-16 w-16 rounded-none border border-slate-100 flex items-center justify-center bg-slate-50 text-slate-400">
-                    <FileCheck className="h-6 w-6" />
+                  <div className={cn(
+                    "h-16 w-16 rounded-none border border-slate-100 flex items-center justify-center transition-all",
+                    p.financialReportStatus === 'Verified' ? "bg-green-50 text-green-600" : "bg-slate-50 text-slate-400"
+                  )}>
+                    {p.financialReportStatus === 'Verified' ? <FileCheck className="h-6 w-6" /> : <FileClock className="h-6 w-6" />}
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-4">
                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{p.id}</span>
                       <h3 className="text-2xl font-headline italic text-slate-900">{p.project}</h3>
+                      <Badge variant="outline" className={cn(
+                        "rounded-none uppercase tracking-widest text-[8px] font-bold",
+                        p.financialReportStatus === 'Verified' ? "border-green-200 text-green-600" : "border-slate-200 text-slate-400"
+                      )}>
+                        {p.financialReportStatus === 'Verified' ? 'Authorized' : 'Submitted'}
+                      </Badge>
                     </div>
                     <div className="flex flex-wrap items-center gap-6 text-[11px] text-slate-400 uppercase tracking-widest font-bold">
                       <span className="flex items-center gap-2"><User className="h-3.5 w-3.5" /> {p.name}</span>
-                      <span className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5" /> Verified: {p.auditDetails?.submissionDate || 'N/A'}</span>
+                      <span className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5" /> Logged: {p.auditDetails?.submissionDate || 'N/A'}</span>
                       <span className="flex items-center gap-2 text-slate-900"><Scale className="h-3.5 w-3.5" /> Capital: KES {p.totalBudget.toLocaleString()}</span>
                     </div>
                   </div>
@@ -83,7 +94,7 @@ export default function AuditHistoryPage() {
                 <div className="flex items-center gap-4">
                   <Link href={`/steward/projects/${p.id}`}>
                     <Button variant="outline" className="rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold border-slate-200 hover:bg-slate-900 hover:text-white transition-all">
-                      Review Audit
+                      Review Dossier
                     </Button>
                   </Link>
                   <Link href={`/transparency/${p.id}`} target="_blank">

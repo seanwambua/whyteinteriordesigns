@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion } from "framer-motion";
@@ -94,9 +95,9 @@ export default function ProjectClosingPage() {
   const handleVerifyReport = (projectId: string) => {
     updateClientProject(projectId, { 
       financialReportStatus: 'Verified',
-      lastActivity: "Financial Audit Verified by Studio Steward"
+      lastActivity: "Financial Audit formally Authorized by Senior Partner"
     });
-    toast({ title: "Report Synchronized" });
+    toast({ title: "Audit Authorized" });
   };
 
   const handleReturnToHandover = (projectId: string) => {
@@ -152,9 +153,9 @@ export default function ProjectClosingPage() {
 
       <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
         <Info className="h-5 w-5 text-accent" />
-        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Audit Authorization Protocol</AlertTitle>
+        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Authorization Protocol</AlertTitle>
         <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
-          Reconciliation protocols require **100% site implementation**, **Handover Authorization**, and **complete ledger liquidation**. Audits cannot be authorized while technical protocols are pending review.
+          Admin authorization is required once the steward has submitted findings (`Awaiting Admin`). Audit authorization locks the dossier, allowing permanent archival.
         </AlertDescription>
       </Alert>
 
@@ -166,19 +167,20 @@ export default function ProjectClosingPage() {
               const projectInquiries = inquiries.filter(inq => inq.projectId === project.id && inq.status !== 'closed');
               const hasPendingInquiries = projectInquiries.length > 0;
               const isVerified = project.financialReportStatus === 'Verified';
+              const isAwaitingAdmin = project.financialReportStatus === 'Awaiting Admin';
               
               const isHandoverComplete = project.handoverStatus === 'Passed';
               const hasStewardSync = project.auditDetails?.isVerified || project.termination?.audit?.isVerified;
               const assignedDesigner = designers.find(d => d.id === project.assignedDesignerId);
               
-              const isBlocked = !allInstallmentsPaid || hasPendingInquiries || !hasStewardSync || !isHandoverComplete;
+              const isBlocked = !allInstallmentsPaid || hasPendingInquiries || !hasStewardSync || !isHandoverComplete || !isAwaitingAdmin;
               const isLegacy = project.id.startsWith('LEG-');
 
               return (
                 <motion.div key={project.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
                   <Card className={cn(
                     "rounded-none border-accent/5 shadow-xl bg-white group overflow-hidden",
-                    isVerified ? "border-l-4 border-l-green-600" : isBlocked ? "border-l-4 border-l-orange-400" : "border-l-4 border-l-accent/40"
+                    isVerified ? "border-l-4 border-l-green-600" : isBlocked && !isAwaitingAdmin ? "border-l-4 border-l-orange-400" : "border-l-4 border-l-accent/40"
                   )}>
                     <CardContent className="p-10 flex flex-col md:flex-row items-center justify-between gap-10">
                       <div className="space-y-6 flex-1">
@@ -191,12 +193,17 @@ export default function ProjectClosingPage() {
                           {isVerified ? (
                             <div className="flex items-center gap-2 text-green-600">
                               <Lock className="h-3.5 w-3.5" />
-                              <span className="text-[11px] font-bold uppercase tracking-widest">Dossier Locked</span>
+                              <span className="text-[11px] font-bold uppercase tracking-widest">Audit Verified</span>
+                            </div>
+                          ) : isAwaitingAdmin ? (
+                            <div className="flex items-center gap-2 text-accent">
+                              <FileClock className="h-3.5 w-3.5" />
+                              <span className="text-[11px] font-bold uppercase tracking-widest">Awaiting Admin Auth</span>
                             </div>
                           ) : isBlocked && (
                             <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-1 border border-orange-100">
                               <AlertTriangle className="h-3 w-3" />
-                              <span className="text-[10px] font-bold uppercase tracking-widest">Protocol Blocked</span>
+                              <span className="text-[10px] font-bold uppercase tracking-widest">Steward Audit Pending</span>
                             </div>
                           )}
                         </div>
@@ -235,7 +242,7 @@ export default function ProjectClosingPage() {
                             <div className="flex items-center gap-3">
                               <div className={cn("h-2 w-2 rounded-full", hasStewardSync ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
                               <span className={cn("text-[11px] font-bold uppercase tracking-widest", hasStewardSync ? "text-accent" : "text-orange-600")}>
-                                {hasStewardSync ? "Synced" : "Pending"}
+                                {hasStewardSync ? "Submitted" : "Pending"}
                               </span>
                             </div>
                           </div>
@@ -288,12 +295,13 @@ export default function ProjectClosingPage() {
                                 </TooltipTrigger>
                                 {isBlocked && (
                                   <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl space-y-2">
-                                    <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Protocol Blocked:</p>
+                                    <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Gate Protocol Blocked:</p>
                                     <ul className="text-[10px] text-muted-foreground font-light italic list-disc pl-4">
-                                      {!isHandoverComplete && <li>Handover Authorization Required (Awaiting Auth)</li>}
-                                      {!allInstallmentsPaid && <li>Ledger Liquidation Required (Pending Payments)</li>}
-                                      {hasPendingInquiries && <li>Resolution of {projectInquiries.length} Inquiry(s) Required</li>}
-                                      {!hasStewardSync && <li>Steward Audit Verification Required</li>}
+                                      {!isHandoverComplete && <li>Handover Authorization Required</li>}
+                                      {!allInstallmentsPaid && <li>Ledger Liquidation Required</li>}
+                                      {hasPendingInquiries && <li>Resolution of Inquiries Required</li>}
+                                      {!hasStewardSync && <li>Steward Audit Submission Required</li>}
+                                      {hasStewardSync && !isAwaitingAdmin && <li>Audit undergoing steward certification</li>}
                                     </ul>
                                   </TooltipContent>
                                 )}
@@ -349,7 +357,7 @@ export default function ProjectClosingPage() {
                 </div>
                 <div className="space-y-2">
                   <p className="text-[13px] font-bold uppercase tracking-widest">Steward Sync</p>
-                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">External Audit Transmitted</p>
+                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">Audit findings transmitted</p>
                 </div>
               </li>
               <li className="flex gap-6">
@@ -366,7 +374,7 @@ export default function ProjectClosingPage() {
 
           <div className="p-10 border border-dashed border-accent/20 bg-secondary/5 text-center">
             <p className="text-[11px] uppercase tracking-[0.4em] font-bold text-accent/40 italic leading-relaxed">
-              Restoring archived dossiers will reset their lifecycle to "Completion" and force a re-handover review protocol.
+              Dossiers in the `Verified` state are immutable. Any further modifications require a formal protocol reset.
             </p>
           </div>
         </div>
