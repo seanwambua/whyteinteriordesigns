@@ -2,8 +2,8 @@
 "use client";
 
 import { use } from "react";
-import { motion } from "framer-motion";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask, Inquiry, SiteReport } from "@/store/use-whyte-store";
+import { motion, AnimatePresence } from "framer-motion";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Inquiry, SiteReport, Installment } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +49,10 @@ import {
   TrendingDown,
   Scale,
   RefreshCcw,
-  Landmark
+  Landmark,
+  Settings2,
+  FileEdit,
+  Coins
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -81,6 +84,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     urgency: 'Normal'
   });
 
+  // FINANCING REORGANIZATION STATE
+  const [isReorganizingPlan, setIsReorganizingPlan] = useState(false);
+  const [tempInstallments, setTempInstallments] = useState<Installment[]>([]);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -101,6 +108,12 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       setTxnCode("");
     }
   }, [verifyingInstallment, project]);
+
+  useEffect(() => {
+    if (isReorganizingPlan && project) {
+      setTempInstallments([...project.installments]);
+    }
+  }, [isReorganizingPlan, project]);
 
   if (!isMounted) return null;
   if (!project) return null;
@@ -131,6 +144,51 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       setVerifyingInstallment(null);
       setTxnCode("");
     }, 1200);
+  };
+
+  // FINANCING REORGANIZATION LOGIC
+  const handleAddTempInstallment = () => {
+    const newIns: Installment = { 
+      label: "Custom Payment Schedule", 
+      percentage: 0, 
+      amount: 0, 
+      status: 'Pending' 
+    };
+    setTempInstallments([...tempInstallments, newIns]);
+  };
+
+  const handleRemoveTempInstallment = (idx: number) => {
+    if (tempInstallments[idx].status === 'Paid') {
+      toast({ title: "Protocol Violation", description: "Verified installments cannot be removed during reorganization.", variant: "destructive" });
+      return;
+    }
+    setTempInstallments(tempInstallments.filter((_, i) => i !== idx));
+  };
+
+  const handleUpdateTempInstallment = (idx: number, field: keyof Installment, value: any) => {
+    const updated = [...tempInstallments];
+    updated[idx] = { ...updated[idx], [field]: value };
+    // Recalculate percentage if amount changes
+    if (field === 'amount') {
+      updated[idx].percentage = Math.round((value / project.totalBudget) * 100);
+    }
+    setTempInstallments(updated);
+  };
+
+  const handleSyncFinalToBalance = (idx: number) => {
+    const otherAllocations = tempInstallments.reduce((sum, ins, i) => i === idx ? sum : sum + ins.amount, 0);
+    const balanceNeeded = Math.max(0, project.totalBudget - otherAllocations);
+    handleUpdateTempInstallment(idx, 'amount', balanceNeeded);
+    toast({ title: "Reconciliation Balance Established" });
+  };
+
+  const handleAuthorizeFinancing = () => {
+    updateClientProject(project.id, { 
+      installments: tempInstallments,
+      lastActivity: "Financing Protocol Reorganized — Custom Payout Schedule Synchronized"
+    });
+    setIsReorganizingPlan(false);
+    toast({ title: "Ledger Synchronized", description: "The custom payout plan is now active." });
   };
 
   const handleUpdateTask = (taskId: string, updates: Partial<ProjectTask>) => {
@@ -218,6 +276,9 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const remainingBalance = project.totalBudget - totalPaid;
   const isLegerSynchronized = Math.abs(remainingBalance) < 1;
   const isOverpaid = remainingBalance < -1;
+
+  const tempTotalAssigned = tempInstallments.reduce((sum, ins) => sum + ins.amount, 0);
+  const tempVariance = tempTotalAssigned - project.totalBudget;
 
   const temporal = (() => {
     if (!project.isActivated) return { label: "Temporal Status", value: "Locked", icon: <ZapOff className="h-5 w-5" />, sub: "Pending Activation" };
@@ -404,9 +465,16 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
            <Card className="rounded-none border-accent/10 bg-white p-10 shadow-2xl relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><Landmark className="h-24 w-24" /></div>
              <div className="relative z-10 space-y-8">
-               <div className="flex items-center gap-4">
-                 <Scale className="h-5 w-5 text-accent/40" />
-                 <h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Financial Reconciliation Index</h3>
+               <div className="flex items-center justify-between">
+                 <div className="flex items-center gap-4">
+                   <Scale className="h-5 w-5 text-accent/40" />
+                   <h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Financial Reconciliation Index</h3>
+                 </div>
+                 {!isAuditVerified && (
+                   <Button onClick={() => setIsReorganizingPlan(true)} variant="ghost" className="h-10 px-6 rounded-none text-accent uppercase tracking-widest text-[10px] font-bold border border-accent/10 hover:bg-accent hover:text-white transition-all shadow-sm">
+                     <Settings2 className="h-4 w-4 mr-2" /> Reorganize Financing
+                   </Button>
+                 )}
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 items-end">
@@ -619,6 +687,118 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               </Button>
             </DialogFooter>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* FINANCING REORGANIZATION WORKBENCH */}
+      <Dialog open={isReorganizingPlan} onOpenChange={setIsReorganizingPlan}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-4xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+          <div className="bg-accent h-1.5 w-full" />
+          <div className="p-10 space-y-8 overflow-y-auto custom-scrollbar flex-1">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3"><Coins className="h-5 w-5 text-accent" /><span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Financing Protocol Workbench</span></div>
+              <DialogTitle className="text-4xl font-headline italic">Reorganize Financing</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-base">
+                Transition to a custom payout schedule. Verified transactions are locked to preserve historical audit integrity.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-8 bg-secondary/30 border border-accent/5">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Commission Commitment</p>
+                <p className="text-2xl font-headline italic">KES {project.totalBudget.toLocaleString()}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Total Assigned Plan</p>
+                <p className="text-2xl font-headline italic">KES {tempTotalAssigned.toLocaleString()}</p>
+              </div>
+              <div className="space-y-1">
+                <p className={cn("text-[10px] font-bold uppercase tracking-widest", tempVariance === 0 ? "text-green-600" : "text-orange-600")}>
+                  Plan Variance
+                </p>
+                <p className={cn("text-2xl font-headline italic", tempVariance === 0 ? "text-green-600" : "text-orange-600")}>
+                  KES {Math.abs(tempVariance).toLocaleString()} {tempVariance > 0 ? '(Over)' : tempVariance < 0 ? '(Under)' : ''}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-accent/5 pb-4">
+                <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Active Payout Schedule</h4>
+                <Button onClick={handleAddTempInstallment} variant="outline" className="h-10 px-6 rounded-none text-[10px] uppercase font-bold tracking-widest border-accent/10 hover:bg-accent hover:text-white transition-all">
+                  <Plus className="h-3.5 w-3.5 mr-2" /> Append Installment
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {tempInstallments.map((ins, idx) => (
+                  <div key={idx} className={cn(
+                    "p-6 border flex flex-col md:flex-row items-center gap-6 transition-all",
+                    ins.status === 'Paid' ? "bg-green-50/50 border-green-600/10" : "bg-white border-accent/5 hover:border-accent/20"
+                  )}>
+                    <div className="flex-1 space-y-4 w-full">
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                        <div className="md:col-span-5 space-y-2">
+                          <Label className="text-[10px] uppercase font-bold opacity-40">Label</Label>
+                          <Input 
+                            value={ins.label} 
+                            onChange={(e) => handleUpdateTempInstallment(idx, 'label', e.target.value)}
+                            readOnly={ins.status === 'Paid'}
+                            className="rounded-none h-10 border-accent/10 text-xs font-bold uppercase tracking-widest"
+                          />
+                        </div>
+                        <div className="md:col-span-4 space-y-2">
+                          <Label className="text-[10px] uppercase font-bold opacity-40">Amount (KES)</Label>
+                          <div className="relative">
+                            <Input 
+                              type="number"
+                              value={ins.amount} 
+                              onChange={(e) => handleUpdateTempInstallment(idx, 'amount', Number(e.target.value))}
+                              readOnly={ins.status === 'Paid'}
+                              className="rounded-none h-10 border-accent/10 text-sm font-bold pl-8"
+                            />
+                            <Coins className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
+                          </div>
+                        </div>
+                        <div className="md:col-span-3 flex gap-2">
+                          {ins.status === 'Pending' && (
+                            <>
+                              <Button onClick={() => handleSyncFinalToBalance(idx)} variant="ghost" size="icon" className="h-10 w-10 text-accent/40 hover:text-accent hover:bg-accent/5" title="Sync to Remaining Balance">
+                                <RefreshCcw className="h-4 w-4" />
+                              </Button>
+                              <Button onClick={() => handleRemoveTempInstallment(idx)} variant="ghost" size="icon" className="h-10 w-10 text-destructive/40 hover:text-destructive hover:bg-destructive/5" title="Remove Installment">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {ins.status === 'Paid' && (
+                            <Badge className="bg-green-600 text-white rounded-none uppercase text-[8px] h-10 px-4 flex items-center gap-2">
+                              <Lock className="h-3 w-3" /> Verified
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="p-10 border-t border-accent/5 bg-secondary/5 flex flex-col sm:flex-row justify-between gap-6">
+            <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-accent/40 italic">
+              <ShieldAlert className="h-4 w-4" /> Final reconciliation requires zero plan variance.
+            </div>
+            <div className="flex gap-4">
+              <Button onClick={() => setIsReorganizingPlan(false)} variant="ghost" className="rounded-none h-14 px-8 text-[11px] font-bold uppercase tracking-widest">Abort Reorganization</Button>
+              <Button 
+                onClick={handleAuthorizeFinancing} 
+                disabled={Math.abs(tempVariance) > 1}
+                className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-3 hover:tracking-[0.2em]"
+              >
+                Authorize financing <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
