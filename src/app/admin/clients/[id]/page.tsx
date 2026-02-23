@@ -274,6 +274,18 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     updateClientProject(project.id, { tasks: updatedTasks });
   };
 
+  const handleUpdateSubtask = (taskId: string, subId: string, title: string) => {
+    if (isReadOnly) return;
+    const updatedTasks = (project.tasks || []).map(task => {
+      if (task.id === taskId) {
+        const subs = (task.subtasks || []).map(s => s.id === subId ? { ...s, title } : s);
+        return { ...task, subtasks: subs };
+      }
+      return task;
+    });
+    updateClientProject(project.id, { tasks: updatedTasks });
+  };
+
   const handleAddReport = () => {
     if (!newReport.content || isAuditVerified) return;
     const report: SiteReport = {
@@ -358,7 +370,24 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             </div>
             <div className="pt-4 border-t border-accent/5 space-y-3">
               <div className="flex justify-between items-center"><span className="text-[12px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span>{!isReadOnly && <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddSubtask(task.id)}><Plus className="h-3.5 w-3.5" /></Button>}</div>
-              <div className="space-y-2">{(task.subtasks || []).map(sub => (<div key={sub.id} className="flex items-center gap-3"><button onClick={() => !isReadOnly && handleToggleSubtask(task.id, sub.id)} disabled={isReadOnly} className={cn("h-4 w-4 border flex items-center justify-center", sub.isCompleted ? "bg-accent border-accent" : "border-accent/20")}>{sub.isCompleted && <Check className="h-2.5 w-2.5 text-white" />}</button><span className={cn("text-[13px] font-light italic", sub.isCompleted ? "text-accent/30 line-through" : "text-accent/70")}>{sub.title}</span></div>))}</div>
+              <div className="space-y-2">
+                {(task.subtasks || []).map(sub => (
+                  <div key={sub.id} className="flex items-center gap-3">
+                    <button onClick={() => !isReadOnly && handleToggleSubtask(task.id, sub.id)} disabled={isReadOnly} className={cn("h-4 w-4 border flex items-center justify-center", sub.isCompleted ? "bg-accent border-accent" : "border-accent/20")}>
+                      {sub.isCompleted && <Check className="h-2.5 w-2.5 text-white" />}
+                    </button>
+                    <Input 
+                      value={sub.title}
+                      onChange={(e) => handleUpdateSubtask(task.id, sub.id, e.target.value)}
+                      readOnly={isReadOnly}
+                      className={cn(
+                        "bg-transparent border-none p-0 h-auto focus-visible:ring-0 text-[13px] font-light italic shadow-none", 
+                        sub.isCompleted ? "text-accent/30 line-through" : "text-accent/70"
+                      )}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
         ))}

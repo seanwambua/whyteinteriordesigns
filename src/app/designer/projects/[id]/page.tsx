@@ -1,3 +1,4 @@
+
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
@@ -186,6 +187,18 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
     updateClientProject(project.id, { tasks: updatedTasks });
   };
 
+  const handleUpdateSubtask = (taskId: string, subId: string, title: string) => {
+    if (isReadOnly) return;
+    const updatedTasks = tasks.map(task => {
+      if (task.id === taskId) {
+        const subs = (task.subtasks || []).map(s => s.id === subId ? { ...s, title } : s);
+        return { ...task, subtasks: subs };
+      }
+      return task;
+    });
+    updateClientProject(project.id, { tasks: updatedTasks });
+  };
+
   const handleAddReport = () => {
     if (!newReport.content || isReadOnly) return;
     const report: SiteReport = {
@@ -268,7 +281,24 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
             </div>
             <div className="pt-4 border-t border-neutral-50 space-y-3">
               <div className="flex justify-between items-center"><span className="text-[12px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span>{!isReadOnly && <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddSubtask(task.id)}><Plus className="h-3.5 w-3.5" /></Button>}</div>
-              <div className="space-y-2">{(task.subtasks || []).map(sub => (<div key={sub.id} className="flex items-center gap-3"><button onClick={() => !isReadOnly && handleToggleSubtask(task.id, sub.id)} disabled={isReadOnly} className={cn("h-4 w-4 border flex items-center justify-center transition-colors", sub.isCompleted ? "bg-accent border-accent" : "border-neutral-200")}>{sub.isCompleted && <Check className="h-2.5 w-2.5 text-white" />}</button><span className={cn("text-[13px] font-light italic", sub.isCompleted ? "text-accent/30 line-through" : "text-accent/70")}>{sub.title}</span></div>))}</div>
+              <div className="space-y-2">
+                {(task.subtasks || []).map(sub => (
+                  <div key={sub.id} className="flex items-center gap-3">
+                    <button onClick={() => !isReadOnly && handleToggleSubtask(task.id, sub.id)} disabled={isReadOnly} className={cn("h-4 w-4 border flex items-center justify-center transition-colors", sub.isCompleted ? "bg-accent border-accent" : "border-neutral-200")}>
+                      {sub.isCompleted && <Check className="h-2.5 w-2.5 text-white" />}
+                    </button>
+                    <Input 
+                      value={sub.title}
+                      onChange={(e) => handleUpdateSubtask(task.id, sub.id, e.target.value)}
+                      readOnly={isReadOnly}
+                      className={cn(
+                        "bg-transparent border-none p-0 h-auto focus-visible:ring-0 text-[13px] font-light italic shadow-none", 
+                        sub.isCompleted ? "text-accent/30 line-through" : "text-accent/70"
+                      )}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
         ))}
@@ -471,7 +501,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
             {(project.siteReports || []).map((log, index) => (
               <motion.div key={log.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
                 <Card className="rounded-none border-neutral-100 bg-white group shadow-sm hover:shadow-md transition-all overflow-hidden">
-                  <div className="flex flex-col md:flex-row">
+                  <div className="flex flex-col md:flex-row h-full">
                     <div className={cn("w-1.5 shrink-0", log.urgency === 'Critical' ? 'bg-red-500' : log.urgency === 'High' ? 'bg-orange-400' : 'bg-accent/20')} />
                     <div className="flex-1 p-8 space-y-4">
                       <div className="flex items-center justify-between"><div className="flex items-center gap-4"><span className="text-[10px] font-bold text-accent/40 uppercase tracking-widest">{log.id}</span><Badge variant="outline" className="rounded-none text-[9px] uppercase border-neutral-100">{log.type}</Badge></div><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{log.date}</span></div>
