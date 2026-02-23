@@ -1,3 +1,4 @@
+
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
@@ -43,7 +44,9 @@ import {
   ZapOff,
   LayoutList,
   Archive,
-  FileCheck
+  FileCheck,
+  UserCheck,
+  ShieldAlert
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -57,13 +60,16 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function DesignerProjectWorkbench({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { clientProjects, updateClientProject, inquiries } = useWhyteStore();
+  const { clientProjects, updateClientProject, inquiries, addInquiry } = useWhyteStore();
   const { toast } = useToast();
   
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [isAddingReport, setIsAddingReport] = useState(false);
   const [isHandoverSyncing, setIsHandoverSyncing] = useState(false);
+  const [isRequestingAccess, setIsRequestingAccess] = useState(false);
+  const [activeDesignerId, setActiveDesignerId] = useState<string | null>(null);
+  
   const [newReport, setNewReport] = useState<Partial<SiteReport>>({
     type: 'Progress',
     content: '',
@@ -75,15 +81,40 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
 
   useEffect(() => {
     setIsMounted(true);
+    setActiveDesignerId(localStorage.getItem("whyte_active_designer_id"));
   }, []);
 
   if (!isMounted || !project) return null;
 
-  // RECONCILIATION GUARDRAIL: Projects in 'Completion' are Read-Only for designers
-  const isReadOnly = project.financialReportStatus === 'Verified' || project.isArchived || project.handoverStatus === 'Pending' || project.status === 'Completion';
+  // ACCESS PROTOCOL: Designer must be the assigned lead for write access
+  const isAssignedLead = activeDesignerId === project.assignedDesignerId;
+  const isReadOnly = project.financialReportStatus === 'Verified' || project.isArchived || project.handoverStatus === 'Pending' || project.status === 'Completion' || !isAssignedLead;
+  
   const tasks = project.tasks || [];
   const allTasksDone = tasks.length > 0 && tasks.every(t => t.status === 'Done');
   const pendingTasks = tasks.filter(t => t.status !== 'Done');
+
+  const handleRequestAccess = () => {
+    setIsRequestingAccess(true);
+    const newInquiry: Inquiry = {
+      id: `REQ-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      name: "Creative Lead Request",
+      email: "designer@whyte.design",
+      type: 'project_support',
+      serviceType: 'design',
+      message: `Lead Request: Designer ${activeDesignerId} is requesting to be added as Implementation Lead for dossier ${project.id}.`,
+      status: 'new',
+      urgency: 'high',
+      date: format(new Date(), "MMM dd, yyyy"),
+      projectId: project.id
+    };
+
+    setTimeout(() => {
+      addInquiry(newInquiry);
+      toast({ title: "Request Transmitted", description: "Authorization request sent to Senior Partners." });
+      setIsRequestingAccess(false);
+    }, 1500);
+  };
 
   const handleUpdateTask = (taskId: string, updates: Partial<ProjectTask>) => {
     if (isReadOnly) return;
@@ -146,7 +177,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   };
 
   const handleAddReport = () => {
-    if (!newReport.content || project.financialReportStatus === 'Verified') return;
+    if (!newReport.content || isReadOnly) return;
     const report: SiteReport = {
       id: `LOG-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
@@ -240,6 +271,27 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
         <Link href="/designer/projects" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[11px] font-bold uppercase tracking-[0.3em]">Back to Registry</span></Link>
         
+        {!isAssignedLead && (
+          <Alert className="rounded-none border-orange-500/20 bg-orange-50 p-8 shadow-xl">
+            <ShieldAlert className="h-6 w-6 text-orange-600" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 w-full ml-4">
+              <div className="space-y-1">
+                <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Restricted Lead Permissions — Observation Mode</AlertTitle>
+                <AlertDescription className="text-[13px] font-light italic text-orange-600/80">
+                  You are viewing this dossier as an external observer. Write-access is restricted to the assigned Creative Lead.
+                </AlertDescription>
+              </div>
+              <Button 
+                onClick={handleRequestAccess}
+                disabled={isRequestingAccess}
+                className="bg-orange-600 text-white hover:bg-orange-700 rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-lg"
+              >
+                {isRequestingAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserCheck className="h-4 w-4" /> Request Implementation Lead</>}
+              </Button>
+            </div>
+          </Alert>
+        )}
+
         {(project.isArchived || project.status === 'Completion') && (
           <Alert className="rounded-none border-neutral-200 bg-neutral-50 p-6">
             <Archive className="h-5 w-5 text-neutral-400" />
@@ -480,7 +532,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
               </div>
               <Button 
                 onClick={handleInitiateHandover}
-                disabled={isHandoverSyncing || project.handoverStatus === 'Pending'}
+                disabled={isHandoverSyncing || project.handoverStatus === 'Pending' || isReadOnly}
                 className="rounded-none h-20 px-16 bg-accent text-white uppercase tracking-[0.3em] text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.4em] flex gap-4"
               >
                 {isHandoverSyncing ? (

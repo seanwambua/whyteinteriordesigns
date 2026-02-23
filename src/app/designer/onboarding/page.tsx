@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,7 +23,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
+import { useWhyteStore } from "@/store/use-whyte-store";
 
 export default function DesignerOnboardingPage() {
   const [step, setStep] = useState(1);
@@ -31,11 +32,13 @@ export default function DesignerOnboardingPage() {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { designers } = useWhyteStore();
   
   const [formData, setFormData] = useState({
     accessCode: "",
-    fullName: "Elena Vibe",
-    specialty: "Architectural Interior Design",
+    designerId: "",
+    fullName: "",
+    specialty: "",
     notifications: true
   });
 
@@ -48,8 +51,14 @@ export default function DesignerOnboardingPage() {
 
   const handleNext = () => {
     if (step === 1) {
-      // Mock verification for the prototype
-      if (formData.accessCode.toUpperCase() === "WHYTE-LEAD") {
+      const found = designers.find(d => d.accessToken.toUpperCase() === formData.accessCode.toUpperCase());
+      if (found) {
+        setFormData({
+          ...formData,
+          designerId: found.id,
+          fullName: found.name,
+          specialty: found.specialty
+        });
         setStep(2);
       } else {
         toast({
@@ -64,6 +73,7 @@ export default function DesignerOnboardingPage() {
       setLoading(true);
       setTimeout(() => {
         localStorage.setItem("whyte_designer_onboarded", "true");
+        localStorage.setItem("whyte_active_designer_id", formData.designerId);
         setLoading(false);
         setShowSuccess(true);
         setTimeout(() => {
@@ -184,7 +194,7 @@ export default function DesignerOnboardingPage() {
                       </div>
                       <h2 className="text-4xl font-headline italic">Identity Verification</h2>
                       <p className="text-muted-foreground font-light text-lg leading-relaxed max-w-xl">
-                        Enter your Studio Access Token provided by the senior partners. Use <span className="text-accent font-bold">WHYTE-LEAD</span> for this prototype.
+                        Enter your Studio Access Token provided by the senior partners. Use <span className="text-accent font-bold">WHYTE-LEAD-01</span> for this prototype.
                       </p>
                     </div>
                     <div className="space-y-6 max-w-md">

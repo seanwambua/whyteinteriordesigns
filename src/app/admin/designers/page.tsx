@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +20,9 @@ import {
   Activity,
   UserPlus,
   ArrowUpRight,
-  Key
+  Key,
+  Eye,
+  LayoutList
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -140,6 +143,8 @@ export default function DesignerRegistryPage() {
         <AnimatePresence mode="popLayout">
           {filteredDesigners.map((designer, index) => {
             const assignedProjects = clientProjects.filter(p => p.assignedDesignerId === designer.id && !p.isArchived);
+            const accessedLogsCount = (clientProjects.reduce((acc, p) => acc + (p.siteReports?.length || 0), 0) / Math.max(1, designers.length)).toFixed(0);
+
             return (
               <motion.div
                 key={designer.id}
@@ -179,6 +184,14 @@ export default function DesignerRegistryPage() {
                           </div>
                           <code className="text-sm font-mono tracking-widest text-accent font-bold block">{designer.accessToken}</code>
                         </div>
+                        <div className="flex items-center justify-between p-4 bg-white border border-accent/5">
+                          <div className="space-y-0.5">
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-accent/30 block">Technical Load</span>
+                            <p className="text-lg font-headline italic text-accent flex items-center gap-2">
+                              <LayoutList className="h-3.5 w-3.5" /> {accessedLogsCount} Logs Synchronized
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -203,7 +216,10 @@ export default function DesignerRegistryPage() {
                             <Link key={p.id} href={`/admin/clients/${p.id}`} className="p-4 border border-accent/5 hover:border-accent/20 transition-all flex flex-col justify-between group/p">
                               <div className="flex justify-between items-start">
                                 <span className="text-[10px] font-bold text-accent/30 uppercase tracking-widest">{p.id}</span>
-                                <Badge variant="ghost" className="text-[8px] uppercase tracking-widest p-0">{p.status}</Badge>
+                                <div className="flex gap-2">
+                                  <Badge variant="ghost" className="text-[8px] uppercase tracking-widest p-0">{p.status}</Badge>
+                                  <Eye className="h-3 w-3 text-accent/20" />
+                                </div>
                               </div>
                               <p className="text-sm font-bold uppercase tracking-widest text-accent/80 group-hover/p:text-accent mt-2">{p.project}</p>
                             </Link>
@@ -300,21 +316,24 @@ export default function DesignerRegistryPage() {
             <div className="space-y-4">
               <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Available Dossiers</Label>
               <div className="max-h-64 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                {clientProjects.filter(p => !p.assignedDesignerId && !p.isArchived).map(p => (
+                {clientProjects.filter(p => p.assignedDesignerId !== selectedDesigner?.id && !p.isArchived).map(p => (
                   <button 
                     key={p.id} 
                     onClick={() => handleAssignProject(p.id)}
                     className="w-full text-left p-4 border border-accent/10 hover:bg-accent hover:text-white transition-all group"
                   >
                     <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:text-white/60">{p.id}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:text-white/60">{p.id}</span>
+                        {p.assignedDesignerId && <Badge variant="ghost" className="text-[7px] p-0 group-hover:text-white/40">Relinking</Badge>}
+                      </div>
                       <Badge variant="ghost" className="text-[8px] uppercase tracking-widest p-0 group-hover:text-white/80">{p.status}</Badge>
                     </div>
                     <p className="text-sm font-bold uppercase tracking-widest mt-1">{p.project}</p>
                   </button>
                 ))}
-                {clientProjects.filter(p => !p.assignedDesignerId && !p.isArchived).length === 0 && (
-                  <p className="text-center py-8 text-[11px] uppercase tracking-widest text-muted-foreground italic">No unassigned dossiers in current cycle</p>
+                {clientProjects.filter(p => !p.isArchived).length === 0 && (
+                  <p className="text-center py-8 text-[11px] uppercase tracking-widest text-muted-foreground italic">No active dossiers in current cycle</p>
                 )}
               </div>
             </div>

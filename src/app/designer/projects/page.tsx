@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion } from "framer-motion";
@@ -15,7 +16,9 @@ import {
   Activity,
   Archive,
   Lock,
-  FileCheck
+  FileCheck,
+  Globe,
+  LockKeyhole
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -28,14 +31,24 @@ export default function SiteDossierRegistryPage() {
   const { clientProjects } = useWhyteStore();
   const [search, setSearch] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const [activeDesignerId, setActiveDesignerId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
+    setActiveDesignerId(localStorage.getItem("whyte_active_designer_id"));
   }, []);
 
   const dossiers = useMemo(() => {
-    // Active for Designer: Activated, not archived, and in Execution phase
-    const active = clientProjects.filter(p => 
+    // Assigned to current designer
+    const assigned = clientProjects.filter(p => 
+      p.assignedDesignerId === activeDesignerId && 
+      !p.isArchived && 
+      p.isActivated && 
+      p.status === 'Execution'
+    );
+    // Studio wide: Active but not assigned to current designer
+    const studioWide = clientProjects.filter(p => 
+      p.assignedDesignerId !== activeDesignerId && 
       !p.isArchived && 
       p.isActivated && 
       p.status === 'Execution'
@@ -46,8 +59,8 @@ export default function SiteDossierRegistryPage() {
       p.status === 'Completion' || 
       p.status === 'Terminated'
     );
-    return { active, archived };
-  }, [clientProjects]);
+    return { assigned, studioWide, archived };
+  }, [clientProjects, activeDesignerId]);
 
   const filterList = (list: ClientProject[]) => list.filter(p => 
     p.project.toLowerCase().includes(search.toLowerCase()) || 
@@ -55,12 +68,13 @@ export default function SiteDossierRegistryPage() {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const activeFiltered = filterList(dossiers.active);
+  const assignedFiltered = filterList(dossiers.assigned);
+  const studioFiltered = filterList(dossiers.studioWide);
   const archivedFiltered = filterList(dossiers.archived);
 
   if (!isMounted) return null;
 
-  const DossierCard = ({ p, isArchived }: { p: ClientProject, isArchived?: boolean }) => (
+  const DossierCard = ({ p, isArchived, isStudioWide }: { p: ClientProject, isArchived?: boolean, isStudioWide?: boolean }) => (
     <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
       <Card className={cn(
         "rounded-none border-neutral-100 bg-white hover:border-accent/40 transition-all group overflow-hidden shadow-sm",
@@ -70,16 +84,18 @@ export default function SiteDossierRegistryPage() {
           <div className="flex items-center gap-8 flex-1">
             <div className={cn(
               "h-16 w-16 rounded-none border border-neutral-100 flex flex-col items-center justify-center transition-all",
-              isArchived ? "bg-neutral-50 text-neutral-400" : "bg-neutral-50 text-accent/40 group-hover:bg-accent group-hover:text-white"
+              isArchived ? "bg-neutral-50 text-neutral-400" : isStudioWide ? "bg-orange-50 text-orange-400" : "bg-neutral-50 text-accent/40 group-hover:bg-accent group-hover:text-white"
             )}>
-              {isArchived ? <Archive className="h-6 w-6" /> : <Briefcase className="h-6 w-6" />}
-              <span className="text-[8px] font-black uppercase mt-1">{isArchived ? 'HIST' : 'ACTV'}</span>
+              {isArchived ? <Archive className="h-6 w-6" /> : isStudioWide ? <LockKeyhole className="h-6 w-6" /> : <Briefcase className="h-6 w-6" />}
+              <span className="text-[8px] font-black uppercase mt-1">{isArchived ? 'HIST' : isStudioWide ? 'READ' : 'ACTV'}</span>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-4">
                 <span className="text-[11px] font-bold text-accent/40 uppercase tracking-widest">{p.id}</span>
                 <h3 className="text-2xl font-headline italic text-accent leading-tight">{p.project}</h3>
-                <Badge variant="outline" className="rounded-none text-[9px] uppercase tracking-widest border-neutral-100">{p.status}</Badge>
+                <Badge variant="outline" className={cn("rounded-none text-[9px] uppercase tracking-widest border-neutral-100", isStudioWide && "border-orange-200 text-orange-600 bg-orange-50")}>
+                  {isStudioWide ? "Observation Only" : p.status}
+                </Badge>
                 {p.financialReportStatus === 'Verified' && <Lock className="h-3.5 w-3.5 text-green-600 opacity-60" title="Audit Verified" />}
               </div>
               <div className="flex flex-wrap items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-widest font-bold">
@@ -96,8 +112,11 @@ export default function SiteDossierRegistryPage() {
           </div>
           <div className="flex items-center gap-4">
             <Link href={`/designer/projects/${p.id}`}>
-              <Button variant="outline" className="rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold border-neutral-200 hover:bg-accent hover:text-white hover:border-accent transition-all">
-                {isArchived ? 'View Archives' : 'Open Workbench'}
+              <Button variant="outline" className={cn(
+                "rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold border-neutral-200 transition-all",
+                isStudioWide ? "hover:bg-orange-600 hover:text-white hover:border-orange-600" : "hover:bg-accent hover:text-white hover:border-accent"
+              )}>
+                {isArchived ? 'View Archives' : isStudioWide ? 'Enter Observation' : 'Open Workbench'}
               </Button>
             </Link>
           </div>
@@ -112,7 +131,7 @@ export default function SiteDossierRegistryPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-4">
             <div className="h-px w-8 bg-accent" />
-            <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Historical Registry</span>
+            <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Implementation Registry</span>
           </div>
           <h1 className="text-5xl font-headline italic">Deployment <span className="not-italic">Dossiers.</span></h1>
         </div>
@@ -128,17 +147,27 @@ export default function SiteDossierRegistryPage() {
         </div>
       </motion.div>
 
-      <Tabs defaultValue="active" className="space-y-10">
-        <TabsList className="bg-transparent border-b border-neutral-200 w-full justify-start rounded-none h-auto p-0 gap-12">
-          <TabsTrigger value="active" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0">Active Commissions ({activeFiltered.length})</TabsTrigger>
-          <TabsTrigger value="archived" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-3"><Archive className="h-4 w-4" /> Master Archive ({archivedFiltered.length})</TabsTrigger>
+      <Tabs defaultValue="assigned" className="space-y-10">
+        <TabsList className="bg-transparent border-b border-neutral-200 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto custom-scrollbar">
+          <TabsTrigger value="assigned" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0">My Assignments ({assignedFiltered.length})</TabsTrigger>
+          <TabsTrigger value="studio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><Globe className="h-4 w-4" /> Studio-wide Registry ({studioFiltered.length})</TabsTrigger>
+          <TabsTrigger value="archived" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-2"><Archive className="h-4 w-4" /> Master Archive ({archivedFiltered.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="active" className="m-0 space-y-6">
-          {activeFiltered.map((p) => <DossierCard key={p.id} p={p} />)}
-          {activeFiltered.length === 0 && (
+        <TabsContent value="assigned" className="m-0 space-y-6">
+          {assignedFiltered.map((p) => <DossierCard key={p.id} p={p} />)}
+          {assignedFiltered.length === 0 && (
             <div className="text-center py-32 border border-dashed border-neutral-200 bg-neutral-50 italic text-[12px] uppercase tracking-widest text-muted-foreground font-light">
-              No active deployment dossiers found matching current synchronization
+              No implementation dossiers currently assigned to your identity
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="studio" className="m-0 space-y-6">
+          {studioFiltered.map((p) => <DossierCard key={p.id} p={p} isStudioWide />)}
+          {studioFiltered.length === 0 && (
+            <div className="text-center py-32 border border-dashed border-neutral-200 bg-neutral-50 italic text-[12px] uppercase tracking-widest text-muted-foreground font-light">
+              No external implementation dossiers synchronized in current cycle
             </div>
           )}
         </TabsContent>
