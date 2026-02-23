@@ -35,7 +35,7 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogDescription,
+  DialogDescription, 
   DialogFooter
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -141,7 +141,7 @@ export default function ProjectClosingPage() {
               const isLegacy = project.id.startsWith('LEG-');
 
               return (
-                <motion.div key={project.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.1 }}>
+                <motion.div key={project.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
                   <Card className="rounded-none border-accent/5 shadow-xl bg-white group overflow-hidden">
                     <div className="flex flex-col md:flex-row items-stretch">
                       <div className={cn("w-2 shrink-0", isVerified ? 'bg-green-600' : isBlocked ? 'bg-orange-400' : 'bg-accent/40')} />

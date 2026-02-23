@@ -127,9 +127,9 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
     setTimeout(() => {
       updateClientProject(project.id, {
-        financialReportStatus: 'Verified',
+        financialReportStatus: 'Pending',
         auditDetails: finalAudit,
-        lastActivity: `Financial Audit Verified by ${financialSteward}`
+        lastActivity: `Financial Audit Transmitted by ${financialSteward}`
       });
       setIsSubmitting(false);
       toast({ title: "Audit Synchronized", description: "Dossier has been locked and authorized in the master registry." });
@@ -176,7 +176,6 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         </div>
       </motion.div>
 
-      {/* SYNC CHECK ALERT */}
       {!isVerified && (
         <Alert className={cn(
           "rounded-none p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 border-dashed",
@@ -207,9 +206,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* Main Audit Section */}
         <div className="lg:col-span-2 space-y-12">
-          {/* Capital Summary */}
           <Card className="rounded-none border-slate-200 bg-white shadow-xl overflow-hidden">
             <div className="bg-slate-50 px-10 py-6 border-b border-slate-200 flex justify-between items-center">
               <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500 flex items-center gap-3">
@@ -238,7 +235,6 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             </CardContent>
           </Card>
 
-          {/* Allocation Breakdown */}
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -311,7 +307,6 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          {/* Steward Comments */}
           <div className="space-y-4">
             <Label className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-900">Stewardship findings & resolution</Label>
             <Textarea 
@@ -324,7 +319,6 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        {/* Sidebar Summary & Action */}
         <div className="space-y-8">
           <Card className="rounded-none border-slate-900 bg-slate-900 text-white p-10 space-y-10 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-5">

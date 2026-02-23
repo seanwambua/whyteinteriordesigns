@@ -117,7 +117,7 @@ export interface ClientProject {
   isExtended?: boolean;
   isArchived?: boolean;
   lastActivity: string;
-  financialReportStatus?: 'Verified' | 'Pending' | 'Awaiting Steward';
+  financialReportStatus?: 'Verified' | 'Pending' | 'Awaiting Steward' | 'Awaiting Admin';
   isActivated: boolean;
   initialDepositPaid: boolean;
   depositCode?: string;
@@ -250,7 +250,7 @@ const initialClientProjects: ClientProject[] = [
     startDate: "Jan 15, 2024",
     endDate: "Jun 30, 2024",
     lastActivity: "Architectural synchronization established.",
-    financialReportStatus: 'Pending',
+    financialReportStatus: 'Awaiting Steward',
     isActivated: true,
     initialDepositPaid: true,
     depositCode: "AUTH-8821",
@@ -384,7 +384,6 @@ export const useWhyteStore = create<WhyteState>()(
       })),
 
       clearAllData: () => {
-        // Clear manual onboarding and session flags from localStorage
         if (typeof window !== 'undefined') {
           localStorage.removeItem("whyte_onboarded");
           localStorage.removeItem("whyte_verified_project_id");

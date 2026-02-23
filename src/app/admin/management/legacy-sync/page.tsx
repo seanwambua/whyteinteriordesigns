@@ -210,7 +210,7 @@ export default function LegacyReconciliationPage() {
       vendorAllocations: allocations,
       assignedDesignerId: formData.assignedDesignerId,
       isArchived: false,
-      financialReportStatus: 'Pending',
+      financialReportStatus: 'Awaiting Steward',
       handoverStatus: 'Pending',
     };
 
@@ -447,7 +447,7 @@ export default function LegacyReconciliationPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-10">
             <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-accent/10">Abort Sync</AlertDialogCancel>
-            <AlertDialogAction onClick={executeFinalSync} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 hover:bg-accent/90 shadow-xl">Authorize Dossier</AlertDialogAction>
+            <AlertDialogAction onClick={executeFinalSync} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 hover:bg-destructive/90 shadow-xl">Authorize Dossier</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
