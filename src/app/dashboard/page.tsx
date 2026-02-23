@@ -531,7 +531,12 @@ export default function ClientDashboardPage() {
             <div className="space-y-4">
               {(activeProject.vendorAllocations || []).map((vendor, vIdx) => (
                 <div key={vIdx} className="flex items-center justify-between">
-                  <div className="space-y-0.5"><p className="text-[10px] font-bold uppercase tracking-widest text-accent/80">{vendor.vendorName}</p><p className="text-[9px] text-muted-foreground italic">{vendor.role}</p></div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-accent/80">
+                      {vendor.role}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground italic">Authorized Specialist</p>
+                  </div>
                   <Badge variant="ghost" className="text-[8px] uppercase tracking-widest opacity-40 p-0 h-auto">{vendor.category}</Badge>
                 </div>
               ))}
