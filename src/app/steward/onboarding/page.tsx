@@ -32,10 +32,12 @@ export default function StewardOnboardingPage() {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const { financialSteward } = useWhyteStore();
+  const { stewards, financialSteward, setFinancialSteward } = useWhyteStore();
   
   const [formData, setFormData] = useState({
     accessToken: "",
+    stewardId: "",
+    stewardName: "",
     agreedToTerms: false,
     agreedToNDA: false,
     notifications: true
@@ -45,17 +47,22 @@ export default function StewardOnboardingPage() {
     setIsMounted(true);
   }, []);
 
-  const totalSteps = 3;
-  const progress = (step / totalSteps) * 100;
-
   const handleNext = () => {
     if (step === 1) {
-      if (formData.accessToken.toUpperCase() === "WHYTE-STEWARD-ALPHA") {
+      const normalizedInput = formData.accessToken.trim().toUpperCase();
+      const found = stewards.find(s => s.accessToken.toUpperCase() === normalizedInput);
+      
+      if (found) {
+        setFormData({
+          ...formData,
+          stewardId: found.id,
+          stewardName: found.name
+        });
         setStep(2);
       } else {
         toast({
           title: "Access Denied",
-          description: "Stewardship Token not recognized by the Master Registry.",
+          description: "Stewardship Token not recognized by the Master Registry. Please contact Senior Partners.",
           variant: "destructive"
         });
       }
@@ -73,6 +80,11 @@ export default function StewardOnboardingPage() {
       setLoading(true);
       setTimeout(() => {
         localStorage.setItem("whyte_steward_onboarded", "true");
+        localStorage.setItem("whyte_active_steward_id", formData.stewardId);
+        // Calibrate primary steward if not already set or if different
+        if (financialSteward !== formData.stewardName) {
+          setFinancialSteward(formData.stewardName);
+        }
         setLoading(false);
         setShowSuccess(true);
         setTimeout(() => {
@@ -193,15 +205,15 @@ export default function StewardOnboardingPage() {
                       </div>
                       <h2 className="text-3xl font-headline italic">Stewardship Token</h2>
                       <p className="text-slate-500 font-light text-sm leading-relaxed max-w-xl">
-                        Enter the unique security token provided by the Senior Partners. For this prototype, use <span className="font-bold text-slate-900">WHYTE-STEWARD-ALPHA</span>.
+                        Enter the unique security token provided by the Senior Partners.
                       </p>
                     </div>
                     <div className="space-y-4 max-w-md">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Professional Access Token</Label>
                         <Input 
-                          placeholder="XXXX-XXXX-XXXX" 
-                          className="rounded-none border-slate-200 h-14 text-xl md:text-2xl tracking-[0.3em] focus:ring-slate-900 uppercase font-bold"
+                          placeholder="WHYTE-STWD-XXXX-XXXX" 
+                          className="rounded-none border-slate-200 h-14 text-xl md:text-2xl tracking-[0.1em] focus:ring-slate-900 uppercase font-bold"
                           value={formData.accessToken}
                           onChange={(e) => setFormData({...formData, accessToken: e.target.value})}
                         />
@@ -277,7 +289,7 @@ export default function StewardOnboardingPage() {
                     <div className="space-y-4 max-w-lg">
                       <div className="p-6 border border-slate-100 bg-slate-50/50 space-y-1">
                         <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Assigned Steward</span>
-                        <p className="text-xl font-headline italic text-slate-900">{financialSteward}</p>
+                        <p className="text-xl font-headline italic text-slate-900">{formData.stewardName}</p>
                       </div>
                       <p className="text-[10px] text-slate-400 italic uppercase tracking-widest font-light leading-relaxed">
                         By finalizing access, you confirm that you are an authorized representative of the above entity and that all audit functions will be performed under this identity.
@@ -304,7 +316,7 @@ export default function StewardOnboardingPage() {
                     className="bg-slate-900 text-white hover:bg-slate-800 rounded-none h-14 px-12 uppercase tracking-[0.3em] transition-all min-w-[200px] text-[10px] font-bold shadow-xl"
                   >
                     {loading ? (
-                      <span className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin" /> Authorizing...</span>
+                      <span className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin" /> Finalizing...</span>
                     ) : (
                       <span className="flex items-center gap-3">
                         {step === totalSteps ? "Synchronize Terminal" : "Continue"} <ChevronRight className="h-4 w-4" />

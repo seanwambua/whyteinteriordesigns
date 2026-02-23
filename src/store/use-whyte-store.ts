@@ -122,6 +122,7 @@ export interface Steward {
   name: string;
   contact: string;
   email: string;
+  accessToken: string;
   status: 'Active' | 'Inactive';
   authorizedDate: string;
   totalAudits: number;
@@ -354,6 +355,7 @@ const initialStewards: Steward[] = [
     name: 'Imani Financial Services (IFS-KE)',
     contact: '+254 700 999 888',
     email: 'compliance@imani.co.ke',
+    accessToken: 'WHYTE-STEWARD-ALPHA',
     status: 'Active',
     authorizedDate: 'Jan 10, 2024',
     totalAudits: 12

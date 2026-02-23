@@ -20,7 +20,8 @@ import {
   Landmark,
   UserPlus,
   Loader2,
-  Scale
+  Scale,
+  Key
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -51,12 +52,19 @@ export default function StewardRegistryPage() {
     name: "",
     email: "",
     contact: "",
+    accessToken: "",
     status: "Active" as Steward['status']
   });
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const generateRandomToken = () => {
+    const part1 = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const part2 = Math.random().toString(36).substring(2, 10).toUpperCase();
+    return `WHYTE-STWD-${part1}-${part2}`;
+  };
 
   const filteredStewards = useMemo(() => {
     return stewards.filter(s => 
@@ -66,7 +74,7 @@ export default function StewardRegistryPage() {
   }, [stewards, search]);
 
   const handleAddSteward = () => {
-    if (!formData.name || !formData.email) return;
+    if (!formData.name || !formData.email || !formData.accessToken) return;
     setIsSubmitting(true);
     
     const newSteward: Steward = {
@@ -74,6 +82,7 @@ export default function StewardRegistryPage() {
       name: formData.name,
       email: formData.email,
       contact: formData.contact,
+      accessToken: formData.accessToken,
       status: formData.status,
       authorizedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
       totalAudits: 0
@@ -83,7 +92,7 @@ export default function StewardRegistryPage() {
       addSteward(newSteward);
       setIsSubmitting(false);
       setIsAddDialogOpen(false);
-      setFormData({ name: "", email: "", contact: "", status: "Active" });
+      setFormData({ name: "", email: "", contact: "", accessToken: "", status: "Active" });
       toast({ title: "Steward Authorized", description: `${newSteward.name} registered in studio protocol.` });
     }, 1200);
   };
@@ -122,7 +131,10 @@ export default function StewardRegistryPage() {
             />
           </div>
           <Button 
-            onClick={() => setIsAddDialogOpen(true)}
+            onClick={() => {
+              setFormData(prev => ({ ...prev, accessToken: generateRandomToken(), name: "", email: "" }));
+              setIsAddDialogOpen(true);
+            }}
             className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold flex gap-3 shadow-xl hover:tracking-[0.2em] transition-all"
           >
             <UserPlus className="h-5 w-5" /> Register Steward
@@ -156,7 +168,7 @@ export default function StewardRegistryPage() {
                         <span className="text-[8px] font-black uppercase mt-1">STWD</span>
                       </div>
                       
-                      <div className="space-y-2">
+                      <div className="space-y-4">
                         <div className="flex items-center gap-4">
                           <span className="text-[11px] font-bold text-accent/40 uppercase tracking-widest">{steward.id}</span>
                           <h3 className="text-2xl font-headline italic text-accent leading-tight">{steward.name}</h3>
@@ -170,6 +182,13 @@ export default function StewardRegistryPage() {
                           <span className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 opacity-40" /> {steward.email}</span>
                           <span className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 opacity-40" /> {steward.contact || "N/A"}</span>
                           <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 opacity-40" /> Authorized: {steward.authorizedDate}</span>
+                        </div>
+                        <div className="p-4 bg-accent/[0.03] border border-accent/10 space-y-2 max-w-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Access Token</span>
+                            <Key className="h-3 w-3 text-accent/20" />
+                          </div>
+                          <code className="text-[11px] font-mono tracking-wider text-accent font-bold block truncate">{steward.accessToken}</code>
                         </div>
                       </div>
                     </div>
@@ -239,7 +258,7 @@ export default function StewardRegistryPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="E.g., Imani Financial Services"
-                  className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent"
+                  className="rounded-none h-14 border-accent/20"
                 />
               </div>
 
@@ -250,7 +269,7 @@ export default function StewardRegistryPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   placeholder="compliance@entity.com"
-                  className="rounded-none border-accent/20 h-12 text-base focus:ring-accent"
+                  className="rounded-none h-12 border-accent/20 h-12"
                 />
               </div>
 
@@ -261,7 +280,7 @@ export default function StewardRegistryPage() {
                     value={formData.contact}
                     onChange={(e) => setFormData({...formData, contact: e.target.value})}
                     placeholder="+254 XXX XXX XXX"
-                    className="rounded-none border-accent/20 h-12 text-base focus:ring-accent"
+                    className="rounded-none border-accent/20 h-12 h-12"
                   />
                 </div>
                 <div className="space-y-2">
@@ -280,13 +299,22 @@ export default function StewardRegistryPage() {
                   </Select>
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Access Token (Generated)</Label>
+                <Input 
+                  value={formData.accessToken} 
+                  readOnly
+                  className="rounded-none border-accent/20 h-12 bg-secondary/30 font-mono tracking-widest uppercase font-bold"
+                />
+              </div>
             </div>
 
             <DialogFooter className="pt-4">
               <Button 
                 className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em]"
                 onClick={handleAddSteward}
-                disabled={isSubmitting || !formData.name || !formData.email}
+                disabled={isSubmitting || !formData.name || !formData.email || !formData.accessToken}
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Authorizing Entry...</span>
