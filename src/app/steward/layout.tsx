@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { Landmark, Scale, ShieldCheck, LayoutDashboard, History, Building2, ExternalLink, LogOut, FileText, Activity } from "lucide-react";
+import { Landmark, Scale, ShieldCheck, LayoutDashboard, History, Building2, ExternalLink, LogOut, FileText, Activity, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useWhyteStore } from "@/store/use-whyte-store";
@@ -34,6 +34,7 @@ export default function StewardLayout({ children }: { children: React.ReactNode 
 
   const navItems = [
     { title: "Audit Terminal", icon: LayoutDashboard, href: "/steward" },
+    { title: "Fiscal Insights", icon: BarChart3, href: "/steward/insights" },
     { title: "Audit History", icon: History, href: "/steward/history" },
   ];
 
