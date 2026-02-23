@@ -1,24 +1,36 @@
-
 "use client";
 
 import { motion } from "framer-motion";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { Landmark, Scale, ShieldCheck, LayoutDashboard, History, Building2, ExternalLink, LogOut, FileText } from "lucide-react";
+import { Landmark, Scale, ShieldCheck, LayoutDashboard, History, Building2, ExternalLink, LogOut, FileText, Activity } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useWhyteStore } from "@/store/use-whyte-store";
 import { useEffect, useState } from "react";
 
 export default function StewardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { financialSteward } = useWhyteStore();
   const [isMounted, setIsMounted] = useState(false);
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    const isOnboarded = localStorage.getItem("whyte_steward_onboarded") === "true";
+    setOnboarded(isOnboarded);
 
-  if (!isMounted) return null;
+    if (!isOnboarded && pathname !== "/steward/onboarding") {
+      router.push("/steward/onboarding");
+    }
+  }, [pathname, router]);
+
+  if (!isMounted || onboarded === null) return null;
+
+  // Don't show sidebar on onboarding page
+  if (pathname === "/steward/onboarding") {
+    return <div className="min-h-screen bg-white">{children}</div>;
+  }
 
   const navItems = [
     { title: "Audit Terminal", icon: LayoutDashboard, href: "/steward" },
@@ -74,7 +86,11 @@ export default function StewardLayout({ children }: { children: React.ReactNode 
                   <p className="text-[9px] text-slate-400 truncate uppercase">Partner Authorized</p>
                 </div>
               </div>
-              <Link href="/" className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors group-data-[collapsible=icon]:hidden">
+              <Link 
+                href="/" 
+                className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors group-data-[collapsible=icon]:hidden"
+                onClick={() => localStorage.removeItem("whyte_steward_onboarded")}
+              >
                 <LogOut className="h-3.5 w-3.5" /> Exit Terminal
               </Link>
             </div>
@@ -86,7 +102,7 @@ export default function StewardLayout({ children }: { children: React.ReactNode 
               <SidebarTrigger className="text-slate-400 hover:text-slate-900" />
               <div className="h-4 w-px bg-slate-200" />
               <div className="flex items-center gap-3">
-                <Building2 className="h-4 w-4 text-slate-400" />
+                <Activity className="h-4 w-4 text-slate-400" />
                 <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-900">{financialSteward}</span>
               </div>
             </div>
