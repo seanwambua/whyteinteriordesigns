@@ -59,7 +59,7 @@ export default function ClientDashboardPage() {
   const { clientProjects, designers, updateClientProject, financialSteward, addInquiry } = useWhyteStore();
   const [verifiedProjectId, setVerifiedProjectId] = useState<string | null>(null);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request">("project_support");
+  const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request" | "financial_reorganization">("project_support");
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -109,34 +109,6 @@ export default function ClientDashboardPage() {
     });
   };
 
-  const handleRequestReorg = () => {
-    const reorgInquiry = {
-      id: `REQ-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-      name: activeProject.name,
-      email: activeProject.email,
-      type: 'project_support' as const,
-      serviceType: 'design' as const,
-      message: "Formal Request for Financing Reorganization: I would like to discuss a custom payout schedule for my commission.",
-      status: 'new' as const,
-      urgency: 'high' as const,
-      date: format(new Date(), "MMM dd, yyyy"),
-      projectId: activeProject.id
-    };
-    
-    addInquiry(reorgInquiry);
-    updateClientProject(activeProject.id, {
-      reorganization: {
-        status: 'Requested',
-        requestedBy: 'Client',
-        terms: "",
-        proposedInstallments: [],
-        clientAgreed: false,
-        stewardWitnessed: false
-      }
-    });
-    toast({ title: "Request Transmitted", description: "A Senior Partner will review your reorganization request." });
-  };
-
   const handleAgreeToReorg = () => {
     if (!activeProject.reorganization) return;
     setIsSigningReorg(true);
@@ -154,7 +126,7 @@ export default function ClientDashboardPage() {
     }, 1500);
   };
 
-  const openSupport = (type: "project_support" | "complaint" | "termination_request") => {
+  const openSupport = (type: "project_support" | "complaint" | "termination_request" | "financial_reorganization") => {
     setSupportType(type);
     setIsSupportOpen(true);
   };
@@ -333,7 +305,7 @@ export default function ClientDashboardPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-16 pb-24 font-body">
+    <div className="max-w-6xl mx-auto space-y-12 pb-24 font-body">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <div className="flex items-center gap-4">
           <div className="h-px w-12 bg-accent" />
@@ -549,11 +521,10 @@ export default function ClientDashboardPage() {
             )}
             {!activeProject.isArchived && activeProject.status !== 'Terminated' && (
               <div className="pt-6 border-t border-accent/5 space-y-4">
-                {!activeProject.reorganization?.status || activeProject.reorganization.status === 'Inactive' ? (
-                  <Button onClick={handleRequestReorg} variant="outline" className="w-full h-14 rounded-none border-orange-500/20 text-orange-600 hover:bg-orange-600 hover:text-white uppercase tracking-widest text-[9px] font-bold flex gap-3 transition-all"><RefreshCcw className="h-4 w-4" /> Request Financing Review</Button>
-                ) : (
+                {activeProject.reorganization?.status && activeProject.reorganization.status !== 'Inactive' && (
                   <Badge className="w-full justify-center rounded-none bg-orange-100 text-orange-800 border-orange-200 uppercase tracking-widest text-[8px] py-3">{activeProject.reorganization.status.replace('_', ' ')}</Badge>
                 )}
+                <Button onClick={() => openSupport("financial_reorganization")} variant="outline" className="w-full h-14 rounded-none border-orange-500/20 text-orange-600 hover:bg-orange-600 hover:text-white uppercase tracking-widest text-[9px] font-bold flex gap-3 transition-all"><RefreshCcw className="h-4 w-4" /> Request Financing Review</Button>
                 <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[9px] font-bold">Raise Studio Inquiry</Button>
               </div>
             )}
@@ -603,7 +574,7 @@ export default function ClientDashboardPage() {
 
             <div className="space-y-6">
               <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Proposed Installment Schedule</h4>
-              <div className="divide-y divide-accent/5 border border-accent/5">
+              <div className="divide-y divide-accent/5 border border-accent/5 bg-white shadow-sm">
                 {activeProject.reorganization?.proposedInstallments.map((ins, i) => (
                   <div key={i} className="p-6 flex items-center justify-between bg-white">
                     <div className="space-y-1">

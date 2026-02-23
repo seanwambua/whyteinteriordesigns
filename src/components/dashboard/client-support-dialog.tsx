@@ -32,12 +32,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Loader2, LifeBuoy, AlertTriangle, XCircle } from "lucide-react";
+import { Send, Loader2, LifeBuoy, AlertTriangle, XCircle, RefreshCcw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useWhyteStore, Inquiry } from "@/store/use-whyte-store";
 
 const formSchema = z.object({
-  type: z.enum(["project_support", "complaint", "termination_request"], {
+  type: z.enum(["project_support", "complaint", "termination_request", "financial_reorganization"], {
     required_error: "Please select the nature of your request.",
   }),
   subject: z.string().min(5, { message: "Subject must be at least 5 characters." }),
@@ -57,7 +57,7 @@ interface ClientSupportDialogProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: string;
-  defaultType?: "project_support" | "complaint" | "termination_request";
+  defaultType?: "project_support" | "complaint" | "termination_request" | "financial_reorganization";
 }
 
 export function ClientSupportDialog({
@@ -67,7 +67,7 @@ export function ClientSupportDialog({
   defaultType = "project_support",
 }: ClientSupportDialogProps) {
   const { toast } = useToast();
-  const { addInquiry, clientProjects } = useWhyteStore();
+  const { addInquiry, clientProjects, updateClientProject } = useWhyteStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -107,7 +107,7 @@ export function ClientSupportDialog({
       serviceType: 'bundle', // Default for portal inquiries
       message: `[${values.subject}] ${values.message}`,
       status: 'new',
-      urgency: values.type === 'termination_request' ? 'critical' : values.type === 'complaint' ? 'high' : 'normal',
+      urgency: values.type === 'termination_request' || values.type === 'financial_reorganization' ? 'critical' : values.type === 'complaint' ? 'high' : 'normal',
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
       projectId: projectId
     };
@@ -123,6 +123,23 @@ export function ClientSupportDialog({
       } else if (values.type === 'termination_request') {
         title = "Termination Protocol Initiated";
         description = "Your request to terminate Project " + projectId + " has been received. A senior partner will contact you for a formal exit interview.";
+      } else if (values.type === 'financial_reorganization') {
+        title = "Reorganization Requested";
+        description = "Your formal request for financing review has been transmitted. Senior Partners and Stewards will review your current payout schedule.";
+        
+        // Also update the project state if applicable
+        if (project) {
+          updateClientProject(project.id, {
+            reorganization: {
+              status: 'Requested',
+              requestedBy: 'Client',
+              terms: values.message,
+              proposedInstallments: [],
+              clientAgreed: false,
+              stewardWitnessed: false
+            }
+          });
+        }
       }
 
       toast({
@@ -144,15 +161,26 @@ export function ClientSupportDialog({
           <div className="flex items-center gap-3">
             {requestType === 'termination_request' ? (
               <XCircle className="h-4 w-4 text-destructive" />
+            ) : requestType === 'financial_reorganization' ? (
+              <RefreshCcw className="h-4 w-4 text-orange-600" />
             ) : (
               <LifeBuoy className="h-4 w-4 text-accent/40" />
             )}
-            <span className={`text-[10px] font-bold uppercase tracking-[0.3em] ${requestType === 'termination_request' ? 'text-destructive' : 'text-accent'}`}>
-              {requestType === 'termination_request' ? 'Contract Dissolution' : 'Studio Direct Line'}
+            <span className={cn(
+              "text-[10px] font-bold uppercase tracking-[0.3em]",
+              requestType === 'termination_request' ? 'text-destructive' : 
+              requestType === 'financial_reorganization' ? 'text-orange-600' : 
+              'text-accent'
+            )}>
+              {requestType === 'termination_request' ? 'Contract Dissolution' : 
+               requestType === 'financial_reorganization' ? 'Financing Review' : 
+               'Studio Direct Line'}
             </span>
           </div>
           <DialogTitle className="text-3xl font-headline italic">
-            {requestType === 'termination_request' ? 'Project Termination' : 'Project Support'}
+            {requestType === 'termination_request' ? 'Project Termination' : 
+             requestType === 'financial_reorganization' ? 'Financing Re-organization' : 
+             'Project Support'}
           </DialogTitle>
           <DialogDescription className="font-light text-muted-foreground italic">
             Reference ID: {projectId} — All communications are logged for architectural auditing.
@@ -167,6 +195,20 @@ export function ClientSupportDialog({
                 <p className="text-xs font-bold text-destructive uppercase tracking-widest">Notice of Impasse</p>
                 <p className="text-[10px] text-destructive/80 leading-relaxed italic">
                   Termination requests signify an unresolvable impasse. Please note that initiated procurement, custom fabrication, and site mobilization costs are subject to the terms in Section 4.2 of your Whyte Interiors contract.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {requestType === 'financial_reorganization' && (
+          <div className="p-4 bg-orange-50 border border-orange-200 mb-4">
+            <div className="flex gap-3 items-start">
+              <RefreshCcw className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-orange-600 uppercase tracking-widest">Payout Schedule Review</p>
+                <p className="text-[10px] text-orange-700 leading-relaxed italic">
+                  A re-organization request initiates a formal review of your capital commitment plan. A Steward will witness any agreed-upon changes to your installment structure.
                 </p>
               </div>
             </div>
@@ -190,6 +232,7 @@ export function ClientSupportDialog({
                     <SelectContent className="rounded-none border-accent/20">
                       <SelectItem value="project_support">General Studio Inquiry</SelectItem>
                       <SelectItem value="complaint">Site Issue / Urgent Concern</SelectItem>
+                      <SelectItem value="financial_reorganization">Financing Re-organization</SelectItem>
                       <SelectItem value="termination_request" className="text-destructive focus:text-destructive">Project Termination Request</SelectItem>
                     </SelectContent>
                   </Select>
@@ -206,7 +249,11 @@ export function ClientSupportDialog({
                   <FormLabel className="text-xs uppercase tracking-widest opacity-70">Subject</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder={requestType === 'termination_request' ? "Formal Request for Termination" : "E.g., Update on foyer lighting"} 
+                      placeholder={
+                        requestType === 'termination_request' ? "Formal Request for Termination" : 
+                        requestType === 'financial_reorganization' ? "Payout Schedule Revision Request" :
+                        "E.g., Update on foyer lighting"
+                      } 
                       className="rounded-none border-accent/20 h-12 focus:ring-accent" 
                       {...field} 
                     />
@@ -222,11 +269,17 @@ export function ClientSupportDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-xs uppercase tracking-widest opacity-70">
-                    {requestType === 'termination_request' ? 'Reason for Termination' : 'Details'}
+                    {requestType === 'termination_request' ? 'Reason for Termination' : 
+                     requestType === 'financial_reorganization' ? 'Proposed Adjustment Rationale' :
+                     'Details'}
                   </FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder={requestType === 'termination_request' ? "Please state the reasons for contract dissolution..." : "Please provide specifics for the design team..."}
+                      placeholder={
+                        requestType === 'termination_request' ? "Please state the reasons for contract dissolution..." : 
+                        requestType === 'financial_reorganization' ? "Please explain why you wish to adjust the current payout terms..." :
+                        "Please provide specifics for the design team..."
+                      }
                       className="min-h-[120px] rounded-none border-accent/20 focus:ring-accent resize-none bg-transparent" 
                       {...field} 
                     />
@@ -268,6 +321,8 @@ export function ClientSupportDialog({
               className={`w-full text-white rounded-none h-14 uppercase tracking-[0.2em] transition-all ${
                 requestType === 'termination_request' 
                   ? 'bg-destructive hover:bg-destructive/90' 
+                  : requestType === 'financial_reorganization' 
+                  ? 'bg-orange-600 hover:bg-orange-700'
                   : requestType === 'complaint' 
                   ? 'bg-orange-600 hover:bg-orange-700' 
                   : 'bg-accent hover:bg-accent/90'
@@ -281,7 +336,9 @@ export function ClientSupportDialog({
               ) : (
                 <span className="flex items-center gap-2">
                   <Send className="h-4 w-4" /> 
-                  {requestType === 'termination_request' ? 'Initiate Dissolution' : 'Send to Studio'}
+                  {requestType === 'termination_request' ? 'Initiate Dissolution' : 
+                   requestType === 'financial_reorganization' ? 'Request Re-organization' :
+                   'Send to Studio'}
                 </span>
               )}
             </Button>

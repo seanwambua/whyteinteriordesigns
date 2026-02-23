@@ -205,7 +205,7 @@ export interface Inquiry {
   id: string;
   name: string;
   email: string;
-  type: 'new_business' | 'project_support' | 'complaint' | 'termination_request';
+  type: 'new_business' | 'project_support' | 'complaint' | 'termination_request' | 'financial_reorganization';
   serviceType: 'design' | 'decor' | 'bundle';
   message: string;
   status: 'new' | 'contacted' | 'closed';
