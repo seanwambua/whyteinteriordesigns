@@ -168,9 +168,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const handleUpdateTempInstallment = (idx: number, field: keyof Installment, value: any) => {
     const updated = [...tempInstallments];
     updated[idx] = { ...updated[idx], [field]: value };
-    // Recalculate percentage if amount changes
+    // Automatically recalculate percentage based on amount relative to total budget
     if (field === 'amount') {
-      updated[idx].percentage = Math.round((value / project.totalBudget) * 100);
+      const budget = project.totalBudget || 1;
+      updated[idx].percentage = Math.round((Number(value) / budget) * 100);
     }
     setTempInstallments(updated);
   };
@@ -178,7 +179,15 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const handleSyncFinalToBalance = (idx: number) => {
     const otherAllocations = tempInstallments.reduce((sum, ins, i) => i === idx ? sum : sum + ins.amount, 0);
     const balanceNeeded = Math.max(0, project.totalBudget - otherAllocations);
-    handleUpdateTempInstallment(idx, 'amount', balanceNeeded);
+    const budget = project.totalBudget || 1;
+    
+    const updated = [...tempInstallments];
+    updated[idx] = { 
+      ...updated[idx], 
+      amount: balanceNeeded,
+      percentage: Math.round((balanceNeeded / budget) * 100)
+    };
+    setTempInstallments(updated);
     toast({ title: "Reconciliation Balance Established" });
   };
 
@@ -374,7 +383,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               </Select>
             </div>
             <div className="px-8 border-r border-accent/10">
-              <span className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span>
+              <span className="text-[12px] font-bold uppercase tracking-widest text-accent/40 block mb-1">Commission Tier</span>
               <Badge className="rounded-none uppercase tracking-widest text-[12px] bg-accent text-white py-1">{project.tier}</Badge>
             </div>
           </div>
@@ -755,9 +764,12 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                               value={ins.amount} 
                               onChange={(e) => handleUpdateTempInstallment(idx, 'amount', Number(e.target.value))}
                               readOnly={ins.status === 'Paid'}
-                              className="rounded-none h-10 border-accent/10 text-sm font-bold pl-8"
+                              className="rounded-none h-10 border-accent/10 text-sm font-bold pl-8 pr-12"
                             />
                             <Coins className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-accent/40">
+                              {ins.percentage}%
+                            </span>
                           </div>
                         </div>
                         <div className="md:col-span-3 flex gap-2">
