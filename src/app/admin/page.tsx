@@ -6,19 +6,15 @@ import {
   Briefcase, 
   MessageSquare, 
   Star, 
-  TrendingUp, 
-  ArrowUpRight, 
   RefreshCcw, 
   ShieldAlert, 
   Archive, 
-  CheckCircle2, 
-  Target, 
-  BarChart3, 
-  ArrowRight,
-  Settings2,
-  Lock,
+  ArrowUpRight, 
+  Activity,
   Zap,
-  Loader2
+  BarChart3,
+  Clock,
+  ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 import { useWhyteStore } from "@/store/use-whyte-store";
@@ -37,25 +33,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Cell } from "recharts";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 export default function AdminDashboardPage() {
   const { toast } = useToast();
-  const { clientProjects, inquiries, feedback, clearAllData, businessTargets, updateBusinessTargets } = useWhyteStore();
+  const { clientProjects, inquiries, feedback, clearAllData } = useWhyteStore();
   const [isMounted, setIsMounted] = useState(false);
-  const [isTargetDialogOpen, setIsTargetDialogOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  const [targets, setTargets] = useState({
-    monthlyRevenueGoal: businessTargets.monthlyRevenueGoal,
-    projectVolumeGoal: businessTargets.projectVolumeGoal,
-    efficiencyTarget: businessTargets.efficiencyTarget
-  });
 
   useEffect(() => {
     setIsMounted(true);
@@ -64,34 +46,12 @@ export default function AdminDashboardPage() {
   const activeJourneys = clientProjects.filter(p => p.isActivated && !p.isArchived);
   const archivedJourneys = clientProjects.filter(p => p.isArchived);
 
-  // Business Insights Calculations
-  const currentRevenue = useMemo(() => 
-    activeJourneys.reduce((sum, p) => sum + (p.totalBudget || 0), 0), 
-    [activeJourneys]
-  );
-
-  const projectEfficiency = useMemo(() => {
-    if (activeJourneys.length === 0) return 0;
-    const avgProgress = activeJourneys.reduce((sum, p) => sum + p.progress, 0) / activeJourneys.length;
-    return Math.round(avgProgress);
-  }, [activeJourneys]);
-
   const stats = [
     { title: "Active Journeys", value: activeJourneys.length.toString(), icon: Briefcase, color: "text-accent" },
     { title: "Archived Projects", value: archivedJourneys.length.toString(), icon: Archive, color: "text-muted-foreground" },
     { title: "Open Inquiries", value: inquiries.filter(i => i.status === 'new').length.toString(), icon: MessageSquare, color: "text-accent" },
     { title: "Client Sentiment", value: feedback.length.toString(), icon: Star, color: "text-amber-500" },
   ];
-
-  const handleUpdateTargets = () => {
-    setIsSyncing(true);
-    setTimeout(() => {
-      updateBusinessTargets(targets);
-      setIsSyncing(false);
-      setIsTargetDialogOpen(false);
-      toast({ title: "Strategic Targets Synchronized" });
-    }, 1200);
-  };
 
   const handleReset = () => {
     clearAllData();
@@ -100,14 +60,6 @@ export default function AdminDashboardPage() {
       description: "All studio local state has been synchronized to empty.",
     });
   };
-
-  const revenueProgress = Math.min(100, Math.round((currentRevenue / businessTargets.monthlyRevenueGoal) * 100));
-  const volumeProgress = Math.min(100, Math.round((activeJourneys.length / businessTargets.projectVolumeGoal) * 100));
-
-  const chartData = [
-    { name: "Target", value: businessTargets.monthlyRevenueGoal, fill: "hsl(var(--accent) / 0.1)" },
-    { name: "Realized", value: currentRevenue, fill: "hsl(var(--accent))" },
-  ];
 
   if (!isMounted) return null;
 
@@ -127,8 +79,8 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex gap-4">
-          <Button onClick={() => setIsTargetDialogOpen(true)} variant="outline" className="rounded-none border-accent/10 text-accent hover:bg-accent/5 h-12 uppercase tracking-widest text-[11px] font-bold flex gap-3">
-            <Target className="h-4 w-4" /> Strategic Targets
+          <Button asChild variant="outline" className="rounded-none border-accent/10 text-accent hover:bg-accent/5 h-12 uppercase tracking-widest text-[11px] font-bold flex gap-3">
+            <Link href="/admin/insights"><BarChart3 className="h-4 w-4" /> Strategic Insights</Link>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -184,107 +136,20 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* Strategic Intelligence Section */}
-      <section className="space-y-8">
-        <div className="flex items-center gap-4">
-          <div className="h-px w-8 bg-accent/20" />
-          <h2 className="text-[13px] font-bold uppercase tracking-[0.4em] text-accent/60">Business Intelligence & Strategic Goals</h2>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Card className="rounded-none border-accent/5 shadow-2xl bg-white lg:col-span-2 overflow-hidden flex flex-col">
-            <div className="bg-accent/5 h-1.5 w-full" />
-            <CardHeader className="p-10 pb-6 flex flex-row items-center justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-2xl font-headline italic flex items-center gap-3">
-                  <BarChart3 className="h-5 w-5 text-accent/40" /> Revenue Realization
-                </CardTitle>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Authorized Capital vs Strategic Target</p>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-headline italic text-accent">KES {currentRevenue.toLocaleString()}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Target Month Cycle</p>
-              </div>
-            </CardHeader>
-            <CardContent className="p-10 pt-0 flex-1 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
-              <div className="md:col-span-7 h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: 'hsl(var(--accent) / 0.4)' }} />
-                    <YAxis hide />
-                    <Bar dataKey="value" radius={[0, 0, 0, 0]}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="md:col-span-5 space-y-8 border-l border-accent/5 pl-12">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-end">
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-accent/40">Fiscal Realization</span>
-                    <span className="text-xl font-headline italic">{revenueProgress}%</span>
-                  </div>
-                  <Progress value={revenueProgress} className="h-1 bg-accent/5 rounded-none" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-accent/30">Gap to Target</p>
-                  <p className="text-xl font-headline italic text-orange-600">KES {Math.max(0, businessTargets.monthlyRevenueGoal - currentRevenue).toLocaleString()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-none border-accent/5 shadow-2xl bg-white p-10 space-y-10">
-            <div className="space-y-1">
-              <CardTitle className="text-xl font-headline italic flex items-center gap-3">
-                <Zap className="h-4 w-4 text-accent/40" /> Implementation Index
-              </CardTitle>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Operational Delivery Metrics</p>
-            </div>
-
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-accent/60">
-                  <span>Project Volume Goal</span>
-                  <span>{activeJourneys.length} / {businessTargets.projectVolumeGoal}</span>
-                </div>
-                <Progress value={volumeProgress} className="h-1 bg-accent/5 rounded-none" />
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-accent/60">
-                  <span>Studio Efficiency</span>
-                  <span>{projectEfficiency}%</span>
-                </div>
-                <Progress value={projectEfficiency} className="h-1 bg-accent/5 rounded-none" />
-                <p className="text-[9px] text-muted-foreground italic uppercase tracking-widest">Average implementation velocity across active dossiers</p>
-              </div>
-
-              <div className="pt-6 border-t border-accent/5">
-                <div className="p-6 bg-accent/[0.02] border border-accent/5 italic text-sm text-accent/60 leading-relaxed">
-                  "Target realization depends on synchronized activation of pending briefs."
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </section>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-12">
+          {/* Active Workflows Summary */}
           <Card className="rounded-none border-accent/10 shadow-2xl bg-white overflow-hidden">
             <div className="bg-accent h-1 w-full" />
             <CardHeader className="flex flex-row items-center justify-between p-8">
-              <CardTitle className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent">Recent Inquiries</CardTitle>
+              <CardTitle className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent">Real-time Pipeline</CardTitle>
               <Link href="/admin/inquiries" className="text-[11px] font-bold uppercase tracking-widest text-accent/40 hover:text-accent flex items-center gap-2 transition-colors">
-                View All Pipeline <ArrowUpRight className="h-3 w-3" />
+                View All Inquiries <ArrowUpRight className="h-3 w-3" />
               </Link>
             </CardHeader>
             <CardContent className="p-8 pt-0">
               <div className="space-y-4">
-                {inquiries.slice(0, 3).map((inquiry) => (
+                {inquiries.slice(0, 4).map((inquiry) => (
                   <div key={inquiry.id} className="flex items-center justify-between p-6 border border-accent/5 hover:border-accent/10 transition-all bg-secondary/10 group cursor-pointer">
                     <div className="space-y-1">
                       <p className="text-base font-bold uppercase tracking-[0.2em] group-hover:text-accent transition-colors">{inquiry.name}</p>
@@ -311,7 +176,7 @@ export default function AdminDashboardPage() {
           <Card className="rounded-none border-accent/10 shadow-xl bg-white overflow-hidden">
             <CardHeader className="p-8">
               <CardTitle className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent flex items-center gap-3">
-                <Archive className="h-4 w-4 opacity-40" /> Recently Retired Projects
+                <Archive className="h-4 w-4 opacity-40" /> Historical Archives
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 pt-0">
@@ -338,7 +203,7 @@ export default function AdminDashboardPage() {
 
         <div className="space-y-8">
           <Card className="rounded-none border-accent/10 shadow-xl bg-white p-8">
-            <CardTitle className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent mb-8">Client Sentiment</CardTitle>
+            <CardTitle className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent mb-8">Latest Sentiment</CardTitle>
             <div className="space-y-8">
               {feedback.filter(fb => fb.isApproved).slice(0, 1).map(fb => (
                 <div key={fb.id} className="p-6 bg-accent/5 border-l-2 border-accent italic">
@@ -375,66 +240,12 @@ export default function AdminDashboardPage() {
               </li>
             </ul>
           </Card>
+
+          <Button asChild variant="outline" className="w-full h-14 rounded-none border-accent/10 text-accent uppercase tracking-widest text-[10px] font-bold flex gap-3">
+            <Link href="/admin/insights"><Zap className="h-4 w-4" /> Operations Intelligence</Link>
+          </Button>
         </div>
       </div>
-
-      <Dialog open={isTargetDialogOpen} onOpenChange={setIsTargetDialogOpen}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden">
-          <div className="bg-accent h-1.5 w-full" />
-          <div className="p-10 space-y-8">
-            <DialogHeader className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Settings2 className="h-5 w-5 text-accent" />
-                <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Strategic Calibration</span>
-              </div>
-              <DialogTitle className="text-3xl font-headline italic">Update Studio Goals</DialogTitle>
-              <DialogDescription className="text-[13px] italic font-light leading-relaxed">
-                Configure current targets for revenue realization and implementation capacity.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-40">Monthly Revenue Goal (KES)</Label>
-                <Input 
-                  type="number" 
-                  value={targets.monthlyRevenueGoal} 
-                  onChange={(e) => setTargets({...targets, monthlyRevenueGoal: Number(e.target.value)})}
-                  className="rounded-none h-14 text-lg border-accent/20 focus:ring-accent" 
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-40">Project Volume</Label>
-                  <Input 
-                    type="number" 
-                    value={targets.projectVolumeGoal} 
-                    onChange={(e) => setTargets({...targets, projectVolumeGoal: Number(e.target.value)})}
-                    className="rounded-none h-12 text-base border-accent/20 focus:ring-accent" 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-40">Efficiency %</Label>
-                  <Input 
-                    type="number" 
-                    value={targets.efficiencyTarget} 
-                    onChange={(e) => setTargets({...targets, efficiencyTarget: Number(e.target.value)})}
-                    className="rounded-none h-12 text-base border-accent/20 focus:ring-accent" 
-                  />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button 
-                className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-xl transition-all" 
-                onClick={handleUpdateTargets} 
-                disabled={isSyncing}
-              >
-                {isSyncing ? <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...</span> : "Authorize Calibration"}
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
