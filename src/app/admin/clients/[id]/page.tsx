@@ -46,7 +46,8 @@ import {
   AlertCircle,
   Building2,
   TrendingDown,
-  Scale
+  Scale,
+  RefreshCcw
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -119,7 +120,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         amount: verifiedAmount,
         date: format(paymentDate, "MMM dd, yyyy")
       };
-      updateClientProject(project.id, { installments: updatedInstallments, lastActivity: `Stewardship Protocol: Payment Verified — KES ${verifiedAmount.toLocaleString()} via Ref ${txnCode}` });
+      updateClientProject(project.id, { 
+        installments: updatedInstallments, 
+        lastActivity: `Stewardship Protocol: Payment Verified — KES ${verifiedAmount.toLocaleString()} via Ref ${txnCode}` 
+      });
       toast({ title: "Financial Protocol Synchronized", description: `Installment verified with code ${txnCode}.` });
       setIsVerifying(false);
       setVerifyingInstallment(null);
@@ -207,10 +211,15 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     toast({ title: "Pipeline Synchronized", description: `Inquiry status updated to ${status}.` });
   };
 
+  // FINANCIAL DERIVATIONS
   const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
-  const remainingBalance = (project.totalBudget || 0) - totalPaid;
+  const remainingBalance = project.totalBudget - totalPaid;
   const isLegerSynchronized = Math.abs(remainingBalance) < 1;
   const isOverpaid = remainingBalance < -1;
+
+  // Plan Integrity Check: Sum of (Paid Actuals + Pending Projected) vs Total Budget
+  const totalPlanValue = project.installments.reduce((sum, i) => sum + i.amount, 0);
+  const hasPlanDiscrepancy = Math.abs(totalPlanValue - project.totalBudget) > 1;
 
   const temporal = (() => {
     if (!project.isActivated) return { label: "Temporal Status", value: "Locked", icon: <ZapOff className="h-5 w-5" />, sub: "Pending Activation" };
@@ -273,7 +282,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12 font-body">
+    <div className="max-w-7xl mx-auto space-y-12 font-body pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
         <Link href="/admin/clients" className="inline-flex items-center gap-2 text-accent/40 hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Master Registry</span></Link>
         {isAuditVerified && (<Alert className="rounded-none border-green-600/20 bg-green-600/[0.02]"><Lock className="h-4 w-4 text-green-600" /><AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-green-600">Dossier Locked — Audit Verified</AlertTitle><AlertDescription className="text-[13px] font-light italic">This commission has been reconciled and verified. All protocols are now read-only.</AlertDescription></Alert>)}
@@ -314,7 +323,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       </motion.div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-12">
-        <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto">
+        <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto custom-scrollbar">
           <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><Layout className="h-4 w-4" /> Overview</TabsTrigger>
           <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><PlayCircle className="h-4 w-4" /> Workflow</TabsTrigger>
           <TabsTrigger value="communications" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-4 px-0 flex gap-2"><MessageSquare className="h-4 w-4" /> Communications</TabsTrigger>
@@ -394,6 +403,16 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         </TabsContent>
 
         <TabsContent value="ledger" className="m-0 space-y-12">
+           {hasPlanDiscrepancy && (
+             <Alert variant="destructive" className="rounded-none border-destructive/20 bg-destructive/5 mb-8">
+               <AlertCircle className="h-4 w-4" />
+               <AlertTitle className="text-[11px] font-bold uppercase tracking-widest">Registry Synchronization Required</AlertTitle>
+               <AlertDescription className="text-[12px] font-light italic">
+                 The current payment plan total (KES {totalPlanValue.toLocaleString()}) does not match the commission's Capital Commitment (KES {project.totalBudget.toLocaleString()}). Recalibration is advised following verified variances.
+               </AlertDescription>
+             </Alert>
+           )}
+
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-12 w-12" /></div>
@@ -436,9 +455,9 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
            <Card className="rounded-none border-accent/5 p-0 bg-white shadow-2xl overflow-hidden">
              <div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center">
                <h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3">
-                 <CreditCard className="h-5 w-5" /> Architectural Registry
+                 <CreditCard className="h-5 w-5" /> Payment Plan Protocol
                </h3>
-               <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">Stewardship Verified</Badge>
+               <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">Stewardship Lead: {assignedSteward?.name || 'Unassigned'}</Badge>
              </div>
              <div className="divide-y divide-accent/5">
                {project.installments.map((ins, i) => {
@@ -467,13 +486,15 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                            <div className="h-1.5 w-1.5 rounded-full bg-accent/10" />
                            <span>{ins.date || 'TBD'}</span>
                            <div className="h-1.5 w-1.5 rounded-full bg-accent/10" />
-                           <span>{ins.percentage}% Allocation (Projected KES {projectedAmount.toLocaleString()})</span>
+                           <span>{ins.percentage}% Allocation Protocol (Target: KES {projectedAmount.toLocaleString()})</span>
                          </div>
                        </div>
                      </div>
                      <div className="flex items-center gap-12 justify-between lg:justify-end">
                        <div className="text-right">
-                         <p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Liquidated Value</p>
+                         <p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">
+                           {ins.status === 'Paid' ? 'Liquidated Value' : 'Projected Value'}
+                         </p>
                          <p className={cn("text-2xl font-headline italic", ins.status === 'Pending' ? 'text-orange-600' : 'text-accent')}>
                            KES {ins.amount.toLocaleString()}
                          </p>
