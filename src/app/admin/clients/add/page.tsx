@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,7 +24,8 @@ import {
   Users,
   ShieldCheck,
   XCircle,
-  Loader2
+  Loader2,
+  Building2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -49,7 +51,7 @@ import {
 export default function AddClientPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { addClientProject, collaborators } = useWhyteStore();
+  const { addClientProject, collaborators, stewards } = useWhyteStore();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -61,6 +63,7 @@ export default function AddClientPage() {
     tier: "Premium" as ClientProject['tier'],
     description: "",
     totalBudget: "",
+    assignedStewardId: "",
     startDate: new Date(),
     endDate: new Date(new Date().setMonth(new Date().getMonth() + 6)),
     milestones: [
@@ -160,7 +163,8 @@ export default function AddClientPage() {
       tasks: formData.tasks.map((t, i) => ({ ...t, id: t.id || `T-${id}-${i + 1}`, status: 'Todo' })), 
       installments: getInstallmentPlan(formData.tier, budget), 
       description: formData.description,
-      vendorAllocations: formData.vendorAllocations
+      vendorAllocations: formData.vendorAllocations,
+      assignedStewardId: formData.assignedStewardId
     };
 
     setTimeout(() => { 
@@ -174,11 +178,11 @@ export default function AddClientPage() {
   const isStepValid = () => { 
     if (step === 1) return formData.name && formData.email; 
     if (step === 2) return formData.project && formData.description; 
-    if (step === 3) return formData.totalBudget && Number(formData.totalBudget) > 0; 
+    if (step === 3) return formData.totalBudget && Number(formData.totalBudget) > 0 && formData.assignedStewardId; 
     if (step === 4) return formData.startDate && formData.endDate;
     if (step === 5) return formData.milestones.length > 0 && formData.milestones.every(m => m.label);
     if (step === 6) return formData.tasks.length > 0 && formData.tasks.every(t => t.title);
-    if (step === 7) return true; // Optional linking
+    if (step === 7) return true; 
     return true; 
   };
 
@@ -226,7 +230,7 @@ export default function AddClientPage() {
               )}
 
               {step === 3 && (
-                <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><Calculator className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Financial Framework</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-3">
@@ -246,6 +250,18 @@ export default function AddClientPage() {
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Capital Commitment (KES)</Label>
                       <Input type="number" placeholder="5,000,000" className="rounded-none border-accent/20 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} />
                     </div>
+                  </div>
+                  <div className="space-y-3 pt-6 border-t border-accent/5">
+                    <div className="flex items-center gap-3 mb-2"><Building2 className="h-4 w-4 text-accent/40" /><Label className="text-[12px] font-bold uppercase tracking-widest text-accent">Stewardship Attribution</Label></div>
+                    <Select onValueChange={(v) => setFormData({...formData, assignedStewardId: v})} value={formData.assignedStewardId}>
+                      <SelectTrigger className="rounded-none border-accent/20 h-14 text-[12px] font-bold uppercase tracking-widest focus:ring-accent">
+                        <SelectValue placeholder="SELECT AUTHORIZED STEWARD FROM REGISTRY" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-none">
+                        {stewards.map(s => <SelectItem key={s.id} value={s.id} className="uppercase tracking-widest text-[11px] font-bold py-3">{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground italic uppercase tracking-widest">Assign a professional steward to oversee the initialization and audit reconciliation of this dossier.</p>
                   </div>
                 </motion.div>
               )}
@@ -465,7 +481,7 @@ export default function AddClientPage() {
             <div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Governance Protocol</span></div>
             <AlertDialogTitle className="text-3xl font-headline italic">Confirm Commission Initialization?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">
-              This will register the dossier for <strong>{formData.project}</strong> in the Master Registry. The initial strategic milestones and site protocols will be synchronized immediately.
+              This will register the dossier for <strong>{formData.project}</strong> in the Master Registry. The initial strategic milestones, site protocols, and professional stewardship lead will be synchronized immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-10">

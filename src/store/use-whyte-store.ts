@@ -170,6 +170,7 @@ export interface ClientProject {
   auditDetails?: FinancialAudit;
   initializedBy?: 'Admin' | 'Designer';
   assignedDesignerId?: string;
+  assignedStewardId?: string;
   handoverStatus?: 'Pending' | 'Failed' | 'Passed' | null;
   handoverNotes?: string;
 }
@@ -347,7 +348,8 @@ const initialClientProjects: ClientProject[] = [
       }
     ],
     initializedBy: 'Admin',
-    assignedDesignerId: 'DES-01'
+    assignedDesignerId: 'DES-01',
+    assignedStewardId: 'STW-01'
   }
 ];
 

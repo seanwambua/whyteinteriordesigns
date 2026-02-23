@@ -1,3 +1,4 @@
+
 "use client";
 
 import { use } from "react";
@@ -42,7 +43,8 @@ import {
   ClipboardList,
   Activity,
   PencilRuler,
-  AlertCircle
+  AlertCircle,
+  Building2
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -56,7 +58,7 @@ import { Calendar } from "@/components/ui/calendar";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { clientProjects, designers, updateClientProject, inquiries, updateInquiryStatus } = useWhyteStore();
+  const { clientProjects, designers, stewards, updateClientProject, inquiries, updateInquiryStatus } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -79,11 +81,11 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   const project = clientProjects.find((p) => p.id === id);
   const assignedDesigner = designers.find(d => d.id === project?.assignedDesignerId);
+  const assignedSteward = stewards.find(s => s.id === project?.assignedStewardId);
   const projectInquiries = inquiries.filter(inq => inq.projectId === id);
   
   const isAuditVerified = project?.financialReportStatus === 'Verified';
   const isPendingActivation = project ? !project.isActivated : false;
-  // RECONCILIATION GUARDRAIL: Projects in 'Completion' are Read-Only for details
   const isReadOnly = isAuditVerified || isPendingActivation || project?.status === 'Completion';
 
   if (!isMounted) return null;
@@ -262,9 +264,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
         <Link href="/admin/clients" className="inline-flex items-center gap-2 text-accent/40 hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Master Registry</span></Link>
         {isAuditVerified && (<Alert className="rounded-none border-green-600/20 bg-green-600/[0.02]"><Lock className="h-4 w-4 text-green-600" /><AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-green-600">Dossier Locked — Audit Verified</AlertTitle><AlertDescription className="text-[13px] font-light italic">This commission has been reconciled and verified. All protocols are now read-only.</AlertDescription></Alert>)}
-        {project.status === 'Completion' && !isAuditVerified && (
-          <Alert className="rounded-none border-accent/10 bg-accent/[0.02]"><ShieldCheck className="h-4 w-4 text-accent" /><AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent">Reconciliation Phase Active</AlertTitle><AlertDescription className="text-[13px] font-light italic">Site implementation is finalized. Dossier is read-only while undergoing financial stewardship reconciliation.</AlertDescription></Alert>
-        )}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
           <div className="space-y-2">
             <div className="flex items-center gap-4"><div className="h-px w-8 bg-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Project Terminal</span></div>
@@ -273,6 +272,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               <span className="flex items-center gap-2"><User className="h-4 w-4 opacity-40" /> {project.name}</span>
               <div className="h-1 w-1 bg-accent/20 rounded-full" />
               <span className="flex items-center gap-2"><PencilRuler className="h-4 w-4 opacity-40" /> {assignedDesigner ? assignedDesigner.name : "Unassigned Lead"}</span>
+              <div className="h-1 w-1 bg-accent/20 rounded-full" />
+              <span className="flex items-center gap-2"><Building2 className="h-4 w-4 opacity-40" /> {assignedSteward ? assignedSteward.name : "Unassigned Steward"}</span>
               <div className="h-1 w-1 bg-accent/20 rounded-full" />
               <span className="opacity-40">{project.id}</span>
             </div>
@@ -380,7 +381,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         </TabsContent>
 
         <TabsContent value="ledger" className="m-0 space-y-12">
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-8"><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p><p className="text-3xl font-headline italic text-accent">KES {(project.totalBudget || 0).toLocaleString()}</p></div></Card><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p><p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p></div></Card><Card className={cn("rounded-none p-10 relative overflow-hidden group transition-all", isLegerSynchronized ? "bg-white border-accent/10" : "bg-orange-50 border-orange-500/20 shadow-xl")}><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><History className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className={cn("text-[11px] font-bold uppercase tracking-[0.4em]", isLegerSynchronized ? "text-accent/40" : "text-orange-600/60")}>Outstanding Balance</p><p className={cn("text-3xl font-headline italic", isLegerSynchronized ? "text-accent" : "text-orange-600")}>KES {remainingBalance.toLocaleString()}</p></div></Card></div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-8"><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p><p className="text-3xl font-headline italic text-accent">KES {(project.totalBudget || 0).toLocaleString()}</p></div></Card><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px) font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p><p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p></div></Card><Card className={cn("rounded-none p-10 relative overflow-hidden group transition-all", isLegerSynchronized ? "bg-white border-accent/10" : "bg-orange-50 border-orange-500/20 shadow-xl")}><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><History className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className={cn("text-[11px] font-bold uppercase tracking-[0.4em]", isLegerSynchronized ? "text-accent/40" : "text-orange-600/60")}>Outstanding Balance</p><p className={cn("text-3xl font-headline italic", isLegerSynchronized ? "text-accent" : "text-orange-600")}>KES {remainingBalance.toLocaleString()}</p></div></Card></div>
            <Card className="rounded-none border-accent/5 p-0 bg-white shadow-2xl overflow-hidden"><div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center"><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3"><CreditCard className="h-5 w-5" /> Architectural Registry</h3><Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">Stewardship Verified</Badge></div><div className="divide-y divide-accent/5">{project.installments.map((ins, i) => (<div key={i} className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8 hover:bg-accent/[0.01] transition-colors"><div className="flex items-center gap-8"><div className={cn("h-12 w-12 rounded-full flex items-center justify-center shrink-0 border", ins.status === 'Paid' ? "bg-green-600/5 border-green-600/20 text-green-600" : "bg-orange-600/5 border-orange-600/20 text-orange-600")}>{ins.status === 'Paid' ? <CheckCircle2 className="h-5 w-5" /> : <Timer className="h-5 w-5 animate-pulse" />}</div><div className="space-y-1.5"><div className="flex items-center gap-3"><p className="text-base font-bold uppercase tracking-[0.2em]">{ins.label}</p><Badge className={cn("rounded-none text-[10px] uppercase tracking-widest px-2.5 py-0.5 font-bold", ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white")}>{ins.status}</Badge></div><div className="flex items-center gap-4 text-[12px] text-muted-foreground font-bold uppercase tracking-widest"><span>Ref: {ins.transactionCode || 'Awaiting Sync'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.date || 'TBD'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.percentage}% Allocation</span></div></div></div><div className="flex items-center gap-12 justify-between lg:justify-end"><div className="text-right"><p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Value</p><p className={cn("text-2xl font-headline italic", ins.status === 'Pending' ? 'text-orange-600' : 'text-accent')}>KES {ins.amount.toLocaleString()}</p></div>{ins.status === 'Pending' && !isAuditVerified && (<Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-12 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"><ShieldCheck className="h-4 w-4" /> Verify Entry</Button>)}{ins.status === 'Paid' && (<div className="h-12 w-12 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]"><Check className="h-6 w-6" /></div>)}</div></div>))}</div></Card>
         </TabsContent>
       </Tabs>
