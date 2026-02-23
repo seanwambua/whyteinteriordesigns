@@ -1,3 +1,4 @@
+
 'use client';
 
 import { create } from 'zustand';
@@ -128,6 +129,16 @@ export interface Steward {
   totalAudits: number;
 }
 
+export interface StudioAccount {
+  id: string;
+  name: string;
+  provider: string;
+  type: 'Bank' | 'Mobile Money' | 'Escrow' | 'Treasury';
+  balance: number;
+  currency: string;
+  status: 'Active' | 'Under Audit' | 'Locked';
+}
+
 export interface ClientProject {
   id: string;
   name: string;
@@ -210,6 +221,7 @@ interface WhyteState {
   clientProjects: ClientProject[];
   designers: Designer[];
   stewards: Steward[];
+  accounts: StudioAccount[];
   inquiries: Inquiry[];
   feedback: Feedback[];
   collaborators: Collaborator[];
@@ -230,6 +242,10 @@ interface WhyteState {
   addSteward: (steward: Steward) => void;
   updateSteward: (id: string, updates: Partial<Steward>) => void;
   removeSteward: (id: string) => void;
+
+  addAccount: (account: StudioAccount) => void;
+  updateAccount: (id: string, updates: Partial<StudioAccount>) => void;
+  removeAccount: (id: string) => void;
   
   addInquiry: (inquiry: Inquiry) => void;
   updateInquiryStatus: (id: string, status: Inquiry['status']) => void;
@@ -362,6 +378,12 @@ const initialStewards: Steward[] = [
   }
 ];
 
+const initialAccounts: StudioAccount[] = [
+  { id: 'ACC-01', name: 'Primary Operational Account', provider: 'NCBA Bank', type: 'Bank', balance: 42500000, currency: 'KES', status: 'Active' },
+  { id: 'ACC-02', name: 'Client Escrow Reserve', provider: 'Standard Chartered', type: 'Escrow', balance: 128000000, currency: 'KES', status: 'Under Audit' },
+  { id: 'ACC-03', name: 'Artisanal Procurement Pool', provider: 'M-Pesa Business', type: 'Mobile Money', balance: 4200000, currency: 'KES', status: 'Active' }
+];
+
 const initialCollaborators: Collaborator[] = [
   { id: "C-1", name: "Artisanal Woodworks KE", category: 'Vendor', specialty: "Joinery & Custom Fabrication", contact: "+254 700 000 000", email: "info@artisanalwoodworks.co.ke", rating: 4.8, status: 'active', type: 'Local Specialist' },
   { id: "C-2", name: "Nairobi Marble & Tile", category: 'Vendor', specialty: "Stone Masonry", contact: "+254 711 111 111", email: "sales@nairobitile.com", rating: 4.9, status: 'active', type: 'Materials Partner' },
@@ -375,6 +397,7 @@ export const useWhyteStore = create<WhyteState>()(
       clientProjects: initialClientProjects,
       designers: initialDesigners,
       stewards: initialStewards,
+      accounts: initialAccounts,
       inquiries: [],
       feedback: [],
       collaborators: initialCollaborators,
@@ -412,6 +435,14 @@ export const useWhyteStore = create<WhyteState>()(
         stewards: state.stewards.filter(s => s.id !== id)
       })),
 
+      addAccount: (account) => set((state) => ({ accounts: [...state.accounts, account] })),
+      updateAccount: (id, updates) => set((state) => ({
+        accounts: state.accounts.map(acc => acc.id === id ? { ...acc, ...updates } : acc)
+      })),
+      removeAccount: (id) => set((state) => ({
+        accounts: state.accounts.filter(acc => acc.id !== id)
+      })),
+
       addInquiry: (inquiry) => set((state) => ({ inquiries: [inquiry, ...state.inquiries] })),
       updateInquiryStatus: (id, status) => set((state) => ({
         inquiries: state.inquiries.map(inq => inq.id === id ? { ...inq, status } : inq)
@@ -447,6 +478,7 @@ export const useWhyteStore = create<WhyteState>()(
           clientProjects: [],
           designers: [],
           stewards: [],
+          accounts: [],
           inquiries: [],
           feedback: [],
           collaborators: [],

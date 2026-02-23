@@ -1,7 +1,8 @@
+
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { LayoutDashboard, Briefcase, MessageSquare, Star, Settings, User, ClipboardList, PlayCircle, CheckCircle2, UserPlus, Users, HardHat, ShieldCheck, Handshake, HeartHandshake, Globe, BarChart3, ShieldAlert, PencilRuler, History, Archive, Building2 } from "lucide-react";
+import { LayoutDashboard, Briefcase, MessageSquare, Star, Settings, User, ClipboardList, PlayCircle, CheckCircle2, UserPlus, Users, HardHat, ShieldCheck, Handshake, HeartHandshake, Globe, BarChart3, ShieldAlert, PencilRuler, History, Archive, Building2, Landmark, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -16,6 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const managementNav = [
     { title: "Dashboard", icon: LayoutDashboard, href: "/admin" },
     { title: "Insights", icon: BarChart3, href: "/admin/insights" },
+    { title: "Fiscal Management", icon: Landmark, href: "/admin/management/fiscal" },
     { title: "CRM", icon: HeartHandshake, href: "/admin/crm" },
     { title: "System Onboarding", icon: ShieldAlert, href: "/admin/operations/onboarding" },
     { title: "Legacy Sync", icon: History, href: "/admin/management/legacy-sync" },
