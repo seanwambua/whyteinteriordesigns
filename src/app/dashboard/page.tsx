@@ -39,7 +39,9 @@ import {
   FileEdit,
   PenTool,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCcw,
+  FileSearch
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -231,7 +233,7 @@ export default function ClientDashboardPage() {
                         <FileCheck className="h-5 w-5 text-green-400" />
                         <h3 className="text-2xl font-headline italic">Audited Financial Statement</h3>
                       </div>
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-white/40">Verified by {financialSteward}</p>
+                      <p className="text-[10px] uppercase tracking-widest text-white/40">Verified by {financialSteward}</p>
                     </div>
                     <Button asChild variant="outline" className="rounded-none border-white/20 text-white hover:bg-white hover:text-black h-12 uppercase tracking-widest text-[9px]">
                       <Link href={`/transparency/${activeProject.id}`} target="_blank" className="flex gap-2">View Full Dossier <ExternalLink className="h-3 w-3" /></Link>
