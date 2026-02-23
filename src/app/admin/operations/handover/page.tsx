@@ -19,7 +19,9 @@ import {
   User,
   LayoutList,
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  XCircle,
+  FileText
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
@@ -29,6 +31,9 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 export default function HandoverProtocolPage() {
   const { clientProjects, updateClientProject } = useWhyteStore();
@@ -36,6 +41,9 @@ export default function HandoverProtocolPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
   
+  const [rejectingProject, setRejectingProject] = useState<ClientProject | null>(null);
+  const [rejectionNotes, setRejectionNotes] = useState("");
+
   // Track checklist per project locally before final sync
   const [verifications, setVerifications] = useState<Record<string, string[]>>({});
 
@@ -43,16 +51,16 @@ export default function HandoverProtocolPage() {
     setIsMounted(true);
   }, []);
 
-  // HANDOVER: Projects in Execution with high progress (>85%) or in Completion phase but not yet reconciled
+  // HANDOVER: Projects in Execution where designer has initialized handover (Pending status)
   const handoverProjects = useMemo(() => {
     return clientProjects.filter(p => 
       !p.isArchived && 
       p.isActivated && 
-      (p.status === 'Completion' || (p.status === 'Execution' && p.progress >= 85))
+      (p.status === 'Completion' || p.handoverStatus === 'Pending')
     );
   }, [clientProjects]);
 
-  const totalAwaiting = handoverProjects.filter(p => p.status === 'Execution').length;
+  const totalAwaiting = handoverProjects.filter(p => p.handoverStatus === 'Pending').length;
   const totalReady = handoverProjects.filter(p => p.status === 'Completion').length;
 
   if (!isMounted) return null;
@@ -72,6 +80,8 @@ export default function HandoverProtocolPage() {
     setTimeout(() => {
       updateClientProject(projectId, { 
         status: 'Completion', 
+        handoverStatus: 'Passed',
+        isArchived: true, // Auto-archive on designer side upon pass
         lastActivity: "Handover Protocol Authorized — Site Keys & Quality Sign-off Verified",
         progress: 100
       });
@@ -80,6 +90,27 @@ export default function HandoverProtocolPage() {
         description: "Commission transitioned to historical completion phase." 
       });
       setIsSyncing(null);
+    }, 1500);
+  };
+
+  const handleFailHandover = () => {
+    if (!rejectingProject || !rejectionNotes) return;
+    setIsSyncing(rejectingProject.id);
+    
+    setTimeout(() => {
+      updateClientProject(rejectingProject.id, {
+        handoverStatus: 'Failed',
+        handoverNotes: rejectionNotes,
+        lastActivity: "Handover Rejected — Corrective Protocols Required"
+      });
+      toast({ 
+        variant: "destructive",
+        title: "Handover Flagged", 
+        description: "Directives transmitted to Creative Lead." 
+      });
+      setIsSyncing(null);
+      setRejectingProject(null);
+      setRejectionNotes("");
     }, 1500);
   };
 
@@ -103,7 +134,7 @@ export default function HandoverProtocolPage() {
         
         <div className="flex gap-6">
           <div className="bg-white border border-accent/10 p-6 flex flex-col items-end gap-1 shadow-sm">
-            <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Awaiting Handover</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Pending Review</span>
             <span className="text-2xl font-headline italic text-orange-600">{totalAwaiting} Dossiers</span>
           </div>
           <div className="bg-accent p-6 flex flex-col items-end gap-1 shadow-xl">
@@ -117,8 +148,8 @@ export default function HandoverProtocolPage() {
         <Info className="h-5 w-5 text-accent" />
         <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-accent mb-2">Final Delivery Framework</AlertTitle>
         <AlertDescription className="text-[14px] font-light italic text-muted-foreground leading-relaxed">
-          Handover protocols manage the transition from site implementation to architectural completion. 
-          Authorization requires a full audit of quality sign-offs, digital asset registry, and formal key transfer.
+          Authorization requires a full audit of quality sign-offs, digital asset registry, and formal key transfer. 
+          Unsatisfactory handovers should be flagged for designer remediation.
         </AlertDescription>
       </Alert>
 
@@ -169,7 +200,7 @@ export default function HandoverProtocolPage() {
                           "rounded-none w-full justify-center py-1.5 uppercase tracking-widest text-[10px] font-bold",
                           isCompleted ? "bg-green-600/10 text-green-600 border-green-600/20" : "border-accent/20 text-accent"
                         )}>
-                          Phase: {project.status}
+                          {isCompleted ? "PHASE: COMPLETION" : "HANDOVER IN REVIEW"}
                         </Badge>
                       </div>
                     </div>
@@ -178,7 +209,7 @@ export default function HandoverProtocolPage() {
                     <div className="flex-1 p-10 md:p-12 space-y-10">
                       <div className="flex items-center gap-4 border-b border-accent/5 pb-6">
                         <LayoutList className="h-5 w-5 text-accent/40" />
-                        <h4 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent">Handover Synchronization Protocol</h4>
+                        <h4 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent">Quality Assurance Synchronization</h4>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -250,11 +281,13 @@ export default function HandoverProtocolPage() {
                           </Button>
                         ) : (
                           <div className="flex items-center gap-4">
-                            {!isFullyVerified && (
-                              <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-orange-600 bg-orange-50 px-4 py-2 border border-orange-200">
-                                <AlertTriangle className="h-3.5 w-3.5" /> Complete all verifications to authorize
-                              </div>
-                            )}
+                            <Button 
+                              onClick={() => setRejectingProject(project)}
+                              variant="ghost"
+                              className="rounded-none h-14 px-8 text-destructive/40 hover:text-destructive hover:bg-destructive/5 uppercase tracking-widest text-[11px] font-bold"
+                            >
+                              Flag for Fixes
+                            </Button>
                             <Button 
                               onClick={() => handleAuthorizeHandover(project.id)}
                               disabled={isSyncing === project.id || !isFullyVerified}
@@ -263,7 +296,7 @@ export default function HandoverProtocolPage() {
                               {isSyncing === project.id ? (
                                 <span className="flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span>
                               ) : (
-                                <><Handshake className="h-5 w-5" /> Authorize Final Handover</>
+                                <><Handshake className="h-5 w-5" /> Authorize & Pass</>
                               )}
                             </Button>
                           </div>
@@ -288,18 +321,54 @@ export default function HandoverProtocolPage() {
             </div>
             <div className="space-y-2">
               <p className="text-lg font-light italic text-muted-foreground uppercase tracking-[0.3em]">
-                No commissions currently prioritized for handover synchronization
+                No commissions currently awaiting handover authorization
               </p>
               <p className="text-[11px] text-accent/40 uppercase tracking-widest font-bold">
-                Projects reach this phase when site implementation velocity exceeds 85%
+                Designers initialize handovers once site protocols are complete.
               </p>
             </div>
-            <Button asChild variant="outline" className="rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-sm border-accent/20 hover:bg-accent hover:text-white transition-all">
-              <Link href="/admin/operations/implementation">Monitor Active Deployment</Link>
-            </Button>
           </motion.div>
         )}
       </div>
+
+      {/* REJECTION DIALOG */}
+      <Dialog open={!!rejectingProject} onOpenChange={(open) => !open && setRejectingProject(null)}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden bg-white">
+          <div className="bg-destructive h-1.5 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <XCircle className="h-5 w-5 text-destructive" />
+                <span className="text-destructive text-[12px] font-bold uppercase tracking-[0.4em]">Handover Flagging</span>
+              </div>
+              <DialogTitle className="text-3xl font-headline italic">Reject Handover Request</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-sm leading-relaxed">
+                Provide technical directives for the Creative Lead. The dossier will be returned to the execution phase.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Technical Fix Notes</Label>
+              <Textarea 
+                value={rejectionNotes}
+                onChange={(e) => setRejectionNotes(e.target.value)}
+                placeholder="Specific site protocols requiring remediation..."
+                className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic leading-relaxed focus:ring-destructive bg-destructive/[0.02]"
+              />
+            </div>
+            <DialogFooter className="pt-4">
+              <Button 
+                onClick={handleFailHandover}
+                disabled={!rejectionNotes || isSyncing === rejectingProject?.id}
+                className="w-full bg-destructive text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all"
+              >
+                {isSyncing === rejectingProject?.id ? (
+                  <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Transmitting...</span>
+                ) : "Transmit Fix Protocol"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

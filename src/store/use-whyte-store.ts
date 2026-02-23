@@ -1,4 +1,3 @@
-
 'use client';
 
 import { create } from 'zustand';
@@ -122,6 +121,8 @@ export interface ClientProject {
   termination?: TerminationDetails;
   auditDetails?: FinancialAudit;
   initializedBy?: 'Admin' | 'Designer';
+  handoverStatus?: 'Pending' | 'Failed' | 'Passed' | null;
+  handoverNotes?: string;
 }
 
 export interface Inquiry {
