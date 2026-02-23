@@ -13,17 +13,19 @@ import {
   FileText, 
   Lock,
   Compass,
-  Zap,
   Info,
   Clock,
-  ShieldAlert,
   CheckCircle2,
-  AlertCircle,
-  Building2
+  Building2,
+  FileEdit,
+  ArrowRight,
+  History,
+  LayoutList
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 export default function ClientGovernanceTermsPage() {
   const { clientProjects, financialSteward } = useWhyteStore();
@@ -40,12 +42,11 @@ export default function ClientGovernanceTermsPage() {
   if (!isMounted) return null;
 
   // GOVERNANCE EFFECTIVENESS LOGIC
-  // Terms are "Effective" only if a steward is assigned AND any reorganization is fully authorized.
   const isReorgInProgress = project?.reorganization && 
     (project.reorganization.status === 'Requested' || project.reorganization.status === 'Pending_Agreement');
   
+  const isReorgAuthorized = project?.reorganization?.status === 'Authorized';
   const isStewardVerified = project?.assignedStewardId && !isReorgInProgress;
-  
   const isEffective = project?.isActivated && isStewardVerified;
 
   const container = {
@@ -63,7 +64,7 @@ export default function ClientGovernanceTermsPage() {
     show: { opacity: 1, y: 0 }
   };
 
-  const clauses = [
+  const coreMandates = [
     {
       title: "Architectural Mandate",
       icon: <Compass className="h-5 w-5" />,
@@ -158,7 +159,7 @@ export default function ClientGovernanceTermsPage() {
               <span>Sync Progress</span>
               <span>{isEffective ? '100%' : '65%'}</span>
             </div>
-            <Progress value={isEffective ? 100 : 65} className="h-1 bg-accent/5" />
+            <Progress value={isEffective ? 100 : 65} className="h-1 bg-accent/5 rounded-none" />
             {!isEffective && (
               <p className="text-[9px] font-bold uppercase tracking-widest text-orange-600 mt-1 flex items-center gap-2">
                 <Clock className="h-3 w-3" /> Awaiting Steward Signature
@@ -168,56 +169,102 @@ export default function ClientGovernanceTermsPage() {
         </CardContent>
       </Card>
 
-      <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-8 shadow-sm">
-        <Info className="h-5 w-5 text-accent" />
-        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-2">Operational Protocol</AlertTitle>
-        <AlertDescription className="text-[14px] font-light italic text-muted-foreground leading-relaxed">
-          The following terms represent the authoritative framework for Project <strong>{verifiedProjectId}</strong>. 
-          Effectiveness is strictly contingent upon the established Stewardship Sync reflected above.
-        </AlertDescription>
-      </Alert>
+      <div className="space-y-12">
+        <div className="flex items-center gap-4">
+          <LayoutList className="h-5 w-5 text-accent/40" />
+          <h2 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Core Studio Mandates</h2>
+        </div>
 
-      <motion.div 
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 gap-10"
-      >
-        {clauses.map((clause, index) => (
-          <motion.div key={index} variants={item}>
-            <Card className={cn(
-              "rounded-none border bg-white shadow-xl hover:shadow-2xl transition-all h-full group relative",
-              clause.isUnderReview ? "border-orange-200 ring-1 ring-orange-100" : "border-accent/5"
-            )}>
-              {clause.isUnderReview && (
-                <div className="absolute top-0 left-0 bg-orange-500 text-white text-[8px] font-bold uppercase tracking-[0.3em] px-4 py-1.5 shadow-lg">
-                  Clause Under Review
-                </div>
-              )}
-              <CardContent className="p-10 space-y-8">
-                <div className="flex items-center justify-between border-b border-accent/5 pb-6">
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "h-10 w-10 rounded-none flex items-center justify-center transition-all",
-                      clause.isUnderReview ? "bg-orange-50 text-orange-500" : "bg-accent/5 text-accent group-hover:bg-accent group-hover:text-white"
-                    )}>
-                      {clause.icon}
-                    </div>
-                    <h3 className="text-2xl font-headline italic">{clause.title}</h3>
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 md:grid-cols-2 gap-10"
+        >
+          {coreMandates.map((clause, index) => (
+            <motion.div key={index} variants={item}>
+              <Card className={cn(
+                "rounded-none border bg-white shadow-xl hover:shadow-2xl transition-all h-full group relative",
+                clause.isUnderReview ? "border-orange-200 ring-1 ring-orange-100" : "border-accent/5"
+              )}>
+                {clause.isUnderReview && (
+                  <div className="absolute top-0 left-0 bg-orange-500 text-white text-[8px] font-bold uppercase tracking-[0.3em] px-4 py-1.5 shadow-lg">
+                    Clause Under Review
                   </div>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-accent/30">{clause.tag}</span>
+                )}
+                <CardContent className="p-10 space-y-8">
+                  <div className="flex items-center justify-between border-b border-accent/5 pb-6">
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "h-10 w-10 rounded-none flex items-center justify-center transition-all",
+                        clause.isUnderReview ? "bg-orange-50 text-orange-500" : "bg-accent/5 text-accent group-hover:bg-accent group-hover:text-white"
+                      )}>
+                        {clause.icon}
+                      </div>
+                      <h3 className="text-2xl font-headline italic">{clause.title}</h3>
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-accent/30">{clause.tag}</span>
+                  </div>
+                  <p className={cn(
+                    "text-base font-light italic leading-relaxed border-l-2 pl-8",
+                    clause.isUnderReview ? "text-orange-700/70 border-orange-200" : "text-accent/70 border-accent/10"
+                  )}>
+                    "{clause.content}"
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* HISTORICAL AMENDMENTS & UPDATES */}
+      {isReorgAuthorized && project?.reorganization && (
+        <div className="space-y-12">
+          <div className="flex items-center gap-4">
+            <History className="h-5 w-5 text-accent/40" />
+            <h2 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Active Commission Addendums</h2>
+          </div>
+
+          <Card className="rounded-none border-green-600/20 bg-green-600/[0.02] shadow-2xl p-12 space-y-10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5"><FileEdit className="h-40 w-40" /></div>
+            
+            <div className="flex flex-col lg:flex-row justify-between items-start gap-12 relative z-10">
+              <div className="space-y-6 flex-1">
+                <div className="flex items-center gap-4">
+                  <Badge className="bg-green-600 text-white rounded-none uppercase tracking-widest text-[9px] font-bold px-4 py-1.5">Authorized Addendum</Badge>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Sync Date: {project.reorganization.finalizedDate}</span>
                 </div>
-                <p className={cn(
-                  "text-base font-light italic leading-relaxed border-l-2 pl-8",
-                  clause.isUnderReview ? "text-orange-700/70 border-orange-200" : "text-accent/70 border-accent/10"
-                )}>
-                  "{clause.content}"
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </motion.div>
+                <h3 className="text-3xl font-headline italic">Financing Reorganization Agreement</h3>
+                <div className="space-y-4">
+                  <p className="text-[10px] uppercase font-bold tracking-[0.3em] opacity-40">Agreed Rationale & Terms</p>
+                  <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-green-600/20 pl-8">
+                    "{project.reorganization.terms}"
+                  </p>
+                </div>
+              </div>
+
+              <div className="w-full lg:w-96 space-y-6">
+                <p className="text-[10px] uppercase font-bold tracking-[0.3em] opacity-40">Updated Payout Schedule</p>
+                <div className="divide-y divide-accent/5 border border-accent/5 bg-white shadow-sm">
+                  {project.reorganization.proposedInstallments.map((ins, i) => (
+                    <div key={i} className="p-5 flex justify-between items-center">
+                      <div className="space-y-0.5">
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-accent">{ins.label}</p>
+                        <p className="text-[9px] text-muted-foreground font-bold">{ins.percentage}% Allocation</p>
+                      </div>
+                      <p className="text-base font-headline italic">KES {ins.amount.toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-green-600">
+                  <ShieldCheck className="h-3 w-3" /> Certified by {financialSteward}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       <motion.div 
         initial={{ opacity: 0 }} 
