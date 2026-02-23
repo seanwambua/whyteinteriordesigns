@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { 
   ArrowLeft, 
@@ -221,7 +222,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const temporal = (() => {
     if (!project.isActivated) return { label: "Temporal Status", value: "Locked", icon: <ZapOff className="h-5 w-5" />, sub: "Pending Activation" };
     const start = parse(project.startDate, "MMM dd, yyyy", new Date());
-    const end = parse(project.endDate, "MMM dd, yyyy", new Date());
+    const end = project.endDate ? parse(project.endDate, "MMM dd, yyyy", new Date()) : new Date();
     if (!isValid(start) || !isValid(end)) return null;
     const remaining = differenceInDays(end, new Date());
     return { 
