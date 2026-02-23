@@ -116,7 +116,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarGroup>
 
             <SidebarGroup className="mt-4">
-              <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Site Operations</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-widest text-accent/40 font-bold mb-4 group-data-[collapsible=icon]:hidden">Project Operations</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {operationsNav.map((item) => (
