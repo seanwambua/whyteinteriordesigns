@@ -24,7 +24,9 @@ import {
   History,
   RefreshCcw,
   Zap,
-  Handshake
+  Handshake,
+  User,
+  PencilRuler
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -46,7 +48,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 export default function ProjectClosingPage() {
   const { toast } = useToast();
-  const { clientProjects, financialSteward, setFinancialSteward, updateClientProject, inquiries } = useWhyteStore();
+  const { clientProjects, financialSteward, setFinancialSteward, updateClientProject, inquiries, designers } = useWhyteStore();
   
   const [isMounted, setIsMounted] = useState(false);
   const [isEditingSteward, setIsEditingSteward] = useState(false);
@@ -61,7 +63,6 @@ export default function ProjectClosingPage() {
 
   if (!isMounted) return null;
 
-  // RECONCILIATION: STRICTLY only activated, non-archived projects in Completion phase
   const relevantProjects = clientProjects.filter(p => 
     !p.isArchived && p.isActivated && p.status === 'Completion'
   );
@@ -136,6 +137,7 @@ export default function ProjectClosingPage() {
               
               const isHandoverComplete = project.handoverStatus === 'Passed';
               const hasStewardSync = !!project.auditDetails;
+              const assignedDesigner = designers.find(d => d.id === project.assignedDesignerId);
               
               const isBlocked = !allInstallmentsPaid || hasPendingInquiries || !hasStewardSync || !isHandoverComplete;
               const isLegacy = project.id.startsWith('LEG-');
@@ -168,7 +170,12 @@ export default function ProjectClosingPage() {
                           
                           <div className="space-y-1">
                             <h3 className="text-3xl font-headline italic">{project.project}</h3>
-                            <p className="text-[12px] uppercase tracking-widest font-bold text-muted-foreground opacity-60">Valued Client: {project.name}</p>
+                            <div className="flex flex-wrap items-center gap-6">
+                              <p className="text-[12px] uppercase tracking-widest font-bold text-muted-foreground opacity-60">Valued Client: {project.name}</p>
+                              <p className="text-[11px] text-accent/60 uppercase tracking-widest font-bold flex items-center gap-2">
+                                <PencilRuler className="h-3 w-3" /> Lead: {assignedDesigner ? assignedDesigner.name : "Unassigned"}
+                              </p>
+                            </div>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pt-6 border-t border-accent/5">

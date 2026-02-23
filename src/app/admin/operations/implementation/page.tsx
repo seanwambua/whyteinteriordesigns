@@ -17,7 +17,8 @@ import {
   Timer,
   AlertCircle,
   MoreVertical,
-  PencilRuler
+  PencilRuler,
+  AlertTriangle
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
@@ -37,7 +38,6 @@ export default function ProjectImplementationPage() {
     setIsMounted(true);
   }, []);
 
-  // IMPLEMENTATION: Strictly projects currently in Execution phase
   const liveProjects = useMemo(() => {
     return clientProjects.filter(p => 
       !p.isArchived && 
@@ -121,6 +121,7 @@ export default function ProjectImplementationPage() {
             >
               {filteredProjects.map((p, index) => {
                 const assignedDesigner = designers.find(d => d.id === p.assignedDesignerId);
+                const isFailed = p.handoverStatus === 'Failed';
                 
                 return (
                   <motion.div
@@ -129,18 +130,24 @@ export default function ProjectImplementationPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Card className="rounded-none border-accent/5 shadow-xl bg-white group hover:shadow-2xl transition-all overflow-hidden h-full flex flex-col">
+                    <Card className={cn(
+                      "rounded-none border-accent/5 shadow-xl bg-white group hover:shadow-2xl transition-all overflow-hidden h-full flex flex-col",
+                      isFailed && "border-destructive/20 ring-1 ring-destructive/10"
+                    )}>
                       <div className={cn(
                         "h-1.5 w-full",
-                        p.status === 'Execution' ? 'bg-green-500' : 'bg-accent/20'
+                        isFailed ? "bg-destructive" : "bg-green-500"
                       )} />
                       <CardContent className="p-10 space-y-10 flex-1 flex flex-col">
                         <div className="flex items-start justify-between">
                           <div className="space-y-3">
                             <div className="flex items-center gap-4">
                               <span className="text-[12px] font-bold text-accent/40 uppercase tracking-[0.4em]">{p.id}</span>
-                              <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest font-bold py-1 px-3 border-accent/10 text-accent bg-accent/5">
-                                {p.status}
+                              <Badge variant="outline" className={cn(
+                                "rounded-none text-[11px] uppercase tracking-widest font-bold py-1 px-3 border-accent/10 text-accent bg-accent/5",
+                                isFailed && "text-destructive border-destructive/20 bg-destructive/5"
+                              )}>
+                                {isFailed ? "Fix Protocol Required" : p.status}
                               </Badge>
                             </div>
                             <h3 className="text-3xl font-headline italic leading-tight">{p.project}</h3>
@@ -155,6 +162,15 @@ export default function ProjectImplementationPage() {
                             <Link href={`/admin/clients/${p.id}`}><ArrowRight className="h-6 w-6" /></Link>
                           </Button>
                         </div>
+
+                        {isFailed && (
+                          <div className="p-4 bg-destructive/5 border border-destructive/10 flex items-start gap-3">
+                            <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                            <p className="text-[11px] italic text-destructive/80 font-light leading-relaxed">
+                              "Returned from Handover Review — Technical remediation mandatory."
+                            </p>
+                          </div>
+                        )}
 
                         <div className="space-y-5 flex-1">
                           <div className="flex justify-between text-[12px] uppercase tracking-[0.4em] font-bold text-accent/60">
@@ -212,6 +228,7 @@ export default function ProjectImplementationPage() {
                   <tbody className="divide-y divide-accent/5">
                     {filteredProjects.map((p) => {
                       const assignedDesigner = designers.find(d => d.id === p.assignedDesignerId);
+                      const isFailed = p.handoverStatus === 'Failed';
                       
                       return (
                         <tr key={p.id} className="group hover:bg-accent/[0.02] transition-colors">
@@ -230,8 +247,11 @@ export default function ProjectImplementationPage() {
                             </span>
                           </td>
                           <td className="p-6">
-                            <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest font-bold border-accent/10 text-accent">
-                              {p.status}
+                            <Badge variant="outline" className={cn(
+                              "rounded-none text-[11px] uppercase tracking-widest font-bold border-accent/10 text-accent",
+                              isFailed && "text-destructive border-destructive/20 bg-destructive/5"
+                            )}>
+                              {isFailed ? "Fix Protocol" : p.status}
                             </Badge>
                           </td>
                           <td className="p-6">

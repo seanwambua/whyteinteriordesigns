@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Handshake, 
@@ -21,7 +21,7 @@ import {
   AlertTriangle,
   ArrowRight,
   XCircle,
-  FileText
+  PencilRuler
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
@@ -36,7 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 export default function HandoverProtocolPage() {
-  const { clientProjects, updateClientProject } = useWhyteStore();
+  const { clientProjects, updateClientProject, designers } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
@@ -44,23 +44,21 @@ export default function HandoverProtocolPage() {
   const [rejectingProject, setRejectingProject] = useState<ClientProject | null>(null);
   const [rejectionNotes, setRejectionNotes] = useState("");
 
-  // Track checklist per project locally before final sync
   const [verifications, setVerifications] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // HANDOVER: Projects awaiting admin review (Pending) or those flagged for fixes (Failed)
   const handoverProjects = useMemo(() => {
     return clientProjects.filter(p => 
       !p.isArchived && 
       p.isActivated && 
-      (p.handoverStatus === 'Pending' || p.handoverStatus === 'Failed')
+      p.handoverStatus === 'Pending'
     );
   }, [clientProjects]);
 
-  const totalAwaiting = handoverProjects.filter(p => p.handoverStatus === 'Pending').length;
+  const totalAwaiting = handoverProjects.length;
   const totalConcluded = clientProjects.filter(p => p.status === 'Completion' || p.isArchived).length;
 
   if (!isMounted) return null;
@@ -98,14 +96,15 @@ export default function HandoverProtocolPage() {
     
     setTimeout(() => {
       updateClientProject(rejectingProject.id, {
+        status: 'Execution', // SEND BACK TO LIVE IMPLEMENTATION
         handoverStatus: 'Failed',
         handoverNotes: rejectionNotes,
-        lastActivity: "Handover Rejected — Corrective Protocols Required"
+        lastActivity: "Handover Rejected — Returned to Implementation for Fixes"
       });
       toast({ 
         variant: "destructive",
         title: "Handover Flagged", 
-        description: "Directives transmitted to Creative Lead." 
+        description: "Dossier returned to Implementation phase with corrective directives." 
       });
       setIsSyncing(null);
       setRejectingProject(null);
@@ -148,7 +147,7 @@ export default function HandoverProtocolPage() {
         <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-accent mb-2">Final Delivery Framework</AlertTitle>
         <AlertDescription className="text-[14px] font-light italic text-muted-foreground leading-relaxed">
           Authorization requires a full audit of quality sign-offs, digital asset registry, and formal key transfer. 
-          Unsatisfactory handovers should be flagged for designer remediation.
+          Flagging for fixes will return the dossier to the **Live Implementation** workbench.
         </AlertDescription>
       </Alert>
 
@@ -157,7 +156,7 @@ export default function HandoverProtocolPage() {
           {handoverProjects.map((project, index) => {
             const projectVerifications = verifications[project.id] || [];
             const isFullyVerified = projectVerifications.length === steps.length;
-            const isHandoverAuthorized = project.handoverStatus === 'Passed';
+            const assignedDesigner = designers.find(d => d.id === project.assignedDesignerId);
 
             return (
               <motion.div 
@@ -167,12 +166,8 @@ export default function HandoverProtocolPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className={cn(
-                  "rounded-none border-accent/5 shadow-2xl bg-white group overflow-hidden transition-all duration-500",
-                  isHandoverAuthorized && "opacity-80"
-                )}>
+                <Card className="rounded-none border-accent/5 shadow-2xl bg-white group overflow-hidden">
                   <div className="flex flex-col lg:flex-row h-full">
-                    {/* Sidebar Project Info */}
                     <div className="lg:w-80 border-b lg:border-b-0 lg:border-r border-accent/5 bg-secondary/10 p-10 flex flex-col justify-between">
                       <div className="space-y-6">
                         <div className="space-y-2">
@@ -182,6 +177,9 @@ export default function HandoverProtocolPage() {
                         <div className="space-y-4">
                           <div className="flex items-center gap-3 text-[12px] text-muted-foreground font-bold uppercase tracking-widest">
                             <User className="h-4 w-4 opacity-40" /> {project.name}
+                          </div>
+                          <div className="flex items-center gap-3 text-[12px] text-accent font-bold uppercase tracking-widest">
+                            <PencilRuler className="h-4 w-4 opacity-40" /> Lead: {assignedDesigner ? assignedDesigner.name : "Unassigned"}
                           </div>
                           <div className="flex items-center gap-3 text-[12px] text-muted-foreground font-bold uppercase tracking-widest">
                             <Clock className="h-4 w-4 opacity-40" /> Target: {project.endDate}
@@ -195,16 +193,12 @@ export default function HandoverProtocolPage() {
                           <span>{project.progress}%</span>
                         </div>
                         <Progress value={project.progress} className="h-1 bg-accent/5 rounded-none" />
-                        <Badge variant="outline" className={cn(
-                          "rounded-none w-full justify-center py-1.5 uppercase tracking-widest text-[10px] font-bold",
-                          isHandoverAuthorized ? "bg-green-600/10 text-green-600 border-green-600/20" : "border-accent/20 text-accent"
-                        )}>
-                          {isHandoverAuthorized ? "PHASE: COMPLETION" : "HANDOVER IN REVIEW"}
+                        <Badge variant="outline" className="rounded-none w-full justify-center py-1.5 uppercase tracking-widest text-[10px] font-bold border-accent/20 text-accent">
+                          HANDOVER IN REVIEW
                         </Badge>
                       </div>
                     </div>
 
-                    {/* Handover Checklist Protocol */}
                     <div className="flex-1 p-10 md:p-12 space-y-10">
                       <div className="flex items-center gap-4 border-b border-accent/5 pb-6">
                         <LayoutList className="h-5 w-5 text-accent/40" />
@@ -215,19 +209,18 @@ export default function HandoverProtocolPage() {
                         {steps.map((step) => (
                           <div 
                             key={step.id} 
-                            onClick={() => !isHandoverAuthorized && toggleVerification(project.id, step.id)}
+                            onClick={() => toggleVerification(project.id, step.id)}
                             className={cn(
                               "p-6 border flex items-center justify-between group/step transition-all cursor-pointer",
-                              projectVerifications.includes(step.id) || isHandoverAuthorized
+                              projectVerifications.includes(step.id)
                                 ? "bg-accent/5 border-accent/20" 
-                                : "bg-white border-accent/5 hover:border-accent/40",
-                              isHandoverAuthorized && "cursor-default"
+                                : "bg-white border-accent/5 hover:border-accent/40"
                             )}
                           >
                             <div className="flex items-center gap-5">
                               <div className={cn(
                                 "h-10 w-10 flex items-center justify-center transition-all",
-                                projectVerifications.includes(step.id) || isHandoverAuthorized
+                                projectVerifications.includes(step.id)
                                   ? "bg-accent text-white" 
                                   : "bg-secondary/50 text-accent/20"
                               )}>
@@ -236,18 +229,18 @@ export default function HandoverProtocolPage() {
                               <div className="space-y-0.5">
                                 <p className={cn(
                                   "text-[12px] font-bold uppercase tracking-widest",
-                                  projectVerifications.includes(step.id) || isHandoverAuthorized ? "text-accent" : "text-accent/40"
+                                  projectVerifications.includes(step.id) ? "text-accent" : "text-accent/40"
                                 )}>{step.label}</p>
                                 <p className="text-[10px] text-muted-foreground uppercase font-light italic tracking-widest">{step.sub}</p>
                               </div>
                             </div>
                             <div className={cn(
                               "h-5 w-5 border flex items-center justify-center transition-all",
-                              projectVerifications.includes(step.id) || isHandoverAuthorized
+                              projectVerifications.includes(step.id)
                                 ? "bg-accent border-accent" 
                                 : "border-accent/10"
                             )}>
-                              {(projectVerifications.includes(step.id) || isHandoverAuthorized) && <CheckCircle2 className="h-3 w-3 text-white" />}
+                              {projectVerifications.includes(step.id) && <CheckCircle2 className="h-3 w-3 text-white" />}
                             </div>
                           </div>
                         ))}
@@ -257,49 +250,41 @@ export default function HandoverProtocolPage() {
                         <div className="flex items-center gap-4">
                           <div className={cn(
                             "h-12 w-12 rounded-full flex items-center justify-center border",
-                            isFullyVerified || isHandoverAuthorized ? "border-green-600/20 bg-green-600/5 text-green-600" : "border-accent/10 text-accent/20"
+                            isFullyVerified ? "border-green-600/20 bg-green-600/5 text-green-600" : "border-accent/10 text-accent/20"
                           )}>
-                            {isHandoverAuthorized ? <ShieldCheck className="h-6 w-6" /> : <Building2 className="h-6 w-6" />}
+                            <Building2 className="h-6 w-6" />
                           </div>
                           <div className="space-y-1">
                             <p className="text-[11px] font-bold uppercase tracking-widest text-accent/40">Operational Status</p>
                             <p className={cn(
                               "text-[13px] font-bold uppercase tracking-widest",
-                              isHandoverAuthorized ? "text-green-600" : isFullyVerified ? "text-accent" : "text-orange-600"
+                              isFullyVerified ? "text-accent" : "text-orange-600"
                             )}>
-                              {isHandoverAuthorized ? "Handover Protocol Finalized" : isFullyVerified ? "Ready for Authorization" : "Verification in Progress"}
+                              {isFullyVerified ? "Ready for Authorization" : "Verification in Progress"}
                             </p>
                           </div>
                         </div>
 
-                        {isHandoverAuthorized ? (
-                          <Button asChild variant="outline" className="rounded-none h-14 px-10 border-accent/10 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[11px] font-bold transition-all shadow-sm flex gap-3">
-                            <Link href={`/admin/operations/closing`}>
-                              Go to Reconciliation <ArrowRight className="h-4 w-4" />
-                            </Link>
+                        <div className="flex items-center gap-4">
+                          <Button 
+                            onClick={() => setRejectingProject(project)}
+                            variant="ghost"
+                            className="rounded-none h-14 px-8 text-destructive/40 hover:text-destructive hover:bg-destructive/5 uppercase tracking-widest text-[11px] font-bold"
+                          >
+                            Flag for Fixes
                           </Button>
-                        ) : (
-                          <div className="flex items-center gap-4">
-                            <Button 
-                              onClick={() => setRejectingProject(project)}
-                              variant="ghost"
-                              className="rounded-none h-14 px-8 text-destructive/40 hover:text-destructive hover:bg-destructive/5 uppercase tracking-widest text-[11px] font-bold"
-                            >
-                              Flag for Fixes
-                            </Button>
-                            <Button 
-                              onClick={() => handleAuthorizeHandover(project.id)}
-                              disabled={isSyncing === project.id || !isFullyVerified}
-                              className="h-16 px-12 bg-accent text-white rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all hover:tracking-[0.2em] flex gap-3"
-                            >
-                              {isSyncing === project.id ? (
-                                <span className="flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span>
-                              ) : (
-                                <><Handshake className="h-5 w-5" /> Authorize & Pass</>
-                              )}
-                            </Button>
-                          </div>
-                        )}
+                          <Button 
+                            onClick={() => handleAuthorizeHandover(project.id)}
+                            disabled={isSyncing === project.id || !isFullyVerified}
+                            className="h-16 px-12 bg-accent text-white rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all hover:tracking-[0.2em] flex gap-3"
+                          >
+                            {isSyncing === project.id ? (
+                              <span className="flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span>
+                            ) : (
+                              <><Handshake className="h-5 w-5" /> Authorize & Pass</>
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -330,7 +315,6 @@ export default function HandoverProtocolPage() {
         )}
       </div>
 
-      {/* REJECTION DIALOG */}
       <Dialog open={!!rejectingProject} onOpenChange={(open) => !open && setRejectingProject(null)}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden bg-white">
           <div className="bg-destructive h-1.5 w-full" />
@@ -342,7 +326,7 @@ export default function HandoverProtocolPage() {
               </div>
               <DialogTitle className="text-3xl font-headline italic">Reject Handover Request</DialogTitle>
               <DialogDescription className="font-light italic text-muted-foreground text-sm leading-relaxed">
-                Provide technical directives for the Creative Lead. The dossier will be returned to the execution phase.
+                Provide technical directives for the Creative Lead. The dossier will be returned to the **Execution (Live Implementation)** phase.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -350,7 +334,7 @@ export default function HandoverProtocolPage() {
               <Textarea 
                 value={rejectionNotes}
                 onChange={(e) => setRejectionNotes(e.target.value)}
-                placeholder="Specific site protocols requiring remediation..."
+                placeholder="Specific site protocols requiring remediation before re-submission..."
                 className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic leading-relaxed focus:ring-destructive bg-destructive/[0.02]"
               />
             </div>
@@ -362,7 +346,7 @@ export default function HandoverProtocolPage() {
               >
                 {isSyncing === rejectingProject?.id ? (
                   <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Transmitting...</span>
-                ) : "Transmit Fix Protocol"}
+                ) : "Authorize Corrective Workflow"}
               </Button>
             </DialogFooter>
           </div>
