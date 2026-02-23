@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,7 +21,9 @@ import {
   ArrowUpRight,
   Key,
   Eye,
-  LayoutList
+  LayoutList,
+  BadgeCheck,
+  Award
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -55,6 +56,8 @@ export default function DesignerRegistryPage() {
     name: "",
     email: "",
     specialty: "Architectural Interior Design",
+    role: "Interior Designer",
+    experienceLevel: "Professional" as Designer['experienceLevel'],
     accessToken: "",
     status: "Active" as Designer['status']
   });
@@ -73,7 +76,8 @@ export default function DesignerRegistryPage() {
   const filteredDesigners = useMemo(() => {
     return designers.filter(d => 
       d.name.toLowerCase().includes(search.toLowerCase()) || 
-      d.specialty.toLowerCase().includes(search.toLowerCase())
+      d.specialty.toLowerCase().includes(search.toLowerCase()) ||
+      d.role.toLowerCase().includes(search.toLowerCase())
     );
   }, [designers, search]);
 
@@ -86,7 +90,15 @@ export default function DesignerRegistryPage() {
     };
     addDesigner(newDesigner);
     setIsAddDialogOpen(false);
-    setFormData({ name: "", email: "", specialty: "Architectural Interior Design", accessToken: "", status: "Active" });
+    setFormData({ 
+      name: "", 
+      email: "", 
+      specialty: "Architectural Interior Design", 
+      role: "Interior Designer",
+      experienceLevel: "Professional",
+      accessToken: "", 
+      status: "Active" 
+    });
     toast({ title: "Designer Authorized", description: `${newDesigner.name} registered in studio hierarchy.` });
   };
 
@@ -114,6 +126,15 @@ export default function DesignerRegistryPage() {
     }
   };
 
+  const getExperienceColor = (level: string) => {
+    switch (level) {
+      case 'Expert': return "text-accent border-accent/20 bg-accent/5";
+      case 'Professional': return "text-blue-600 border-blue-100 bg-blue-50";
+      case 'Beginner': return "text-muted-foreground border-neutral-100 bg-neutral-50";
+      default: return "";
+    }
+  };
+
   if (!isMounted) return null;
 
   return (
@@ -131,7 +152,7 @@ export default function DesignerRegistryPage() {
           <div className="relative w-72">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
             <input 
-              placeholder="Search leads..." 
+              placeholder="Search registry..." 
               className="w-full pl-12 pr-4 rounded-none border border-accent/10 h-14 text-[13px] uppercase tracking-widest bg-white focus:outline-none focus:border-accent shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -144,7 +165,7 @@ export default function DesignerRegistryPage() {
             }}
             className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold flex gap-3 shadow-xl hover:tracking-[0.2em] transition-all"
           >
-            <UserPlus className="h-5 w-5" /> Register Lead
+            <UserPlus className="h-5 w-5" /> Register Designer
           </Button>
         </div>
       </motion.div>
@@ -171,7 +192,10 @@ export default function DesignerRegistryPage() {
                             {designer.name.split(' ').map(n => n[0]).join('')}
                           </div>
                           <div className="space-y-1">
-                            <h3 className="text-2xl font-headline italic text-accent">{designer.name}</h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-2xl font-headline italic text-accent">{designer.name}</h3>
+                              {designer.experienceLevel === 'Expert' && <BadgeCheck className="h-4 w-4 text-accent" />}
+                            </div>
                             <Badge className={cn("rounded-none uppercase tracking-widest text-[9px] font-bold py-0.5 px-2", getStatusColor(designer.status))}>
                               {designer.status}
                             </Badge>
@@ -179,28 +203,28 @@ export default function DesignerRegistryPage() {
                         </div>
                         <div className="space-y-3 pt-4 border-t border-accent/5">
                           <div className="flex items-center gap-3 text-[12px] text-muted-foreground font-bold uppercase tracking-widest">
-                            <Mail className="h-3.5 w-3.5 opacity-40" /> {designer.email}
+                            <Award className="h-3.5 w-3.5 opacity-40" /> {designer.role}
                           </div>
                           <div className="flex items-center gap-3 text-[12px] text-muted-foreground font-bold uppercase tracking-widest">
                             <Activity className="h-3.5 w-3.5 opacity-40" /> {designer.specialty}
                           </div>
+                          <div className="flex items-center gap-3 text-[12px] text-muted-foreground font-bold uppercase tracking-widest">
+                            <Mail className="h-3.5 w-3.5 opacity-40" /> {designer.email}
+                          </div>
                         </div>
                       </div>
                       <div className="pt-8 space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="outline" className={cn("rounded-none text-[9px] uppercase tracking-widest font-bold", getExperienceColor(designer.experienceLevel))}>
+                            {designer.experienceLevel} Tier
+                          </Badge>
+                        </div>
                         <div className="p-4 bg-accent/[0.03] border border-accent/10 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Access Token</span>
                             <Key className="h-3 w-3 text-accent/20" />
                           </div>
                           <code className="text-sm font-mono tracking-widest text-accent font-bold block">{designer.accessToken}</code>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-white border border-accent/5">
-                          <div className="space-y-0.5">
-                            <span className="text-[9px] font-bold uppercase tracking-widest text-accent/30 block">Technical Load</span>
-                            <p className="text-lg font-headline italic text-accent flex items-center gap-2">
-                              <LayoutList className="h-3.5 w-3.5" /> {accessedLogsCount} Logs Synchronized
-                            </p>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -209,7 +233,7 @@ export default function DesignerRegistryPage() {
                       <div className="space-y-8">
                         <div className="flex items-center justify-between">
                           <h4 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40 flex items-center gap-3">
-                            <Briefcase className="h-4 w-4" /> Active Implementation Load ({assignedProjects.length})
+                            <Briefcase className="h-4 w-4" /> Implementation Load ({assignedProjects.length})
                           </h4>
                           <Button 
                             variant="ghost" 
@@ -275,13 +299,34 @@ export default function DesignerRegistryPage() {
               </div>
               <DialogTitle className="text-4xl font-headline italic">Register Designer</DialogTitle>
               <DialogDescription className="font-light italic text-muted-foreground text-base">
-                Authorize a new creative lead within the studio hierarchy and generate a professional Access Token.
+                Authorize a new creative lead within the studio hierarchy and assign their professional designation.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Creative Identity</Label>
-                <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Full Name" className="rounded-none h-14 border-accent/20" />
+                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Full Name</Label>
+                <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Creative Identity" className="rounded-none h-14 border-accent/20" />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Studio Role</Label>
+                  <Input value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})} placeholder="E.g., Senior Architect" className="rounded-none h-12 border-accent/20" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Experience Tier</Label>
+                  <Select value={formData.experienceLevel} onValueChange={(v: any) => setFormData({...formData, experienceLevel: v})}>
+                    <SelectTrigger className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="Beginner">Beginner</SelectItem>
+                      <SelectItem value="Professional">Professional</SelectItem>
+                      <SelectItem value="Expert">Expert</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Specialty Registry</Label>
+                <Input value={formData.specialty} onChange={(e) => setFormData({...formData, specialty: e.target.value})} placeholder="E.g., Minimalism & Textures" className="rounded-none h-12 border-accent/20" />
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Communication Protocol (Email)</Label>
@@ -290,7 +335,7 @@ export default function DesignerRegistryPage() {
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Access Token</Label>
-                  <Input value={formData.accessToken} onChange={(e) => setFormData({...formData, accessToken: e.target.value})} placeholder="E.g., WHYTE-LEAD-XX" className="rounded-none h-12 border-accent/20 uppercase font-bold tracking-widest" />
+                  <Input value={formData.accessToken} onChange={(e) => setFormData({...formData, accessToken: e.target.value})} placeholder="AUTO-GENERATED" className="rounded-none h-12 border-accent/20 uppercase font-bold tracking-widest bg-secondary/30" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Status Protocol</Label>
@@ -306,8 +351,8 @@ export default function DesignerRegistryPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleAddDesigner} disabled={!formData.name || !formData.email || !formData.accessToken} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl">
-                Authorize Registry Entry
+              <Button onClick={handleAddDesigner} disabled={!formData.name || !formData.email || !formData.accessToken} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em]">
+                Authorize Designer Entry
               </Button>
             </DialogFooter>
           </div>
@@ -334,8 +379,7 @@ export default function DesignerRegistryPage() {
                   >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:text-white/60">{p.id}</span>
-                        {p.assignedDesignerId && <Badge variant="ghost" className="text-[7px] p-0 group-hover:text-white/40">Relinking</Badge>}
+                        <span className="text-[10px] font-bold uppercase tracking-widest group-hover:text-white/60">{p.id}</span>
                       </div>
                       <Badge variant="ghost" className="text-[8px] uppercase tracking-widest p-0 group-hover:text-white/80">{p.status}</Badge>
                     </div>

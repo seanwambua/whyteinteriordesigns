@@ -96,6 +96,8 @@ export interface Designer {
   name: string;
   email: string;
   specialty: string;
+  role: string;
+  experienceLevel: 'Beginner' | 'Professional' | 'Expert';
   accessToken: string;
   status: 'Active' | 'On Leave' | 'Inactive';
   joinedDate: string;
@@ -309,6 +311,8 @@ const initialDesigners: Designer[] = [
     name: 'Elena Vibe',
     email: 'elena@whyte.design',
     specialty: 'Architectural Interior Design',
+    role: 'Lead Architect',
+    experienceLevel: 'Expert',
     accessToken: 'WHYTE-LEAD-01',
     status: 'Active',
     joinedDate: 'Jan 01, 2023'
