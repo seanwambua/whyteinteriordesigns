@@ -56,7 +56,9 @@ import {
   Handshake,
   Compass,
   FileSearch,
-  LayoutList
+  LayoutList,
+  Calculator,
+  Users
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
