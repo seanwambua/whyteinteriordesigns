@@ -340,19 +340,29 @@ export const useWhyteStore = create<WhyteState>()(
         businessTargets: { ...state.businessTargets, ...updates }
       })),
 
-      clearAllData: () => set({
-        projects: [],
-        clientProjects: [],
-        inquiries: [],
-        feedback: [],
-        collaborators: [],
-        financialSteward: "Imani Financial Services (IFS-KE)",
-        businessTargets: {
-          monthlyRevenueGoal: 50000000,
-          projectVolumeGoal: 10,
-          efficiencyTarget: 95
+      clearAllData: () => {
+        // Clear manual onboarding and session flags from localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem("whyte_onboarded");
+          localStorage.removeItem("whyte_verified_project_id");
+          localStorage.removeItem("whyte_designer_onboarded");
+          localStorage.removeItem("whyte_steward_onboarded");
         }
-      }),
+
+        set({
+          projects: [],
+          clientProjects: [],
+          inquiries: [],
+          feedback: [],
+          collaborators: [],
+          financialSteward: "Imani Financial Services (IFS-KE)",
+          businessTargets: {
+            monthlyRevenueGoal: 50000000,
+            projectVolumeGoal: 10,
+            efficiencyTarget: 95
+          }
+        });
+      },
     }),
     {
       name: 'whyte-studio-storage',
