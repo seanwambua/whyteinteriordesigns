@@ -39,7 +39,9 @@ import {
   TrendingUp,
   ShieldCheck,
   Handshake,
-  AlertCircle
+  AlertCircle,
+  ZapOff,
+  LayoutList
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -75,17 +77,19 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   if (!isMounted || !project) return null;
 
   const isReadOnly = project.financialReportStatus === 'Verified' || project.isArchived || project.handoverStatus === 'Pending';
-  const allTasksDone = (project.tasks || []).length > 0 && (project.tasks || []).every(t => t.status === 'Done');
+  const tasks = project.tasks || [];
+  const allTasksDone = tasks.length > 0 && tasks.every(t => t.status === 'Done');
+  const pendingTasks = tasks.filter(t => t.status !== 'Done');
 
   const handleUpdateTask = (taskId: string, updates: Partial<ProjectTask>) => {
     if (isReadOnly) return;
-    const updatedTasks = (project.tasks || []).map(t => t.id === taskId ? { ...t, ...updates } : t);
+    const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, ...updates } : t);
     updateClientProject(project.id, { tasks: updatedTasks });
   };
 
   const handleMoveTask = (taskId: string, newStatus: ProjectTask['status']) => {
     if (isReadOnly) return;
-    const updatedTasks = (project.tasks || []).map(t => t.id === taskId ? { ...t, status: newStatus } : t);
+    const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t);
     const completed = updatedTasks.filter(t => t.status === 'Done').length;
     const progress = Math.round((completed / Math.max(1, updatedTasks.length)) * 100);
     updateClientProject(project.id, { 
@@ -99,7 +103,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   const handleAddTask = (status: ProjectTask['status']) => {
     if (isReadOnly) return;
     const newTask: ProjectTask = { id: `T-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "New Protocol", status, priority: "Medium", subtasks: [] };
-    const updatedTasks = [...(project.tasks || []), newTask];
+    const updatedTasks = [...tasks, newTask];
     const completed = updatedTasks.filter(t => t.status === 'Done').length;
     const progress = Math.round((completed / Math.max(1, updatedTasks.length)) * 100);
     updateClientProject(project.id, { tasks: updatedTasks, progress });
@@ -107,7 +111,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
 
   const handleDeleteTask = (taskId: string) => {
     if (isReadOnly) return;
-    const updatedTasks = (project.tasks || []).filter(t => t.id !== taskId);
+    const updatedTasks = tasks.filter(t => t.id !== taskId);
     const completed = updatedTasks.filter(t => t.status === 'Done').length;
     const progress = Math.round((completed / Math.max(1, updatedTasks.length)) * 100);
     updateClientProject(project.id, { tasks: updatedTasks, progress });
@@ -115,7 +119,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
 
   const handleAddSubtask = (taskId: string) => {
     if (isReadOnly) return;
-    const updatedTasks = (project.tasks || []).map(t => {
+    const updatedTasks = tasks.map(t => {
       if (t.id === taskId) {
         const sub: SubTask = { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "New Sub-protocol", isCompleted: false };
         return { ...t, subtasks: [...(t.subtasks || []), sub] };
@@ -127,7 +131,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
 
   const handleToggleSubtask = (taskId: string, subId: string) => {
     if (isReadOnly) return;
-    const updatedTasks = (project.tasks || []).map(t => {
+    const updatedTasks = tasks.map(t => {
       if (t.id === taskId) {
         const subs = (t.subtasks || []).map(s => s.id === subId ? { ...s, isCompleted: !s.isCompleted } : s);
         return { ...t, subtasks: subs };
@@ -167,9 +171,6 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
       toast({ title: "Handover Synchronized", description: "Protocol transmitted to Admin for verification." });
     }, 1500);
   };
-
-  const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
-  const remainingBalance = (project.totalBudget || 0) - totalPaid;
 
   const temporal = (() => {
     const start = parse(project.startDate, "MMM dd, yyyy", new Date());
@@ -297,7 +298,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
           <TabsTrigger value="workflow" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-3"><PlayCircle className="h-4 w-4" /> Workflow</TabsTrigger>
           <TabsTrigger value="communications" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-3"><MessageSquare className="h-4 w-4" /> Communications</TabsTrigger>
           <TabsTrigger value="logs" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-3"><ClipboardList className="h-4 w-4" /> Site Logs</TabsTrigger>
-          <TabsTrigger value="ledger" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-3"><Wallet className="h-4 w-4" /> Ledger</TabsTrigger>
+          <TabsTrigger value="handover" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-3"><Handshake className="h-4 w-4" /> Handover</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="m-0 space-y-12">
@@ -324,45 +325,9 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
               </div>
             </div>
           </Card>
-
-          {/* HANDOVER INITIALIZATION SECTION */}
-          {project.status === 'Execution' && (
-            <Card className={cn(
-              "rounded-none border-dashed p-12 flex flex-col md:flex-row items-center justify-between gap-12 transition-all",
-              allTasksDone ? "bg-accent/[0.02] border-accent/20" : "bg-secondary/5 border-neutral-200 opacity-60"
-            )}>
-              <div className="space-y-4 max-w-2xl">
-                <div className="flex items-center gap-4">
-                  <Handshake className={cn("h-6 w-6", allTasksDone ? "text-accent" : "text-muted-foreground")} />
-                  <h3 className="text-2xl font-headline italic">Handover Protocol Initialization</h3>
-                </div>
-                <p className="text-sm font-light text-muted-foreground italic leading-relaxed">
-                  {allTasksDone 
-                    ? "Site protocols are complete. Synchronize with the studio registry to authorize handover. This will lock the dossier for administrative quality review." 
-                    : "Final handover cannot be initialized until all site protocols are documented as 'Done' in the workflow terminal."}
-                </p>
-              </div>
-              <Button 
-                onClick={handleInitiateHandover}
-                disabled={!allTasksDone || isHandoverSyncing || project.handoverStatus === 'Pending'}
-                className={cn(
-                  "rounded-none h-16 px-12 uppercase tracking-[0.2em] text-[11px] font-bold shadow-2xl transition-all flex gap-3",
-                  allTasksDone ? "bg-accent text-white hover:tracking-[0.3em]" : "bg-neutral-100 text-neutral-400 cursor-not-allowed border border-neutral-200"
-                )}
-              >
-                {isHandoverSyncing ? (
-                  <span className="flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin" /> Transmitting...</span>
-                ) : project.handoverStatus === 'Pending' ? (
-                  "Sync Established"
-                ) : (
-                  <><ShieldCheck className="h-5 w-5" /> Request Handover Sync</>
-                )}
-              </Button>
-            </Card>
-          )}
         </TabsContent>
 
-        <TabsContent value="workflow" className="m-0"><div className="flex gap-8 overflow-x-auto pb-8 custom-scrollbar"><KanbanColumn status="Todo" tasks={(project.tasks || []).filter(t => t.status === 'Todo')} /><KanbanColumn status="In Progress" tasks={(project.tasks || []).filter(t => t.status === 'In Progress')} /><KanbanColumn status="Done" tasks={(project.tasks || []).filter(t => t.status === 'Done')} /></div></TabsContent>
+        <TabsContent value="workflow" className="m-0"><div className="flex gap-8 overflow-x-auto pb-8 custom-scrollbar"><KanbanColumn status="Todo" tasks={tasks.filter(t => t.status === 'Todo')} /><KanbanColumn status="In Progress" tasks={tasks.filter(t => t.status === 'In Progress')} /><KanbanColumn status="Done" tasks={tasks.filter(t => t.status === 'Done')} /></div></TabsContent>
 
         <TabsContent value="communications" className="m-0 space-y-8">
           <div className="grid grid-cols-1 gap-6">
@@ -419,9 +384,65 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
           </div>
         </TabsContent>
 
-        <TabsContent value="ledger" className="m-0 space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8"><Card className="rounded-none border-neutral-100 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p><p className="text-3xl font-headline italic text-accent">KES {(project.totalBudget || 0).toLocaleString()}</p></div></Card><Card className="rounded-none border-neutral-100 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p><p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p></div></Card><Card className="rounded-none border-neutral-100 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><History className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-orange-600/60">Escrow Balance</p><p className="text-3xl font-headline italic text-orange-600">KES {remainingBalance.toLocaleString()}</p></div></Card></div>
-          <Card className="rounded-none border-neutral-100 p-0 bg-white shadow-2xl overflow-hidden"><div className="bg-neutral-50 px-10 py-6 border-b border-neutral-100 flex justify-between items-center"><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3"><CreditCard className="h-5 w-5" /> Architectural Registry</h3><Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest border-neutral-100 text-accent/40 font-bold">Registry Sync Active</Badge></div><div className="divide-y divide-neutral-50">{project.installments.map((ins, i) => (<div key={i} className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8 hover:bg-neutral-50/50 transition-colors"><div className="flex items-center gap-8"><div className={cn("h-12 w-12 rounded-full flex items-center justify-center shrink-0 border", ins.status === 'Paid' ? "bg-green-600/5 border-green-600/20 text-green-600" : "bg-orange-600/5 border-orange-600/20 text-orange-600")}>{ins.status === 'Paid' ? <CheckCircle2 className="h-5 w-5" /> : <Timer className="h-5 w-5 animate-pulse" />}</div><div className="space-y-1.5"><div className="flex items-center gap-3"><p className="text-base font-bold uppercase tracking-[0.2em]">{ins.label}</p><Badge className={cn("rounded-none text-[10px] uppercase tracking-widest px-2.5 py-0.5 font-bold", ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white")}>{ins.status}</Badge></div><div className="flex items-center gap-4 text-[12px] text-muted-foreground font-bold uppercase tracking-widest"><span>Ref: {ins.transactionCode || 'Awaiting Sync'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.percentage}% Allocation</span></div></div></div><div className="text-right"><p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Value</p><p className="text-2xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p></div></div>))}</div></Card>
+        <TabsContent value="handover" className="m-0 space-y-12">
+          {!allTasksDone ? (
+            <Card className="rounded-none border-dashed border-accent/20 bg-accent/[0.02] p-24 text-center space-y-8">
+              <div className="h-20 w-20 bg-accent/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ZapOff className="h-10 w-10 text-accent/20" />
+              </div>
+              <div className="space-y-4 max-w-xl mx-auto">
+                <h3 className="text-3xl font-headline italic">Protocol Impasse</h3>
+                <p className="text-muted-foreground font-light italic leading-relaxed">
+                  The handover terminal remains locked until all architectural protocols are documented as "Done" within the site workflow.
+                </p>
+              </div>
+              <div className="pt-8 border-t border-accent/5 max-w-md mx-auto space-y-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Awaiting Resolution ({pendingTasks.length})</p>
+                <div className="space-y-2">
+                  {pendingTasks.slice(0, 3).map(task => (
+                    <div key={task.id} className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-accent/60">
+                      <div className="h-1.5 w-1.5 rounded-full bg-orange-400" />
+                      <span className="truncate">{task.title}</span>
+                    </div>
+                  ))}
+                  {pendingTasks.length > 3 && <p className="text-[10px] italic opacity-40">+ {pendingTasks.length - 3} additional protocols</p>}
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <Card className={cn(
+              "rounded-none border-dashed p-12 flex flex-col md:flex-row items-center justify-between gap-12 transition-all bg-accent/[0.02] border-accent/20 shadow-2xl"
+            )}>
+              <div className="space-y-6 max-w-2xl">
+                <div className="flex items-center gap-4">
+                  <Handshake className="h-8 w-8 text-accent" />
+                  <h3 className="text-4xl font-headline italic">Handover Authorization</h3>
+                </div>
+                <p className="text-lg font-light text-accent/80 italic leading-relaxed border-l-2 border-accent/10 pl-8">
+                  "Site protocols verified. Transmit this dossier to the Senior Partners for final quality audit and key transfer synchronization."
+                </p>
+                {project.handoverStatus === 'Failed' && (
+                  <div className="mt-6 p-6 bg-destructive/5 border border-destructive/10">
+                    <p className="text-[10px] uppercase font-bold text-destructive mb-2 flex items-center gap-2"><AlertCircle className="h-3 w-3" /> Fix Directives Required</p>
+                    <p className="text-sm italic text-destructive/80">Addressing admin feedback is mandatory before re-initialization.</p>
+                  </div>
+                )}
+              </div>
+              <Button 
+                onClick={handleInitiateHandover}
+                disabled={isHandoverSyncing || project.handoverStatus === 'Pending'}
+                className="rounded-none h-20 px-16 bg-accent text-white uppercase tracking-[0.3em] text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.4em] flex gap-4"
+              >
+                {isHandoverSyncing ? (
+                  <span className="flex items-center gap-3"><Loader2 className="h-6 w-6 animate-spin" /> Synchronizing...</span>
+                ) : project.handoverStatus === 'Pending' ? (
+                  <><CheckCircle2 className="h-6 w-6" /> Sync Established</>
+                ) : (
+                  <><ShieldCheck className="h-6 w-6" /> Authorize Sync</>
+                )}
+              </Button>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 
