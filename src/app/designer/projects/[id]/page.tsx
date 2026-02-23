@@ -41,7 +41,9 @@ import {
   Handshake,
   AlertCircle,
   ZapOff,
-  LayoutList
+  LayoutList,
+  Archive,
+  FileCheck
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -51,6 +53,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parse, differenceInDays, isValid, format } from "date-fns";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function DesignerProjectWorkbench({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -234,8 +237,16 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-24 font-body">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-        <Link href="/designer/projects" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[11px] font-bold uppercase tracking-[0.3em]">Back to Deployment Hub</span></Link>
+        <Link href="/designer/projects" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[11px] font-bold uppercase tracking-[0.3em]">Back to Registry</span></Link>
         
+        {project.isArchived && (
+          <Alert className="rounded-none border-neutral-200 bg-neutral-50 p-6">
+            <Archive className="h-5 w-5 text-neutral-400" />
+            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-neutral-500 mb-1">Archived Dossier — Historical Record</AlertTitle>
+            <AlertDescription className="text-[13px] font-light italic text-neutral-400">This commission has been formally concluded. All protocols are read-only for archival reference and final financial reconciliation.</AlertDescription>
+          </Alert>
+        )}
+
         {project.handoverStatus === 'Pending' && (
           <div className="p-6 bg-accent text-white border border-accent/10 flex items-center justify-between shadow-xl">
             <div className="flex items-center gap-4">
@@ -270,22 +281,34 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
           <div className="space-y-2">
             <div className="flex items-center gap-4"><PencilRuler className="h-5 w-5 text-accent" /><span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Deployment Workbench</span></div>
             <h1 className="text-5xl font-headline italic">{project.project}</h1>
-            <div className="flex items-center gap-6 text-[12px] text-muted-foreground uppercase tracking-widest font-bold"><span>Dossier: {project.id}</span><div className="h-1 w-1 bg-neutral-200 rounded-full" /><span>Phase: {project.status}</span></div>
+            <div className="flex items-center gap-6 text-[12px] text-muted-foreground uppercase tracking-widest font-bold">
+              <span>Dossier: {project.id}</span>
+              <div className="h-1 w-1 bg-neutral-200 rounded-full" />
+              <span className={cn(project.isArchived && "text-neutral-400")}>Phase: {project.status}</span>
+              {project.financialReportStatus === 'Verified' && (
+                <>
+                  <div className="h-1 w-1 bg-neutral-200 rounded-full" />
+                  <span className="text-green-600 flex items-center gap-2"><FileCheck className="h-3.5 w-3.5" /> Audit Synchronized</span>
+                </>
+              )}
+            </div>
           </div>
           <div className="flex flex-col items-end gap-4">
-            <div className="text-right space-y-1">
-              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-accent/40 mb-1 w-64">
-                <span>Site Velocity</span>
-                <span>{project.progress}%</span>
+            {!project.isArchived && (
+              <div className="text-right space-y-1">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-accent/40 mb-1 w-64">
+                  <span>Site Velocity</span>
+                  <span>{project.progress}%</span>
+                </div>
+                <Progress value={project.progress} className="h-1 bg-neutral-100" />
               </div>
-              <Progress value={project.progress} className="h-1 bg-neutral-100" />
-            </div>
+            )}
             <div className="flex gap-4">
               <Badge className={cn(
                 "rounded-none uppercase tracking-[0.3em] text-[11px] font-bold py-2 px-6",
-                project.handoverStatus === 'Pending' ? "bg-accent/40 text-white" : "bg-accent text-white"
+                project.isArchived ? "bg-neutral-400 text-white" : project.handoverStatus === 'Pending' ? "bg-accent/40 text-white" : "bg-accent text-white"
               )}>
-                {project.handoverStatus === 'Pending' ? "AWAITING SYNC" : "EXECUTION ACTIVE"}
+                {project.isArchived ? "Dossier Archived" : project.handoverStatus === 'Pending' ? "Awaiting Sync" : "Execution Active"}
               </Badge>
             </div>
           </div>
@@ -327,7 +350,13 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
           </Card>
         </TabsContent>
 
-        <TabsContent value="workflow" className="m-0"><div className="flex gap-8 overflow-x-auto pb-8 custom-scrollbar"><KanbanColumn status="Todo" tasks={tasks.filter(t => t.status === 'Todo')} /><KanbanColumn status="In Progress" tasks={tasks.filter(t => t.status === 'In Progress')} /><KanbanColumn status="Done" tasks={tasks.filter(t => t.status === 'Done')} /></div></TabsContent>
+        <TabsContent value="workflow" className="m-0">
+          <div className="flex gap-8 overflow-x-auto pb-8 custom-scrollbar">
+            <KanbanColumn status="Todo" tasks={tasks.filter(t => t.status === 'Todo')} />
+            <KanbanColumn status="In Progress" tasks={tasks.filter(t => t.status === 'In Progress')} />
+            <KanbanColumn status="Done" tasks={tasks.filter(t => t.status === 'Done')} />
+          </div>
+        </TabsContent>
 
         <TabsContent value="communications" className="m-0 space-y-8">
           <div className="grid grid-cols-1 gap-6">
@@ -385,7 +414,19 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
         </TabsContent>
 
         <TabsContent value="handover" className="m-0 space-y-12">
-          {!allTasksDone ? (
+          {project.isArchived ? (
+            <Card className="rounded-none border-accent/10 bg-accent/[0.02] p-24 text-center space-y-8">
+              <div className="h-20 w-20 bg-accent/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="h-10 w-10 text-accent/40" />
+              </div>
+              <div className="space-y-4 max-w-xl mx-auto">
+                <h3 className="text-3xl font-headline italic text-accent">Protocol Finalized</h3>
+                <p className="text-muted-foreground font-light italic leading-relaxed">
+                  Handover synchronization was authorized on {project.endDate}. This dossier is now preserved in the studio archives.
+                </p>
+              </div>
+            </Card>
+          ) : !allTasksDone ? (
             <Card className="rounded-none border-dashed border-accent/20 bg-accent/[0.02] p-24 text-center space-y-8">
               <div className="h-20 w-20 bg-accent/5 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ZapOff className="h-10 w-10 text-accent/20" />
