@@ -51,7 +51,10 @@ export default function DesignerOnboardingPage() {
 
   const handleNext = () => {
     if (step === 1) {
-      const found = designers.find(d => d.accessToken.toUpperCase() === formData.accessCode.toUpperCase());
+      // Normalize input by removing extra whitespace and matching case
+      const normalizedInput = formData.accessCode.trim().toUpperCase();
+      const found = designers.find(d => d.accessToken.toUpperCase() === normalizedInput);
+      
       if (found) {
         setFormData({
           ...formData,
@@ -63,7 +66,7 @@ export default function DesignerOnboardingPage() {
       } else {
         toast({
           title: "Verification Failed",
-          description: "Access Token not recognized by Studio Registry.",
+          description: "Unique Access Token not recognized by the Master Registry. Please contact Senior Partners.",
           variant: "destructive"
         });
       }
@@ -194,18 +197,21 @@ export default function DesignerOnboardingPage() {
                       </div>
                       <h2 className="text-4xl font-headline italic">Identity Verification</h2>
                       <p className="text-muted-foreground font-light text-lg leading-relaxed max-w-xl">
-                        Enter your Studio Access Token provided by the senior partners. Use <span className="text-accent font-bold">WHYTE-LEAD-01</span> for this prototype.
+                        Enter your unique 64-bit Access Token provided by the studio. This credential is required to synchronize your professional workbench.
                       </p>
                     </div>
-                    <div className="space-y-6 max-w-md">
+                    <div className="space-y-6 max-w-lg">
                       <div className="space-y-3">
-                        <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Access Token</Label>
+                        <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">High-Entropy Access Token</Label>
                         <Input 
                           placeholder="XXXX-XXXX-XXXX" 
-                          className="rounded-none border-neutral-200 h-16 text-2xl tracking-[0.3em] focus:ring-accent uppercase font-bold"
+                          className="rounded-none border-neutral-200 h-16 text-xl md:text-2xl tracking-[0.2em] focus:ring-accent uppercase font-bold"
                           value={formData.accessCode}
                           onChange={(e) => setFormData({...formData, accessCode: e.target.value})}
                         />
+                        <p className="text-[10px] text-muted-foreground italic uppercase tracking-widest mt-2">
+                          Note: Tokens are case-insensitive but must match the studio registry exactly.
+                        </p>
                       </div>
                     </div>
                   </div>
