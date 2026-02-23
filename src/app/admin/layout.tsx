@@ -17,7 +17,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const managementNav = [
     { title: "Dashboard", icon: LayoutDashboard, href: "/admin" },
     { title: "Insights", icon: BarChart3, href: "/admin/insights" },
-    { title: "Fiscal Management", icon: Landmark, href: "/admin/management/fiscal" },
     { title: "CRM", icon: HeartHandshake, href: "/admin/crm" },
     { title: "System Onboarding", icon: ShieldAlert, href: "/admin/operations/onboarding" },
     { title: "Legacy Sync", icon: History, href: "/admin/management/legacy-sync" },
