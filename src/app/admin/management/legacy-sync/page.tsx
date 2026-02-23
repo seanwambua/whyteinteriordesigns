@@ -39,7 +39,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { useWhyteStore, ClientProject, Designer, Collaborator, VendorAllocation, Milestone, ProjectTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, Designer, Collaborator, VendorAllocation, Milestone, ProjectTask, Installment } from "@/store/use-whyte-store";
 import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
@@ -59,6 +59,13 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type SyncPath = 'Implementation' | 'Handover' | 'Archive';
+
+interface HistoricalSettlement {
+  id: string;
+  amount: string;
+  code: string;
+  date: Date;
+}
 
 export default function LegacyReconciliationPage() {
   const { toast } = useToast();
@@ -81,9 +88,9 @@ export default function LegacyReconciliationPage() {
     tier: "Premium" as ClientProject['tier'],
     description: "",
     totalBudget: "",
-    liquidatedFunds: "",
-    transactionCode: "",
-    settlementDate: new Date(),
+    settlements: [
+      { id: 'S-1', amount: "", code: "", date: new Date() }
+    ] as HistoricalSettlement[],
     startDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
     endDate: new Date(),
     assignedDesignerId: "",
@@ -100,6 +107,33 @@ export default function LegacyReconciliationPage() {
 
   const handleNext = () => setStep(prev => prev + 1);
   const handleBack = () => setStep(prev => prev - 1);
+
+  const addSettlement = () => {
+    setFormData({
+      ...formData,
+      settlements: [
+        ...formData.settlements,
+        { id: `S-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, amount: "", code: "", date: new Date() }
+      ]
+    });
+  };
+
+  const removeSettlement = (idx: number) => {
+    if (formData.settlements.length <= 1) return;
+    setFormData({
+      ...formData,
+      settlements: formData.settlements.filter((_, i) => i !== idx)
+    });
+  };
+
+  const updateSettlement = (idx: number, field: keyof HistoricalSettlement, value: any) => {
+    const updated = [...formData.settlements];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setFormData({ ...formData, settlements: updated });
+  };
+
+  const liquidatedTotal = formData.settlements.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+  const dueBalance = Math.max(0, (Number(formData.totalBudget) || 0) - liquidatedTotal);
 
   const toggleCollaborator = (id: string) => {
     setFormData(prev => ({
@@ -123,7 +157,6 @@ export default function LegacyReconciliationPage() {
     setLoading(true);
     const id = `LEG-${Math.floor(Math.random() * 9000) + 1000}`;
     const budget = Number(formData.totalBudget) || 0;
-    const liquidated = Number(formData.liquidatedFunds) || 0;
     
     const allocations: VendorAllocation[] = formData.linkedCollaborators.map(cid => {
       const col = collaborators.find(c => c.id === cid);
@@ -142,6 +175,24 @@ export default function LegacyReconciliationPage() {
     const isArchived = formData.syncPath === 'Archive';
     const isHandover = formData.syncPath === 'Handover';
 
+    const settlementInstallments: Installment[] = formData.settlements.map(s => ({
+      label: "Historical Settlement",
+      percentage: Math.round(((Number(s.amount) || 0) / Math.max(1, budget)) * 100),
+      amount: Number(s.amount) || 0,
+      status: 'Paid',
+      transactionCode: s.code || 'LEGACY-SYNC',
+      date: format(s.date, "MMM dd, yyyy")
+    }));
+
+    if (dueBalance > 0) {
+      settlementInstallments.push({
+        label: "Outstanding Balance",
+        percentage: Math.round((dueBalance / budget) * 100),
+        amount: dueBalance,
+        status: 'Pending'
+      });
+    }
+
     const legacyDossier: ClientProject = { 
       id, 
       name: formData.name, 
@@ -158,22 +209,7 @@ export default function LegacyReconciliationPage() {
       totalBudget: budget, 
       milestones: isArchived ? [{ id: 'M-HIST', label: "Legacy Conclusion", date: format(formData.endDate, "MMM dd, yyyy"), isCompleted: true, description: "Historical record finalized." }] : formData.milestones, 
       tasks: formData.activeTasks, 
-      installments: [
-        { 
-          label: "Historical Settlement", 
-          percentage: Math.round((liquidated / Math.max(1, budget)) * 100), 
-          amount: liquidated, 
-          status: 'Paid' as const, 
-          transactionCode: formData.transactionCode || 'LEGACY-SYNC',
-          date: format(formData.settlementDate, "MMM dd, yyyy")
-        },
-        ...(liquidated < budget ? [{
-          label: "Outstanding Balance",
-          percentage: Math.round(((budget - liquidated) / budget) * 100),
-          amount: budget - liquidated,
-          status: 'Pending' as const
-        }] : [])
-      ], 
+      installments: settlementInstallments, 
       description: formData.description,
       vendorAllocations: allocations,
       assignedDesignerId: formData.assignedDesignerId,
@@ -181,7 +217,7 @@ export default function LegacyReconciliationPage() {
       financialReportStatus: isArchived ? 'Verified' : 'Pending',
       handoverStatus: isHandover ? 'Pending' : null,
       auditDetails: isArchived ? {
-        totalReceived: liquidated,
+        totalReceived: liquidatedTotal,
         allocations: [],
         refundAmount: 0,
         stewardComments: `Historical reconciliation for project ${id}.`,
@@ -203,7 +239,9 @@ export default function LegacyReconciliationPage() {
     if (step === 2) return formData.name && formData.email && formData.project; 
     if (step === 3 && formData.syncPath === 'Handover') return formData.handoverChecklist.length > 0;
     if (step === 4 || (formData.syncPath === 'Archive' && step === 3)) return formData.assignedDesignerId !== "";
-    if (step === 5 || (formData.syncPath === 'Archive' && step === 4)) return formData.totalBudget && formData.liquidatedFunds && formData.transactionCode; 
+    if (step === 5 || (formData.syncPath === 'Archive' && step === 4)) {
+      return formData.totalBudget && formData.settlements.every(s => s.amount && s.code);
+    }
     return true; 
   };
 
@@ -387,32 +425,44 @@ export default function LegacyReconciliationPage() {
               {(step === 5 || (formData.syncPath === 'Archive' && step === 4)) && (
                 <motion.div key="s-fiscal" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><Calculator className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Fiscal Reconciliation</h3></div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Contract Value (KES)</Label><Input type="number" placeholder="Original Budget" className="rounded-none border-accent/20 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} /></div>
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Liquidated Funds (KES)</Label><Input type="number" placeholder="Amount Received" className="rounded-none border-accent/20 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.liquidatedFunds} onChange={(e) => setFormData({...formData, liquidatedFunds: e.target.value})} /></div>
-                  </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-3">
-                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label>
-                      <div className="relative">
-                        <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-accent/20" />
-                        <Input placeholder="E.g., TRX-HIST-9921" className="pl-12 rounded-none border-accent/20 h-14 text-sm font-bold uppercase tracking-widest focus:ring-accent" value={formData.transactionCode} onChange={(e) => setFormData({...formData, transactionCode: e.target.value})} />
-                      </div>
+                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Contract Value (KES)</Label><Input type="number" placeholder="Original Budget" className="rounded-none border-accent/20 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} /></div>
+
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between border-b border-accent/5 pb-4">
+                      <h4 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Historical Settlement Ledger</h4>
+                      <Button type="button" variant="outline" size="sm" onClick={addSettlement} className="rounded-none h-10 px-6 text-[10px] uppercase tracking-widest font-bold border-accent/10 hover:bg-accent hover:text-white"><Plus className="h-3.5 w-3.5 mr-2" /> Append Entry</Button>
                     </div>
-                    <div className="space-y-3">
-                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Settlement Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-accent/20 uppercase tracking-widest font-bold">
-                            <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
-                            {format(formData.settlementDate, "MMM dd, yyyy")}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 rounded-none">
-                          <Calendar mode="single" selected={formData.settlementDate} onSelect={(d) => d && setFormData({...formData, settlementDate: d})} initialFocus />
-                        </PopoverContent>
-                      </Popover>
+
+                    <div className="space-y-6">
+                      {formData.settlements.map((s, idx) => (
+                        <div key={s.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-8 relative group hover:bg-white hover:shadow-xl transition-all">
+                          <Button variant="ghost" size="icon" onClick={() => removeSettlement(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                            <div className="md:col-span-4 space-y-2">
+                              <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Liquidated Amount (KES)</Label>
+                              <Input type="number" value={s.amount} onChange={(e) => updateSettlement(idx, 'amount', e.target.value)} className="rounded-none h-12 text-sm font-bold border-accent/10" placeholder="0.00" />
+                            </div>
+                            <div className="md:col-span-4 space-y-2">
+                              <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Transaction Code</Label>
+                              <div className="relative">
+                                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
+                                <Input value={s.code} onChange={(e) => updateSettlement(idx, 'code', e.target.value)} className="pl-10 rounded-none h-12 text-sm font-bold border-accent/10" placeholder="E.g., TRX-9921" />
+                              </div>
+                            </div>
+                            <div className="md:col-span-4 space-y-2">
+                              <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Settlement Date</Label>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-accent/10 font-bold uppercase tracking-widest"><CalendarIcon className="mr-3 h-4 w-4 opacity-40" />{format(s.date, "MMM dd, yyyy")}</Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={s.date} onSelect={(d) => d && updateSettlement(idx, 'date', d)} initialFocus /></PopoverContent>
+                              </Popover>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -422,11 +472,14 @@ export default function LegacyReconciliationPage() {
                         <span className="text-[11px] font-bold uppercase tracking-widest text-accent/40">Historical Due Balance</span>
                         <p className="text-[10px] text-orange-600 font-bold uppercase tracking-widest italic">Highlighted across portal registries</p>
                       </div>
-                      <span className={cn("text-3xl font-headline italic", Number(formData.totalBudget) - Number(formData.liquidatedFunds) > 0 ? "text-orange-600" : "text-green-600")}>
-                        KES {(Number(formData.totalBudget) - Number(formData.liquidatedFunds)).toLocaleString()}
-                      </span>
+                      <div className="text-right">
+                        <p className="text-[9px] uppercase font-bold text-accent/20 mb-1">Liquidated: KES {liquidatedTotal.toLocaleString()}</p>
+                        <span className={cn("text-3xl font-headline italic", dueBalance > 0 ? "text-orange-600" : "text-green-600")}>
+                          KES {dueBalance.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
-                    <Progress value={(Number(formData.liquidatedFunds) / Math.max(1, Number(formData.totalBudget))) * 100} className="h-1 bg-accent/5 rounded-none" />
+                    <Progress value={(liquidatedTotal / Math.max(1, Number(formData.totalBudget))) * 100} className="h-1 bg-accent/5 rounded-none" />
                   </div>
                 </motion.div>
               )}
