@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "use-framer-motion";
+import { motion } from "framer-motion";
 import { useWhyteStore, Collaborator } from "@/store/use-whyte-store";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
