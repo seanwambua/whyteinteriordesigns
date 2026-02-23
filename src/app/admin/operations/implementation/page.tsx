@@ -16,7 +16,8 @@ import {
   Search,
   Timer,
   AlertCircle,
-  MoreVertical
+  MoreVertical,
+  PencilRuler
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
@@ -27,7 +28,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export default function ProjectImplementationPage() {
-  const { clientProjects } = useWhyteStore();
+  const { clientProjects, designers } = useWhyteStore();
   const [isMounted, setIsMounted] = useState(false);
   const [view, setView] = useState<"grid" | "list">("list");
   const [searchQuery, setSearchQuery] = useState("");
@@ -118,65 +119,74 @@ export default function ProjectImplementationPage() {
               exit={{ opacity: 0 }}
               className="grid grid-cols-1 lg:grid-cols-2 gap-8"
             >
-              {filteredProjects.map((p, index) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card className="rounded-none border-accent/5 shadow-xl bg-white group hover:shadow-2xl transition-all overflow-hidden h-full flex flex-col">
-                    <div className={cn(
-                      "h-1.5 w-full",
-                      p.status === 'Execution' ? 'bg-green-500' : 'bg-accent/20'
-                    )} />
-                    <CardContent className="p-10 space-y-10 flex-1 flex flex-col">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-4">
-                            <span className="text-[12px] font-bold text-accent/40 uppercase tracking-[0.4em]">{p.id}</span>
-                            <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest font-bold py-1 px-3 border-accent/10 text-accent bg-accent/5">
-                              {p.status}
-                            </Badge>
+              {filteredProjects.map((p, index) => {
+                const assignedDesigner = designers.find(d => d.id === p.assignedDesignerId);
+                
+                return (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card className="rounded-none border-accent/5 shadow-xl bg-white group hover:shadow-2xl transition-all overflow-hidden h-full flex flex-col">
+                      <div className={cn(
+                        "h-1.5 w-full",
+                        p.status === 'Execution' ? 'bg-green-500' : 'bg-accent/20'
+                      )} />
+                      <CardContent className="p-10 space-y-10 flex-1 flex flex-col">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-4">
+                              <span className="text-[12px] font-bold text-accent/40 uppercase tracking-[0.4em]">{p.id}</span>
+                              <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest font-bold py-1 px-3 border-accent/10 text-accent bg-accent/5">
+                                {p.status}
+                              </Badge>
+                            </div>
+                            <h3 className="text-3xl font-headline italic leading-tight">{p.project}</h3>
+                            <div className="flex flex-col gap-1">
+                              <p className="text-[12px] text-muted-foreground uppercase tracking-widest font-bold">Client: {p.name}</p>
+                              <p className="text-[11px] text-accent/60 uppercase tracking-widest font-bold flex items-center gap-2">
+                                <PencilRuler className="h-3 w-3" /> Lead: {assignedDesigner ? assignedDesigner.name : "Unassigned"}
+                              </p>
+                            </div>
                           </div>
-                          <h3 className="text-3xl font-headline italic leading-tight">{p.project}</h3>
-                          <p className="text-[12px] text-muted-foreground uppercase tracking-widest font-bold">Client: {p.name}</p>
+                          <Button asChild variant="ghost" className="h-14 w-14 rounded-full border border-accent/5 group-hover:bg-accent group-hover:text-white transition-all shadow-sm">
+                            <Link href={`/admin/clients/${p.id}`}><ArrowRight className="h-6 w-6" /></Link>
+                          </Button>
                         </div>
-                        <Button asChild variant="ghost" className="h-14 w-14 rounded-full border border-accent/5 group-hover:bg-accent group-hover:text-white transition-all shadow-sm">
-                          <Link href={`/admin/clients/${p.id}`}><ArrowRight className="h-6 w-6" /></Link>
-                        </Button>
-                      </div>
 
-                      <div className="space-y-5 flex-1">
-                        <div className="flex justify-between text-[12px] uppercase tracking-[0.4em] font-bold text-accent/60">
-                          <span>Implementation Velocity</span>
-                          <span>{p.progress}%</span>
+                        <div className="space-y-5 flex-1">
+                          <div className="flex justify-between text-[12px] uppercase tracking-[0.4em] font-bold text-accent/60">
+                            <span>Implementation Velocity</span>
+                            <span>{p.progress}%</span>
+                          </div>
+                          <Progress value={p.progress} className="h-1.5 bg-secondary rounded-none" />
                         </div>
-                        <Progress value={p.progress} className="h-1.5 bg-secondary rounded-none" />
-                      </div>
 
-                      <div className="flex flex-col md:flex-row md:items-center justify-between pt-8 border-t border-accent/5 gap-6">
-                        <div className="flex items-center gap-8">
-                          <div className="flex items-center gap-2.5 text-[12px] uppercase tracking-widest text-muted-foreground font-bold" title="Site Protocols">
-                            <ClipboardList className="h-4 w-4 text-accent/40" /> 
-                            {p.tasks?.length || 0} Protocols
+                        <div className="flex flex-col md:flex-row md:items-center justify-between pt-8 border-t border-accent/5 gap-6">
+                          <div className="flex items-center gap-8">
+                            <div className="flex items-center gap-2.5 text-[12px] uppercase tracking-widest text-muted-foreground font-bold" title="Site Protocols">
+                              <ClipboardList className="h-4 w-4 text-accent/40" /> 
+                              {p.tasks?.length || 0} Protocols
+                            </div>
+                            <div className="flex items-center gap-2.5 text-[12px] uppercase tracking-widest text-muted-foreground font-bold" title="Timeline Target">
+                              <Clock className="h-4 w-4 text-accent/40" /> 
+                              {p.endDate}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2.5 text-[12px] uppercase tracking-widest text-muted-foreground font-bold" title="Timeline Target">
-                            <Clock className="h-4 w-4 text-accent/40" /> 
-                            {p.endDate}
+                          <div className="flex items-center gap-3 max-w-[240px]">
+                            <Activity className="h-3.5 w-3.5 text-accent/20 shrink-0" />
+                            <p className="text-[12px] font-light italic text-accent/60 truncate" title={p.lastActivity}>
+                              "{p.lastActivity || 'Sync initialized.'}"
+                            </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 max-w-[240px]">
-                          <Activity className="h-3.5 w-3.5 text-accent/20 shrink-0" />
-                          <p className="text-[12px] font-light italic text-accent/60 truncate" title={p.lastActivity}>
-                            "{p.lastActivity || 'Sync initialized.'}"
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           ) : (
             <motion.div 
@@ -192,6 +202,7 @@ export default function ProjectImplementationPage() {
                     <tr className="bg-accent/5 border-b border-accent/10">
                       <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Dossier ID</th>
                       <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Project & Client</th>
+                      <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Creative Lead</th>
                       <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Lifecycle Status</th>
                       <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Site Velocity</th>
                       <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Target Deadline</th>
@@ -199,40 +210,49 @@ export default function ProjectImplementationPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-accent/5">
-                    {filteredProjects.map((p) => (
-                      <tr key={p.id} className="group hover:bg-accent/[0.02] transition-colors">
-                        <td className="p-6">
-                          <span className="text-[12px] font-bold text-accent uppercase tracking-widest">{p.id}</span>
-                        </td>
-                        <td className="p-6">
-                          <div className="space-y-1">
-                            <p className="text-base font-headline italic text-accent">{p.project}</p>
-                            <p className="text-[12px] uppercase font-bold text-muted-foreground/60">{p.name}</p>
-                          </div>
-                        </td>
-                        <td className="p-6">
-                          <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest font-bold border-accent/10 text-accent">
-                            {p.status}
-                          </Badge>
-                        </td>
-                        <td className="p-6">
-                          <div className="flex items-center gap-4 w-40">
-                            <span className="text-[13px] font-bold text-accent/60 min-w-[32px]">{p.progress}%</span>
-                            <Progress value={p.progress} className="h-1 bg-secondary rounded-none flex-1" />
-                          </div>
-                        </td>
-                        <td className="p-6">
-                          <div className="flex items-center gap-2 text-[12px] font-bold text-muted-foreground uppercase tracking-widest">
-                            <Timer className="h-3.5 w-3.5 opacity-40" /> {p.endDate}
-                          </div>
-                        </td>
-                        <td className="p-6 text-right">
-                          <Button asChild variant="ghost" size="icon" className="rounded-full hover:bg-accent hover:text-white transition-all">
-                            <Link href={`/admin/clients/${p.id}`}><ChevronRight className="h-5 w-5" /></Link>
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredProjects.map((p) => {
+                      const assignedDesigner = designers.find(d => d.id === p.assignedDesignerId);
+                      
+                      return (
+                        <tr key={p.id} className="group hover:bg-accent/[0.02] transition-colors">
+                          <td className="p-6">
+                            <span className="text-[12px] font-bold text-accent uppercase tracking-widest">{p.id}</span>
+                          </td>
+                          <td className="p-6">
+                            <div className="space-y-1">
+                              <p className="text-base font-headline italic text-accent">{p.project}</p>
+                              <p className="text-[12px] uppercase font-bold text-muted-foreground/60">{p.name}</p>
+                            </div>
+                          </td>
+                          <td className="p-6">
+                            <span className="text-[12px] uppercase tracking-widest font-bold text-accent/80">
+                              {assignedDesigner ? assignedDesigner.name : "Unassigned"}
+                            </span>
+                          </td>
+                          <td className="p-6">
+                            <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest font-bold border-accent/10 text-accent">
+                              {p.status}
+                            </Badge>
+                          </td>
+                          <td className="p-6">
+                            <div className="flex items-center gap-4 w-40">
+                              <span className="text-[13px] font-bold text-accent/60 min-w-[32px]">{p.progress}%</span>
+                              <Progress value={p.progress} className="h-1 bg-secondary rounded-none flex-1" />
+                            </div>
+                          </td>
+                          <td className="p-6">
+                            <div className="flex items-center gap-2 text-[12px] font-bold text-muted-foreground uppercase tracking-widest">
+                              <Timer className="h-3.5 w-3.5 opacity-40" /> {p.endDate}
+                            </div>
+                          </td>
+                          <td className="p-6 text-right">
+                            <Button asChild variant="ghost" size="icon" className="rounded-full hover:bg-accent hover:text-white transition-all">
+                              <Link href={`/admin/clients/${p.id}`}><ChevronRight className="h-5 w-5" /></Link>
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -28,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SiteDossierRegistryPage() {
-  const { clientProjects } = useWhyteStore();
+  const { clientProjects, designers } = useWhyteStore();
   const [search, setSearch] = useState("");
   const [isMounted, setIsMounted] = useState(false);
   const [activeDesignerId, setActiveDesignerId] = useState<string | null>(null);
@@ -74,56 +73,63 @@ export default function SiteDossierRegistryPage() {
 
   if (!isMounted) return null;
 
-  const DossierCard = ({ p, isArchived, isStudioWide }: { p: ClientProject, isArchived?: boolean, isStudioWide?: boolean }) => (
-    <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
-      <Card className={cn(
-        "rounded-none border-neutral-100 bg-white hover:border-accent/40 transition-all group overflow-hidden shadow-sm",
-        isArchived && "opacity-80"
-      )}>
-        <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-8 flex-1">
-            <div className={cn(
-              "h-16 w-16 rounded-none border border-neutral-100 flex flex-col items-center justify-center transition-all",
-              isArchived ? "bg-neutral-50 text-neutral-400" : isStudioWide ? "bg-orange-50 text-orange-400" : "bg-neutral-50 text-accent/40 group-hover:bg-accent group-hover:text-white"
-            )}>
-              {isArchived ? <Archive className="h-6 w-6" /> : isStudioWide ? <LockKeyhole className="h-6 w-6" /> : <Briefcase className="h-6 w-6" />}
-              <span className="text-[8px] font-black uppercase mt-1">{isArchived ? 'HIST' : isStudioWide ? 'READ' : 'ACTV'}</span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-4">
-                <span className="text-[11px] font-bold text-accent/40 uppercase tracking-widest">{p.id}</span>
-                <h3 className="text-2xl font-headline italic text-accent leading-tight">{p.project}</h3>
-                <Badge variant="outline" className={cn("rounded-none text-[9px] uppercase tracking-widest border-neutral-100", isStudioWide && "border-orange-200 text-orange-600 bg-orange-50")}>
-                  {isStudioWide ? "Observation Only" : p.status}
-                </Badge>
-                {p.financialReportStatus === 'Verified' && <Lock className="h-3.5 w-3.5 text-green-600 opacity-60" title="Audit Verified" />}
-              </div>
-              <div className="flex flex-wrap items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-widest font-bold">
-                <span className="flex items-center gap-2">Client: {p.name}</span>
-                <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 opacity-40" /> {isArchived ? 'Handover' : 'Target'}: {p.endDate}</span>
-                {!isArchived && (
-                  <div className="flex items-center gap-4 w-40">
-                    <span className="text-[10px] text-accent/60">{p.progress}%</span>
-                    <Progress value={p.progress} className="h-1 bg-neutral-100 flex-1" />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href={`/designer/projects/${p.id}`}>
-              <Button variant="outline" className={cn(
-                "rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold border-neutral-200 transition-all",
-                isStudioWide ? "hover:bg-orange-600 hover:text-white hover:border-orange-600" : "hover:bg-accent hover:text-white hover:border-accent"
+  const DossierCard = ({ p, isArchived, isStudioWide }: { p: ClientProject, isArchived?: boolean, isStudioWide?: boolean }) => {
+    const assignedDesigner = designers.find(d => d.id === p.assignedDesignerId);
+    
+    return (
+      <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+        <Card className={cn(
+          "rounded-none border-neutral-100 bg-white hover:border-accent/40 transition-all group overflow-hidden shadow-sm",
+          isArchived && "opacity-80"
+        )}>
+          <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-8 flex-1">
+              <div className={cn(
+                "h-16 w-16 rounded-none border border-neutral-100 flex flex-col items-center justify-center transition-all",
+                isArchived ? "bg-neutral-50 text-neutral-400" : isStudioWide ? "bg-orange-50 text-orange-400" : "bg-neutral-50 text-accent/40 group-hover:bg-accent group-hover:text-white"
               )}>
-                {isArchived ? 'View Archives' : isStudioWide ? 'Enter Observation' : 'Open Workbench'}
-              </Button>
-            </Link>
+                {isArchived ? <Archive className="h-6 w-6" /> : isStudioWide ? <LockKeyhole className="h-6 w-6" /> : <Briefcase className="h-6 w-6" />}
+                <span className="text-[8px] font-black uppercase mt-1">{isArchived ? 'HIST' : isStudioWide ? 'READ' : 'ACTV'}</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-4">
+                  <span className="text-[11px] font-bold text-accent/40 uppercase tracking-widest">{p.id}</span>
+                  <h3 className="text-2xl font-headline italic text-accent leading-tight">{p.project}</h3>
+                  <Badge variant="outline" className={cn("rounded-none text-[9px] uppercase tracking-widest border-neutral-100", isStudioWide && "border-orange-200 text-orange-600 bg-orange-50")}>
+                    {isStudioWide ? "Observation Only" : p.status}
+                  </Badge>
+                  {p.financialReportStatus === 'Verified' && <Lock className="h-3.5 w-3.5 text-green-600 opacity-60" title="Audit Verified" />}
+                </div>
+                <div className="flex flex-wrap items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-widest font-bold">
+                  <span className="flex items-center gap-2">Client: {p.name}</span>
+                  <span className="flex items-center gap-2 text-accent/60">
+                    <PencilRuler className="h-3.5 w-3.5 opacity-40" /> Lead: {assignedDesigner ? assignedDesigner.name : "Unassigned"}
+                  </span>
+                  <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 opacity-40" /> {isArchived ? 'Handover' : 'Target'}: {p.endDate}</span>
+                  {!isArchived && (
+                    <div className="flex items-center gap-4 w-40">
+                      <span className="text-[10px] text-accent/60">{p.progress}%</span>
+                      <Progress value={p.progress} className="h-1 bg-neutral-100 flex-1" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link href={`/designer/projects/${p.id}`}>
+                <Button variant="outline" className={cn(
+                  "rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold border-neutral-200 transition-all",
+                  isStudioWide ? "hover:bg-orange-600 hover:text-white hover:border-orange-600" : "hover:bg-accent hover:text-white hover:border-accent"
+                )}>
+                  {isArchived ? 'View Archives' : isStudioWide ? 'Enter Observation' : 'Open Workbench'}
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </Card>
-    </motion.div>
-  );
+        </Card>
+      </motion.div>
+    );
+  };
 
   return (
     <div className="space-y-12 max-w-7xl mx-auto pb-24 font-body">

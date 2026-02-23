@@ -53,7 +53,7 @@ import { parse, differenceInDays, isValid, format } from "date-fns";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { clientProjects, updateClientProject, financialSteward, inquiries, updateInquiryStatus } = useWhyteStore();
+  const { clientProjects, designers, updateClientProject, financialSteward, inquiries, updateInquiryStatus } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -74,6 +74,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   }, []);
 
   const project = clientProjects.find((p) => p.id === id);
+  const assignedDesigner = designers.find(d => d.id === project?.assignedDesignerId);
   const projectInquiries = inquiries.filter(inq => inq.projectId === id);
   
   const isAuditVerified = project?.financialReportStatus === 'Verified';
@@ -262,7 +263,13 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           <div className="space-y-2">
             <div className="flex items-center gap-4"><div className="h-px w-8 bg-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Project Terminal</span></div>
             <h1 className="text-5xl font-headline italic">{project.project}</h1>
-            <div className="flex items-center gap-6 text-[13px] text-muted-foreground uppercase tracking-widest font-bold"><span className="flex items-center gap-2"><User className="h-4 w-4 opacity-40" /> {project.name}</span><div className="h-1 w-1 bg-accent/20 rounded-full" /><span className="opacity-40">{project.id}</span></div>
+            <div className="flex flex-wrap items-center gap-6 text-[13px] text-muted-foreground uppercase tracking-widest font-bold">
+              <span className="flex items-center gap-2"><User className="h-4 w-4 opacity-40" /> {project.name}</span>
+              <div className="h-1 w-1 bg-accent/20 rounded-full" />
+              <span className="flex items-center gap-2"><PencilRuler className="h-4 w-4 opacity-40" /> {assignedDesigner ? assignedDesigner.name : "Unassigned Lead"}</span>
+              <div className="h-1 w-1 bg-accent/20 rounded-full" />
+              <span className="opacity-40">{project.id}</span>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-4 bg-white p-6 border border-accent/5 shadow-2xl">
             <div className="space-y-1 pr-8 border-r border-accent/10"><Label className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label><Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)} disabled={isReadOnly}><SelectTrigger className="rounded-none border-none h-8 p-0 text-[13px] font-bold uppercase tracking-widest text-accent focus:ring-0 w-44"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="Planning">Planning</SelectItem><SelectItem value="Execution">Execution</SelectItem><SelectItem value="Completion">Completion</SelectItem></SelectContent></Select></div>

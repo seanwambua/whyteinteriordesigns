@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -33,7 +32,8 @@ import {
   Scale,
   Building2,
   ExternalLink,
-  Loader2
+  Loader2,
+  PencilRuler
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -46,7 +46,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
 export default function ClientDashboardPage() {
-  const { clientProjects, updateClientProject, financialSteward } = useWhyteStore();
+  const { clientProjects, designers, updateClientProject, financialSteward } = useWhyteStore();
   const [verifiedProjectId, setVerifiedProjectId] = useState<string | null>(null);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request">("project_support");
@@ -79,6 +79,8 @@ export default function ClientDashboardPage() {
       </div>
     );
   }
+
+  const assignedDesigner = designers.find(d => d.id === activeProject.assignedDesignerId);
 
   const handleClientAgreeTermination = () => {
     if (!activeProject.termination) return;
@@ -457,9 +459,17 @@ export default function ClientDashboardPage() {
               </div>
             )}
           </Card>
-          
+
           <Card className="rounded-none border-accent/5 bg-secondary/30 p-8 space-y-6">
-            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><HardHat className="h-3 w-3" /> {(activeProject.isArchived || activeProject.status === 'Terminated') ? "Historical Network" : "Active Partner Matrix"}</h4>
+            <div className="space-y-1">
+              <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2">
+                <PencilRuler className="h-3 w-3" /> Creative Lead
+              </h4>
+              <p className="text-lg font-headline italic text-accent">{assignedDesigner ? assignedDesigner.name : "Unassigned"}</p>
+            </div>
+            <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2 pt-4 border-t border-accent/5">
+              <HardHat className="h-3 w-3" /> {(activeProject.isArchived || activeProject.status === 'Terminated') ? "Historical Network" : "Active Partner Matrix"}
+            </h4>
             <div className="space-y-4">
               {(activeProject.vendorAllocations || []).map((vendor, vIdx) => (
                 <div key={vIdx} className="flex items-center justify-between">

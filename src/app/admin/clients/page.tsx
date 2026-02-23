@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -22,7 +21,8 @@ import {
   Info,
   Lock,
   Settings2,
-  FolderOpen
+  FolderOpen,
+  PencilRuler
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -59,7 +59,7 @@ type GroupedClient = {
 };
 
 export default function ClientDirectoryPage() {
-  const { clientProjects, removeClientProject, updateClientProject } = useWhyteStore();
+  const { clientProjects, designers, removeClientProject, updateClientProject } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [search, setSearch] = useState("");
@@ -154,78 +154,92 @@ export default function ClientDirectoryPage() {
 
         {/* Individual Projects Sub-Registry */}
         <div className="divide-y divide-accent/5">
-          {client.projects.map((project) => (
-            <div key={project.id} className="p-8 hover:bg-accent/[0.01] transition-colors group">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-                <div className="flex-1 space-y-6">
-                  <div className="flex items-center gap-4">
-                    <span className="text-[11px] font-bold text-accent/40 uppercase tracking-[0.4em]">{project.id}</span>
-                    <h4 className="text-xl font-headline italic text-accent/80">{project.project}</h4>
-                    <Badge variant="outline" className={cn("rounded-none uppercase tracking-widest text-[9px] font-bold px-2 py-0.5", getStatusColor(project.status))}>
-                      {project.status}
-                    </Badge>
-                    {project.financialReportStatus === 'Verified' && (
-                      <Lock className="h-3.5 w-3.5 text-green-600 opacity-60" title="Audit Verified" />
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-end">
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40">
-                        <span>Implementation Velocity</span>
-                        <span>{project.progress}%</span>
-                      </div>
-                      <Progress value={project.progress} className="h-1 bg-secondary rounded-none" />
+          {client.projects.map((project) => {
+            const assignedDesigner = designers.find(d => d.id === project.assignedDesignerId);
+            
+            return (
+              <div key={project.id} className="p-8 hover:bg-accent/[0.01] transition-colors group">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+                  <div className="flex-1 space-y-6">
+                    <div className="flex items-center gap-4">
+                      <span className="text-[11px] font-bold text-accent/40 uppercase tracking-[0.4em]">{project.id}</span>
+                      <h4 className="text-xl font-headline italic text-accent/80">{project.project}</h4>
+                      <Badge variant="outline" className={cn("rounded-none uppercase tracking-widest text-[9px] font-bold px-2 py-0.5", getStatusColor(project.status))}>
+                        {project.status}
+                      </Badge>
+                      {project.financialReportStatus === 'Verified' && (
+                        <Lock className="h-3.5 w-3.5 text-green-600 opacity-60" title="Audit Verified" />
+                      )}
                     </div>
-                    <div className="flex items-center gap-8 text-[11px] uppercase tracking-widest font-bold text-muted-foreground/60">
-                      <div className="space-y-1">
-                        <span className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5 opacity-40" /> Registered</span>
-                        <span className="text-accent/60 font-medium">{project.startDate}</span>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 opacity-40" /> Latest Sync</span>
-                        <span className="text-accent/60 font-medium truncate max-w-[140px] block italic">"{project.lastActivity}"</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-4 pl-8 lg:border-l border-accent/5">
-                  <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/5 hover:bg-accent hover:text-white transition-all p-0 shadow-sm">
-                    <Link href={`/admin/clients/${project.id}`}><ChevronRight className="h-5 w-5" /></Link>
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-10 w-10 p-0 rounded-full hover:bg-accent/5"><MoreVertical className="h-5 w-5 text-accent/20" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-none border-accent/10 w-64 p-2">
-                      <DropdownMenuLabel className="text-[11px] uppercase tracking-widest opacity-40 mb-2 px-3">Tactical Control</DropdownMenuLabel>
-                      <DropdownMenuItem asChild className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer focus:bg-accent focus:text-white mb-1">
-                        <Link href={`/admin/clients/${project.id}`} className="flex gap-3"><FileText className="h-4 w-4" /> Project Terminal</Link>
-                      </DropdownMenuItem>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-end">
+                      <div className="space-y-3 lg:col-span-1">
+                        <div className="flex justify-between text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40">
+                          <span>Implementation Velocity</span>
+                          <span>{project.progress}%</span>
+                        </div>
+                        <Progress value={project.progress} className="h-1 bg-secondary rounded-none" />
+                      </div>
                       
-                      {!project.isActivated && (
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-accent/40 flex items-center gap-2">
+                          <PencilRuler className="h-3 w-3" /> Creative Lead
+                        </span>
+                        <span className="text-[12px] uppercase tracking-widest font-bold text-accent/80">
+                          {assignedDesigner ? assignedDesigner.name : "Unassigned"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-8 text-[11px] uppercase tracking-widest font-bold text-muted-foreground/60">
+                        <div className="space-y-1">
+                          <span className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5 opacity-40" /> Registered</span>
+                          <span className="text-accent/60 font-medium">{project.startDate}</span>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 opacity-40" /> Latest Sync</span>
+                          <span className="text-accent/60 font-medium truncate max-w-[140px] block italic">"{project.lastActivity}"</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 pl-8 lg:border-l border-accent/5">
+                    <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/5 hover:bg-accent hover:text-white transition-all p-0 shadow-sm">
+                      <Link href={`/admin/clients/${project.id}`}><ChevronRight className="h-5 w-5" /></Link>
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-10 w-10 p-0 rounded-full hover:bg-accent/5"><MoreVertical className="h-5 w-5 text-accent/20" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="rounded-none border-accent/10 w-64 p-2">
+                        <DropdownMenuLabel className="text-[11px] uppercase tracking-widest opacity-40 mb-2 px-3">Tactical Control</DropdownMenuLabel>
                         <DropdownMenuItem asChild className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer focus:bg-accent focus:text-white mb-1">
-                          <Link href="/admin/operations/planning" className="flex gap-3"><Settings2 className="h-4 w-4" /> Comprehensive Edit</Link>
+                          <Link href={`/admin/clients/${project.id}`} className="flex gap-3"><FileText className="h-4 w-4" /> Project Terminal</Link>
                         </DropdownMenuItem>
-                      )}
+                        
+                        {!project.isActivated && (
+                          <DropdownMenuItem asChild className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer focus:bg-accent focus:text-white mb-1">
+                            <Link href="/admin/operations/planning" className="flex gap-3"><Settings2 className="h-4 w-4" /> Comprehensive Edit</Link>
+                          </DropdownMenuItem>
+                        )}
 
-                      {project.isActivated && (
-                        <DropdownMenuItem onClick={() => handleToggleArchive(project.id, !!project.isArchived)} className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer flex gap-3 focus:bg-accent focus:text-white mb-1">
-                          {project.isArchived ? <><RefreshCcw className="h-4 w-4" /> Restore Registry</> : <><Archive className="h-4 w-4" /> Move to Archive</>}
+                        {project.isActivated && (
+                          <DropdownMenuItem onClick={() => handleToggleArchive(project.id, !!project.isArchived)} className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer flex gap-3 focus:bg-accent focus:text-white mb-1">
+                            {project.isArchived ? <><RefreshCcw className="h-4 w-4" /> Restore Registry</> : <><Archive className="h-4 w-4" /> Move to Archive</>}
+                          </DropdownMenuItem>
+                        )}
+
+                        <DropdownMenuSeparator className="my-2 bg-accent/5" />
+                        <DropdownMenuItem onClick={() => setDeleteId(project.id)} className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer text-destructive focus:bg-destructive focus:text-white flex gap-3">
+                          <Trash2 className="h-4 w-4" /> Purge Dossier
                         </DropdownMenuItem>
-                      )}
-
-                      <DropdownMenuSeparator className="my-2 bg-accent/5" />
-                      <DropdownMenuItem onClick={() => setDeleteId(project.id)} className="text-[12px] uppercase tracking-widest font-bold py-3 px-3 cursor-pointer text-destructive focus:bg-destructive focus:text-white flex gap-3">
-                        <Trash2 className="h-4 w-4" /> Purge Dossier
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Card>
     </motion.div>
