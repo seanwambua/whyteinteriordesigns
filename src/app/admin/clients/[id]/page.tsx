@@ -51,6 +51,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { parse, differenceInDays, isValid, format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 export default function ProjectMasterTerminal({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -285,7 +287,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-4 bg-white p-6 border border-accent/5 shadow-2xl">
-            <div className="space-y-1 pr-8 border-r border-accent/10"><Label className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label><Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)} disabled={isReadOnly}><SelectTrigger className="rounded-none border-none h-8 p-0 text-[13px] font-bold uppercase tracking-widest text-accent focus:ring-0 w-44"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="Planning">Planning</SelectItem><SelectItem value="Execution">Execution</SelectItem><SelectItem value="Completion">Completion</SelectItem></SelectContent></Select></div>
+            <div className="space-y-1 pr-8 border-r border-accent/10"><Label className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Phase Lifecycle</Label><Select value={project.status} onValueChange={(v: any) => handleUpdateStatus(v)} disabled={isReadOnly}><SelectTrigger className="rounded-none border-none h-8 p-0 text-[13px] font-bold uppercase tracking-widest text-accent focus:ring-0 w-44"><SelectValue /></SelectTrigger><SelectContent className="rounded-none"><SelectItem value="Planning">Planning</SelectItem><SelectItem value="Execution">Execution</SelectItem><SelectItem value="Completion">Completion</SelectItem></Select></div>
             <div className="px-8 border-r border-accent/10"><span className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40 block mb-1">Commission Tier</span><Badge className="rounded-none uppercase tracking-widest text-[12px] bg-accent text-white py-1">{project.tier}</Badge></div>
           </div>
         </div>
@@ -393,7 +395,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               </div>
               <div className="space-y-2"><Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Log Content</Label><Textarea value={newReport.content} onChange={(e) => setNewReport({...newReport, content: e.target.value})} placeholder="Administrative site notes..." className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic leading-relaxed focus:ring-accent bg-secondary/10" /></div>
             </div>
-            <DialogFooter><Button onClick={handleAddReport} disabled={!newReport.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all">Transmit to Registry</Button></DialogFooter>
+            <DialogFooter><Button onClick={handleAddReport} disabled={!newReport.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[10px] font-bold shadow-2xl transition-all">Transmit to Registry</Button></DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
