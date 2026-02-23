@@ -22,7 +22,8 @@ import {
   Banknote,
   Activity,
   ClipboardList,
-  Eye
+  Eye,
+  Signature
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -88,7 +89,7 @@ export default function StewardDashboardPage() {
 
   const stats = [
     { label: "Activation Requests", value: projects.activation.length.toString(), icon: Banknote, sub: "Forensic Queue" },
-    { label: "Active Commissions", value: projects.live.length.toString(), icon: Activity, sub: "Ongoing Oversight" },
+    { label: "Active Portfolio", value: projects.live.length.toString(), icon: Activity, sub: "Ongoing Oversight" },
     { label: "Final Reconciliations", value: projects.audit.length.toString(), icon: Scale, sub: "Closing Phase" },
   ];
 
@@ -97,32 +98,32 @@ export default function StewardDashboardPage() {
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="bg-accent/[0.02] border-b border-accent/10">
-            <th className="p-8 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Dossier ID</th>
-            <th className="p-8 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Project Context</th>
-            <th className="p-8 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Capital Plan</th>
-            <th className="p-8 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Lifecycle</th>
-            <th className="p-8 text-right text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Protocol</th>
+            <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Dossier ID</th>
+            <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Project Context</th>
+            <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Capital Plan</th>
+            <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Lifecycle</th>
+            <th className="p-6 text-right text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Protocol</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-accent/5">
           {data.map((p) => (
             <tr key={p.id} className="group hover:bg-accent/[0.01] transition-colors">
-              <td className="p-8">
+              <td className="p-6">
                 <span className="text-[13px] font-bold text-accent/60 uppercase tracking-widest">{p.id}</span>
               </td>
-              <td className="p-8">
+              <td className="p-6">
                 <div className="space-y-1">
                   <p className="text-xl font-headline italic text-accent">{p.project}</p>
                   <p className="text-[11px] uppercase font-bold text-muted-foreground/60">{p.name}</p>
                 </div>
               </td>
-              <td className="p-8">
+              <td className="p-6">
                 <div className="space-y-1">
                   <p className="text-[14px] font-bold text-accent">KES {p.totalBudget.toLocaleString()}</p>
                   <p className="text-[10px] text-accent/40 uppercase font-bold tracking-widest">Tier: {p.tier}</p>
                 </div>
               </td>
-              <td className="p-8">
+              <td className="p-6">
                 <Badge variant="outline" className={cn(
                   "rounded-none uppercase tracking-widest text-[9px] font-bold px-4 py-1.5 border-accent/10",
                   p.status === 'Planning' ? "bg-orange-50 text-orange-600 border-orange-200" :
@@ -132,8 +133,8 @@ export default function StewardDashboardPage() {
                   {p.status}
                 </Badge>
               </td>
-              <td className="p-8 text-right">
-                <Button asChild variant="ghost" size="sm" className="rounded-none border border-accent/5 hover:bg-accent hover:text-white transition-all uppercase tracking-widest text-[10px] font-bold gap-3 h-12 px-6">
+              <td className="p-6 text-right">
+                <Button asChild variant="ghost" size="sm" className="rounded-none border border-accent/5 hover:bg-accent hover:text-white transition-all uppercase tracking-widest text-[10px] font-bold gap-3 h-10 px-6">
                   <Link href={`/steward/projects/${p.id}`}>
                     {actionLabel} <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -143,7 +144,7 @@ export default function StewardDashboardPage() {
           ))}
           {data.length === 0 && (
             <tr>
-              <td colSpan={5} className="p-32 text-center text-accent/30 italic text-[13px] uppercase tracking-[0.4em] font-light">
+              <td colSpan={5} className="p-24 text-center text-accent/30 italic text-[13px] uppercase tracking-[0.4em] font-light">
                 {emptyMessage}
               </td>
             </tr>
@@ -154,21 +155,21 @@ export default function StewardDashboardPage() {
   );
 
   return (
-    <div className="space-y-16 max-w-7xl mx-auto pb-24 font-body">
+    <div className="space-y-12 max-w-7xl mx-auto pb-24 font-body">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div className="space-y-4">
+        <div className="space-y-2">
           <div className="flex items-center gap-4">
             <div className="h-px w-12 bg-accent" />
-            <span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Audit Terminal</span>
+            <span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Stewardship Terminal</span>
           </div>
-          <h1 className="text-6xl font-headline italic">Financial <span className="not-italic">Stewardship.</span></h1>
+          <h1 className="text-5xl font-headline italic">Lead <span className="not-italic">Oversight.</span></h1>
         </div>
         
-        <div className="relative w-96">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-accent/30" />
+        <div className="relative w-80">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-accent/30" />
           <input 
-            placeholder="Search Master Registry..." 
-            className="w-full pl-14 pr-6 rounded-none border border-accent/10 h-16 text-[13px] uppercase tracking-widest bg-white focus:outline-none focus:border-accent/40 shadow-xl transition-all"
+            placeholder="Search Registry..." 
+            className="w-full pl-12 pr-4 rounded-none border border-accent/10 h-14 text-[12px] uppercase tracking-widest bg-white focus:outline-none focus:border-accent/40 shadow-xl transition-all"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -180,13 +181,13 @@ export default function StewardDashboardPage() {
           <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
             <Card className="rounded-none border-accent/5 bg-white shadow-xl overflow-hidden group">
               <div className="h-1 w-full bg-accent/5" />
-              <CardContent className="p-10 space-y-6">
+              <CardContent className="p-8 space-y-4">
                 <div className="flex items-center justify-between">
-                  <stat.icon className="h-6 w-6 text-accent opacity-20 group-hover:opacity-100 transition-opacity" />
+                  <stat.icon className="h-5 w-5 text-accent opacity-20 group-hover:opacity-100 transition-opacity" />
                   <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">{stat.label}</span>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-5xl font-headline italic text-accent leading-none">{stat.value}</p>
+                  <p className="text-4xl font-headline italic text-accent leading-none">{stat.value}</p>
                   <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold opacity-60">{stat.sub}</p>
                 </div>
               </CardContent>
@@ -195,16 +196,16 @@ export default function StewardDashboardPage() {
         ))}
       </div>
 
-      <Tabs defaultValue="activation" className="space-y-12">
-        <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-16 overflow-x-auto custom-scrollbar">
-          <TabsTrigger value="activation" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-6 px-0 flex gap-3">
-            <Banknote className="h-4.5 w-4.5" /> Activations ({projects.activation.length})
+      <Tabs defaultValue="activation" className="space-y-10">
+        <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto custom-scrollbar">
+          <TabsTrigger value="activation" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3">
+            <Banknote className="h-4 w-4" /> Activations ({projects.activation.length})
           </TabsTrigger>
-          <TabsTrigger value="live" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-6 px-0 flex gap-3">
-            <Activity className="h-4.5 w-4.5" /> Active Portfolio ({projects.live.length})
+          <TabsTrigger value="live" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3">
+            <Activity className="h-4 w-4" /> Active Portfolio ({projects.live.length})
           </TabsTrigger>
-          <TabsTrigger value="audit" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-6 px-0 flex gap-3">
-            <Scale className="h-4.5 w-4.5" /> Reconciliations ({projects.audit.length})
+          <TabsTrigger value="audit" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3">
+            <Scale className="h-4 w-4" /> Reconciliations ({projects.audit.length})
           </TabsTrigger>
         </TabsList>
 
@@ -233,8 +234,8 @@ export default function StewardDashboardPage() {
         </TabsContent>
       </Tabs>
 
-      <div className="p-16 border border-dashed border-accent/20 text-center bg-accent/[0.01]">
-        <p className="text-[12px] uppercase tracking-[0.5em] text-accent/30 font-bold italic leading-relaxed max-w-2xl mx-auto">
+      <div className="p-12 border border-dashed border-accent/20 text-center bg-accent/[0.01]">
+        <p className="text-[11px] uppercase tracking-[0.5em] text-accent/30 font-bold italic leading-relaxed max-w-xl mx-auto">
           "Professional Stewardship — Continuous forensic oversight throughout the architectural commission lifecycle."
         </p>
       </div>
