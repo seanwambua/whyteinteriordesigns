@@ -26,7 +26,8 @@ import {
   Zap,
   Handshake,
   User,
-  PencilRuler
+  PencilRuler,
+  AlertCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -136,7 +137,7 @@ export default function ProjectClosingPage() {
               const isVerified = project.financialReportStatus === 'Verified';
               
               const isHandoverComplete = project.handoverStatus === 'Passed';
-              const hasStewardSync = !!project.auditDetails;
+              const hasStewardSync = !!project.auditDetails || !!project.termination?.audit;
               const assignedDesigner = designers.find(d => d.id === project.assignedDesignerId);
               
               const isBlocked = !allInstallmentsPaid || hasPendingInquiries || !hasStewardSync || !isHandoverComplete;
@@ -144,132 +145,132 @@ export default function ProjectClosingPage() {
 
               return (
                 <motion.div key={project.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
-                  <Card className="rounded-none border-accent/5 shadow-xl bg-white group overflow-hidden">
-                    <div className="flex flex-col md:flex-row items-stretch">
-                      <div className={cn("w-2 shrink-0", isVerified ? 'bg-green-600' : isBlocked ? 'bg-orange-400' : 'bg-accent/40')} />
-                      <CardContent className="p-10 flex-1 flex flex-col md:flex-row items-center justify-between gap-10">
-                        <div className="space-y-6 flex-1">
-                          <div className="flex flex-wrap items-center gap-4">
-                            <span className="text-[12px] font-bold text-accent/40 uppercase tracking-widest">{project.id}</span>
-                            {isLegacy && <Badge className="bg-slate-100 text-slate-600 rounded-none text-[9px] border-slate-200">Legacy Sync</Badge>}
-                            <Badge variant="outline" className="rounded-none text-[11px] font-bold uppercase tracking-widest px-3 py-1 border-accent/20 text-accent">
-                              Phase: {project.status}
-                            </Badge>
-                            {isVerified ? (
-                              <div className="flex items-center gap-2 text-green-600">
-                                <Lock className="h-3.5 w-3.5" />
-                                <span className="text-[11px] font-bold uppercase tracking-widest">Dossier Locked</span>
-                              </div>
-                            ) : isBlocked && (
-                              <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-1 border border-orange-100">
-                                <AlertTriangle className="h-3 w-3" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Protocol Blocked</span>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="space-y-1">
-                            <h3 className="text-3xl font-headline italic">{project.project}</h3>
-                            <div className="flex flex-wrap items-center gap-6">
-                              <p className="text-[12px] uppercase tracking-widest font-bold text-muted-foreground opacity-60">Valued Client: {project.name}</p>
-                              <p className="text-[11px] text-accent/60 uppercase tracking-widest font-bold flex items-center gap-2">
-                                <PencilRuler className="h-3 w-3" /> Lead: {assignedDesigner ? assignedDesigner.name : "Unassigned"}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pt-6 border-t border-accent/5">
-                            <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Handover</p>
-                              <div className="flex items-center gap-3">
-                                <div className={cn("h-2 w-2 rounded-full", isHandoverComplete ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
-                                <span className={cn("text-[11px] font-bold uppercase tracking-widest", isHandoverComplete ? "text-accent" : "text-orange-600")}>
-                                  {isHandoverComplete ? "Passed" : "Awaiting Auth"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Ledger Sync</p>
-                              <div className="flex items-center gap-3">
-                                <div className={cn("h-2 w-2 rounded-full", allInstallmentsPaid ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
-                                <span className={cn("text-[11px] font-bold uppercase tracking-widest", allInstallmentsPaid ? "text-accent" : "text-orange-600")}>
-                                  {allInstallmentsPaid ? "Liquidated" : "Pending"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Steward</p>
-                              <div className="flex items-center gap-3">
-                                <div className={cn("h-2 w-2 rounded-full", hasStewardSync ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
-                                <span className={cn("text-[11px] font-bold uppercase tracking-widest", hasStewardSync ? "text-accent" : "text-orange-600")}>
-                                  {hasStewardSync ? "Synced" : "Pending"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Inquiries</p>
-                              <div className="flex items-center gap-3">
-                                <div className={cn("h-2 w-2 rounded-full", !hasPendingInquiries ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
-                                <span className={cn("text-[11px] font-bold uppercase tracking-widest", !hasPendingInquiries ? "text-accent" : "text-orange-600")}>
-                                  {!hasPendingInquiries ? "None" : "Resolved"}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4">
+                  <Card className={cn(
+                    "rounded-none border-accent/5 shadow-xl bg-white group overflow-hidden",
+                    isVerified ? "border-l-4 border-l-green-600" : isBlocked ? "border-l-4 border-l-orange-400" : "border-l-4 border-l-accent/40"
+                  )}>
+                    <CardContent className="p-10 flex flex-col md:flex-row items-center justify-between gap-10">
+                      <div className="space-y-6 flex-1">
+                        <div className="flex flex-wrap items-center gap-4">
+                          <span className="text-[12px] font-bold text-accent/40 uppercase tracking-widest">{project.id}</span>
+                          {isLegacy && <Badge className="bg-slate-100 text-slate-600 rounded-none text-[9px] border-slate-200">Legacy Sync</Badge>}
+                          <Badge variant="outline" className="rounded-none text-[11px] font-bold uppercase tracking-widest px-3 py-1 border-accent/20 text-accent">
+                            Phase: {project.status}
+                          </Badge>
                           {isVerified ? (
-                            <>
-                              <Button asChild variant="outline" className="h-14 px-8 rounded-none border-accent/10 hover:bg-accent/5 flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-sm">
-                                <Link href={`/transparency/${project.id}`} target="_blank">
-                                  <Eye className="h-4.5 w-4.5" /> View Breakdown
-                                </Link>
-                              </Button>
-                              <Button 
-                                onClick={() => handleArchiveProject(project.id)} 
-                                disabled={archivingId === project.id} 
-                                variant="outline" 
-                                className="h-14 w-14 rounded-full hover:bg-black hover:text-white transition-all p-0 shadow-sm border-black/10 group/archive"
-                                title="Archive Dossier"
-                              >
-                                {archivingId === project.id ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6 group-hover/archive:scale-110 transition-transform" />}
-                              </Button>
-                            </>
-                          ) : (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="inline-block">
-                                    <Button 
-                                      onClick={() => handleVerifyReport(project.id)} 
-                                      disabled={isBlocked}
-                                      className={cn(
-                                        "h-16 px-10 rounded-none flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-xl",
-                                        !isBlocked ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
-                                      )}
-                                    >
-                                      <FileCheck className="h-5 w-5" /> Authorize Audit
-                                    </Button>
-                                  </div>
-                                </TooltipTrigger>
-                                {isBlocked && (
-                                  <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl space-y-2">
-                                    <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Protocol Blocked:</p>
-                                    <ul className="text-[10px] text-muted-foreground font-light italic list-disc pl-4">
-                                      {!isHandoverComplete && <li>Handover Authorization Required</li>}
-                                      {!allInstallmentsPaid && <li>Ledger Liquidation Required</li>}
-                                      {hasPendingInquiries && <li>Resolution of {projectInquiries.length} Inquiry(s) Required</li>}
-                                      {!hasStewardSync && <li>Steward Audit Synchronization Required</li>}
-                                    </ul>
-                                  </TooltipContent>
-                                )}
-                              </Tooltip>
-                            </TooltipProvider>
+                            <div className="flex items-center gap-2 text-green-600">
+                              <Lock className="h-3.5 w-3.5" />
+                              <span className="text-[11px] font-bold uppercase tracking-widest">Dossier Locked</span>
+                            </div>
+                          ) : isBlocked && (
+                            <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-1 border border-orange-100">
+                              <AlertTriangle className="h-3 w-3" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest">Protocol Blocked</span>
+                            </div>
                           )}
                         </div>
-                      </CardContent>
-                    </div>
+                        
+                        <div className="space-y-1">
+                          <h3 className="text-3xl font-headline italic">{project.project}</h3>
+                          <div className="flex flex-wrap items-center gap-6">
+                            <p className="text-[12px] uppercase tracking-widest font-bold text-muted-foreground opacity-60">Valued Client: {project.name}</p>
+                            <p className="text-[11px] text-accent/60 uppercase tracking-widest font-bold flex items-center gap-2">
+                              <PencilRuler className="h-3 w-3" /> Lead: {assignedDesigner ? assignedDesigner.name : "Unassigned"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pt-6 border-t border-accent/5">
+                          <div className="space-y-2">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Handover</p>
+                            <div className="flex items-center gap-3">
+                              <div className={cn("h-2 w-2 rounded-full", isHandoverComplete ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
+                              <span className={cn("text-[11px] font-bold uppercase tracking-widest", isHandoverComplete ? "text-accent" : "text-orange-600")}>
+                                {isHandoverComplete ? "Passed" : "Awaiting Auth"}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Ledger Sync</p>
+                            <div className="flex items-center gap-3">
+                              <div className={cn("h-2 w-2 rounded-full", allInstallmentsPaid ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
+                              <span className={cn("text-[11px] font-bold uppercase tracking-widest", allInstallmentsPaid ? "text-accent" : "text-orange-600")}>
+                                {allInstallmentsPaid ? "Liquidated" : "Pending"}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Steward</p>
+                            <div className="flex items-center gap-3">
+                              <div className={cn("h-2 w-2 rounded-full", hasStewardSync ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
+                              <span className={cn("text-[11px] font-bold uppercase tracking-widest", hasStewardSync ? "text-accent" : "text-orange-600")}>
+                                {hasStewardSync ? "Synced" : "Pending"}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Inquiries</p>
+                            <div className="flex items-center gap-3">
+                              <div className={cn("h-2 w-2 rounded-full", !hasPendingInquiries ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
+                              <span className={cn("text-[11px] font-bold uppercase tracking-widest", !hasPendingInquiries ? "text-accent" : "text-orange-600")}>
+                                {!hasPendingInquiries ? "None" : "Resolved"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        {isVerified ? (
+                          <>
+                            <Button asChild variant="outline" className="h-14 px-8 rounded-none border-accent/10 hover:bg-accent/5 flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-sm">
+                              <Link href={`/transparency/${project.id}`} target="_blank">
+                                <Eye className="h-4.5 w-4.5" /> View Breakdown
+                              </Link>
+                            </Button>
+                            <Button 
+                              onClick={() => handleArchiveProject(project.id)} 
+                              disabled={archivingId === project.id} 
+                              variant="outline" 
+                              className="h-14 w-14 rounded-full hover:bg-black hover:text-white transition-all p-0 shadow-sm border-black/10 group/archive"
+                              title="Archive Dossier"
+                            >
+                              {archivingId === project.id ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6 group-hover/archive:scale-110 transition-transform" />}
+                            </Button>
+                          </>
+                        ) : (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="inline-block">
+                                  <Button 
+                                    onClick={() => handleVerifyReport(project.id)} 
+                                    disabled={isBlocked}
+                                    className={cn(
+                                      "h-16 px-10 rounded-none flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-xl",
+                                      !isBlocked ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
+                                    )}
+                                  >
+                                    <FileCheck className="h-5 w-5" /> Authorize Audit
+                                  </Button>
+                                </div>
+                              </TooltipTrigger>
+                              {isBlocked && (
+                                <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl space-y-2">
+                                  <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Protocol Blocked:</p>
+                                  <ul className="text-[10px] text-muted-foreground font-light italic list-disc pl-4">
+                                    {!isHandoverComplete && <li>Handover Authorization Required (Awaiting Auth)</li>}
+                                    {!allInstallmentsPaid && <li>Ledger Liquidation Required (Pending Payments)</li>}
+                                    {hasPendingInquiries && <li>Resolution of {projectInquiries.length} Inquiry(s) Required</li>}
+                                    {!hasStewardSync && <li>Steward Audit Synchronization Required</li>}
+                                  </ul>
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                    </CardContent>
                   </Card>
                 </motion.div>
               );
