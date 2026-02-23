@@ -26,7 +26,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Settings2,
-  Check
+  Check,
+  PencilRuler
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
