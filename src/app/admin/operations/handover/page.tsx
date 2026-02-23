@@ -51,17 +51,17 @@ export default function HandoverProtocolPage() {
     setIsMounted(true);
   }, []);
 
-  // HANDOVER: Projects in Execution where designer has initialized handover (Pending status)
+  // HANDOVER: Projects awaiting admin review (Pending) or those flagged for fixes (Failed)
   const handoverProjects = useMemo(() => {
     return clientProjects.filter(p => 
       !p.isArchived && 
       p.isActivated && 
-      (p.status === 'Completion' || p.handoverStatus === 'Pending')
+      (p.handoverStatus === 'Pending' || p.handoverStatus === 'Failed')
     );
   }, [clientProjects]);
 
   const totalAwaiting = handoverProjects.filter(p => p.handoverStatus === 'Pending').length;
-  const totalReady = handoverProjects.filter(p => p.status === 'Completion').length;
+  const totalConcluded = clientProjects.filter(p => p.status === 'Completion' || p.isArchived).length;
 
   if (!isMounted) return null;
 
@@ -81,7 +81,7 @@ export default function HandoverProtocolPage() {
       updateClientProject(projectId, { 
         status: 'Completion', 
         handoverStatus: 'Passed',
-        isArchived: true, // Auto-archive on designer side upon pass
+        // isArchived: true, // REMOVED: isArchived should only happen after reconciliation
         lastActivity: "Handover Protocol Authorized — Site Keys & Quality Sign-off Verified",
         progress: 100
       });
@@ -139,7 +139,7 @@ export default function HandoverProtocolPage() {
           </div>
           <div className="bg-accent p-6 flex flex-col items-end gap-1 shadow-xl">
             <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/40">Total Concluded</span>
-            <span className="text-2xl font-headline italic text-white">{totalReady} Dossiers</span>
+            <span className="text-2xl font-headline italic text-white">{totalConcluded} Dossiers</span>
           </div>
         </div>
       </motion.div>

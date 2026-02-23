@@ -34,8 +34,18 @@ export default function SiteDossierRegistryPage() {
   }, []);
 
   const dossiers = useMemo(() => {
-    const active = clientProjects.filter(p => !p.isArchived && p.isActivated);
-    const archived = clientProjects.filter(p => p.isArchived);
+    // Active for Designer: Activated, not archived, and in Execution phase
+    const active = clientProjects.filter(p => 
+      !p.isArchived && 
+      p.isActivated && 
+      p.status === 'Execution'
+    );
+    // Archived for Designer: Formally archived OR in Completion phase (Handover Passed)
+    const archived = clientProjects.filter(p => 
+      p.isArchived || 
+      p.status === 'Completion' || 
+      p.status === 'Terminated'
+    );
     return { active, archived };
   }, [clientProjects]);
 
@@ -74,7 +84,7 @@ export default function SiteDossierRegistryPage() {
               </div>
               <div className="flex flex-wrap items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-widest font-bold">
                 <span className="flex items-center gap-2">Client: {p.name}</span>
-                <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 opacity-40" /> {isArchived ? 'Concluded' : 'Target'}: {p.endDate}</span>
+                <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 opacity-40" /> {isArchived ? 'Handover' : 'Target'}: {p.endDate}</span>
                 {!isArchived && (
                   <div className="flex items-center gap-4 w-40">
                     <span className="text-[10px] text-accent/60">{p.progress}%</span>

@@ -36,12 +36,12 @@ export default function ProjectImplementationPage() {
     setIsMounted(true);
   }, []);
 
-  // IMPLEMENTATION: Only activated, non-archived projects in implementation phases
+  // IMPLEMENTATION: Strictly projects currently in Execution phase
   const liveProjects = useMemo(() => {
     return clientProjects.filter(p => 
       !p.isArchived && 
       p.isActivated && 
-      (p.status === 'Execution' || p.status === 'Planning' || p.status === 'Completion')
+      p.status === 'Execution'
     );
   }, [clientProjects]);
 

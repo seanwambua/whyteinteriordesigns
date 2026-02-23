@@ -63,9 +63,9 @@ export default function DesignerDashboardPage() {
   if (!isMounted) return null;
 
   const stats = [
-    { label: "Active Site Protocols", value: activeDossiers.length.toString(), icon: Briefcase, sub: "Synchronized Dossiers" },
+    { label: "Active Site Protocols", value: activeDossiers.length.toString(), icon: Briefcase, sub: "In Execution" },
     { label: "Pending Briefs", value: pendingBriefs.length.toString(), icon: FilePlus, sub: "Awaiting Admin Auth" },
-    { label: "Deployment Velocity", value: "92%", icon: Activity, sub: "Across Commissions" },
+    { label: "Deployment Velocity", value: "92%", icon: Activity, sub: "Registry Average" },
   ];
 
   return (
