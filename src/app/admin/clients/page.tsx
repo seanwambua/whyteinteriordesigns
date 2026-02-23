@@ -24,7 +24,8 @@ import {
   FolderOpen,
   PencilRuler,
   Eye,
-  FileClock
+  FileClock,
+  Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,10 +50,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type GroupedClient = {
   name: string;
@@ -60,12 +62,16 @@ type GroupedClient = {
   projects: ClientProject[];
 };
 
-export default function ClientDirectoryPage() {
+function ClientDirectoryContent() {
   const { clientProjects, designers, removeClientProject, updateClientProject } = useWhyteStore();
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const defaultTab = searchParams.get('tab') || "active";
 
   useEffect(() => {
     setIsMounted(true);
@@ -116,12 +122,32 @@ export default function ClientDirectoryPage() {
     }
   };
 
-  const handleToggleArchive = (id: string, currentStatus: boolean) => {
-    updateClientProject(id, { isArchived: !currentStatus });
-    toast({
-      title: !currentStatus ? "Commission Archived" : "Commission Restored",
-      description: `Project ${id} has been transitioned.`,
+  const handleReviewArchive = (id: string) => {
+    updateClientProject(id, { 
+      isArchived: false,
+      status: 'Completion',
+      handoverStatus: 'Pending',
+      financialReportStatus: 'Pending',
+      lastActivity: "Historical Dossier Re-opened for Mandatory Review Protocol."
     });
+    toast({ 
+      title: "Archive Protocol Initialized", 
+      description: `Dossier ${id} has been transmitted to the Handover pipeline.`,
+    });
+    router.push("/admin/operations/handover");
+  };
+
+  const handleToggleArchive = (id: string, currentStatus: boolean) => {
+    if (currentStatus) {
+      // RESTORING FROM ARCHIVE -> SEND BACK TO HANDOVER
+      handleReviewArchive(id);
+    } else {
+      updateClientProject(id, { isArchived: true });
+      toast({
+        title: "Commission Archived",
+        description: `Project ${id} has been transitioned to historical records.`,
+      });
+    }
   };
 
   const handleDelete = () => {
@@ -134,7 +160,6 @@ export default function ClientDirectoryPage() {
   const ClientDossierCard = ({ client, isArchivedView }: { client: GroupedClient, isArchivedView?: boolean }) => (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <Card className={cn("rounded-none border-accent/5 shadow-xl bg-white overflow-hidden", isArchivedView && "opacity-90")}>
-        {/* Client Identity Header */}
         <div className={cn("p-8 border-b border-accent/5 flex flex-col lg:flex-row lg:items-center justify-between gap-6", isArchivedView ? "bg-slate-50" : "bg-accent/5")}>
           <div className="flex items-center gap-6">
             <div className="h-14 w-14 rounded-full bg-white flex items-center justify-center text-accent font-headline italic text-xl border border-accent/10 shadow-sm">
@@ -154,7 +179,6 @@ export default function ClientDirectoryPage() {
           </Badge>
         </div>
 
-        {/* Individual Projects Sub-Registry */}
         <div className="divide-y divide-accent/5">
           {client.projects.map((project) => {
             const assignedDesigner = designers.find(d => d.id === project.assignedDesignerId);
@@ -209,8 +233,12 @@ export default function ClientDirectoryPage() {
 
                   <div className="flex items-center gap-4 pl-8 lg:border-l border-accent/5">
                     {isArchivedView ? (
-                      <Button asChild variant="outline" className="rounded-none h-12 px-8 border-slate-200 text-[10px] font-bold uppercase tracking-widest flex gap-3 hover:bg-slate-900 hover:text-white transition-all">
-                        <Link href={`/admin/clients/${project.id}`}><FileClock className="h-4 w-4" /> Review Dossier</Link>
+                      <Button 
+                        onClick={() => handleReviewArchive(project.id)}
+                        variant="outline" 
+                        className="rounded-none h-12 px-8 border-slate-200 text-[10px] font-bold uppercase tracking-widest flex gap-3 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
+                      >
+                        <FileClock className="h-4 w-4" /> Review Dossier
                       </Button>
                     ) : (
                       <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/5 hover:bg-accent hover:text-white transition-all p-0 shadow-sm">
@@ -288,11 +316,11 @@ export default function ClientDirectoryPage() {
         <Info className="h-5 w-5 text-accent" />
         <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-accent mb-1">Dossier Consolidation Protocol</AlertTitle>
         <AlertDescription className="text-base font-light italic text-muted-foreground leading-relaxed">
-          Concurrent projects are synchronized under a unified **Client Dossier**. This ensures total transparency across the architectural relationship and historical archival.
+          Concurrent projects are synchronized under a unified **Client Dossier**. Reviewing historical items from the Master Archives will transmit them back to the Handover pipeline for re-verification.
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="active" className="space-y-10">
+      <Tabs defaultValue={defaultTab} className="space-y-10">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto custom-scrollbar">
           <TabsTrigger value="active" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0">Active Portfolios ({activeCommissions.length})</TabsTrigger>
           <TabsTrigger value="pending" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0">Pending Briefings ({pendingProjects.length})</TabsTrigger>
@@ -329,5 +357,13 @@ export default function ClientDirectoryPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function ClientDirectoryPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>}>
+      <ClientDirectoryContent />
+    </Suspense>
   );
 }

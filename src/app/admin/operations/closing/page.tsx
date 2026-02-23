@@ -23,7 +23,8 @@ import {
   MessageSquare,
   History,
   RefreshCcw,
-  Zap
+  Zap,
+  Handshake
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -120,7 +121,7 @@ export default function ProjectClosingPage() {
         <Info className="h-5 w-5 text-accent" />
         <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Audit Authorization Protocol</AlertTitle>
         <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
-          Reconciliation protocols require **100% site implementation**, **complete ledger liquidation**, and **resolution of all client inquiries**. Audits cannot be authorized while communications are pending or if the assigned steward sync check is incomplete.
+          Reconciliation protocols require **100% site implementation**, **Handover Authorization**, and **complete ledger liquidation**. Audits cannot be authorized while technical protocols are pending review.
         </AlertDescription>
       </Alert>
 
@@ -133,10 +134,10 @@ export default function ProjectClosingPage() {
               const hasPendingInquiries = projectInquiries.length > 0;
               const isVerified = project.financialReportStatus === 'Verified';
               
-              // SYNC CHECK: Has the steward submitted their findings?
+              const isHandoverComplete = project.handoverStatus === 'Passed';
               const hasStewardSync = !!project.auditDetails;
               
-              const isBlocked = !allInstallmentsPaid || hasPendingInquiries || !hasStewardSync;
+              const isBlocked = !allInstallmentsPaid || hasPendingInquiries || !hasStewardSync || !isHandoverComplete;
               const isLegacy = project.id.startsWith('LEG-');
 
               return (
@@ -170,31 +171,40 @@ export default function ProjectClosingPage() {
                             <p className="text-[12px] uppercase tracking-widest font-bold text-muted-foreground opacity-60">Valued Client: {project.name}</p>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-accent/5">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pt-6 border-t border-accent/5">
+                            <div className="space-y-2">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Handover</p>
+                              <div className="flex items-center gap-3">
+                                <div className={cn("h-2 w-2 rounded-full", isHandoverComplete ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
+                                <span className={cn("text-[11px] font-bold uppercase tracking-widest", isHandoverComplete ? "text-accent" : "text-orange-600")}>
+                                  {isHandoverComplete ? "Passed" : "Awaiting Auth"}
+                                </span>
+                              </div>
+                            </div>
                             <div className="space-y-2">
                               <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Ledger Sync</p>
                               <div className="flex items-center gap-3">
                                 <div className={cn("h-2 w-2 rounded-full", allInstallmentsPaid ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
                                 <span className={cn("text-[11px] font-bold uppercase tracking-widest", allInstallmentsPaid ? "text-accent" : "text-orange-600")}>
-                                  {allInstallmentsPaid ? "Liquidated" : "Pending Payment"}
+                                  {allInstallmentsPaid ? "Liquidated" : "Pending"}
                                 </span>
                               </div>
                             </div>
                             <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Communications</p>
-                              <div className="flex items-center gap-3">
-                                <div className={cn("h-2 w-2 rounded-full", !hasPendingInquiries ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
-                                <span className={cn("text-[11px] font-bold uppercase tracking-widest", !hasPendingInquiries ? "text-accent" : "text-orange-600")}>
-                                  {!hasPendingInquiries ? "Resolved" : "Open Inquiries"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Steward Sync</p>
+                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Steward</p>
                               <div className="flex items-center gap-3">
                                 <div className={cn("h-2 w-2 rounded-full", hasStewardSync ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
                                 <span className={cn("text-[11px] font-bold uppercase tracking-widest", hasStewardSync ? "text-accent" : "text-orange-600")}>
-                                  {hasStewardSync ? "Synchronized" : "Awaiting Partner"}
+                                  {hasStewardSync ? "Synced" : "Pending"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Inquiries</p>
+                              <div className="flex items-center gap-3">
+                                <div className={cn("h-2 w-2 rounded-full", !hasPendingInquiries ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
+                                <span className={cn("text-[11px] font-bold uppercase tracking-widest", !hasPendingInquiries ? "text-accent" : "text-orange-600")}>
+                                  {!hasPendingInquiries ? "None" : "Resolved"}
                                 </span>
                               </div>
                             </div>
@@ -206,7 +216,7 @@ export default function ProjectClosingPage() {
                             <>
                               <Button asChild variant="outline" className="h-14 px-8 rounded-none border-accent/10 hover:bg-accent/5 flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-sm">
                                 <Link href={`/transparency/${project.id}`} target="_blank">
-                                  <Eye className="h-4.5 w-4.5" /> View Audited Breakdown
+                                  <Eye className="h-4.5 w-4.5" /> View Breakdown
                                 </Link>
                               </Button>
                               <Button 
@@ -222,7 +232,7 @@ export default function ProjectClosingPage() {
                           ) : (
                             <TooltipProvider>
                               <Tooltip>
-                                <TooltipTrigger asChild>
+                                TooltipTrigger asChild>
                                   <div className="inline-block">
                                     <Button 
                                       onClick={() => handleVerifyReport(project.id)} 
@@ -240,6 +250,7 @@ export default function ProjectClosingPage() {
                                   <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl space-y-2">
                                     <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Protocol Blocked:</p>
                                     <ul className="text-[10px] text-muted-foreground font-light italic list-disc pl-4">
+                                      {!isHandoverComplete && <li>Handover Authorization Required</li>}
                                       {!allInstallmentsPaid && <li>Ledger Liquidation Required</li>}
                                       {hasPendingInquiries && <li>Resolution of {projectInquiries.length} Inquiry(s) Required</li>}
                                       {!hasStewardSync && <li>Steward Audit Synchronization Required</li>}
@@ -278,11 +289,11 @@ export default function ProjectClosingPage() {
             <ul className="space-y-12 relative z-10">
               <li className="flex gap-6">
                 <div className="h-10 w-10 border border-white/20 rounded-full flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="h-5 w-5 text-white/60" />
+                  <Handshake className="h-5 w-5 text-white/60" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[13px] font-bold uppercase tracking-widest">Handover Synchronization</p>
-                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">Site Implementation Complete</p>
+                  <p className="text-[13px] font-bold uppercase tracking-widest">Handover Sync</p>
+                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">Technical Quality Auth</p>
                 </div>
               </li>
               <li className="flex gap-6">
@@ -290,7 +301,7 @@ export default function ProjectClosingPage() {
                   <RefreshCcw className="h-5 w-5 text-white/60" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[13px] font-bold uppercase tracking-widest">Steward Sync Check</p>
+                  <p className="text-[13px] font-bold uppercase tracking-widest">Steward Sync</p>
                   <p className="text-[11px] text-white/40 italic uppercase tracking-widest">External Audit Transmitted</p>
                 </div>
               </li>
@@ -308,7 +319,7 @@ export default function ProjectClosingPage() {
 
           <div className="p-10 border border-dashed border-accent/20 bg-secondary/5 text-center">
             <p className="text-[11px] uppercase tracking-[0.4em] font-bold text-accent/40 italic leading-relaxed">
-              Dossiers are locked upon audit authorization. The assigned Financial Steward must synchronize findings before Admin sign-off.
+              Restoring archived dossiers will reset their lifecycle to "Completion" and force a re-handover review protocol.
             </p>
           </div>
         </div>
