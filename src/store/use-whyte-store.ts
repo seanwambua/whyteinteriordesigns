@@ -117,6 +117,16 @@ export interface Designer {
   joinedDate: string;
 }
 
+export interface Steward {
+  id: string;
+  name: string;
+  contact: string;
+  email: string;
+  status: 'Active' | 'Inactive';
+  authorizedDate: string;
+  totalAudits: number;
+}
+
 export interface ClientProject {
   id: string;
   name: string;
@@ -198,6 +208,7 @@ interface WhyteState {
   projects: Project[];
   clientProjects: ClientProject[];
   designers: Designer[];
+  stewards: Steward[];
   inquiries: Inquiry[];
   feedback: Feedback[];
   collaborators: Collaborator[];
@@ -214,6 +225,10 @@ interface WhyteState {
   addDesigner: (designer: Designer) => void;
   updateDesigner: (id: string, updates: Partial<Designer>) => void;
   removeDesigner: (id: string) => void;
+
+  addSteward: (steward: Steward) => void;
+  updateSteward: (id: string, updates: Partial<Steward>) => void;
+  removeSteward: (id: string) => void;
   
   addInquiry: (inquiry: Inquiry) => void;
   updateInquiryStatus: (id: string, status: Inquiry['status']) => void;
@@ -333,6 +348,18 @@ const initialDesigners: Designer[] = [
   }
 ];
 
+const initialStewards: Steward[] = [
+  {
+    id: 'STW-01',
+    name: 'Imani Financial Services (IFS-KE)',
+    contact: '+254 700 999 888',
+    email: 'compliance@imani.co.ke',
+    status: 'Active',
+    authorizedDate: 'Jan 10, 2024',
+    totalAudits: 12
+  }
+];
+
 const initialCollaborators: Collaborator[] = [
   { id: "C-1", name: "Artisanal Woodworks KE", category: 'Vendor', specialty: "Joinery & Custom Fabrication", contact: "+254 700 000 000", email: "info@artisanalwoodworks.co.ke", rating: 4.8, status: 'active', type: 'Local Specialist' },
   { id: "C-2", name: "Nairobi Marble & Tile", category: 'Vendor', specialty: "Stone Masonry", contact: "+254 711 111 111", email: "sales@nairobitile.com", rating: 4.9, status: 'active', type: 'Materials Partner' },
@@ -345,6 +372,7 @@ export const useWhyteStore = create<WhyteState>()(
       projects: initialProjects,
       clientProjects: initialClientProjects,
       designers: initialDesigners,
+      stewards: initialStewards,
       inquiries: [],
       feedback: [],
       collaborators: initialCollaborators,
@@ -372,6 +400,14 @@ export const useWhyteStore = create<WhyteState>()(
       })),
       removeDesigner: (id) => set((state) => ({
         designers: state.designers.filter(d => d.id !== id)
+      })),
+
+      addSteward: (steward) => set((state) => ({ stewards: [...state.stewards, steward] })),
+      updateSteward: (id, updates) => set((state) => ({
+        stewards: state.stewards.map(s => s.id === id ? { ...s, ...updates } : s)
+      })),
+      removeSteward: (id) => set((state) => ({
+        stewards: state.stewards.filter(s => s.id !== id)
       })),
 
       addInquiry: (inquiry) => set((state) => ({ inquiries: [inquiry, ...state.inquiries] })),
@@ -408,6 +444,7 @@ export const useWhyteStore = create<WhyteState>()(
           projects: [],
           clientProjects: [],
           designers: [],
+          stewards: [],
           inquiries: [],
           feedback: [],
           collaborators: [],
