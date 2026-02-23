@@ -20,7 +20,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle, 
   AlertDialogTrigger 
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/dialog";
 import { 
   ChevronRight, 
   Check, 
@@ -62,7 +62,7 @@ export default function OnboardingPage() {
     fullName: "",
     email: "",
     agreedToTerms: false,
-    agreedToNDA: false,
+    agreedToNonCompete: false,
     depositRef: "",
     depositAmount: "",
     notifications: true
@@ -398,6 +398,7 @@ export default function OnboardingPage() {
                             <p><strong>2. Financial Integrity:</strong> Capital realization occurs strictly via the authorized payment plan synchronized in this portal. Any reorganization requires formal multi-party agreement.</p>
                             <p><strong>3. Data Sovereignty:</strong> All architectural plans, material registries, and site log metadata are protected under the Studio's Digital Sovereignty protocol.</p>
                             <p><strong>4. Quality Sign-off:</strong> Final handover is subject to a forensic audit by our assigned Financial Steward.</p>
+                            <p><strong>5. Non-Compete Mandate:</strong> The client agrees to refrain from engaging studio-authorized trade partners or collaborators for any external commissions during the project lifecycle without express written consent from Senior Partners.</p>
                           </div>
                         </ScrollArea>
                       </div>
@@ -416,13 +417,13 @@ export default function OnboardingPage() {
                         </div>
                         <div className="flex items-center space-x-3">
                           <Checkbox 
-                            id="nda" 
-                            checked={formData.agreedToNDA} 
-                            onCheckedChange={(v) => setFormData({...formData, agreedToNDA: !!v})}
+                            id="non-compete" 
+                            checked={formData.agreedToNonCompete} 
+                            onCheckedChange={(v) => setFormData({...formData, agreedToNonCompete: !!v})}
                             className="rounded-none border-accent/30 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
                           />
-                          <label htmlFor="nda" className="text-[11px] font-bold uppercase tracking-widest text-accent/60 cursor-pointer">
-                            I execute the Non-Disclosure Agreement (NDA)
+                          <label htmlFor="non-compete" className="text-[11px] font-bold uppercase tracking-widest text-accent/60 cursor-pointer">
+                            I authorize the Studio Non-Compete Mandate
                           </label>
                         </div>
                       </div>
@@ -516,7 +517,7 @@ export default function OnboardingPage() {
                     onClick={handleNext}
                     disabled={
                       (step === 1 && !formData.projectRef) || 
-                      (step === 3 && (!formData.agreedToTerms || !formData.agreedToNDA)) ||
+                      (step === 3 && (!formData.agreedToTerms || !formData.agreedToNonCompete)) ||
                       (step === 4 && (!formData.depositRef || !formData.depositAmount || (!isAmountMatching && formData.depositAmount !== "")))
                     }
                     className="bg-accent text-white hover:bg-accent/90 rounded-none h-14 px-12 uppercase tracking-[0.3em] transition-all min-w-[200px] text-[10px] font-bold shadow-xl"
