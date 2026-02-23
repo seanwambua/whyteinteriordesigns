@@ -68,6 +68,7 @@ export interface AuditAllocation {
   category: string;
   amount: number;
   description: string;
+  isVerified?: boolean;
 }
 
 export interface AuditIncoming {
