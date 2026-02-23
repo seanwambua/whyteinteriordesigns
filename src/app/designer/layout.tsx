@@ -1,7 +1,7 @@
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { LayoutDashboard, Briefcase, Camera, ClipboardList, Users, Compass, PencilRuler, LogOut, Home, Activity, FilePlus } from "lucide-react";
+import { LayoutDashboard, Briefcase, Camera, ClipboardList, Users, Compass, PencilRuler, LogOut, Home, Activity, FilePlus, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -31,8 +31,9 @@ export default function DesignerLayout({ children }: { children: React.ReactNode
 
   const navItems = [
     { title: "Workbench", icon: LayoutDashboard, href: "/designer" },
+    { title: "My Assignments", icon: UserCheck, href: "/designer/assigned" },
     { title: "Initialize Brief", icon: FilePlus, href: "/designer/initialize" },
-    { title: "Active Site Dossiers", icon: Briefcase, href: "/designer/projects" },
+    { title: "Studio Registry", icon: Briefcase, href: "/designer/projects" },
     { title: "Site Log Registry", icon: ClipboardList, href: "/designer/logs" },
   ];
 
@@ -118,7 +119,10 @@ export default function DesignerLayout({ children }: { children: React.ReactNode
               <Link 
                 href="/" 
                 className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors group-data-[collapsible=icon]:hidden"
-                onClick={() => localStorage.removeItem("whyte_designer_onboarded")}
+                onClick={() => {
+                  localStorage.removeItem("whyte_designer_onboarded");
+                  localStorage.removeItem("whyte_active_designer_id");
+                }}
               >
                 <LogOut className="h-3.5 w-3.5" /> Exit Portal
               </Link>
