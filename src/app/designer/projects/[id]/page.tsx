@@ -214,7 +214,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-24 font-body">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-        <Link href="/designer" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[11px] font-bold uppercase tracking-[0.3em]">Back to Deployment Hub</span></Link>
+        <Link href="/designer/projects" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[11px] font-bold uppercase tracking-[0.3em]">Back to Deployment Hub</span></Link>
         {isReadOnly && (<div className="p-6 bg-neutral-50 border border-neutral-200 flex items-center gap-4"><Lock className="h-5 w-5 text-muted-foreground" /><div className="space-y-0.5"><p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Commission Locked — Historical Archive</p><p className="text-[12px] text-muted-foreground/70 italic font-light">This dossier has been finalized and is currently in read-only mode.</p></div></div>)}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
           <div className="space-y-2">
@@ -239,7 +239,40 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
 
         <TabsContent value="workflow" className="m-0"><div className="flex gap-8 overflow-x-auto pb-8 custom-scrollbar"><KanbanColumn status="Todo" tasks={(project.tasks || []).filter(t => t.status === 'Todo')} /><KanbanColumn status="In Progress" tasks={(project.tasks || []).filter(t => t.status === 'In Progress')} /><KanbanColumn status="Done" tasks={(project.tasks || []).filter(t => t.status === 'Done')} /></div></TabsContent>
 
-        <TabsContent value="communications" className="m-0 space-y-8"><div className="grid grid-cols-1 gap-6">{projectInquiries.map((inq) => (<Card key={inq.id} className={cn("rounded-none border-neutral-100 p-8 bg-white shadow-lg group relative", inq.urgency === 'critical' && "border-l-4 border-l-destructive")}><div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8"><div className="space-y-4 flex-1"><div className="flex items-center gap-4"><span className="text-[11px] font-bold text-accent/40 uppercase tracking-widest">{inq.id}</span><Badge variant="outline" className={cn("rounded-none text-[9px] font-bold uppercase tracking-widest px-3 py-1", inq.urgency === 'critical' ? 'text-destructive border-destructive/20 bg-destructive/5' : 'text-accent border-accent/20 bg-accent/5')}>{inq.urgency} Urgency</Badge><Badge className={cn("rounded-none text-[9px] font-bold uppercase tracking-widest px-3 py-1", inq.status === 'new' ? 'bg-accent text-white' : 'bg-green-600 text-white')}>{inq.status}</Badge></div><p className="text-base font-light italic text-accent/80 leading-relaxed border-l-2 border-accent/10 pl-6">"{inq.message}"</p><div className="flex items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-widest font-bold"><span className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> {inq.email}</span><span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> {inq.date}</span></div></div></div></Card>))}{projectInquiries.length === 0 && (<div className="text-center py-24 border border-dashed border-neutral-200 bg-neutral-50/50 space-y-4"><div className="h-16 w-16 bg-accent/5 rounded-full flex items-center justify-center mx-auto"><MessageSquare className="h-8 w-8 text-accent/20" /></div><p className="text-[13px] font-light italic text-muted-foreground uppercase tracking-[0.3em]">No project consultations logged in pipeline</p></div>)}</TabsContent>
+        <TabsContent value="communications" className="m-0 space-y-8">
+          <div className="grid grid-cols-1 gap-6">
+            {projectInquiries.map((inq) => (
+              <Card key={inq.id} className={cn("rounded-none border-neutral-100 p-8 bg-white shadow-lg group relative", inq.urgency === 'critical' && "border-l-4 border-l-destructive")}>
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                  <div className="space-y-4 flex-1">
+                    <div className="flex items-center gap-4">
+                      <span className="text-[11px] font-bold text-accent/40 uppercase tracking-widest">{inq.id}</span>
+                      <Badge variant="outline" className={cn("rounded-none text-[9px] font-bold uppercase tracking-widest px-3 py-1", inq.urgency === 'critical' ? 'text-destructive border-destructive/20 bg-destructive/5' : 'text-accent border-accent/20 bg-accent/5')}>
+                        {inq.urgency} Urgency
+                      </Badge>
+                      <Badge className={cn("rounded-none text-[9px] font-bold uppercase tracking-widest px-3 py-1", inq.status === 'new' ? 'bg-accent text-white' : 'bg-green-600 text-white')}>
+                        {inq.status}
+                      </Badge>
+                    </div>
+                    <p className="text-base font-light italic text-accent/80 leading-relaxed border-l-2 border-accent/10 pl-6">"{inq.message}"</p>
+                    <div className="flex items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-widest font-bold">
+                      <span className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> {inq.email}</span>
+                      <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> {inq.date}</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+            {projectInquiries.length === 0 && (
+              <div className="text-center py-24 border border-dashed border-neutral-200 bg-neutral-50/50 space-y-4">
+                <div className="h-16 w-16 bg-accent/5 rounded-full flex items-center justify-center mx-auto">
+                  <MessageSquare className="h-8 w-8 text-accent/20" />
+                </div>
+                <p className="text-[13px] font-light italic text-muted-foreground uppercase tracking-[0.3em]">No project consultations logged in pipeline</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
 
         <TabsContent value="logs" className="m-0 space-y-10">
           <div className="flex items-center justify-between"><div className="flex items-center gap-4"><ClipboardList className="h-5 w-5 text-accent/40" /><h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent">Site Log Registry</h2></div>{!isReadOnly && <Button onClick={() => setIsAddingReport(true)} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl"><Plus className="h-4 w-4" /> New Site Entry</Button>}</div>
