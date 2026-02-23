@@ -23,7 +23,9 @@ import {
   Eye,
   LayoutList,
   BadgeCheck,
-  Award
+  Award,
+  XCircle,
+  Link2Off
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -63,10 +65,10 @@ export default function DesignerRegistryPage() {
   });
 
   const generateRandomToken = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    const part1 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    const part2 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    return `WHYTE-${part1}-${part2}`;
+    // Generates a 64-bit style random token (16 chars alphanumeric)
+    const part1 = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const part2 = Math.random().toString(36).substring(2, 10).toUpperCase();
+    return `${part1}-${part2}`;
   };
 
   useEffect(() => {
@@ -110,6 +112,14 @@ export default function DesignerRegistryPage() {
     });
     toast({ title: "Commission Assigned", description: `Dossier ${projectId} linked to ${selectedDesigner.name}.` });
     setIsAssignDialogOpen(false);
+  };
+
+  const handleUnassignProject = (projectId: string) => {
+    updateClientProject(projectId, { 
+      assignedDesignerId: undefined,
+      lastActivity: `Creative Lead Unassigned`
+    });
+    toast({ title: "Commission Unlinked", variant: "destructive" });
   };
 
   const handleRemove = (id: string) => {
@@ -174,7 +184,6 @@ export default function DesignerRegistryPage() {
         <AnimatePresence mode="popLayout">
           {filteredDesigners.map((designer, index) => {
             const assignedProjects = clientProjects.filter(p => p.assignedDesignerId === designer.id && !p.isArchived);
-            const accessedLogsCount = (clientProjects.reduce((acc, p) => acc + (p.siteReports?.length || 0), 0) / Math.max(1, designers.length)).toFixed(0);
 
             return (
               <motion.div
@@ -221,10 +230,10 @@ export default function DesignerRegistryPage() {
                         </div>
                         <div className="p-4 bg-accent/[0.03] border border-accent/10 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Access Token</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Access Token (64-bit)</span>
                             <Key className="h-3 w-3 text-accent/20" />
                           </div>
-                          <code className="text-sm font-mono tracking-widest text-accent font-bold block">{designer.accessToken}</code>
+                          <code className="text-[11px] font-mono tracking-wider text-accent font-bold block break-all">{designer.accessToken}</code>
                         </div>
                       </div>
                     </div>
@@ -247,16 +256,26 @@ export default function DesignerRegistryPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {assignedProjects.map(p => (
-                            <Link key={p.id} href={`/admin/clients/${p.id}`} className="p-4 border border-accent/5 hover:border-accent/20 transition-all flex flex-col justify-between group/p">
+                            <div key={p.id} className="p-4 border border-accent/5 hover:border-accent/20 transition-all flex flex-col justify-between group/p bg-white shadow-sm">
                               <div className="flex justify-between items-start">
                                 <span className="text-[10px] font-bold text-accent/30 uppercase tracking-widest">{p.id}</span>
                                 <div className="flex gap-2">
-                                  <Badge variant="ghost" className="text-[8px] uppercase tracking-widest p-0">{p.status}</Badge>
-                                  <Eye className="h-3 w-3 text-accent/20" />
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    onClick={() => handleUnassignProject(p.id)}
+                                    className="h-6 w-6 text-destructive/40 hover:text-destructive hover:bg-destructive/5"
+                                    title="Unassign Lead"
+                                  >
+                                    <Link2Off className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Link href={`/admin/clients/${p.id}`}>
+                                    <Eye className="h-3.5 w-3.5 text-accent/20 hover:text-accent cursor-pointer" />
+                                  </Link>
                                 </div>
                               </div>
-                              <p className="text-sm font-bold uppercase tracking-widest text-accent/80 group-hover/p:text-accent mt-2">{p.project}</p>
-                            </Link>
+                              <p className="text-sm font-bold uppercase tracking-widest text-accent/80 mt-2">{p.project}</p>
+                            </div>
                           ))}
                           {assignedProjects.length === 0 && (
                             <div className="col-span-full py-8 text-center border border-dashed border-accent/10 italic text-[11px] text-muted-foreground uppercase tracking-widest">
@@ -386,8 +405,8 @@ export default function DesignerRegistryPage() {
                     <p className="text-sm font-bold uppercase tracking-widest mt-1">{p.project}</p>
                   </button>
                 ))}
-                {clientProjects.filter(p => !p.isArchived).length === 0 && (
-                  <p className="text-center py-8 text-[11px] uppercase tracking-widest text-muted-foreground italic">No active dossiers in current cycle</p>
+                {clientProjects.filter(p => p.assignedDesignerId !== selectedDesigner?.id && !p.isArchived).length === 0 && (
+                  <p className="text-center py-8 text-[11px] uppercase tracking-widest text-muted-foreground italic">No active dossiers available for assignment</p>
                 )}
               </div>
             </div>
