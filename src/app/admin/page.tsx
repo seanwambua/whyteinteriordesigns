@@ -57,8 +57,12 @@ export default function AdminDashboardPage() {
     clearAllData();
     toast({
       title: "Digital Vault Purged",
-      description: "All studio local state has been synchronized to empty.",
+      description: "All studio local state has been synchronized to empty. Refreshing session...",
     });
+    // Force a full page reload to clear memory and re-trigger layout-level onboarding checks
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
   if (!isMounted) return null;
@@ -96,7 +100,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <AlertDialogTitle className="text-2xl font-headline italic text-destructive">Confirm Digital Purge?</AlertDialogTitle>
                 <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-base italic">
-                  This will permanently remove all locally persisted studio data, including active journeys and inquiries. This action cannot be reversed.
+                  This will permanently remove all locally persisted studio data and session authorizations. You will need to re-complete onboarding for all portals.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="pt-6">

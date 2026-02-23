@@ -3,7 +3,8 @@
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { LayoutDashboard, Briefcase, MessageSquare, Star, Settings, Home, LogOut } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 function DashboardSidebar() {
   const pathname = usePathname();
@@ -70,6 +71,28 @@ function DashboardSidebar() {
 }
 
 export default function ClientDashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const isOnboarded = localStorage.getItem("whyte_onboarded") === "true";
+    setOnboarded(isOnboarded);
+
+    if (!isOnboarded && pathname !== "/dashboard/onboarding") {
+      router.push("/dashboard/onboarding");
+    }
+  }, [pathname, router]);
+
+  if (!isMounted || onboarded === null) return null;
+
+  // Don't show sidebar on onboarding page
+  if (pathname === "/dashboard/onboarding") {
+    return <div className="min-h-screen bg-white">{children}</div>;
+  }
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-secondary/10 w-full font-body">
