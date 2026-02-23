@@ -73,7 +73,6 @@ interface KanbanColumnProps {
   handleUpdateSubtask: (taskId: string, subId: string, title: string) => void;
 }
 
-// Memoized to prevent input focus loss during character entry
 const KanbanColumn = memo(({ 
   status, 
   tasks, 
@@ -391,24 +390,6 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
           </div>
         )}
 
-        {project.handoverStatus === 'Failed' && (
-          <div className="p-8 bg-destructive/5 border-l-4 border-destructive space-y-4 shadow-sm">
-            <div className="flex items-center gap-4 text-destructive">
-              <AlertCircle className="h-6 w-6" />
-              <div className="space-y-0.5">
-                <p className="text-[11px] font-bold uppercase tracking-widest">Handover Protocol Flagged — Corrective Action Required</p>
-                <p className="text-[12px] opacity-80 italic font-light">Administrative quality audit identified discrepancies in site implementation.</p>
-              </div>
-            </div>
-            {project.handoverNotes && (
-              <div className="bg-white p-6 border border-destructive/10">
-                <p className="text-[10px] uppercase font-bold text-destructive/40 mb-2">Admin Directives:</p>
-                <p className="text-sm font-light italic text-destructive/80 leading-relaxed">"{project.handoverNotes}"</p>
-              </div>
-            )}
-          </div>
-        )}
-
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
           <div className="space-y-2">
             <div className="flex items-center gap-4"><PencilRuler className="h-5 w-5 text-accent" /><span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Deployment Workbench</span></div>
@@ -463,7 +444,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
                   <p className="text-2xl font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || "Brief pending synchronization."}"</p>
                 </div>
                 <div className="space-y-6 pt-10 border-t border-neutral-50">
-                  <div className="flex items-center gap-3"><LayoutList className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/40">Technical Scope of Works</h3></div>
+                  <div className="flex items-center gap-3"><LayoutList className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/40">Scope of Works</h3></div>
                   <p className="text-lg font-light italic leading-relaxed text-accent/70 border-l-2 border-accent/10 pl-8">"{project.workScope || "Detailed implementation protocols defined in planning."}"</p>
                 </div>
               </div>
@@ -643,12 +624,6 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
                 <p className="text-lg font-light text-accent/80 italic leading-relaxed border-l-2 border-accent/10 pl-8">
                   "Site protocols verified. Transmit this dossier to the Senior Partners for final quality audit and key transfer synchronization."
                 </p>
-                {project.handoverStatus === 'Failed' && (
-                  <div className="mt-6 p-6 bg-destructive/5 border border-destructive/10">
-                    <p className="text-[10px] uppercase font-bold text-destructive mb-2 flex items-center gap-2"><AlertCircle className="h-3 w-3" /> Fix Directives Required</p>
-                    <p className="text-sm italic text-destructive/80">Addressing admin feedback is mandatory before re-initialization.</p>
-                  </div>
-                )}
               </div>
               <Button 
                 onClick={handleInitiateHandover}

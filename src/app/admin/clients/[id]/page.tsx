@@ -82,7 +82,6 @@ interface KanbanColumnProps {
   handleUpdateSubtask: (taskId: string, subId: string, title: string) => void;
 }
 
-// Extracted to memoized component to prevent re-rendering focus issues
 const KanbanColumn = memo(({ 
   status, 
   tasks, 
@@ -177,7 +176,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     urgency: 'Normal'
   });
 
-  // FINANCING REORGANIZATION STATE
   const [isReorganizingPlan, setIsReorganizingPlan] = useState(false);
   const [tempInstallments, setTempInstallments] = useState<Installment[]>([]);
   const [reorgTerms, setReorgTerms] = useState("");
@@ -195,7 +193,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const isPendingActivation = project ? !project.isActivated : false;
   const isReadOnly = isAuditVerified || isPendingActivation || project?.status === 'Completion';
 
-  // REORG CONSTRAINTS
   const reorganizationFinalized = (project?.reorganizationCount || 0) >= 1;
 
   useEffect(() => {
@@ -246,7 +243,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     }, 1200);
   };
 
-  // FINANCING REORGANIZATION LOGIC
   const handleAddTempInstallment = () => {
     const newIns: Installment = { 
       label: "Custom Payment Schedule", 
@@ -400,7 +396,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     toast({ title: "Pipeline Synchronized", description: `Inquiry status updated to ${status}.` });
   };
 
-  // FINANCIAL DERIVATIONS
   const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
   const remainingBalance = project.totalBudget - totalPaid;
   const isLegerSynchronized = Math.abs(remainingBalance) < 1;
@@ -495,13 +490,13 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                   <p className="text-2xl font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">"{project.description || "Narrative pending synchronization."}"</p>
                 </div>
                 <div className="space-y-6 pt-10 border-t border-accent/5">
-                  <div className="flex items-center gap-3"><LayoutList className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Technical Scope of Works</h3></div>
+                  <div className="flex items-center gap-3"><LayoutList className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Scope of Works</h3></div>
                   <p className="text-lg font-light italic leading-relaxed text-accent/70 border-l-2 border-accent/10 pl-8">"{project.workScope || "Technical scope defined in contract archives."}"</p>
                 </div>
               </div>
               <div className="space-y-10 border-l border-accent/5 pl-12">
                 <div className="space-y-6">
-                  <div className="flex items-center gap-3"><Compass className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Spatial Metrics</h3></div>
+                  <div className="flex items-center gap-3"><Compass className="h-4 w-4 text-accent/40" /><h3 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Spatial Parameters</h3></div>
                   <div className="grid grid-cols-1 gap-6">
                     <div className="bg-secondary/30 p-6 border border-accent/5">
                       <p className="text-[10px] uppercase tracking-widest font-bold text-accent/40 mb-1">Capacity</p>
@@ -887,7 +882,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         </DialogContent>
       </Dialog>
 
-      {/* FINANCING REORGANIZATION WORKBENCH */}
       <Dialog open={isReorganizingPlan} onOpenChange={setIsReorganizingPlan}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-4xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
           <div className="bg-accent h-1.5 w-full" />

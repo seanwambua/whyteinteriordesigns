@@ -115,8 +115,6 @@ export default function ProjectPlanningPage() {
     if (activationProject) {
       setAssignedStewardId(activationProject.assignedStewardId || "");
       const deposit = activationProject.installments.find(i => i.label.toLowerCase().includes('deposit'));
-      
-      // If client already submitted data, pre-fill for admin review before transmission
       if (activationProject.pendingActivationData) {
         setActivationAmount(activationProject.pendingActivationData.amount);
         setDepositCode(activationProject.pendingActivationData.reference);
@@ -150,10 +148,7 @@ export default function ProjectPlanningPage() {
       setActivationProject(null);
       setDepositCode("");
       setAssignedStewardId("");
-      toast({ 
-        title: "Transmission Authorized", 
-        description: "Initial deposit data sent to Financial Steward for forensic verification." 
-      });
+      toast({ title: "Transmission Authorized", description: "Initial deposit data sent to Financial Steward." });
     }, 1500);
   };
 
@@ -280,7 +275,7 @@ export default function ProjectPlanningPage() {
   };
 
   return (
-    <div className="space-y-12 max-w-7xl mx-auto font-body pb-24">
+    <div className="max-w-7xl mx-auto space-y-12 font-body pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-2">
           <div className="flex items-center gap-4"><div className="h-px w-8 bg-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Operations Hub</span></div>
@@ -426,10 +421,10 @@ export default function ProjectPlanningPage() {
               <TabsContent value="briefing" className="m-0 space-y-12">
                 <div className="space-y-8">
                   <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea value={editFormData.description} onChange={(e) => setEditFormData({...editFormData, description: e.target.value})} placeholder="Creative briefing summary..." className="min-h-[180px] rounded-none p-8 font-light italic text-xl border-accent/20 leading-relaxed focus:ring-accent" /></div>
-                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Technical Scope of Works</Label><Textarea value={editFormData.workScope} onChange={(e) => setEditFormData({...editFormData, workScope: e.target.value})} placeholder="Structural and implementation requirements..." className="min-h-[180px] rounded-none p-8 font-light italic text-base border-accent/20 leading-relaxed focus:ring-accent bg-secondary/5" /></div>
+                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Scope of Works</Label><Textarea value={editFormData.workScope} onChange={(e) => setEditFormData({...editFormData, workScope: e.target.value})} placeholder="Structural and implementation requirements..." className="min-h-[180px] rounded-none p-8 font-light italic text-base border-accent/20 leading-relaxed focus:ring-accent bg-secondary/5" /></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-accent/5">
                     <div className="space-y-3">
-                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><Compass className="h-3.5 w-3.5" /> Primary Rooms Count</Label>
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><Compass className="h-3.5 w-3.5" /> Spatial Parameters (Rooms)</Label>
                       <Input type="number" value={editFormData.roomsCount} onChange={(e) => setEditFormData({...editFormData, roomsCount: Number(e.target.value)})} className="rounded-none h-14 text-2xl font-headline italic border-accent/20 focus:ring-accent" />
                     </div>
                   </div>
