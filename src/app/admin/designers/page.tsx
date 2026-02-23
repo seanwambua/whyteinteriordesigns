@@ -59,6 +59,13 @@ export default function DesignerRegistryPage() {
     status: "Active" as Designer['status']
   });
 
+  const generateRandomToken = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const part1 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    const part2 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    return `WHYTE-${part1}-${part2}`;
+  };
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -131,7 +138,10 @@ export default function DesignerRegistryPage() {
             />
           </div>
           <Button 
-            onClick={() => setIsAddDialogOpen(true)}
+            onClick={() => {
+              setFormData(prev => ({ ...prev, accessToken: generateRandomToken(), name: "", email: "" }));
+              setIsAddDialogOpen(true);
+            }}
             className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold flex gap-3 shadow-xl hover:tracking-[0.2em] transition-all"
           >
             <UserPlus className="h-5 w-5" /> Register Lead
