@@ -44,6 +44,7 @@ import { parse, differenceInDays, isAfter, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function ClientDashboardPage() {
   const { clientProjects, designers, updateClientProject, financialSteward } = useWhyteStore();
