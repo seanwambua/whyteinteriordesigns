@@ -21,7 +21,9 @@ import {
   AlertTriangle,
   CircleDollarSign,
   MessageSquare,
-  History
+  History,
+  RefreshCcw,
+  Zap
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -116,9 +118,9 @@ export default function ProjectClosingPage() {
 
       <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
         <Info className="h-5 w-5 text-accent" />
-        <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-accent mb-1">Audit Authorization Protocol</AlertTitle>
+        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Audit Authorization Protocol</AlertTitle>
         <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
-          Reconciliation protocols require **100% site implementation**, **complete ledger liquidation**, and **resolution of all client inquiries**. Audits cannot be authorized while communications are pending.
+          Reconciliation protocols require **100% site implementation**, **complete ledger liquidation**, and **resolution of all client inquiries**. Audits cannot be authorized while communications are pending or if the assigned steward sync check is incomplete.
         </AlertDescription>
       </Alert>
 
@@ -130,7 +132,11 @@ export default function ProjectClosingPage() {
               const projectInquiries = inquiries.filter(inq => inq.projectId === project.id && inq.status !== 'closed');
               const hasPendingInquiries = projectInquiries.length > 0;
               const isVerified = project.financialReportStatus === 'Verified';
-              const isBlocked = !allInstallmentsPaid || hasPendingInquiries;
+              
+              // SYNC CHECK: Has the steward submitted their findings?
+              const hasStewardSync = !!project.auditDetails;
+              
+              const isBlocked = !allInstallmentsPaid || hasPendingInquiries || !hasStewardSync;
               const isLegacy = project.id.startsWith('LEG-');
 
               return (
@@ -164,22 +170,31 @@ export default function ProjectClosingPage() {
                             <p className="text-[12px] uppercase tracking-widest font-bold text-muted-foreground opacity-60">Valued Client: {project.name}</p>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-accent/5">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-accent/5">
                             <div className="space-y-2">
                               <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Ledger Sync</p>
                               <div className="flex items-center gap-3">
                                 <div className={cn("h-2 w-2 rounded-full", allInstallmentsPaid ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
-                                <span className={cn("text-[12px] font-bold uppercase tracking-widest", allInstallmentsPaid ? "text-accent" : "text-orange-600")}>
-                                  {allInstallmentsPaid ? (isLegacy ? "Historical Settlement Verified" : "All Installments Liquidated") : "Awaiting Client Payment"}
+                                <span className={cn("text-[11px] font-bold uppercase tracking-widest", allInstallmentsPaid ? "text-accent" : "text-orange-600")}>
+                                  {allInstallmentsPaid ? "Liquidated" : "Pending Payment"}
                                 </span>
                               </div>
                             </div>
                             <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Communication Registry</p>
+                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Communications</p>
                               <div className="flex items-center gap-3">
                                 <div className={cn("h-2 w-2 rounded-full", !hasPendingInquiries ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
-                                <span className={cn("text-[12px] font-bold uppercase tracking-widest", !hasPendingInquiries ? "text-accent" : "text-orange-600")}>
-                                  {!hasPendingInquiries ? "No Pending Inquiries" : `${projectInquiries.length} Open Inquiry(s)`}
+                                <span className={cn("text-[11px] font-bold uppercase tracking-widest", !hasPendingInquiries ? "text-accent" : "text-orange-600")}>
+                                  {!hasPendingInquiries ? "Resolved" : "Open Inquiries"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Steward Sync</p>
+                              <div className="flex items-center gap-3">
+                                <div className={cn("h-2 w-2 rounded-full", hasStewardSync ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
+                                <span className={cn("text-[11px] font-bold uppercase tracking-widest", hasStewardSync ? "text-accent" : "text-orange-600")}>
+                                  {hasStewardSync ? "Synchronized" : "Awaiting Partner"}
                                 </span>
                               </div>
                             </div>
@@ -227,6 +242,7 @@ export default function ProjectClosingPage() {
                                     <ul className="text-[10px] text-muted-foreground font-light italic list-disc pl-4">
                                       {!allInstallmentsPaid && <li>Ledger Liquidation Required</li>}
                                       {hasPendingInquiries && <li>Resolution of {projectInquiries.length} Inquiry(s) Required</li>}
+                                      {!hasStewardSync && <li>Steward Audit Synchronization Required</li>}
                                     </ul>
                                   </TooltipContent>
                                 )}
@@ -271,11 +287,11 @@ export default function ProjectClosingPage() {
               </li>
               <li className="flex gap-6">
                 <div className="h-10 w-10 border border-white/20 rounded-full flex items-center justify-center shrink-0">
-                  <MessageSquare className="h-5 w-5 text-white/60" />
+                  <RefreshCcw className="h-5 w-5 text-white/60" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[13px] font-bold uppercase tracking-widest">Communication Resolution</p>
-                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">All Inquiries Closed</p>
+                  <p className="text-[13px] font-bold uppercase tracking-widest">Steward Sync Check</p>
+                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">External Audit Transmitted</p>
                 </div>
               </li>
               <li className="flex gap-6">
@@ -292,7 +308,7 @@ export default function ProjectClosingPage() {
 
           <div className="p-10 border border-dashed border-accent/20 bg-secondary/5 text-center">
             <p className="text-[11px] uppercase tracking-[0.4em] font-bold text-accent/40 italic leading-relaxed">
-              Dossiers are locked upon audit authorization. Ensure all registry resource payments are also reconciled before final sign-off.
+              Dossiers are locked upon audit authorization. The assigned Financial Steward must synchronize findings before Admin sign-off.
             </p>
           </div>
         </div>

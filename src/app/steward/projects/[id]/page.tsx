@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
@@ -24,12 +23,15 @@ import {
   Info,
   ExternalLink,
   Lock,
-  Wallet
+  Wallet,
+  RefreshCcw,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function StewardAuditWorkbench({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -38,6 +40,8 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   
   const [isMounted, setIsMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSyncingRegistry, setIsSyncingRegistry] = useState(false);
+  const [lastSyncTimestamp, setLastSyncTimestamp] = useState<string | null>(null);
 
   const project = clientProjects.find(p => p.id === id);
 
@@ -54,6 +58,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         setAllocations(existing.allocations || []);
         setStewardComments(existing.stewardComments || "");
         setRefundAmount(existing.refundAmount || 0);
+        setLastSyncTimestamp(existing.submissionDate || null);
       }
     }
   }, [project]);
@@ -68,10 +73,23 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   }, [allocations]);
 
   const remainingBalance = totalPaidByClient - totalAllocated - refundAmount;
+  const hasDiscrepancy = remainingBalance < 0;
 
   if (!isMounted || !project) return null;
 
   const isVerified = project.financialReportStatus === 'Verified';
+
+  const handleRunSyncCheck = () => {
+    setIsSyncingRegistry(true);
+    setTimeout(() => {
+      setIsSyncingRegistry(false);
+      setLastSyncTimestamp(new Date().toLocaleTimeString());
+      toast({ 
+        title: "Registry Sync established", 
+        description: `Verified ${project.installments.filter(i => i.status === 'Paid').length} synchronized transactions.`
+      });
+    }, 1500);
+  };
 
   const handleAddAllocation = () => {
     if (isVerified) return;
@@ -95,7 +113,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   };
 
   const handleAuthorizeAudit = () => {
-    if (isVerified) return;
+    if (isVerified || !lastSyncTimestamp) return;
     setIsSubmitting(true);
     
     const finalAudit: FinancialAudit = {
@@ -114,12 +132,12 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         lastActivity: `Financial Audit Verified by ${financialSteward}`
       });
       setIsSubmitting(false);
-      toast({ title: "Audit Synchronized", description: "Dossier has been locked and authorized." });
+      toast({ title: "Audit Synchronized", description: "Dossier has been locked and authorized in the master registry." });
     }, 1500);
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-12 pb-24">
+    <div className="max-w-6xl mx-auto space-y-12 pb-24 font-body">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
         <Link href="/steward" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-all group">
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
@@ -158,6 +176,36 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         </div>
       </motion.div>
 
+      {/* SYNC CHECK ALERT */}
+      {!isVerified && (
+        <Alert className={cn(
+          "rounded-none p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 border-dashed",
+          lastSyncTimestamp ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200 shadow-sm"
+        )}>
+          <div className="flex gap-4 items-start">
+            {lastSyncTimestamp ? <ShieldCheck className="h-6 w-6 text-green-600 mt-1" /> : <RefreshCcw className="h-6 w-6 text-slate-400 mt-1" />}
+            <div className="space-y-1">
+              <AlertTitle className="text-[12px] font-bold uppercase tracking-widest">Protocol Sync Check</AlertTitle>
+              <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
+                {lastSyncTimestamp 
+                  ? `Synchronization established at ${lastSyncTimestamp}. All project installments verified against registry.` 
+                  : "Establishing a sync check is mandatory before authorizing final capital reconciliation."}
+              </AlertDescription>
+            </div>
+          </div>
+          <Button 
+            onClick={handleRunSyncCheck}
+            disabled={isSyncingRegistry || isVerified}
+            className={cn(
+              "rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-lg transition-all",
+              lastSyncTimestamp ? "bg-green-600 text-white hover:bg-green-700" : "bg-slate-900 text-white hover:bg-black"
+            )}
+          >
+            {isSyncingRegistry ? <><Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...</> : <><RefreshCcw className="h-4 w-4" /> Run Sync Check</>}
+          </Button>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         {/* Main Audit Section */}
         <div className="lg:col-span-2 space-y-12">
@@ -176,7 +224,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   <p className="text-3xl font-headline italic text-slate-900">KES {project.totalBudget.toLocaleString()}</p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Funds Received (To Date)</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Funds Received (Sync Verified)</p>
                   <p className="text-3xl font-headline italic text-green-600">KES {totalPaidByClient.toLocaleString()}</p>
                 </div>
               </div>
@@ -227,7 +275,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                             onChange={(e) => updateAllocation(alloc.id, 'category', e.target.value)}
                             readOnly={isVerified}
                             placeholder="E.g., Structural Materials" 
-                            className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-slate-100"
+                            className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-slate-100 focus:ring-slate-900"
                           />
                         </div>
                         <div className="md:col-span-5 space-y-2">
@@ -237,7 +285,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                             onChange={(e) => updateAllocation(alloc.id, 'description', e.target.value)}
                             readOnly={isVerified}
                             placeholder="Specific site protocol description" 
-                            className="rounded-none h-12 text-sm italic border-slate-100"
+                            className="rounded-none h-12 text-sm italic border-slate-100 focus:ring-slate-900"
                           />
                         </div>
                         <div className="md:col-span-3 space-y-2">
@@ -247,7 +295,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                             value={alloc.amount} 
                             onChange={(e) => updateAllocation(alloc.id, 'amount', Number(e.target.value))}
                             readOnly={isVerified}
-                            className="rounded-none h-12 text-sm font-bold border-slate-100"
+                            className="rounded-none h-12 text-sm font-bold border-slate-100 focus:ring-slate-900"
                           />
                         </div>
                       </div>
@@ -271,7 +319,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               onChange={(e) => setStewardComments(e.target.value)}
               readOnly={isVerified}
               placeholder="Provide a professional summary of the financial audit and any capital reconciliation findings..." 
-              className="min-h-[180px] rounded-none border-slate-200 p-8 font-light italic text-lg leading-relaxed focus:ring-slate-900"
+              className="min-h-[180px] rounded-none border-slate-200 p-8 font-light italic text-lg leading-relaxed focus:ring-slate-900 bg-white"
             />
           </div>
         </div>
@@ -286,7 +334,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             
             <div className="space-y-10 relative z-10">
               <div className="space-y-1">
-                <p className="text-[10px] uppercase tracking-widest text-slate-400">Cumulative Funds</p>
+                <p className="text-[10px] uppercase tracking-widest text-slate-400">Cumulative Funds Received</p>
                 <p className="text-3xl font-headline italic text-green-400">KES {totalPaidByClient.toLocaleString()}</p>
               </div>
               <div className="space-y-1">
@@ -301,38 +349,52 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                     value={refundAmount} 
                     onChange={(e) => setRefundAmount(Number(e.target.value))}
                     readOnly={isVerified}
-                    className="bg-white/5 border-white/10 text-2xl font-headline italic text-white rounded-none h-14"
+                    className="bg-white/5 border-white/10 text-2xl font-headline italic text-white rounded-none h-14 focus:ring-slate-400"
                   />
                 </div>
                 <div className="pt-4 flex justify-between items-center">
                   <span className="text-[10px] uppercase tracking-widest text-slate-400">Escrow Balance</span>
                   <span className={cn(
                     "text-xl font-headline italic",
-                    remainingBalance < 0 ? "text-red-400" : "text-white"
+                    hasDiscrepancy ? "text-red-400" : "text-white"
                   )}>KES {remainingBalance.toLocaleString()}</span>
                 </div>
               </div>
             </div>
 
             {!isVerified && (
-              <Button 
-                onClick={handleAuthorizeAudit}
-                disabled={isSubmitting || totalPaidByClient === 0}
-                className="w-full h-16 bg-white text-slate-900 hover:bg-slate-100 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all"
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin" /> Authorizing...</span>
-                ) : (
-                  <><ShieldCheck className="h-4 w-4" /> Authorize Final Audit</>
+              <div className="space-y-4 relative z-10">
+                {hasDiscrepancy && (
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 flex gap-3 items-center">
+                    <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
+                    <p className="text-[10px] text-red-200 italic leading-relaxed">Deficit identified. Check allocations against synchronized funds.</p>
+                  </div>
                 )}
-              </Button>
+                <Button 
+                  onClick={handleAuthorizeAudit}
+                  disabled={isSubmitting || totalPaidByClient === 0 || !lastSyncTimestamp || hasDiscrepancy}
+                  className={cn(
+                    "w-full h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all flex gap-4",
+                    !lastSyncTimestamp ? "bg-white/5 text-white/40 cursor-not-allowed border-white/10" : "bg-white text-slate-900 hover:bg-slate-100"
+                  )}
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span>
+                  ) : (
+                    <><ShieldCheck className="h-6 w-6" /> Authorize Final Audit</>
+                  )}
+                </Button>
+                {!lastSyncTimestamp && (
+                  <p className="text-[9px] text-slate-500 text-center uppercase tracking-widest font-bold">Registry Sync required to unlock</p>
+                )}
+              </div>
             )}
           </Card>
 
           <div className="p-8 border border-dashed border-slate-200 bg-slate-50 text-center space-y-6">
-            <div className="flex justify-center"><AlertCircle className="h-6 w-6 text-slate-300" /></div>
+            <div className="flex justify-center"><Zap className="h-6 w-6 text-slate-300" /></div>
             <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 leading-relaxed italic">
-              Verification locks this dossier. All allocations must be supported by site protocol documentation within the studio registry.
+              Registry synchronization verifies the project ledger against external partner entries. Discrepancies lock the authorization protocol.
             </p>
           </div>
         </div>
