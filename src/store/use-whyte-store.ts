@@ -1,3 +1,4 @@
+
 'use client';
 
 import { create } from 'zustand';
@@ -75,6 +76,7 @@ export interface FinancialAudit {
   refundAmount: number;
   stewardComments: string;
   isVerified: boolean;
+  submissionDate?: string;
 }
 
 export interface TerminationDetails {
@@ -118,6 +120,7 @@ export interface ClientProject {
   operationalBudget?: number;
   vendorAllocations?: VendorAllocation[];
   termination?: TerminationDetails;
+  auditDetails?: FinancialAudit;
 }
 
 export interface Inquiry {
