@@ -18,6 +18,7 @@ import {
   Camera, 
   ClipboardList, 
   AlertTriangle,
+  Hourglass,
   Activity,
   History,
   Info,
@@ -255,10 +256,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
                       </Badge>
                     </div>
                     <p className="text-base font-light italic text-accent/80 leading-relaxed border-l-2 border-accent/10 pl-6">"{inq.message}"</p>
-                    <div className="flex items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-widest font-bold">
-                      <span className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> {inq.email}</span>
-                      <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> {inq.date}</span>
-                    </div>
+                    <div className="flex items-center gap-6 text-[11px] text-muted-foreground uppercase tracking-widest font-bold"><span className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> {inq.email}</span><span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> {inq.date}</span></div>
                   </div>
                 </div>
               </Card>
