@@ -120,6 +120,9 @@ export default function ClientDashboardPage() {
   const totalPaid = activeProject.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
   const dueBalance = activeProject.totalBudget - totalPaid;
   const hasOutstandingBalance = dueBalance > 0;
+  
+  // FINAL RECONCILIATION GUARDRAIL: Only notify if project is in 'Completion' phase
+  const showBalanceAlert = hasOutstandingBalance && !isBalanceAlertDismissed && activeProject.status === 'Completion';
 
   if (activeProject.status === 'Termination') {
     const audit = activeProject.termination?.audit;
@@ -313,7 +316,7 @@ export default function ClientDashboardPage() {
       </motion.div>
 
       <AnimatePresence>
-        {hasOutstandingBalance && !isBalanceAlertDismissed && (
+        {showBalanceAlert && (
           <motion.div
             initial={{ opacity: 0, y: -20, height: 0 }}
             animate={{ opacity: 1, y: 0, height: "auto" }}
