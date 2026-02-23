@@ -307,16 +307,6 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
           </Alert>
         )}
 
-        {!isLegerSynchronized && isAssignedLead && (
-          <Alert className="rounded-none border-orange-500/20 bg-orange-500/[0.02] p-6 shadow-sm">
-            <AlertCircle className="h-5 w-5 text-orange-600" />
-            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600 mb-1">Dossier Alert — Capital Impasse</AlertTitle>
-            <AlertDescription className="text-[13px] font-light italic text-orange-600/80">
-              The studio registry identified an outstanding balance for this commission. Site procurement and trade liquidations may be impacted.
-            </AlertDescription>
-          </Alert>
-        )}
-
         {(project.isArchived || project.status === 'Completion') && (
           <Alert className="rounded-none border-neutral-200 bg-neutral-50 p-6">
             <Archive className="h-5 w-5 text-neutral-400" />

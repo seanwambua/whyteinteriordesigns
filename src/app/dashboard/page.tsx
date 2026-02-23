@@ -53,7 +53,6 @@ export default function ClientDashboardPage() {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request">("project_support");
   const [isMounted, setIsMounted] = useState(false);
-  const [isBalanceAlertDismissed, setIsBalanceAlertDismissed] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -120,9 +119,6 @@ export default function ClientDashboardPage() {
   const totalPaid = activeProject.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
   const dueBalance = activeProject.totalBudget - totalPaid;
   const hasOutstandingBalance = dueBalance > 0;
-  
-  // FINAL RECONCILIATION GUARDRAIL: Only notify if project is in 'Completion' phase
-  const showBalanceAlert = hasOutstandingBalance && !isBalanceAlertDismissed && activeProject.status === 'Completion';
 
   if (activeProject.status === 'Termination') {
     const audit = activeProject.termination?.audit;
@@ -315,45 +311,6 @@ export default function ClientDashboardPage() {
         </div>
       </motion.div>
 
-      <AnimatePresence>
-        {showBalanceAlert && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: "auto" }}
-            exit={{ opacity: 0, y: -20, height: 0 }}
-            transition={{ duration: 0.5, ease: "circOut" }}
-            className="overflow-hidden"
-          >
-            <Alert className="rounded-none border-orange-500/20 bg-orange-500/[0.03] p-8 shadow-xl relative group">
-              <button 
-                onClick={() => setIsBalanceAlertDismissed(true)}
-                className="absolute top-4 right-4 p-2 text-orange-600/40 hover:text-orange-600 transition-colors"
-                title="Dismiss Protocol"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <div className="flex items-start">
-                <Wallet className="h-6 w-6 text-orange-600 shrink-0" />
-                <div className="ml-4 space-y-2 pr-8">
-                  <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Pending Capital Commitment Identified</AlertTitle>
-                  <AlertDescription className="text-sm font-light italic text-orange-600/80 leading-relaxed">
-                    Our registry indicates an outstanding balance of **KES {dueBalance.toLocaleString()}**. 
-                    Please coordinate with your Financial Lead to synchronize final settlements and unlock the handover audit.
-                  </AlertDescription>
-                  <Button 
-                    variant="link" 
-                    onClick={() => setIsBalanceAlertDismissed(true)}
-                    className="text-[10px] uppercase font-bold tracking-widest text-orange-600/60 hover:text-orange-600 p-0 h-auto"
-                  >
-                    Dismiss Protocol
-                  </Button>
-                </div>
-              </div>
-            </Alert>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {(activeProject.isArchived || activeProject.status === 'Terminated') && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -492,9 +449,9 @@ export default function ClientDashboardPage() {
         </div>
 
         <div className="lg:col-span-4 space-y-8">
-          <Card className={cn("rounded-none shadow-xl bg-white p-8 space-y-8 transition-all border", hasOutstandingBalance && activeProject.status === 'Completion' ? "border-orange-500/20 ring-1 ring-orange-500/10" : "border-accent/5")}>
+          <Card className={cn("rounded-none shadow-xl bg-white p-8 space-y-8 transition-all border border-accent/5")}>
             <div className="text-center space-y-2">
-              <h3 className={cn("text-[10px] font-bold uppercase tracking-[0.4em]", hasOutstandingBalance && activeProject.status === 'Completion' ? "text-orange-600" : "text-accent/40")}>Financial Ledger</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Financial Ledger</h3>
               <p className="text-xs font-light italic text-muted-foreground">Commission Tier: {activeProject.tier}</p>
             </div>
             <div className="space-y-4">

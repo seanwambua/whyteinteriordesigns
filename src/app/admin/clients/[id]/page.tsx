@@ -265,15 +265,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         {project.status === 'Completion' && !isAuditVerified && (
           <Alert className="rounded-none border-accent/10 bg-accent/[0.02]"><ShieldCheck className="h-4 w-4 text-accent" /><AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent">Reconciliation Phase Active</AlertTitle><AlertDescription className="text-[13px] font-light italic">Site implementation is finalized. Dossier is read-only while undergoing financial stewardship reconciliation.</AlertDescription></Alert>
         )}
-        {!isLegerSynchronized && (
-          <Alert className="rounded-none border-orange-500/20 bg-orange-500/[0.02] p-6 shadow-sm">
-            <AlertCircle className="h-5 w-5 text-orange-600" />
-            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600 mb-1">Outstanding Capital Commitment</AlertTitle>
-            <AlertDescription className="text-[13px] font-light italic text-orange-600/80">
-              A due balance of **KES {remainingBalance.toLocaleString()}** has been identified. Settlement verification required before final reconciliation.
-            </AlertDescription>
-          </Alert>
-        )}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
           <div className="space-y-2">
             <div className="flex items-center gap-4"><div className="h-px w-8 bg-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Project Terminal</span></div>
