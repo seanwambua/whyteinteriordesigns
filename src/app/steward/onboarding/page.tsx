@@ -44,6 +44,7 @@ export default function StewardOnboardingPage() {
     authorizedDate: "",
     agreedToTerms: false,
     agreedToNDA: false,
+    agreedToNonCompete: false,
     consentText: "",
     notifications: true
   });
@@ -73,7 +74,7 @@ export default function StewardOnboardingPage() {
         });
       }
     } else if (step === 2) {
-      if (formData.agreedToTerms && formData.agreedToNDA && formData.consentText === "I CONSENT") {
+      if (formData.agreedToTerms && formData.agreedToNDA && formData.agreedToNonCompete && formData.consentText === "I CONSENT") {
         setStep(3);
       } else {
         toast({
@@ -281,6 +282,17 @@ export default function StewardOnboardingPage() {
                             Execute Non-Disclosure Agreement (NDA)
                           </label>
                         </div>
+                        <div className="flex items-center space-x-3">
+                          <Checkbox 
+                            id="non-compete" 
+                            checked={formData.agreedToNonCompete} 
+                            onCheckedChange={(v) => setFormData({...formData, agreedToNonCompete: !!v})}
+                            className="rounded-none border-slate-300 data-[state=checked]:bg-slate-900 data-[state=checked]:border-slate-900"
+                          />
+                          <label htmlFor="non-compete" className="text-[11px] font-bold uppercase tracking-widest text-slate-600 cursor-pointer">
+                            Authorize Non-Compete Mandate
+                          </label>
+                        </div>
                       </div>
 
                       <div className="space-y-3 pt-4 border-t border-slate-100">
@@ -359,7 +371,7 @@ export default function StewardOnboardingPage() {
                     onClick={handleNext}
                     disabled={
                       (step === 1 && !formData.accessToken) ||
-                      (step === 2 && (formData.consentText !== "I CONSENT" || !formData.agreedToTerms || !formData.agreedToNDA))
+                      (step === 2 && (formData.consentText !== "I CONSENT" || !formData.agreedToTerms || !formData.agreedToNDA || !formData.agreedToNonCompete))
                     }
                     className="bg-slate-900 text-white hover:bg-slate-800 rounded-none h-14 px-12 uppercase tracking-[0.3em] transition-all min-w-[200px] text-[10px] font-bold shadow-xl"
                   >
