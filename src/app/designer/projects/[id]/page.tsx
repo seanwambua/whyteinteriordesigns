@@ -79,7 +79,8 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
 
   if (!isMounted || !project) return null;
 
-  const isReadOnly = project.financialReportStatus === 'Verified' || project.isArchived || project.handoverStatus === 'Pending';
+  // RECONCILIATION GUARDRAIL: Projects in 'Completion' are Read-Only for designers
+  const isReadOnly = project.financialReportStatus === 'Verified' || project.isArchived || project.handoverStatus === 'Pending' || project.status === 'Completion';
   const tasks = project.tasks || [];
   const allTasksDone = tasks.length > 0 && tasks.every(t => t.status === 'Done');
   const pendingTasks = tasks.filter(t => t.status !== 'Done');
@@ -145,7 +146,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   };
 
   const handleAddReport = () => {
-    if (!newReport.content || isReadOnly) return;
+    if (!newReport.content || project.financialReportStatus === 'Verified') return;
     const report: SiteReport = {
       id: `LOG-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
@@ -239,11 +240,17 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
         <Link href="/designer/projects" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[11px] font-bold uppercase tracking-[0.3em]">Back to Registry</span></Link>
         
-        {project.isArchived && (
+        {(project.isArchived || project.status === 'Completion') && (
           <Alert className="rounded-none border-neutral-200 bg-neutral-50 p-6">
             <Archive className="h-5 w-5 text-neutral-400" />
-            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-neutral-500 mb-1">Archived Dossier — Historical Record</AlertTitle>
-            <AlertDescription className="text-[13px] font-light italic text-neutral-400">This commission has been formally concluded. All protocols are read-only for archival reference and final financial reconciliation.</AlertDescription>
+            <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-neutral-500 mb-1">
+              {project.isArchived ? "Archived Dossier — Historical Record" : "Reconciliation Phase Active — Dossier Locked"}
+            </AlertTitle>
+            <AlertDescription className="text-[13px] font-light italic text-neutral-400">
+              {project.isArchived 
+                ? "This commission has been formally concluded and archived." 
+                : "Handover authorized. Dossier is read-only while Admin performs final financial reconciliation."}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -414,7 +421,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
         </TabsContent>
 
         <TabsContent value="handover" className="m-0 space-y-12">
-          {project.isArchived ? (
+          {project.status === 'Completion' || project.isArchived ? (
             <Card className="rounded-none border-accent/10 bg-accent/[0.02] p-24 text-center space-y-8">
               <div className="h-20 w-20 bg-accent/5 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="h-10 w-10 text-accent/40" />
@@ -422,7 +429,9 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
               <div className="space-y-4 max-w-xl mx-auto">
                 <h3 className="text-3xl font-headline italic text-accent">Protocol Finalized</h3>
                 <p className="text-muted-foreground font-light italic leading-relaxed">
-                  Handover synchronization was authorized on {project.endDate}. This dossier is now preserved in the studio archives.
+                  {project.isArchived 
+                    ? `Handover synchronization was authorized on ${project.endDate}. This dossier is now preserved in the studio archives.`
+                    : "Handover authorized. Project has transitioned to the Reconciliation phase."}
                 </p>
               </div>
             </Card>

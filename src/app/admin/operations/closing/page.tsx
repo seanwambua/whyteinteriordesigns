@@ -19,7 +19,8 @@ import {
   Eye,
   Lock,
   AlertTriangle,
-  CircleDollarSign
+  CircleDollarSign,
+  MessageSquare
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -41,7 +42,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 export default function ProjectClosingPage() {
   const { toast } = useToast();
-  const { clientProjects, financialSteward, setFinancialSteward, updateClientProject } = useWhyteStore();
+  const { clientProjects, financialSteward, setFinancialSteward, updateClientProject, inquiries } = useWhyteStore();
   
   const [isMounted, setIsMounted] = useState(false);
   const [isEditingSteward, setIsEditingSteward] = useState(false);
@@ -116,7 +117,7 @@ export default function ProjectClosingPage() {
         <Info className="h-5 w-5 text-accent" />
         <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-accent mb-1">Audit Authorization Protocol</AlertTitle>
         <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
-          Reconciliation protocols require **100% site implementation** and **complete ledger liquidation**. Audits cannot be authorized if any installments remain synchronized as pending.
+          Reconciliation protocols require **100% site implementation**, **complete ledger liquidation**, and **resolution of all client inquiries**. Audits cannot be authorized while communications are pending.
         </AlertDescription>
       </Alert>
 
@@ -125,13 +126,16 @@ export default function ProjectClosingPage() {
           <div className="space-y-6">
             {relevantProjects.map((project, index) => {
               const allInstallmentsPaid = project.installments.every(i => i.status === 'Paid');
+              const projectInquiries = inquiries.filter(inq => inq.projectId === project.id && inq.status !== 'closed');
+              const hasPendingInquiries = projectInquiries.length > 0;
               const isVerified = project.financialReportStatus === 'Verified';
+              const isBlocked = !allInstallmentsPaid || hasPendingInquiries;
 
               return (
                 <motion.div key={project.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.1 }}>
                   <Card className="rounded-none border-accent/5 shadow-xl bg-white group overflow-hidden">
                     <div className="flex flex-col md:flex-row items-stretch">
-                      <div className={cn("w-2 shrink-0", isVerified ? 'bg-green-600' : allInstallmentsPaid ? 'bg-accent/40' : 'bg-orange-400')} />
+                      <div className={cn("w-2 shrink-0", isVerified ? 'bg-green-600' : isBlocked ? 'bg-orange-400' : 'bg-accent/40')} />
                       <CardContent className="p-10 flex-1 flex flex-col md:flex-row items-center justify-between gap-10">
                         <div className="space-y-6 flex-1">
                           <div className="flex flex-wrap items-center gap-4">
@@ -144,10 +148,10 @@ export default function ProjectClosingPage() {
                                 <Lock className="h-3.5 w-3.5" />
                                 <span className="text-[11px] font-bold uppercase tracking-widest">Dossier Locked</span>
                               </div>
-                            ) : !allInstallmentsPaid && (
+                            ) : isBlocked && (
                               <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-1 border border-orange-100">
                                 <AlertTriangle className="h-3 w-3" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Liquidation Pending</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Protocol Blocked</span>
                               </div>
                             )}
                           </div>
@@ -168,10 +172,12 @@ export default function ProjectClosingPage() {
                               </div>
                             </div>
                             <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Handover Protocol</p>
+                              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/30">Communication Registry</p>
                               <div className="flex items-center gap-3">
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                <span className="text-[12px] font-bold uppercase tracking-widest text-accent">Site Keys Synchronized</span>
+                                <div className={cn("h-2 w-2 rounded-full", !hasPendingInquiries ? "bg-green-500" : "bg-orange-500 animate-pulse")} />
+                                <span className={cn("text-[12px] font-bold uppercase tracking-widest", !hasPendingInquiries ? "text-accent" : "text-orange-600")}>
+                                  {!hasPendingInquiries ? "No Pending Inquiries" : `${projectInquiries.length} Open Inquiry(s)`}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -202,19 +208,23 @@ export default function ProjectClosingPage() {
                                   <div className="inline-block">
                                     <Button 
                                       onClick={() => handleVerifyReport(project.id)} 
-                                      disabled={!allInstallmentsPaid}
+                                      disabled={isBlocked}
                                       className={cn(
                                         "h-16 px-10 rounded-none flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-xl",
-                                        allInstallmentsPaid ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
+                                        !isBlocked ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
                                       )}
                                     >
                                       <FileCheck className="h-5 w-5" /> Authorize Audit
                                     </Button>
                                   </div>
                                 </TooltipTrigger>
-                                {!allInstallmentsPaid && (
-                                  <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl">
-                                    <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Protocol Blocked: Ledger Liquidation Required</p>
+                                {isBlocked && (
+                                  <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl space-y-2">
+                                    <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Protocol Blocked:</p>
+                                    <ul className="text-[10px] text-muted-foreground font-light italic list-disc pl-4">
+                                      {!allInstallmentsPaid && <li>Ledger Liquidation Required</li>}
+                                      {hasPendingInquiries && <li>Resolution of {projectInquiries.length} Inquiry(s) Required</li>}
+                                    </ul>
                                   </TooltipContent>
                                 )}
                               </Tooltip>
@@ -258,20 +268,20 @@ export default function ProjectClosingPage() {
               </li>
               <li className="flex gap-6">
                 <div className="h-10 w-10 border border-white/20 rounded-full flex items-center justify-center shrink-0">
+                  <MessageSquare className="h-5 w-5 text-white/60" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[13px] font-bold uppercase tracking-widest">Communication Resolution</p>
+                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">All Inquiries Closed</p>
+                </div>
+              </li>
+              <li className="flex gap-6">
+                <div className="h-10 w-10 border border-white/20 rounded-full flex items-center justify-center shrink-0">
                   <CircleDollarSign className="h-5 w-5 text-white/60" />
                 </div>
                 <div className="space-y-2">
                   <p className="text-[13px] font-bold uppercase tracking-widest">Ledger Liquidation</p>
                   <p className="text-[11px] text-white/40 italic uppercase tracking-widest">100% Funds Received</p>
-                </div>
-              </li>
-              <li className="flex gap-6">
-                <div className="h-10 w-10 border border-white/20 rounded-full flex items-center justify-center shrink-0">
-                  <FileCheck className="h-5 w-5 text-white/60" />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[13px] font-bold uppercase tracking-widest">Audit Authorization</p>
-                  <p className="text-[11px] text-white/40 italic uppercase tracking-widest">Stewardship Verified Breakdown</p>
                 </div>
               </li>
             </ul>
