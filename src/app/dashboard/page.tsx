@@ -32,7 +32,8 @@ import {
   Handshake,
   Scale,
   Building2,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -42,6 +43,7 @@ import { Badge } from "@/components/ui/badge";
 import { parse, differenceInDays, isAfter, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function ClientDashboardPage() {
   const { clientProjects, updateClientProject, financialSteward } = useWhyteStore();
@@ -50,6 +52,7 @@ export default function ClientDashboardPage() {
   const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request">("project_support");
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
@@ -57,25 +60,22 @@ export default function ClientDashboardPage() {
     setVerifiedProjectId(storedId);
   }, []);
 
-  if (!isMounted) return null;
-
   const activeProject = clientProjects.find(p => p.id === verifiedProjectId) 
     || clientProjects.find(p => p.isActivated && !p.isArchived)
     || clientProjects.find(p => p.isArchived);
 
-  if (!activeProject) {
+  // AUTOMATED ONBOARDING INITIALIZATION
+  useEffect(() => {
+    if (isMounted && !activeProject) {
+      router.replace("/dashboard/onboarding");
+    }
+  }, [isMounted, activeProject, router]);
+
+  if (!isMounted || !activeProject) {
     return (
-      <div className="max-w-6xl mx-auto py-32 text-center space-y-8 font-body">
-        <div className="h-20 w-20 bg-accent/5 rounded-full flex items-center justify-center mx-auto mb-8">
-          <Briefcase className="h-10 w-10 text-accent/20" />
-        </div>
-        <h2 className="text-4xl font-headline italic">Project Synchronization Required.</h2>
-        <p className="text-muted-foreground font-light max-w-md mx-auto leading-relaxed">
-          We could not locate an active journey associated with your session. Please verify your Project Reference ID to access the private archives.
-        </p>
-        <Button asChild className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-widest text-[10px] font-bold">
-          <Link href="/dashboard/onboarding">Verify Studio Identity</Link>
-        </Button>
+      <div className="flex flex-col items-center justify-center py-48 space-y-6">
+        <Loader2 className="h-10 w-10 text-accent/20 animate-spin" />
+        <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Synchronizing Dossier...</p>
       </div>
     );
   }
@@ -106,7 +106,6 @@ export default function ClientDashboardPage() {
   
   const deadline = parse(deadlineStr, "MMM dd, yyyy", new Date());
   const startDate = parse(startStr, "MMM dd, yyyy", new Date());
-  const today = new Date();
   
   const totalDuration = differenceInDays(deadline, startDate);
   const efficiencyRating = (activeProject.isArchived || activeProject.status === 'Terminated')
@@ -157,7 +156,6 @@ export default function ClientDashboardPage() {
               </div>
             </Card>
 
-            {/* Audited Accounts Section */}
             {audit && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 <Card className="rounded-none border-accent/10 bg-black text-white p-10 space-y-10 shadow-2xl overflow-hidden relative">
@@ -345,7 +343,6 @@ export default function ClientDashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         <div className="lg:col-span-8 space-y-12">
-          {/* Main Status Card */}
           <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
             <Card className={cn("rounded-none border-accent/10 shadow-2xl overflow-hidden bg-white", (activeProject.isArchived || activeProject.status === 'Terminated') && "opacity-90")}>
               <div className={cn("h-1.5 w-full", (activeProject.isArchived || activeProject.status === 'Terminated') ? "bg-black" : "bg-accent")} />
@@ -417,7 +414,6 @@ export default function ClientDashboardPage() {
             </Card>
           </motion.div>
 
-          {/* Operational Workflow (Tasks) */}
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
