@@ -70,8 +70,17 @@ export interface AuditAllocation {
   description: string;
 }
 
+export interface AuditIncoming {
+  id: string;
+  label: string;
+  amount: number;
+  reference: string;
+  date: string;
+}
+
 export interface FinancialAudit {
   totalReceived: number;
+  incomingFunds?: AuditIncoming[];
   allocations: AuditAllocation[];
   refundAmount: number;
   stewardComments: string;

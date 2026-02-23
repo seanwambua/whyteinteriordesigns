@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, AuditAllocation, FinancialAudit } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, AuditAllocation, AuditIncoming, FinancialAudit } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,10 @@ import {
   Lock,
   Wallet,
   RefreshCcw,
-  Zap
+  Zap,
+  TrendingDown,
+  TrendingUp,
+  CreditCard
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -46,16 +49,17 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   const project = clientProjects.find(p => p.id === id);
 
   const [allocations, setAllocations] = useState<AuditAllocation[]>([]);
+  const [incomingFunds, setIncomingFunds] = useState<AuditIncoming[]>([]);
   const [stewardComments, setStewardComments] = useState("");
   const [refundAmount, setRefundAmount] = useState(0);
 
   useEffect(() => {
     setIsMounted(true);
     if (project) {
-      // Initialize with existing audit if available
       const existing = project.auditDetails || project.termination?.audit;
       if (existing) {
         setAllocations(existing.allocations || []);
+        setIncomingFunds(existing.incomingFunds || []);
         setStewardComments(existing.stewardComments || "");
         setRefundAmount(existing.refundAmount || 0);
         setLastSyncTimestamp(existing.submissionDate || null);
@@ -63,17 +67,24 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
     }
   }, [project]);
 
-  const totalPaidByClient = useMemo(() => {
+  const totalRegistryPaid = useMemo(() => {
     if (!project) return 0;
     return project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
   }, [project]);
+
+  const totalIncomingLogged = useMemo(() => {
+    return incomingFunds.reduce((sum, f) => sum + f.amount, 0);
+  }, [incomingFunds]);
 
   const totalAllocated = useMemo(() => {
     return allocations.reduce((sum, a) => sum + a.amount, 0);
   }, [allocations]);
 
-  const remainingBalance = totalPaidByClient - totalAllocated - refundAmount;
+  const remainingBalance = totalIncomingLogged - totalAllocated - refundAmount;
   const hasDiscrepancy = remainingBalance < 0;
+  
+  // Sync Discrepancy: Steward log doesn't match Studio Registry
+  const hasSyncDiscrepancy = lastSyncTimestamp && totalIncomingLogged !== totalRegistryPaid;
 
   if (!isMounted || !project) return null;
 
@@ -84,11 +95,44 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
     setTimeout(() => {
       setIsSyncingRegistry(false);
       setLastSyncTimestamp(new Date().toLocaleTimeString());
-      toast({ 
-        title: "Registry Sync established", 
-        description: `Verified ${project.installments.filter(i => i.status === 'Paid').length} synchronized transactions.`
-      });
+      
+      const registryTotal = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
+      
+      if (totalIncomingLogged !== registryTotal) {
+        toast({ 
+          variant: "destructive",
+          title: "Registry Discrepancy Identified", 
+          description: `Logged funds (KES ${totalIncomingLogged.toLocaleString()}) do not match studio registry (KES ${registryTotal.toLocaleString()}).`
+        });
+      } else {
+        toast({ 
+          title: "Registry Sync Established", 
+          description: "All logged incoming funds match the studio's verified transactions."
+        });
+      }
     }, 1500);
+  };
+
+  const handleAddIncoming = () => {
+    if (isVerified) return;
+    const newEntry: AuditIncoming = {
+      id: `INC-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      label: "",
+      amount: 0,
+      reference: "",
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+    };
+    setIncomingFunds([...incomingFunds, newEntry]);
+  };
+
+  const updateIncoming = (id: string, field: keyof AuditIncoming, value: any) => {
+    if (isVerified) return;
+    setIncomingFunds(incomingFunds.map(f => f.id === id ? { ...f, [field]: value } : f));
+  };
+
+  const removeIncoming = (id: string) => {
+    if (isVerified) return;
+    setIncomingFunds(incomingFunds.filter(f => f.id !== id));
   };
 
   const handleAddAllocation = () => {
@@ -113,11 +157,12 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   };
 
   const handleAuthorizeAudit = () => {
-    if (isVerified || !lastSyncTimestamp) return;
+    if (isVerified || !lastSyncTimestamp || hasSyncDiscrepancy) return;
     setIsSubmitting(true);
     
     const finalAudit: FinancialAudit = {
-      totalReceived: totalPaidByClient,
+      totalReceived: totalIncomingLogged,
+      incomingFunds,
       allocations,
       refundAmount,
       stewardComments,
@@ -145,7 +190,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         </Link>
 
         {isVerified && (
-          <div className="p-6 bg-green-50 border border-green-200 flex items-center gap-4">
+          <div className="p-6 bg-green-50 border border-green-200 flex items-center gap-4 shadow-sm">
             <Lock className="h-5 w-5 text-green-600" />
             <div className="space-y-0.5">
               <p className="text-[11px] font-bold uppercase tracking-widest text-green-600">Audit Verified — Read-Only Mode</p>
@@ -178,15 +223,17 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
       {!isVerified && (
         <Alert className={cn(
-          "rounded-none p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 border-dashed",
-          lastSyncTimestamp ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200 shadow-sm"
+          "rounded-none p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 border-dashed transition-all",
+          hasSyncDiscrepancy ? "bg-red-50 border-red-200" : lastSyncTimestamp ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200 shadow-sm"
         )}>
           <div className="flex gap-4 items-start">
-            {lastSyncTimestamp ? <ShieldCheck className="h-6 w-6 text-green-600 mt-1" /> : <RefreshCcw className="h-6 w-6 text-slate-400 mt-1" />}
+            {hasSyncDiscrepancy ? <AlertTriangle className="h-6 w-6 text-red-600 mt-1" /> : lastSyncTimestamp ? <ShieldCheck className="h-6 w-6 text-green-600 mt-1" /> : <RefreshCcw className="h-6 w-6 text-slate-400 mt-1" />}
             <div className="space-y-1">
               <AlertTitle className="text-[12px] font-bold uppercase tracking-widest">Protocol Sync Check</AlertTitle>
               <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
-                {lastSyncTimestamp 
+                {hasSyncDiscrepancy 
+                  ? `Critical Discrepancy: Verified log (KES ${totalIncomingLogged.toLocaleString()}) does not match Studio Registry (KES ${totalRegistryPaid.toLocaleString()}). authorization locked.`
+                  : lastSyncTimestamp 
                   ? `Synchronization established at ${lastSyncTimestamp}. All project installments verified against registry.` 
                   : "Establishing a sync check is mandatory before authorizing final capital reconciliation."}
               </AlertDescription>
@@ -197,7 +244,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             disabled={isSyncingRegistry || isVerified}
             className={cn(
               "rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-lg transition-all",
-              lastSyncTimestamp ? "bg-green-600 text-white hover:bg-green-700" : "bg-slate-900 text-white hover:bg-black"
+              hasSyncDiscrepancy ? "bg-red-600 text-white hover:bg-red-700" : lastSyncTimestamp ? "bg-green-600 text-white hover:bg-green-700" : "bg-slate-900 text-white hover:bg-black"
             )}
           >
             {isSyncingRegistry ? <><Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...</> : <><RefreshCcw className="h-4 w-4" /> Run Sync Check</>}
@@ -206,40 +253,99 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        <div className="lg:col-span-2 space-y-12">
-          <Card className="rounded-none border-slate-200 bg-white shadow-xl overflow-hidden">
-            <div className="bg-slate-50 px-10 py-6 border-b border-slate-200 flex justify-between items-center">
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500 flex items-center gap-3">
-                <Banknote className="h-4 w-4" /> Capital Summary
-              </h3>
-              <Badge variant="outline" className="rounded-none text-[10px] uppercase border-slate-200">Verified Payments</Badge>
-            </div>
-            <CardContent className="p-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Commitment</p>
-                  <p className="text-3xl font-headline italic text-slate-900">KES {project.totalBudget.toLocaleString()}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Funds Received (Sync Verified)</p>
-                  <p className="text-3xl font-headline italic text-green-600">KES {totalPaidByClient.toLocaleString()}</p>
-                </div>
-              </div>
-              <div className="mt-8 pt-8 border-t border-slate-100">
-                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
-                  <span>Liquidation Progress</span>
-                  <span>{Math.round((totalPaidByClient / project.totalBudget) * 100)}%</span>
-                </div>
-                <Progress value={(totalPaidByClient / project.totalBudget) * 100} className="h-1 bg-slate-100" />
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="lg:col-span-2 space-y-16">
+          {/* INCOMING FUNDS REGISTRY */}
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <ShieldCheck className="h-5 w-5 text-slate-400" />
-                <h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-900">Site Cost Allocations</h2>
+                <TrendingUp className="h-5 w-5 text-slate-400" />
+                <h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-900">Incoming Funds Registry</h2>
+              </div>
+              {!isVerified && (
+                <Button onClick={handleAddIncoming} variant="outline" size="sm" className="rounded-none border-slate-200 uppercase tracking-widest text-[10px] font-bold gap-2">
+                  <Plus className="h-3.5 w-3.5" /> Log Payment
+                </Button>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              {incomingFunds.map((entry) => (
+                <motion.div key={entry.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+                  <Card className="rounded-none border-slate-200 bg-white group relative overflow-hidden">
+                    {!isVerified && (
+                      <Button 
+                        onClick={() => removeIncoming(entry.id)}
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute top-4 right-4 h-8 w-8 text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all z-10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <CardContent className="p-8">
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                        <div className="md:col-span-4 space-y-2">
+                          <Label className="text-[10px] uppercase font-bold text-slate-400">Payment Label</Label>
+                          <Input 
+                            value={entry.label} 
+                            onChange={(e) => updateIncoming(entry.id, 'label', e.target.value)}
+                            readOnly={isVerified}
+                            placeholder="E.g., Initial Deposit" 
+                            className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-slate-100 focus:ring-slate-900"
+                          />
+                        </div>
+                        <div className="md:col-span-3 space-y-2">
+                          <Label className="text-[10px] uppercase font-bold text-slate-400">Amount (KES)</Label>
+                          <Input 
+                            type="number"
+                            value={entry.amount} 
+                            onChange={(e) => updateIncoming(entry.id, 'amount', Number(e.target.value))}
+                            readOnly={isVerified}
+                            className="rounded-none h-12 text-sm font-bold border-slate-100 focus:ring-slate-900"
+                          />
+                        </div>
+                        <div className="md:col-span-3 space-y-2">
+                          <Label className="text-[10px] uppercase font-bold text-slate-400">Ref Code</Label>
+                          <div className="relative">
+                            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-200" />
+                            <Input 
+                              value={entry.reference} 
+                              onChange={(e) => updateIncoming(entry.id, 'reference', e.target.value)}
+                              readOnly={isVerified}
+                              placeholder="TRX-XXXX" 
+                              className="pl-10 rounded-none h-12 text-sm font-mono border-slate-100 focus:ring-slate-900"
+                            />
+                          </div>
+                        </div>
+                        <div className="md:col-span-2 space-y-2">
+                          <Label className="text-[10px] uppercase font-bold text-slate-400">Date</Label>
+                          <Input 
+                            value={entry.date} 
+                            onChange={(e) => updateIncoming(entry.id, 'date', e.target.value)}
+                            readOnly={isVerified}
+                            placeholder="MMM DD, YYYY" 
+                            className="rounded-none h-12 text-[11px] font-bold border-slate-100 focus:ring-slate-900"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+              {incomingFunds.length === 0 && (
+                <div className="py-20 text-center border border-dashed border-slate-200 bg-slate-50">
+                  <p className="text-[11px] uppercase tracking-widest text-slate-400 italic">No incoming payments currently logged for verification</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* SITE COST ALLOCATIONS */}
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <TrendingDown className="h-5 w-5 text-slate-400" />
+                <h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-900">Site Cost Allocations (Outgoing)</h2>
               </div>
               {!isVerified && (
                 <Button onClick={handleAddAllocation} variant="outline" size="sm" className="rounded-none border-slate-200 uppercase tracking-widest text-[10px] font-bold gap-2">
@@ -249,15 +355,15 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             </div>
 
             <div className="space-y-4">
-              {allocations.map((alloc, idx) => (
+              {allocations.map((alloc) => (
                 <motion.div key={alloc.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
-                  <Card className="rounded-none border-slate-200 bg-white group relative">
+                  <Card className="rounded-none border-slate-200 bg-white group relative overflow-hidden">
                     {!isVerified && (
                       <Button 
                         onClick={() => removeAllocation(alloc.id)}
                         variant="ghost" 
                         size="icon" 
-                        className="absolute top-4 right-4 h-8 w-8 text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                        className="absolute top-4 right-4 h-8 w-8 text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all z-10"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -314,7 +420,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               onChange={(e) => setStewardComments(e.target.value)}
               readOnly={isVerified}
               placeholder="Provide a professional summary of the financial audit and any capital reconciliation findings..." 
-              className="min-h-[180px] rounded-none border-slate-200 p-8 font-light italic text-lg leading-relaxed focus:ring-slate-900 bg-white"
+              className="min-h-[180px] rounded-none border-slate-200 p-8 font-light italic text-lg leading-relaxed focus:ring-slate-900 bg-white shadow-sm"
             />
           </div>
         </div>
@@ -328,8 +434,8 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             
             <div className="space-y-10 relative z-10">
               <div className="space-y-1">
-                <p className="text-[10px] uppercase tracking-widest text-slate-400">Cumulative Funds Received</p>
-                <p className="text-3xl font-headline italic text-green-400">KES {totalPaidByClient.toLocaleString()}</p>
+                <p className="text-[10px] uppercase tracking-widest text-slate-400">Verified Incoming Funds</p>
+                <p className="text-3xl font-headline italic text-green-400">KES {totalIncomingLogged.toLocaleString()}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] uppercase tracking-widest text-slate-400">Verified Site Costs</p>
@@ -346,7 +452,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                     className="bg-white/5 border-white/10 text-2xl font-headline italic text-white rounded-none h-14 focus:ring-slate-400"
                   />
                 </div>
-                <div className="pt-4 flex justify-between items-center">
+                <div className="pt-4 flex justify-between items-center border-t border-white/5 mt-4">
                   <span className="text-[10px] uppercase tracking-widest text-slate-400">Escrow Balance</span>
                   <span className={cn(
                     "text-xl font-headline italic",
@@ -357,19 +463,25 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             </div>
 
             {!isVerified && (
-              <div className="space-y-4 relative z-10">
+              <div className="space-y-4 relative z-10 pt-4">
                 {hasDiscrepancy && (
                   <div className="p-4 bg-red-500/10 border border-red-500/20 flex gap-3 items-center">
                     <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
-                    <p className="text-[10px] text-red-200 italic leading-relaxed">Deficit identified. Check allocations against synchronized funds.</p>
+                    <p className="text-[10px] text-red-200 italic leading-relaxed">Capital Deficit identified. Check allocations against synchronized funds.</p>
+                  </div>
+                )}
+                {hasSyncDiscrepancy && (
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 flex gap-3 items-center">
+                    <Zap className="h-4 w-4 text-red-400 shrink-0" />
+                    <p className="text-[10px] text-red-200 italic leading-relaxed">Registry Sync Failed. Logged funds do not match studio records.</p>
                   </div>
                 )}
                 <Button 
                   onClick={handleAuthorizeAudit}
-                  disabled={isSubmitting || totalPaidByClient === 0 || !lastSyncTimestamp || hasDiscrepancy}
+                  disabled={isSubmitting || totalIncomingLogged === 0 || !lastSyncTimestamp || hasDiscrepancy || hasSyncDiscrepancy}
                   className={cn(
                     "w-full h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all flex gap-4",
-                    !lastSyncTimestamp ? "bg-white/5 text-white/40 cursor-not-allowed border-white/10" : "bg-white text-slate-900 hover:bg-slate-100"
+                    (!lastSyncTimestamp || hasSyncDiscrepancy) ? "bg-white/5 text-white/40 cursor-not-allowed border-white/10" : "bg-white text-slate-900 hover:bg-slate-100"
                   )}
                 >
                   {isSubmitting ? (
@@ -386,9 +498,9 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
           </Card>
 
           <div className="p-8 border border-dashed border-slate-200 bg-slate-50 text-center space-y-6">
-            <div className="flex justify-center"><Zap className="h-6 w-6 text-slate-300" /></div>
+            <div className="flex justify-center"><History className="h-6 w-6 text-slate-300" /></div>
             <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 leading-relaxed italic">
-              Registry synchronization verifies the project ledger against external partner entries. Discrepancies lock the authorization protocol.
+              Verification protocol establishes an immutable financial record. Discrepancies between logged funds and studio records lock the authorization cycle.
             </p>
           </div>
         </div>

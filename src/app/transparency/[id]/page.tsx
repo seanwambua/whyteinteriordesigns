@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use, useState, useEffect } from "react";
@@ -17,7 +16,10 @@ import {
   ArrowRight, 
   FileText,
   Building2,
-  AlertCircle
+  AlertCircle,
+  TrendingUp,
+  TrendingDown,
+  CreditCard
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -102,7 +104,7 @@ export default function FinancialTransparencyPage({ params }: { params: Promise<
     );
   }
 
-  const audit = project?.termination?.audit;
+  const audit = project?.auditDetails || project?.termination?.audit;
 
   if (!audit) {
     return (
@@ -137,9 +139,41 @@ export default function FinancialTransparencyPage({ params }: { params: Promise<
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-        <div className="lg:col-span-8 space-y-16">
+        <div className="lg:col-span-8 space-y-20">
+          {/* VERIFIED INCOME SECTION */}
           <section className="space-y-8">
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.5em] text-accent/40">Capital Distribution Breakdown</h2>
+            <div className="flex items-center gap-4">
+              <TrendingUp className="h-4 w-4 text-green-600" />
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.5em] text-accent/40">Verified Incoming Capital</h2>
+            </div>
+            <div className="space-y-4">
+              {audit.incomingFunds?.map((f) => (
+                <div key={f.id} className="p-8 border border-accent/5 bg-secondary/5 flex justify-between items-center group hover:bg-accent/[0.02] transition-colors">
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold uppercase tracking-widest text-accent">{f.label}</p>
+                    <div className="flex items-center gap-4 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                      <span>Ref: {f.reference}</span>
+                      <div className="h-1 w-1 rounded-full bg-accent/10" />
+                      <span>{f.date}</span>
+                    </div>
+                  </div>
+                  <p className="text-2xl font-headline italic text-green-600">KES {f.amount.toLocaleString()}</p>
+                </div>
+              ))}
+              {(!audit.incomingFunds || audit.incomingFunds.length === 0) && (
+                <div className="p-8 border border-dashed border-accent/10 text-center italic text-muted-foreground text-sm font-light">
+                  Direct ledger synchronization utilized for cumulative total.
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* SITE ALLOCATIONS SECTION */}
+          <section className="space-y-8">
+            <div className="flex items-center gap-4">
+              <TrendingDown className="h-4 w-4 text-orange-600" />
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.5em] text-accent/40">Capital Distribution Breakdown</h2>
+            </div>
             <div className="space-y-4">
               {audit.allocations.map((a) => (
                 <div key={a.id} className="p-8 border border-accent/5 bg-secondary/5 flex justify-between items-center group hover:bg-accent/[0.02] transition-colors">
@@ -161,7 +195,7 @@ export default function FinancialTransparencyPage({ params }: { params: Promise<
         </div>
 
         <div className="lg:col-span-4 space-y-8">
-          <Card className="rounded-none border-accent/10 bg-black text-white p-10 space-y-12 shadow-2xl">
+          <Card className="rounded-none border-accent/10 bg-black text-white p-10 space-y-12 shadow-2xl sticky top-32">
             <div className="space-y-10">
               <div className="space-y-1">
                 <p className="text-[9px] uppercase tracking-widest opacity-40">Cumulative Funds Received</p>
