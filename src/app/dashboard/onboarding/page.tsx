@@ -40,7 +40,8 @@ import {
   Handshake,
   LayoutList,
   AlertTriangle,
-  RefreshCcw
+  RefreshCcw,
+  Clock
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
@@ -134,7 +135,7 @@ export default function OnboardingPage() {
         setShowSuccess(true);
         setTimeout(() => {
           router.push("/dashboard");
-        }, 4000);
+        }, 5000);
       }, 2000);
     }
   };
@@ -176,7 +177,7 @@ export default function OnboardingPage() {
     setShowSuccess(true);
     setTimeout(() => {
       router.push("/dashboard");
-    }, 4000);
+    }, 5000);
   };
 
   const handleBack = () => setStep(step - 1);
@@ -203,7 +204,7 @@ export default function OnboardingPage() {
                 transition={{ duration: 2, repeat: Infinity }}
                 className="absolute inset-0 rounded-full border border-white/40"
               />
-              <Trophy className="h-8 w-8 text-white" />
+              <Clock className="h-8 w-8 text-white" />
             </div>
           </motion.div>
           
@@ -215,7 +216,7 @@ export default function OnboardingPage() {
               className="flex justify-center items-center gap-4 mb-2"
             >
               <div className="h-px w-8 bg-white/20" />
-              <span className="text-white/40 text-[10px] font-bold uppercase tracking-[0.5em]">Dossier Synchronized</span>
+              <span className="text-white/40 text-[10px] font-bold uppercase tracking-[0.5em]">Authorization Pending</span>
               <div className="h-px w-8 bg-white/20" />
             </motion.div>
             
@@ -225,7 +226,7 @@ export default function OnboardingPage() {
               transition={{ delay: 0.8 }}
               className="text-4xl md:text-5xl font-headline text-white italic"
             >
-              Welcome to the <br /> <span className="not-italic">Inner Circle.</span>
+              Credentials <span className="not-italic">Submitted.</span>
             </motion.h2>
             
             <motion.p
@@ -234,14 +235,14 @@ export default function OnboardingPage() {
               transition={{ delay: 1.2 }}
               className="text-white/60 font-light text-base italic leading-relaxed max-w-md mx-auto"
             >
-              Your governance and financial protocols are now established. Transitioning you to your workspace...
+              Your deposit data has been transmitted to our Financial Steward. The workspace will unlock once forensic verification is complete.
             </motion.p>
           </div>
 
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: "100%" }}
-            transition={{ duration: 3, ease: "linear", delay: 1 }}
+            transition={{ duration: 4, ease: "linear", delay: 1 }}
             className="h-0.5 bg-white/20 max-w-xs mx-auto overflow-hidden"
           >
             <div className="h-full bg-white w-full" />
@@ -321,7 +322,7 @@ export default function OnboardingPage() {
                         <Briefcase className="h-5 w-5" />
                       </div>
                       <h2 className="text-2xl font-headline italic">Project Verification</h2>
-                      <p className="text-muted-foreground font-light text-sm leading-relaxed">
+                      <p className="text-muted-foreground font-light text-sm leading-relaxed max-w-xl">
                         Enter the unique Project Reference ID found on your design contract (e.g., WP-0082) to securely link your commission dossier.
                       </p>
                     </div>
@@ -524,7 +525,7 @@ export default function OnboardingPage() {
                       <span className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...</span>
                     ) : (
                       <span className="flex items-center gap-3">
-                        {step === totalSteps ? "Finalize Synchronization" : "Continue"} <ChevronRight className="h-4 w-4" />
+                        {step === totalSteps ? "Finalize Submission" : "Continue"} <ChevronRight className="h-4 w-4" />
                       </span>
                     )}
                   </Button>

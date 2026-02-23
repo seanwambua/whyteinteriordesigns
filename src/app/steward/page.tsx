@@ -17,7 +17,9 @@ import {
   TrendingUp,
   Landmark,
   BadgeCheck,
-  Loader2
+  Loader2,
+  RefreshCcw,
+  Banknote
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -42,12 +44,15 @@ export default function StewardDashboardPage() {
   }, [isMounted, router]);
 
   const relevantProjects = useMemo(() => {
-    // RECONCILIATION GUARDRAIL: Stewards only see projects that have Passed technical handover
+    // RECONCILIATION GUARDRAIL: Stewards see:
+    // 1. Projects that have passed technical handover but need final audit
+    // 2. Projects in Planning that need Activation verification
     return clientProjects.filter(p => 
       !p.isArchived && 
-      p.isActivated && 
-      p.handoverStatus === 'Passed' &&
-      p.financialReportStatus !== 'Verified'
+      (
+        (p.isActivated && p.handoverStatus === 'Passed' && p.financialReportStatus !== 'Verified') ||
+        (!p.isActivated && p.pendingActivationData)
+      )
     );
   }, [clientProjects]);
 
@@ -57,8 +62,8 @@ export default function StewardDashboardPage() {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalCapitalUnderReview = relevantProjects.reduce((sum, p) => sum + p.totalBudget, 0);
-  const pendingAuditsCount = relevantProjects.filter(p => p.financialReportStatus !== 'Awaiting Admin').length;
+  const activationRequests = relevantProjects.filter(p => !p.isActivated).length;
+  const pendingAuditsCount = relevantProjects.filter(p => p.isActivated && p.financialReportStatus !== 'Awaiting Admin').length;
 
   if (!isMounted) {
     return (
@@ -70,8 +75,8 @@ export default function StewardDashboardPage() {
   }
 
   const stats = [
-    { label: "Pending Review", value: pendingAuditsCount.toString(), icon: Clock, sub: "Requires Action" },
-    { label: "Capital Under Review", value: `KES ${(totalCapitalUnderReview / 1000000).toFixed(1)}M`, icon: Landmark, sub: "Total Commitment" },
+    { label: "Activation Requests", value: activationRequests.toString(), icon: Banknote, sub: "Pending Activation" },
+    { label: "Audit Pipeline", value: pendingAuditsCount.toString(), icon: Clock, sub: "Requires Action" },
     { label: "Audit Accuracy", value: "99.8%", icon: BadgeCheck, sub: "Stewardship Integrity" },
   ];
 
@@ -119,7 +124,7 @@ export default function StewardDashboardPage() {
       <div className="space-y-8">
         <div className="flex items-center gap-4">
           <Scale className="h-5 w-5 text-slate-400" />
-          <h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-900">Pending Reconciliation Protocols</h2>
+          <h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-900">Pending Reconciliation & Activation Protocols</h2>
         </div>
 
         <div className="bg-white border border-slate-200 shadow-xl overflow-hidden">
@@ -129,7 +134,7 @@ export default function StewardDashboardPage() {
                 <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Dossier ID</th>
                 <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Project Context</th>
                 <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Capital Commitment</th>
-                <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Audit Status</th>
+                <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Audit/Activation</th>
                 <th className="p-6 text-right text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Protocol</th>
               </tr>
             </thead>
@@ -152,17 +157,23 @@ export default function StewardDashboardPage() {
                     </div>
                   </td>
                   <td className="p-6">
-                    <Badge variant="outline" className={cn(
-                      "rounded-none uppercase tracking-widest text-[9px] font-bold py-1 px-3",
-                      p.financialReportStatus === 'Awaiting Admin' ? "bg-accent/10 text-accent border-accent/20" : "bg-orange-50 text-orange-600 border-orange-200"
-                    )}>
-                      {p.financialReportStatus === 'Awaiting Admin' ? 'Findings Submitted' : 'Action Required'}
-                    </Badge>
+                    {!p.isActivated ? (
+                      <Badge className="bg-orange-600 text-white rounded-none uppercase tracking-widest text-[8px] py-1 px-3">
+                        Activation Authorization
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className={cn(
+                        "rounded-none uppercase tracking-widest text-[9px] font-bold py-1 px-3",
+                        p.financialReportStatus === 'Awaiting Admin' ? "bg-accent/10 text-accent border-accent/20" : "bg-blue-50 text-blue-600 border-blue-200"
+                      )}>
+                        {p.financialReportStatus === 'Awaiting Admin' ? 'Findings Submitted' : 'Final Audit Protocol'}
+                      </Badge>
+                    )}
                   </td>
                   <td className="p-6 text-right">
                     <Button asChild variant="ghost" size="sm" className="rounded-none border border-slate-200 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all uppercase tracking-widest text-[10px] font-bold gap-2">
                       <Link href={`/steward/projects/${p.id}`}>
-                        {p.financialReportStatus === 'Awaiting Admin' ? 'Review Audit' : 'Perform Audit'} <ArrowRight className="h-3.5 w-3.5" />
+                        {!p.isActivated ? 'Certify Activation' : p.financialReportStatus === 'Awaiting Admin' ? 'Review Audit' : 'Perform Audit'} <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
                     </Button>
                   </td>
@@ -171,7 +182,7 @@ export default function StewardDashboardPage() {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={5} className="p-20 text-center text-slate-400 italic text-[13px] uppercase tracking-widest">
-                    No active dossiers prioritized for financial reconciliation
+                    No dossiers currently prioritized for activation or reconciliation
                   </td>
                 </tr>
               )}
@@ -182,7 +193,7 @@ export default function StewardDashboardPage() {
 
       <div className="p-10 border border-dashed border-slate-200 text-center bg-white/50">
         <p className="text-[11px] uppercase tracking-[0.5em] text-slate-400 font-bold italic leading-relaxed">
-          Authorized auditing protocol — All actions are logged and synchronized with the master registry.
+          Forensic activation protocol — Commissions are authorized strictly upon verified receipt of initial capital commitment.
         </p>
       </div>
     </div>

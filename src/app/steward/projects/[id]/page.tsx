@@ -182,6 +182,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
           : ins
       );
 
+      // CRITICAL: THIS IS THE ONLY PLACE WHERE isActivated IS SET TO TRUE
       updateClientProject(project.id, {
         isActivated: true,
         initialDepositPaid: true,
@@ -189,12 +190,12 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         status: 'Execution',
         lastActivity: `Commission Activated — Initial Deposit of KES ${activationAmount.toLocaleString()} Forensic Verified by ${financialSteward}`,
         installments: updatedInstallments,
-        pendingActivationData: undefined // Clear pending
+        pendingActivationData: undefined // Clear pending flag
       });
 
       setIsSyncingActivation(false);
       setIsVerifyingActivation(false);
-      toast({ title: "Activation Authorized", description: "Project has transitioned to Live Implementation phase." });
+      toast({ title: "Activation Certified", description: "Dossier authorized for Live Implementation." });
     }, 2000);
   };
 
@@ -252,13 +253,13 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             <ShieldAlert className="h-6 w-6 text-orange-600" />
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 w-full ml-4">
               <div className="space-y-1">
-                <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Initial Activation Verification Required</AlertTitle>
+                <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Forensic Activation Authorization Required</AlertTitle>
                 <AlertDescription className="text-[13px] font-light italic text-orange-600/80">
-                  The client has submitted onboarding payment details. Forensic verification of the initial deposit is required to activate the dossier.
+                  Receipt of capital commitment has been logged. Professional certification of the initial deposit is mandatory to unlock the Execution phase.
                 </AlertDescription>
               </div>
               <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold shadow-lg hover:bg-orange-700 transition-all flex gap-3">
-                <Banknote className="h-4 w-4" /> Verify Activation Deposit
+                <Banknote className="h-4 w-4" /> Certify Activation
               </Button>
             </div>
           </Alert>
@@ -284,7 +285,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   project.reorganization.clientAgreed ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-blue-200 text-blue-800 cursor-default"
                 )}
               >
-                <FileSearch className="h-4 w-4" /> {project.reorganization.clientAgreed ? "Witness Agreement" : "Awaiting Client Sign-off"}
+                <FileSearch className="h-4 w-4" /> Witness Agreement
               </Button>
             </div>
           </Alert>
@@ -302,7 +303,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         </div>
       </motion.div>
 
-      {!isVerified && (
+      {project.isActivated && !isVerified && (
         <Alert className={cn("rounded-none p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 border-dashed transition-all shadow-sm", hasSyncDiscrepancy ? "bg-red-50 border-red-200" : lastSyncTimestamp ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200")}>
           <div className="flex gap-4 items-start">
             {hasSyncDiscrepancy ? <AlertTriangle className="h-6 w-6 text-red-600 mt-1" /> : lastSyncTimestamp ? <ShieldCheck className="h-6 w-6 text-green-600 mt-1" /> : <RefreshCcw className="h-6 w-6 text-slate-400 mt-1" />}
@@ -312,70 +313,85 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        <div className="lg:col-span-2 space-y-16">
-          <div className="space-y-8">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4"><div className="flex items-center gap-4"><TrendingUp className="h-5 w-5 text-slate-400" /><h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-900">Incoming Funds Registry</h2></div>{!isVerified && <Button onClick={handleAddIncoming} variant="ghost" size="sm" className="rounded-none text-slate-400 hover:text-slate-900 uppercase tracking-widest text-[10px] font-bold gap-2"><Plus className="h-3.5 w-3.5" /> Log Payment</Button>}</div>
-            <div className="space-y-6">
-              {incomingFunds.map((entry) => (
-                <motion.div key={entry.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
-                  <Card className={cn("rounded-none border transition-all group relative overflow-hidden", entry.isVerified ? "border-green-600/30 bg-green-600/[0.02]" : "border-slate-200 bg-white")}>
-                    <CardContent className="p-8 space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
-                        <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Payment Label</Label><Input value={entry.label} onChange={(e) => updateIncoming(entry.id, 'label', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-slate-100 focus:ring-slate-900" /></div>
-                        <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Amount (KES)</Label><Input type="number" value={entry.amount} onChange={(e) => updateIncoming(entry.id, 'amount', Number(e.target.value))} readOnly={isVerified || entry.isVerified} className="rounded-none h-12 text-sm font-bold border-slate-100 focus:ring-slate-900" /></div>
-                        <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Ref Code</Label><Input value={entry.reference} onChange={(e) => updateIncoming(entry.id, 'reference', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-12 text-sm font-mono border-slate-100 focus:ring-slate-900" /></div>
-                        <div className="md:col-span-3 space-y-2"><Button variant={entry.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyIncoming(entry.id)} className={cn("h-12 w-full rounded-none uppercase tracking-widest text-[10px] font-bold flex gap-3", entry.isVerified ? "bg-green-600 text-white" : "border-slate-200 text-slate-400")}>{entry.isVerified ? "Certified" : "Certify"}</Button></div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-8">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4"><div className="flex items-center gap-4"><TrendingDown className="h-5 w-5 text-slate-400" /><h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-900">Site Cost Allocations (Expenses)</h2></div>{!isVerified && <Button onClick={handleAddAllocation} variant="ghost" size="sm" className="rounded-none text-slate-400 hover:text-slate-900 uppercase tracking-widest text-[10px] font-bold gap-2"><Plus className="h-3.5 w-3.5" /> Log Allocation</Button>}</div>
-            <div className="space-y-6">
-              {allocations.map((alloc) => (
-                <motion.div key={alloc.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
-                  <Card className={cn("rounded-none border transition-all group relative overflow-hidden", alloc.isVerified ? "border-green-600/30 bg-green-600/[0.02]" : "border-slate-200 bg-white")}>
-                    <CardContent className="p-8 space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
-                        <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Classification</Label><Input value={alloc.category} onChange={(e) => updateAllocation(alloc.id, 'category', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-slate-100 focus:ring-slate-900" /></div>
-                        <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Amount (KES)</Label><Input type="number" value={alloc.amount} onChange={(e) => updateAllocation(alloc.id, 'amount', Number(e.target.value))} readOnly={isVerified || alloc.isVerified} className="rounded-none h-12 text-sm font-bold border-slate-100 focus:ring-slate-900" /></div>
-                        <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Breakdown</Label><Input value={alloc.description} onChange={(e) => updateAllocation(alloc.id, 'description', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-12 text-sm italic border-slate-100 focus:ring-slate-900" /></div>
-                        <div className="md:col-span-3 space-y-2"><Button variant={alloc.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyAllocation(alloc.id)} className={cn("h-12 w-full rounded-none uppercase tracking-widest text-[10px] font-bold flex gap-3", alloc.isVerified ? "bg-green-600 text-white" : "border-slate-200 text-slate-400")}>{alloc.isVerified ? "Certified" : "Certify"}</Button></div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <Label className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-900">Stewardship findings & resolution</Label>
-            <Textarea value={stewardComments} onChange={(e) => setStewardComments(e.target.value)} readOnly={isVerified} placeholder="Provide professional summary..." className="min-h-[180px] rounded-none border-slate-200 p-8 font-light italic text-lg focus:ring-slate-900 bg-white shadow-sm" />
-          </div>
-        </div>
-
-        <div className="space-y-8">
-          <Card className="rounded-none border-slate-900 bg-slate-900 text-white p-10 space-y-10 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-5"><Scale className="h-40 w-40" /></div>
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.4em] text-slate-400 relative z-10">Reconciliation Logic</h3>
-            <div className="space-y-10 relative z-10">
-              <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest text-slate-400">Verified Incoming Funds</p><p className="text-3xl font-headline italic text-green-400">KES {totalIncomingLogged.toLocaleString()}</p></div>
-              <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest text-slate-400">Verified Site Costs</p><p className="text-3xl font-headline italic text-orange-400">KES {totalAllocated.toLocaleString()}</p></div>
-              <div className="pt-8 border-t border-white/10 space-y-4">
-                <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Authorized Refund</p><Input type="number" value={refundAmount} onChange={(e) => setRefundAmount(Number(e.target.value))} readOnly={isVerified} className="bg-white/5 border-white/10 text-2xl font-headline italic text-white rounded-none h-14" /></div>
-                <div className="pt-4 flex justify-between items-center border-t border-white/5 mt-4"><span className="text-[10px] uppercase tracking-widest text-slate-400">Escrow Balance</span><span className={cn("text-xl font-headline italic", hasDiscrepancy ? "text-red-400" : "text-white")}>KES {remainingBalance.toLocaleString()}</span></div>
+      {project.isActivated ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="lg:col-span-2 space-y-16">
+            <div className="space-y-8">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4"><div className="flex items-center gap-4"><TrendingUp className="h-5 w-5 text-slate-400" /><h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-900">Incoming Funds Registry</h2></div>{!isVerified && <Button onClick={handleAddIncoming} variant="ghost" size="sm" className="rounded-none text-slate-400 hover:text-slate-900 uppercase tracking-widest text-[10px] font-bold gap-2"><Plus className="h-3.5 w-3.5" /> Log Payment</Button>}</div>
+              <div className="space-y-6">
+                {incomingFunds.map((entry) => (
+                  <motion.div key={entry.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+                    <Card className={cn("rounded-none border transition-all group relative overflow-hidden", entry.isVerified ? "border-green-600/30 bg-green-600/[0.02]" : "border-slate-200 bg-white")}>
+                      <CardContent className="p-8 space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
+                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Payment Label</Label><Input value={entry.label} onChange={(e) => updateIncoming(entry.id, 'label', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-slate-100 focus:ring-slate-900" /></div>
+                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Amount (KES)</Label><Input type="number" value={entry.amount} onChange={(e) => updateIncoming(entry.id, 'amount', Number(e.target.value))} readOnly={isVerified || entry.isVerified} className="rounded-none h-12 text-sm font-bold border-slate-100 focus:ring-slate-900" /></div>
+                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Ref Code</Label><Input value={entry.reference} onChange={(e) => updateIncoming(entry.id, 'reference', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-12 text-sm font-mono border-slate-100 focus:ring-slate-900" /></div>
+                          <div className="md:col-span-3 space-y-2"><Button variant={entry.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyIncoming(entry.id)} className={cn("h-12 w-full rounded-none uppercase tracking-widest text-[10px] font-bold flex gap-3", entry.isVerified ? "bg-green-600 text-white" : "border-slate-200 text-slate-400")}>{entry.isVerified ? "Certified" : "Certify"}</Button></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
               </div>
             </div>
-            {!isVerified && <Button onClick={handleAuthorizeAudit} disabled={isSubmitting || totalIncomingLogged === 0 || !lastSyncTimestamp || hasDiscrepancy || hasSyncDiscrepancy || !allFundsVerified || !allAllocationsVerified} className="w-full h-16 rounded-none bg-white text-slate-900 uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all flex gap-4 items-center justify-center">{isSubmitting ? <><Loader2 className="h-5 w-5 animate-spin" /> Transmitting...</> : <><ShieldCheck className="h-6 w-6" /> Transmit to Admin</>}</Button>}
-          </Card>
+
+            <div className="space-y-8">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4"><div className="flex items-center gap-4"><TrendingDown className="h-5 w-5 text-slate-400" /><h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-900">Site Cost Allocations (Expenses)</h2></div>{!isVerified && <Button onClick={handleAddAllocation} variant="ghost" size="sm" className="rounded-none text-slate-400 hover:text-slate-900 uppercase tracking-widest text-[10px] font-bold gap-2"><Plus className="h-3.5 w-3.5" /> Log Allocation</Button>}</div>
+              <div className="space-y-6">
+                {allocations.map((alloc) => (
+                  <motion.div key={alloc.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+                    <Card className={cn("rounded-none border transition-all group relative overflow-hidden", alloc.isVerified ? "border-green-600/30 bg-green-600/[0.02]" : "border-slate-200 bg-white")}>
+                      <CardContent className="p-8 space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
+                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Classification</Label><Input value={alloc.category} onChange={(e) => updateAllocation(alloc.id, 'category', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-slate-100 focus:ring-slate-900" /></div>
+                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Amount (KES)</Label><Input type="number" value={alloc.amount} onChange={(e) => updateAllocation(alloc.id, 'amount', Number(e.target.value))} readOnly={isVerified || alloc.isVerified} className="rounded-none h-12 text-sm font-bold border-slate-100 focus:ring-slate-900" /></div>
+                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Breakdown</Label><Input value={alloc.description} onChange={(e) => updateAllocation(alloc.id, 'description', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-12 text-sm italic border-slate-100 focus:ring-slate-900" /></div>
+                          <div className="md:col-span-3 space-y-2"><Button variant={alloc.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyAllocation(alloc.id)} className={cn("h-12 w-full rounded-none uppercase tracking-widest text-[10px] font-bold flex gap-3", alloc.isVerified ? "bg-green-600 text-white" : "border-slate-200 text-slate-400")}>{alloc.isVerified ? "Certified" : "Certify"}</Button></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Label className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-900">Stewardship findings & resolution</Label>
+              <Textarea value={stewardComments} onChange={(e) => setStewardComments(e.target.value)} readOnly={isVerified} placeholder="Provide professional summary..." className="min-h-[180px] rounded-none border-slate-200 p-8 font-light italic text-lg focus:ring-slate-900 bg-white shadow-sm" />
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <Card className="rounded-none border-slate-900 bg-slate-900 text-white p-10 space-y-10 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-5"><Scale className="h-40 w-40" /></div>
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.4em] text-slate-400 relative z-10">Reconciliation Logic</h3>
+              <div className="space-y-10 relative z-10">
+                <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest text-slate-400">Verified Incoming Funds</p><p className="text-3xl font-headline italic text-green-400">KES {totalIncomingLogged.toLocaleString()}</p></div>
+                <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest text-slate-400">Verified Site Costs</p><p className="text-3xl font-headline italic text-orange-400">KES {totalAllocated.toLocaleString()}</p></div>
+                <div className="pt-8 border-t border-white/10 space-y-4">
+                  <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Authorized Refund</p><Input type="number" value={refundAmount} onChange={(e) => setRefundAmount(Number(e.target.value))} readOnly={isVerified} className="bg-white/5 border-white/10 text-2xl font-headline italic text-white rounded-none h-14" /></div>
+                  <div className="pt-4 flex justify-between items-center border-t border-white/5 mt-4"><span className="text-[10px] uppercase tracking-widest text-slate-400">Escrow Balance</span><span className={cn("text-xl font-headline italic", hasDiscrepancy ? "text-red-400" : "text-white")}>KES {remainingBalance.toLocaleString()}</span></div>
+                </div>
+              </div>
+              {!isVerified && <Button onClick={handleAuthorizeAudit} disabled={isSubmitting || totalIncomingLogged === 0 || !lastSyncTimestamp || hasDiscrepancy || hasSyncDiscrepancy || !allFundsVerified || !allAllocationsVerified} className="w-full h-16 rounded-none bg-white text-slate-900 uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all flex gap-4 items-center justify-center">{isSubmitting ? <><Loader2 className="h-5 w-5 animate-spin" /> Transmitting...</> : <><ShieldCheck className="h-6 w-6" /> Transmit to Admin</>}</Button>}
+            </Card>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="text-center py-40 bg-white border border-slate-200 space-y-8">
+          <div className="h-20 w-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto">
+            <Lock className="h-10 w-10 text-orange-600" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-headline italic text-slate-900">Dossier Locked — Awaiting Activation</h2>
+            <p className="text-slate-500 font-light italic max-w-md mx-auto">Forensic audit functions are restricted until the initial capital commitment has been certified and the journey activated.</p>
+          </div>
+          <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl hover:bg-orange-700 transition-all flex gap-3 mx-auto">
+            <Banknote className="h-5 w-5" /> Certify Activation Deposit
+          </Button>
+        </div>
+      )}
 
       {/* ACTIVATION VERIFICATION DIALOG */}
       <Dialog open={isVerifyingActivation} onOpenChange={setIsVerifyingActivation}>
@@ -390,12 +406,12 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             <div className="space-y-8">
               <div className="p-6 bg-orange-50/50 border border-orange-100 space-y-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-orange-600/60">Client Reported Reference</span>
-                  <span className="text-lg font-mono font-bold text-slate-900">{project.pendingActivationData?.reference}</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-orange-600/60">Reported Reference</span>
+                  <span className="text-lg font-mono font-bold text-slate-900">{project.pendingActivationData?.reference || activationCode}</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-orange-600/60">Client Reported Amount</span>
-                  <span className="text-lg font-headline italic text-slate-900">KES {project.pendingActivationData?.amount.toLocaleString()}</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-orange-600/60">Reported Amount</span>
+                  <span className="text-lg font-headline italic text-slate-900">KES {project.pendingActivationData?.amount.toLocaleString() || activationAmount.toLocaleString()}</span>
                 </div>
               </div>
 

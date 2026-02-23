@@ -27,7 +27,9 @@ import {
   Info,
   PencilRuler,
   Building2,
-  Clock
+  Clock,
+  ShieldAlert,
+  RefreshCcw
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -109,7 +111,15 @@ export default function ProjectPlanningPage() {
     if (activationProject) {
       setAssignedStewardId(activationProject.assignedStewardId || "");
       const deposit = activationProject.installments.find(i => i.label.toLowerCase().includes('deposit'));
-      setActivationAmount(deposit?.amount || 0);
+      
+      // If client already submitted data, pre-fill for admin review before transmission
+      if (activationProject.pendingActivationData) {
+        setActivationAmount(activationProject.pendingActivationData.amount);
+        setDepositCode(activationProject.pendingActivationData.reference);
+      } else {
+        setActivationAmount(deposit?.amount || 0);
+        setDepositCode("");
+      }
       setActivationDate(new Date());
     }
   }, [activationProject]);
@@ -118,36 +128,28 @@ export default function ProjectPlanningPage() {
 
   const pendingPlanning = clientProjects.filter(p => p.status === 'Planning' && !p.isArchived);
 
-  const handleActivateJourney = () => {
+  const handleTransmitToSteward = () => {
     if (!activationProject || !depositCode || !assignedStewardId) return;
     setIsActivating(true);
+    
     setTimeout(() => {
-      const updatedInstallments = activationProject.installments.map(ins => 
-        ins.label.toLowerCase().includes('deposit') 
-          ? { 
-              ...ins, 
-              status: 'Paid' as const, 
-              transactionCode: depositCode, 
-              amount: activationAmount,
-              date: format(activationDate, "MMM dd, yyyy")
-            } 
-          : ins
-      );
       updateClientProject(activationProject.id, {
-        isActivated: true,
-        initialDepositPaid: true,
-        depositCode: depositCode,
+        pendingActivationData: {
+          amount: activationAmount,
+          reference: depositCode,
+          timestamp: new Date().toISOString()
+        },
         assignedStewardId: assignedStewardId,
-        status: 'Execution',
-        lastActivity: `Journey Activated — Initial Deposit of KES ${activationAmount.toLocaleString()} Verified by ${stewards.find(s => s.id === assignedStewardId)?.name || 'Authorized Steward'}`,
-        installments: updatedInstallments
+        lastActivity: `Deposit Receipt Logged by Admin — Awaiting Steward Forensic Verification`
       });
       setIsActivating(false);
       setActivationProject(null);
       setDepositCode("");
       setAssignedStewardId("");
-      toast({ title: "Journey Activated" });
-      router.push("/admin/operations/implementation");
+      toast({ 
+        title: "Transmission Authorized", 
+        description: "Initial deposit data sent to Financial Steward for forensic verification." 
+      });
     }, 1500);
   };
 
@@ -283,20 +285,22 @@ export default function ProjectPlanningPage() {
 
       <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
         <Info className="h-5 w-5 text-accent" />
-        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Authorization Guardrail</AlertTitle>
+        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Activation Protocol Mandate</AlertTitle>
         <AlertDescription className="text-base font-light italic text-muted-foreground leading-relaxed">
-          Pending briefings require a verified initial deposit and an assigned Financial Steward to transition to the **Implementation** phase.
+          Initial deposits must be transmitted to the assigned Financial Steward for forensic verification. A dossier transitions to **Execution** only after Steward certification.
         </AlertDescription>
       </Alert>
 
       <div className="grid grid-cols-1 gap-8">
         {pendingPlanning.map((project, index) => {
           const assignedSteward = stewards.find(s => s.id === project.assignedStewardId);
+          const isAwaitingSteward = !!project.pendingActivationData;
+
           return (
             <motion.div key={project.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
               <Card className={cn(
                 "rounded-none border-accent/5 shadow-2xl bg-white overflow-hidden group min-h-[300px] border-l-4",
-                project.initializedBy === 'Designer' ? 'border-l-accent' : 'border-l-orange-500/40'
+                isAwaitingSteward ? 'border-l-blue-500' : project.initializedBy === 'Designer' ? 'border-l-accent' : 'border-l-orange-500/40'
               )}>
                 <div className="flex flex-col md:flex-row items-stretch h-full">
                   <div className="p-10 border-b md:border-b-0 md:border-r border-accent/5 flex flex-col justify-between min-w-[300px] bg-secondary/5">
@@ -323,8 +327,12 @@ export default function ProjectPlanningPage() {
                       </div>
                     </div>
                     <div className="space-y-3 pt-10">
-                      <p className="text-[10px] font-bold text-orange-600/60 uppercase tracking-[0.3em]">Authorization Status</p>
-                      <div className="flex items-center gap-3 text-[12px] font-bold text-orange-600 uppercase tracking-widest"><Banknote className="h-4 w-4" /> Awaiting Deposit Sync</div>
+                      <p className="text-[10px] font-bold text-orange-600/60 uppercase tracking-[0.3em]">Lifecycle State</p>
+                      {isAwaitingSteward ? (
+                        <div className="flex items-center gap-3 text-[12px] font-bold text-blue-600 uppercase tracking-widest animate-pulse"><RefreshCcw className="h-4 w-4" /> Awaiting Steward Forensic Sync</div>
+                      ) : (
+                        <div className="flex items-center gap-3 text-[12px] font-bold text-orange-600 uppercase tracking-widest"><Banknote className="h-4 w-4" /> Awaiting Deposit Sync</div>
+                      )}
                     </div>
                   </div>
                   <div className="flex-1 p-10 md:p-12 flex flex-col justify-between">
@@ -346,7 +354,9 @@ export default function ProjectPlanningPage() {
                         <Button variant="ghost" onClick={() => handleOpenEdit(project)} className="rounded-none h-12 px-6 text-[11px] uppercase tracking-widest font-bold text-accent/60 hover:text-accent hover:bg-accent/5 transition-all"><Settings2 className="h-4 w-4 mr-2" /> Master Edit</Button>
                         <Button variant="ghost" onClick={() => setDeleteId(project.id)} className="rounded-none h-12 px-6 text-[11px] uppercase tracking-widest font-bold text-destructive/40 hover:text-destructive hover:bg-destructive/5 transition-all"><Trash2 className="h-4 w-4 mr-2" /> Purge Brief</Button>
                       </div>
-                      <Button onClick={() => setActivationProject(project)} className="h-16 px-12 rounded-none bg-orange-600 text-white uppercase tracking-widest text-[11px] font-bold hover:bg-orange-700 transition-all flex gap-3 shadow-2xl hover:tracking-[0.2em]"><ShieldCheck className="h-5 w-5" /> Authorize Activation</Button>
+                      <Button onClick={() => setActivationProject(project)} className="h-16 px-12 rounded-none bg-orange-600 text-white uppercase tracking-widest text-[11px] font-bold hover:bg-orange-700 transition-all flex gap-3 shadow-2xl hover:tracking-[0.2em]">
+                        {isAwaitingSteward ? <><RefreshCcw className="h-5 w-5" /> Update Receipt Details</> : <><ShieldCheck className="h-5 w-5" /> Confirm Receipt for Steward</>}
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -527,15 +537,17 @@ export default function ProjectPlanningPage() {
           <div className="bg-orange-600 h-1.5 w-full" />
           <div className="p-12 space-y-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
             <DialogHeader className="space-y-4">
-              <div className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-orange-600" /><span className="text-orange-600 text-[12px] font-bold uppercase tracking-[0.4em]">Activation Protocol</span></div>
-              <DialogTitle className="text-3xl font-headline italic">Verify Commitment</DialogTitle>
-              <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">Transitioning <strong>{activationProject?.project}</strong> to site implementation requires formal verification of the initial capital commitment and assigned stewardship.</DialogDescription>
+              <div className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-orange-600" /><span className="text-orange-600 text-[12px] font-bold uppercase tracking-[0.4em]">Administrative Verification</span></div>
+              <DialogTitle className="text-3xl font-headline italic">Confirm Receipt</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">
+                Log the transaction reference for <strong>{activationProject?.project}</strong>. This data will be transmitted to the assigned Steward for forensic certification.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-10">
               <div className="p-8 bg-orange-500/5 border border-orange-500/10 space-y-4 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-16 w-16" /></div>
                 <div className="flex flex-col gap-1 relative z-10">
-                  <span className="text-[11px] uppercase tracking-widest font-bold text-orange-600/60">Authorized Deposit Value</span>
+                  <span className="text-[11px] uppercase tracking-widest font-bold text-orange-600/60">Expected Deposit Value</span>
                   <span className="text-3xl font-headline italic text-orange-600">KES {activationProject ? (activationProject.installments.find(i => i.label.toLowerCase().includes('deposit'))?.amount || 0).toLocaleString() : 0}</span>
                 </div>
               </div>
@@ -585,10 +597,10 @@ export default function ProjectPlanningPage() {
             <DialogFooter className="pt-6">
               <Button 
                 className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em]" 
-                onClick={handleActivateJourney} 
+                onClick={handleTransmitToSteward} 
                 disabled={isActivating || !depositCode || !assignedStewardId}
               >
-                {isActivating ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span> : "Authorize Commission Activation"}
+                {isActivating ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Transmitting...</span> : "Authorize Transmission to Steward"}
               </Button>
             </DialogFooter>
           </div>
