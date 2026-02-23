@@ -55,8 +55,6 @@ export default function InsightsLayout({ children }: { children: React.ReactNode
   const subNav = [
     { title: "Fiscal Terminal", href: "/admin/insights/fiscal", icon: Wallet },
     { title: "Tactical Pipeline", href: "/admin/insights/tactical", icon: Target },
-    { title: "Operational Health", href: "/admin/insights/operational", icon: Zap },
-    { title: "Market Presence", href: "/admin/insights/market", icon: Globe },
   ];
 
   return (
