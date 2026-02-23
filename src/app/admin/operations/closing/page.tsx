@@ -232,7 +232,7 @@ export default function ProjectClosingPage() {
                           ) : (
                             <TooltipProvider>
                               <Tooltip>
-                                TooltipTrigger asChild>
+                                <TooltipTrigger asChild>
                                   <div className="inline-block">
                                     <Button 
                                       onClick={() => handleVerifyReport(project.id)} 
