@@ -52,7 +52,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   const { toast } = useToast();
   
   const [isMounted, setIsMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState("workflow");
+  const [activeTab, setActiveTab] = useState("overview");
   const [isAddingReport, setIsAddingReport] = useState(false);
   const [newReport, setNewReport] = useState<Partial<SiteReport>>({
     type: 'Progress',
@@ -275,8 +275,26 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
         </TabsContent>
 
         <TabsContent value="logs" className="m-0 space-y-10">
-          <div className="flex items-center justify-between"><div className="flex items-center gap-4"><ClipboardList className="h-5 w-5 text-accent/40" /><h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent">Site Log Registry</h2></div>{!isReadOnly && <Button onClick={() => setIsAddingReport(true)} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl"><Plus className="h-4 w-4" /> New Site Entry</Button>}</div>
-          <div className="space-y-6">{(project.siteReports || []).map((log, index) => (<motion.div key={log.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}><Card className="rounded-none border-neutral-100 bg-white group shadow-sm hover:shadow-md transition-all overflow-hidden"><div className="flex flex-col md:flex-row"><div className={cn("w-1.5 shrink-0", log.urgency === 'Critical' ? 'bg-red-500' : log.urgency === 'High' ? 'bg-orange-400' : 'bg-accent/20')} /><div className="flex-1 p-8 space-y-4"><div className="flex items-center justify-between"><div className="flex items-center gap-4"><span className="text-[10px] font-bold text-accent/40 uppercase tracking-widest">{log.id}</span><Badge variant="outline" className="rounded-none text-[9px] uppercase border-neutral-100">{log.type}</Badge></div><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{log.date}</span></div><p className="text-base font-light italic leading-relaxed text-accent/80">"{log.content}"</p></div></div></Card></motion.div>))}{(!project.siteReports || project.siteReports.length === 0) && <div className="py-24 text-center border border-dashed border-neutral-200 bg-neutral-50/50 italic text-[12px] uppercase tracking-widest text-muted-foreground font-light">No site log entries currently synchronized for this dossier</div>}</div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4"><ClipboardList className="h-5 w-5 text-accent/40" /><h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent">Site Log Registry</h2></div>
+            {!isReadOnly && <Button onClick={() => setIsAddingReport(true)} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl"><Plus className="h-4 w-4" /> New Site Entry</Button>}
+          </div>
+          <div className="space-y-6">
+            {(project.siteReports || []).map((log, index) => (
+              <motion.div key={log.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
+                <Card className="rounded-none border-neutral-100 bg-white group shadow-sm hover:shadow-md transition-all overflow-hidden">
+                  <div className="flex flex-col md:flex-row">
+                    <div className={cn("w-1.5 shrink-0", log.urgency === 'Critical' ? 'bg-red-500' : log.urgency === 'High' ? 'bg-orange-400' : 'bg-accent/20')} />
+                    <div className="flex-1 p-8 space-y-4">
+                      <div className="flex items-center justify-between"><div className="flex items-center gap-4"><span className="text-[10px] font-bold text-accent/40 uppercase tracking-widest">{log.id}</span><Badge variant="outline" className="rounded-none text-[9px] uppercase border-neutral-100">{log.type}</Badge></div><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{log.date}</span></div>
+                      <p className="text-base font-light italic leading-relaxed text-accent/80">"{log.content}"</p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+            {(!project.siteReports || project.siteReports.length === 0) && <div className="py-24 text-center border border-dashed border-neutral-200 bg-neutral-50/50 italic text-[12px] uppercase tracking-widest text-muted-foreground font-light">No site log entries currently synchronized for this dossier</div>}
+          </div>
         </TabsContent>
 
         <TabsContent value="ledger" className="m-0 space-y-12">
