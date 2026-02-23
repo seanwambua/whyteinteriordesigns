@@ -155,6 +155,12 @@ export interface Collaborator {
   type: string;
 }
 
+export interface BusinessTargets {
+  monthlyRevenueGoal: number;
+  projectVolumeGoal: number;
+  efficiencyTarget: number;
+}
+
 interface WhyteState {
   projects: Project[];
   clientProjects: ClientProject[];
@@ -162,6 +168,7 @@ interface WhyteState {
   feedback: Feedback[];
   collaborators: Collaborator[];
   financialSteward: string;
+  businessTargets: BusinessTargets;
   
   addProject: (project: Project) => void;
   removeProject: (id: string) => void;
@@ -182,6 +189,7 @@ interface WhyteState {
   removeCollaborator: (id: string) => void;
   
   setFinancialSteward: (steward: string) => void;
+  updateBusinessTargets: (targets: Partial<BusinessTargets>) => void;
   
   clearAllData: () => void;
 }
@@ -286,6 +294,11 @@ export const useWhyteStore = create<WhyteState>()(
       feedback: [],
       collaborators: initialCollaborators,
       financialSteward: "Imani Financial Services (IFS-KE)",
+      businessTargets: {
+        monthlyRevenueGoal: 50000000,
+        projectVolumeGoal: 10,
+        efficiencyTarget: 95
+      },
 
       addProject: (project) => set((state) => ({ projects: [...state.projects, project] })),
       removeProject: (id) => set((state) => ({ projects: state.projects.filter(p => p.id !== id) })),
@@ -316,6 +329,9 @@ export const useWhyteStore = create<WhyteState>()(
       removeCollaborator: (id) => set((state) => ({ collaborators: state.collaborators.filter(c => c.id !== id) })),
 
       setFinancialSteward: (steward) => set({ financialSteward: steward }),
+      updateBusinessTargets: (updates) => set((state) => ({
+        businessTargets: { ...state.businessTargets, ...updates }
+      })),
 
       clearAllData: () => set({
         projects: [],
@@ -323,7 +339,12 @@ export const useWhyteStore = create<WhyteState>()(
         inquiries: [],
         feedback: [],
         collaborators: [],
-        financialSteward: "Imani Financial Services (IFS-KE)"
+        financialSteward: "Imani Financial Services (IFS-KE)",
+        businessTargets: {
+          monthlyRevenueGoal: 50000000,
+          projectVolumeGoal: 10,
+          efficiencyTarget: 95
+        }
       }),
     }),
     {
