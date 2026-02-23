@@ -80,7 +80,8 @@ export default function HandoverProtocolPage() {
         status: 'Completion', 
         handoverStatus: 'Passed',
         lastActivity: "Handover Protocol Authorized — Site Keys & Quality Sign-off Verified",
-        progress: 100
+        progress: 100,
+        financialReportStatus: 'Awaiting Steward'
       });
       toast({ 
         title: "Handover Synchronized", 
@@ -96,7 +97,7 @@ export default function HandoverProtocolPage() {
     
     setTimeout(() => {
       updateClientProject(rejectingProject.id, {
-        status: 'Execution', // SEND BACK TO LIVE IMPLEMENTATION
+        status: 'Execution', 
         handoverStatus: 'Failed',
         handoverNotes: rejectionNotes,
         lastActivity: "Handover Rejected — Returned to Implementation for Fixes"

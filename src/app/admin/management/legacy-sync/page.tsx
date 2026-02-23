@@ -189,17 +189,19 @@ export default function LegacyReconciliationPage() {
       });
     }
 
+    const isDirectArchive = formData.syncPath === 'Archive_Review';
+
     const legacyDossier: ClientProject = { 
       id, 
       name: formData.name, 
       email: formData.email, 
       project: formData.project, 
       tier: formData.tier, 
-      status: 'Completion', 
-      progress: 95, 
+      status: isDirectArchive ? 'Completion' : formData.syncPath === 'Implementation' ? 'Execution' : 'Completion', 
+      progress: isDirectArchive ? 100 : 90, 
       startDate: format(formData.startDate, "MMM dd, yyyy"), 
       endDate: format(formData.endDate, "MMM dd, yyyy"), 
-      lastActivity: `Legacy Reconciliation: Dossier Transmitted to Handover Review.`, 
+      lastActivity: `Legacy Reconciliation: Dossier Transmitted to ${formData.syncPath} Protocol.`, 
       isActivated: true, 
       initialDepositPaid: true, 
       totalBudget: budget, 
@@ -209,16 +211,16 @@ export default function LegacyReconciliationPage() {
       description: formData.description,
       vendorAllocations: allocations,
       assignedDesignerId: formData.assignedDesignerId,
-      isArchived: false,
-      financialReportStatus: 'Awaiting Steward',
-      handoverStatus: 'Pending',
+      isArchived: isDirectArchive,
+      financialReportStatus: isDirectArchive ? 'Verified' : 'Awaiting Steward',
+      handoverStatus: isDirectArchive ? 'Passed' : 'Pending',
     };
 
     setTimeout(() => { 
       addClientProject(legacyDossier); 
       setLoading(false); 
-      toast({ title: "Legacy Sync Authorized", description: `Dossier ${id} registered. Injected into pipeline for Handover and Financial Audit.` });
-      router.push("/admin/operations/handover"); 
+      toast({ title: "Legacy Sync Authorized", description: `Dossier ${id} registered. Injected into pipeline for Verification.` });
+      router.push(isDirectArchive ? "/admin/clients?tab=archives" : "/admin/operations/handover"); 
     }, 1500);
   };
 
@@ -270,7 +272,7 @@ export default function LegacyReconciliationPage() {
                     {[
                       { id: 'Implementation', label: 'Active Site Sync', icon: PlayCircle, sub: 'Needs Execution Completion' },
                       { id: 'Handover', label: 'Handover Entry', icon: Handshake, sub: 'Direct to Handover review' },
-                      { id: 'Archive_Review', label: 'Archival Review', icon: Archive, sub: 'Historical Data Entry only' },
+                      { id: 'Archive_Review', label: 'Direct Archival', icon: Archive, sub: 'Historical Data Entry only' },
                     ].map((path) => (
                       <button
                         key={path.id}
@@ -293,7 +295,7 @@ export default function LegacyReconciliationPage() {
               )}
 
               {step === 2 && (
-                <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><User className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Dossier Identity</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Client Identity</Label><Input placeholder="E.g., Adnan Kibet" className="rounded-none border-accent/20 h-14 text-lg focus:ring-accent" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} /></div>
@@ -305,7 +307,7 @@ export default function LegacyReconciliationPage() {
               )}
 
               {step === 3 && (
-                <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><LayoutList className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Operational Status</h3></div>
                   {formData.syncPath === 'Archive_Review' ? (
                     <div className="text-center py-20 border border-dashed border-accent/10 space-y-4">
@@ -348,7 +350,7 @@ export default function LegacyReconciliationPage() {
               )}
 
               {step === 4 && (
-                <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><PencilRuler className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Creative & Network Attribution</h3></div>
                   <div className="space-y-6">
                     <div className="space-y-3">
@@ -384,7 +386,7 @@ export default function LegacyReconciliationPage() {
               )}
 
               {step === 5 && (
-                <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><Calculator className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Fiscal Reconciliation</h3></div>
                   <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Contract Value (KES)</Label><Input type="number" placeholder="Original Budget" className="rounded-none border-accent/20 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} /></div>
                   <div className="space-y-8">
@@ -410,7 +412,7 @@ export default function LegacyReconciliationPage() {
               )}
 
               {step === 6 && (
-                <motion.div key="s6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><FileClock className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Sync Authorization</h3></div>
                   <div className="space-y-6">
                     <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Archival Metadata</Label><Textarea placeholder="Verification notes for handover review..." className="min-h-[180px] rounded-none border-accent/20 text-lg p-8 font-light italic leading-relaxed focus:ring-accent bg-secondary/5" value={formData.archivalNotes} onChange={(e) => setFormData({...formData, archivalNotes: e.target.value})} /></div>
