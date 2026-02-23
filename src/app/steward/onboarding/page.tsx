@@ -19,11 +19,14 @@ import {
   FileText, 
   ArrowLeft,
   Landmark,
-  Building2
+  Building2,
+  BadgeCheck,
+  Award
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useWhyteStore } from "@/store/use-whyte-store";
+import { Badge } from "@/components/ui/badge";
 
 export default function StewardOnboardingPage() {
   const [step, setStep] = useState(1);
@@ -38,8 +41,10 @@ export default function StewardOnboardingPage() {
     accessToken: "",
     stewardId: "",
     stewardName: "",
+    authorizedDate: "",
     agreedToTerms: false,
     agreedToNDA: false,
+    consentText: "",
     notifications: true
   });
 
@@ -56,7 +61,8 @@ export default function StewardOnboardingPage() {
         setFormData({
           ...formData,
           stewardId: found.id,
-          stewardName: found.name
+          stewardName: found.name,
+          authorizedDate: found.authorizedDate
         });
         setStep(2);
       } else {
@@ -67,12 +73,12 @@ export default function StewardOnboardingPage() {
         });
       }
     } else if (step === 2) {
-      if (formData.agreedToTerms && formData.agreedToNDA) {
+      if (formData.agreedToTerms && formData.agreedToNDA && formData.consentText === "I CONSENT") {
         setStep(3);
       } else {
         toast({
           title: "Legal Protocol Incomplete",
-          description: "You must authorize all legal clauses to proceed.",
+          description: "You must authorize all legal clauses and explicitly type 'I CONSENT' to proceed.",
           variant: "destructive"
         });
       }
@@ -231,21 +237,22 @@ export default function StewardOnboardingPage() {
                       <div className="h-12 w-12 bg-slate-50 flex items-center justify-center text-slate-900 mb-4 border border-slate-100">
                         <Scale className="h-5 w-5" />
                       </div>
-                      <h2 className="text-3xl font-headline italic">Legal Synchronization</h2>
+                      <h2 className="text-3xl font-headline italic">Ethics & Legal Protocol</h2>
                       <p className="text-slate-500 font-light text-sm leading-relaxed">
-                        Authorize the professional frameworks governing your access to the studio ledger.
+                        Authorize the professional frameworks and ethics governing your access to the studio ledger.
                       </p>
                     </div>
                     
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Non-Disclosure & Privacy Protocol</Label>
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Professional Mandates</Label>
                         <ScrollArea className="h-40 w-full border border-slate-100 p-5 bg-slate-50/50">
                           <div className="text-[11px] font-light leading-relaxed text-slate-600 space-y-3 italic">
-                            <p><strong>1. Confidentiality Commitment:</strong> The Steward acknowledges that all financial data, client identities, and site cost allocations are proprietary.</p>
-                            <p><strong>2. Data Sovereignty:</strong> No data extracted may be reproduced or transmitted outside the authorized reconciliation cycle.</p>
-                            <p><strong>3. Audit Integrity:</strong> The Steward agrees to perform all functions with professional precision.</p>
-                            <p><strong>4. Impasse Resolution:</strong> Any discrepancies must be escalated to the Senior Developer Panel.</p>
+                            <p><strong>1. Forensic Integrity:</strong> The Steward must perform all audits with uncompromising accuracy and professional skepticism.</p>
+                            <p><strong>2. Conflict of Interest:</strong> Stewards must declare any commercial interest in site trade partners or material suppliers.</p>
+                            <p><strong>3. Confidentiality Commitment:</strong> All financial data, client identities, and site cost allocations are proprietary.</p>
+                            <p><strong>4. Data Sovereignty:</strong> No data extracted may be reproduced or transmitted outside the authorized reconciliation cycle.</p>
+                            <p><strong>5. Impasse Resolution:</strong> Any discrepancies must be escalated to the Senior Partner panel for immediate resolution.</p>
                           </div>
                         </ScrollArea>
                       </div>
@@ -274,30 +281,64 @@ export default function StewardOnboardingPage() {
                           </label>
                         </div>
                       </div>
+
+                      <div className="space-y-3 pt-4 border-t border-slate-100">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Type "I CONSENT" to authorize the stewardship mandate</Label>
+                        <Input 
+                          placeholder="I CONSENT"
+                          value={formData.consentText}
+                          onChange={(e) => setFormData({...formData, consentText: e.target.value})}
+                          className="rounded-none border-slate-200 h-12 uppercase font-bold tracking-widest text-center focus:ring-slate-900"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {step === 3 && (
-                  <div className="space-y-8">
+                  <div className="space-y-10">
                     <div className="space-y-3">
                       <div className="h-12 w-12 bg-slate-50 flex items-center justify-center text-slate-900 mb-4 border border-slate-100">
-                        <Building2 className="h-5 w-5" />
+                        <BadgeCheck className="h-5 w-5" />
                       </div>
                       <h2 className="text-3xl font-headline italic">Entity Confirmation</h2>
                       <p className="text-slate-500 font-light text-sm leading-relaxed">
-                        Confirm the steward entity identity recognized by the studio registry.
+                        Authorize the decryption of the stewardship terminal under the following professional identity.
                       </p>
                     </div>
-                    <div className="space-y-4 max-w-lg">
-                      <div className="p-6 border border-slate-100 bg-slate-50/50 space-y-1">
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Assigned Steward</span>
-                        <p className="text-xl font-headline italic text-slate-900">{formData.stewardName}</p>
+
+                    <div className="p-10 border border-slate-200 bg-slate-50/50 space-y-8 relative overflow-hidden shadow-inner">
+                      <div className="absolute top-0 right-0 p-4 opacity-5"><Landmark className="h-32 w-32" /></div>
+                      <div className="flex items-center gap-8 relative z-10">
+                        <div className="h-20 w-20 bg-slate-900 text-white flex items-center justify-center font-headline italic text-3xl shadow-xl">
+                          {formData.stewardName.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">{formData.stewardId}</span>
+                          <h3 className="text-3xl font-headline italic text-slate-900">{formData.stewardName}</h3>
+                          <Badge className="bg-slate-900 text-white rounded-none uppercase tracking-widest text-[9px] font-bold py-1 px-3">Authorized Stewardship Entity</Badge>
+                        </div>
                       </div>
-                      <p className="text-[10px] text-slate-400 italic uppercase tracking-widest font-light leading-relaxed">
-                        By finalizing access, you confirm that you are an authorized representative of the above entity and that all audit functions will be performed under this identity.
-                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-slate-200 relative z-10">
+                        <div className="space-y-1">
+                          <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400">Authorization Date</p>
+                          <p className="text-[13px] font-bold uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                            <BadgeCheck className="h-3.5 w-3.5 opacity-40" /> {formData.authorizedDate}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400">Professional Designation</p>
+                          <p className="text-[13px] font-bold uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                            <Award className="h-3.5 w-3.5 opacity-40" /> Financial Auditor
+                          </p>
+                        </div>
+                      </div>
                     </div>
+                    
+                    <p className="text-[10px] text-slate-400 italic uppercase tracking-widest font-light leading-relaxed text-center">
+                      By finalizing, you certify that you are an authorized representative of the above entity.
+                    </p>
                   </div>
                 )}
 
@@ -315,7 +356,10 @@ export default function StewardOnboardingPage() {
                   )}
                   <Button 
                     onClick={handleNext}
-                    disabled={step === 1 && !formData.accessToken}
+                    disabled={
+                      (step === 1 && !formData.accessToken) ||
+                      (step === 2 && (formData.consentText !== "I CONSENT" || !formData.agreedToTerms || !formData.agreedToNDA))
+                    }
                     className="bg-slate-900 text-white hover:bg-slate-800 rounded-none h-14 px-12 uppercase tracking-[0.3em] transition-all min-w-[200px] text-[10px] font-bold shadow-xl"
                   >
                     {loading ? (

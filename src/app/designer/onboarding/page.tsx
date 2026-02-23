@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   ChevronRight, 
   Check, 
@@ -18,11 +19,15 @@ import {
   Lock,
   Loader2,
   ShieldCheck,
-  Compass
+  Compass,
+  Scale,
+  BadgeCheck,
+  Award
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useWhyteStore } from "@/store/use-whyte-store";
+import { cn } from "@/lib/utils";
 
 export default function DesignerOnboardingPage() {
   const [step, setStep] = useState(1);
@@ -38,14 +43,17 @@ export default function DesignerOnboardingPage() {
     designerId: "",
     fullName: "",
     specialty: "",
-    notifications: true
+    role: "",
+    experience: "",
+    notifications: true,
+    consentText: ""
   });
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const totalSteps = 3;
+  const totalSteps = 5;
   const progress = (step / totalSteps) * 100;
 
   const handleNext = () => {
@@ -58,7 +66,9 @@ export default function DesignerOnboardingPage() {
           ...formData,
           designerId: found.id,
           fullName: found.name,
-          specialty: found.specialty
+          specialty: found.specialty,
+          role: found.role,
+          experience: found.experienceLevel
         });
         setStep(2);
       } else {
@@ -251,6 +261,42 @@ export default function DesignerOnboardingPage() {
                   <div className="space-y-8">
                     <div className="space-y-3">
                       <div className="h-12 w-12 bg-accent/5 flex items-center justify-center text-accent mb-4 border border-accent/10">
+                        <Scale className="h-5 w-5" />
+                      </div>
+                      <h2 className="text-3xl font-headline italic">Ethics Mandate</h2>
+                      <p className="text-muted-foreground font-light text-sm leading-relaxed">
+                        Authorize the professional code of conduct and architectural ethics governing your implementation work.
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <ScrollArea className="h-48 w-full border border-accent/10 p-6 bg-neutral-50/50">
+                        <div className="text-[11px] font-light leading-relaxed text-accent/70 space-y-4 italic">
+                          <p><strong>1. Architectural Integrity:</strong> Every creative lead must prioritize structural quality and safety over aesthetic convenience.</p>
+                          <p><strong>2. Financial Rectitude:</strong> Designers are prohibited from direct financial negotiation with site trades without senior partner authorization.</p>
+                          <p><strong>3. Data Sovereignty:</strong> Studio plans, material registries, and site log metadata are proprietary assets of Whyte Interior Designs.</p>
+                          <p><strong>4. Conflict of Interest:</strong> Leads must declare any personal relationship with trade partners synchronized in their active dossiers.</p>
+                          <p><strong>5. Implementation Velocity:</strong> All site logs must be synchronized within 24 hours of site visits to ensure implementation velocity remains optimal.</p>
+                        </div>
+                      </ScrollArea>
+
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-accent/60">Type "I CONSENT" to authorize the mandate</Label>
+                        <Input 
+                          placeholder="I CONSENT"
+                          value={formData.consentText}
+                          onChange={(e) => setFormData({...formData, consentText: e.target.value})}
+                          className="rounded-none border-accent/20 h-12 uppercase font-bold tracking-widest text-center"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {step === 4 && (
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <div className="h-12 w-12 bg-accent/5 flex items-center justify-center text-accent mb-4 border border-accent/10">
                         <Bell className="h-5 w-5" />
                       </div>
                       <h2 className="text-3xl font-headline italic">Deployment Alerts</h2>
@@ -272,6 +318,49 @@ export default function DesignerOnboardingPage() {
                   </div>
                 )}
 
+                {step === 5 && (
+                  <div className="space-y-10">
+                    <div className="space-y-3">
+                      <div className="h-12 w-12 bg-accent/5 flex items-center justify-center text-accent mb-4 border border-accent/10">
+                        <BadgeCheck className="h-5 w-5" />
+                      </div>
+                      <h2 className="text-3xl font-headline italic">Final Verification</h2>
+                      <p className="text-muted-foreground font-light text-sm leading-relaxed">
+                        Authorize the decryption of your creative workbench under the following identity.
+                      </p>
+                    </div>
+
+                    <div className="p-10 border border-accent/10 bg-accent/[0.02] space-y-8 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-5"><PencilRuler className="h-32 w-32" /></div>
+                      <div className="flex items-center gap-8 relative z-10">
+                        <div className="h-20 w-20 bg-accent text-white flex items-center justify-center font-headline italic text-3xl shadow-xl">
+                          {formData.fullName.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold text-accent/40 uppercase tracking-[0.4em]">{formData.designerId}</span>
+                          <h3 className="text-3xl font-headline italic text-accent">{formData.fullName}</h3>
+                          <Badge className="bg-accent text-white rounded-none uppercase tracking-widest text-[9px] font-bold py-1 px-3">Authorized Creative Lead</Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-12 pt-8 border-t border-accent/5 relative z-10">
+                        <div className="space-y-1">
+                          <p className="text-[9px] uppercase tracking-widest font-bold text-accent/40">Studio Role</p>
+                          <p className="text-[13px] font-bold uppercase tracking-widest text-accent flex items-center gap-2">
+                            <Award className="h-3.5 w-3.5 opacity-40" /> {formData.role}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[9px] uppercase tracking-widest font-bold text-accent/40">Professional Tier</p>
+                          <p className="text-[13px] font-bold uppercase tracking-widest text-accent flex items-center gap-2">
+                            <BadgeCheck className="h-3.5 w-3.5 opacity-40" /> {formData.experience} Experience
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="pt-10 flex items-center justify-between border-t border-neutral-100 mt-10">
                   {step > 1 ? (
                     <Button 
@@ -286,7 +375,10 @@ export default function DesignerOnboardingPage() {
                   )}
                   <Button 
                     onClick={handleNext}
-                    disabled={step === 1 && !formData.accessCode}
+                    disabled={
+                      (step === 1 && !formData.accessCode) ||
+                      (step === 3 && formData.consentText !== "I CONSENT")
+                    }
                     className="bg-accent text-white hover:bg-accent/90 rounded-none h-14 px-12 uppercase tracking-[0.3em] transition-all min-w-[200px] text-[10px] font-bold shadow-xl"
                   >
                     {loading ? (
