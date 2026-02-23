@@ -1,7 +1,7 @@
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { LayoutDashboard, Briefcase, MessageSquare, Star, Settings, Home, LogOut } from "lucide-react";
+import { LayoutDashboard, Briefcase, MessageSquare, Star, Settings, Home, LogOut, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -15,6 +15,7 @@ function DashboardSidebar() {
     { title: "Active Projects", icon: Briefcase, href: "/dashboard/projects" },
     { title: "Consultations", icon: MessageSquare, href: "/dashboard/consultations" },
     { title: "Submit Review", icon: Star, href: "/dashboard/submit-review" },
+    { title: "Governance Terms", icon: ShieldCheck, href: "/dashboard/terms" },
   ];
 
   const handleNavClick = () => {
