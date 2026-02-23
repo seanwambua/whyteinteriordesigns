@@ -21,7 +21,8 @@ import {
   UserPlus,
   Loader2,
   Scale,
-  Key
+  Key,
+  ShieldAlert
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -48,6 +49,12 @@ export default function StewardRegistryPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const generateRandomToken = () => {
+    const part1 = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const part2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `WHYTE-STWD-${part1}-${part2}`;
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -59,12 +66,6 @@ export default function StewardRegistryPage() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const generateRandomToken = () => {
-    const part1 = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const part2 = Math.random().toString(36).substring(2, 10).toUpperCase();
-    return `WHYTE-STWD-${part1}-${part2}`;
-  };
 
   const filteredStewards = useMemo(() => {
     return stewards.filter(s => 
@@ -132,7 +133,7 @@ export default function StewardRegistryPage() {
           </div>
           <Button 
             onClick={() => {
-              setFormData(prev => ({ ...prev, accessToken: generateRandomToken(), name: "", email: "" }));
+              setFormData(prev => ({ ...prev, accessToken: generateRandomToken(), name: "", email: "", contact: "" }));
               setIsAddDialogOpen(true);
             }}
             className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold flex gap-3 shadow-xl hover:tracking-[0.2em] transition-all"
@@ -185,7 +186,7 @@ export default function StewardRegistryPage() {
                         </div>
                         <div className="p-4 bg-accent/[0.03] border border-accent/10 space-y-2 max-w-sm">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Access Token</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Authorized Code</span>
                             <Key className="h-3 w-3 text-accent/20" />
                           </div>
                           <code className="text-[11px] font-mono tracking-wider text-accent font-bold block truncate">{steward.accessToken}</code>
@@ -230,7 +231,7 @@ export default function StewardRegistryPage() {
         </AnimatePresence>
         
         {filteredStewards.length === 0 && (
-          <div className="text-center py-32 border border-dashed border-accent/10 bg-secondary/5 italic text-muted-foreground uppercase tracking-[0.3em] font-light">
+          <div className="text-center py-32 border border-dashed border-accent/10 bg-secondary/5 italic text-[12px] uppercase tracking-[0.3em] font-light">
             No authorized stewardship entities found in the current registry
           </div>
         )}
@@ -246,8 +247,8 @@ export default function StewardRegistryPage() {
                 <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Authorization Protocol</span>
               </div>
               <DialogTitle className="text-4xl font-headline italic">Register Steward</DialogTitle>
-              <DialogDescription className="font-light italic text-muted-foreground text-base">
-                Authorize a new professional entity to perform financial audits and reconciliation protocols.
+              <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">
+                Authorize a new professional entity. A unique **Stewardship Code** has been auto-generated for synchronization.
               </DialogDescription>
             </DialogHeader>
             
@@ -258,7 +259,7 @@ export default function StewardRegistryPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="E.g., Imani Financial Services"
-                  className="rounded-none h-14 border-accent/20"
+                  className="rounded-none h-14 border-accent/20 text-lg focus:ring-accent"
                 />
               </div>
 
@@ -269,7 +270,7 @@ export default function StewardRegistryPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   placeholder="compliance@entity.com"
-                  className="rounded-none h-12 border-accent/20 h-12"
+                  className="rounded-none border-accent/20 h-12 text-base focus:ring-accent"
                 />
               </div>
 
@@ -280,7 +281,7 @@ export default function StewardRegistryPage() {
                     value={formData.contact}
                     onChange={(e) => setFormData({...formData, contact: e.target.value})}
                     placeholder="+254 XXX XXX XXX"
-                    className="rounded-none border-accent/20 h-12 h-12"
+                    className="rounded-none border-accent/20 h-12 text-base focus:ring-accent"
                   />
                 </div>
                 <div className="space-y-2">
@@ -289,7 +290,7 @@ export default function StewardRegistryPage() {
                     value={formData.status} 
                     onValueChange={(v: any) => setFormData({...formData, status: v})}
                   >
-                    <SelectTrigger className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase">
+                    <SelectTrigger className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase tracking-widest">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -300,13 +301,17 @@ export default function StewardRegistryPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Access Token (Generated)</Label>
+              <div className="p-6 bg-accent/[0.03] border border-dashed border-accent/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest text-accent">Auto-Generated Code</Label>
+                  <ShieldAlert className="h-3 w-3 text-accent/40" />
+                </div>
                 <Input 
                   value={formData.accessToken} 
                   readOnly
-                  className="rounded-none border-accent/20 h-12 bg-secondary/30 font-mono tracking-widest uppercase font-bold"
+                  className="rounded-none border-none h-12 bg-transparent font-mono tracking-[0.2em] uppercase font-bold text-lg p-0 focus-visible:ring-0"
                 />
+                <p className="text-[9px] text-muted-foreground italic uppercase tracking-widest">Unique identifier required for portal synchronization.</p>
               </div>
             </div>
 
@@ -314,7 +319,7 @@ export default function StewardRegistryPage() {
               <Button 
                 className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em]"
                 onClick={handleAddSteward}
-                disabled={isSubmitting || !formData.name || !formData.email || !formData.accessToken}
+                disabled={isSubmitting || !formData.name || !formData.email}
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Authorizing Entry...</span>

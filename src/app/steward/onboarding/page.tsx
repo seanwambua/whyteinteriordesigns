@@ -62,7 +62,7 @@ export default function StewardOnboardingPage() {
       } else {
         toast({
           title: "Access Denied",
-          description: "Stewardship Token not recognized by the Master Registry. Please contact Senior Partners.",
+          description: "Stewardship Code not recognized by the Master Registry. Please contact Senior Partners.",
           variant: "destructive"
         });
       }
@@ -97,6 +97,9 @@ export default function StewardOnboardingPage() {
   const handleBack = () => setStep(step - 1);
 
   if (!isMounted) return null;
+
+  const totalSteps = 3;
+  const progress = (step / totalSteps) * 100;
 
   if (showSuccess) {
     return (
@@ -169,7 +172,7 @@ export default function StewardOnboardingPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 md:p-8 font-body">
       <div className="max-w-3xl w-full">
-        <div className="mb-10 text-center space-y-2">
+        <div className="mb-8 text-center space-y-2">
           <div className="flex justify-center items-center gap-4 mb-1">
             <div className="h-px w-12 bg-slate-900/20" />
             <span className="text-slate-900 text-[10px] font-bold uppercase tracking-[0.4em]">Governance Protocol</span>
@@ -179,7 +182,7 @@ export default function StewardOnboardingPage() {
           <p className="text-slate-500 font-light text-base italic">Authenticate your stewardship entity to access the professional audit terminal.</p>
         </div>
 
-        <div className="mb-8 max-w-sm mx-auto">
+        <div className="mb-6 max-w-sm mx-auto">
           <div className="flex justify-between text-[9px] uppercase tracking-[0.3em] font-bold text-slate-400 mb-1.5">
             <span>Protocol Stage {step} of {totalSteps}</span>
             <span>{Math.round(progress)}%</span>
@@ -203,14 +206,14 @@ export default function StewardOnboardingPage() {
                       <div className="h-12 w-12 bg-slate-50 flex items-center justify-center text-slate-900 mb-4 border border-slate-100">
                         <Lock className="h-5 w-5" />
                       </div>
-                      <h2 className="text-3xl font-headline italic">Stewardship Token</h2>
+                      <h2 className="text-3xl font-headline italic">Stewardship Code</h2>
                       <p className="text-slate-500 font-light text-sm leading-relaxed max-w-xl">
-                        Enter the unique security token provided by the Senior Partners.
+                        Enter the unique Stewardship Code provided by the Senior Partners within the master registry.
                       </p>
                     </div>
                     <div className="space-y-4 max-w-md">
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Professional Access Token</Label>
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Authorized Stewardship Code</Label>
                         <Input 
                           placeholder="WHYTE-STWD-XXXX-XXXX" 
                           className="rounded-none border-slate-200 h-14 text-xl md:text-2xl tracking-[0.1em] focus:ring-slate-900 uppercase font-bold"
@@ -298,7 +301,7 @@ export default function StewardOnboardingPage() {
                   </div>
                 )}
 
-                <div className="pt-10 flex items-center justify-between border-t border-slate-100 mt-10">
+                <div className="pt-8 flex items-center justify-between border-t border-slate-100 mt-8">
                   {step > 1 ? (
                     <Button 
                       variant="ghost" 
