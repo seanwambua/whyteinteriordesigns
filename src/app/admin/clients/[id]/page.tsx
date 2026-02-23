@@ -104,6 +104,9 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const isPendingActivation = project ? !project.isActivated : false;
   const isReadOnly = isAuditVerified || isPendingActivation || project?.status === 'Completion';
 
+  // REORG CONSTRAINTS
+  const reorganizationFinalized = (project?.reorganizationCount || 0) >= 1;
+
   useEffect(() => {
     if (verifyingInstallment !== null && project) {
       setVerifiedAmount(project.installments[verifyingInstallment].amount);
@@ -512,8 +515,14 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                          <Clock className="h-3 w-3" /> Awaiting Client Agreement
                        </Badge>
                      )}
-                     <Button onClick={() => setIsReorganizingPlan(true)} variant="ghost" className="h-10 px-6 rounded-none text-accent uppercase tracking-widest text-[10px] font-bold border border-accent/10 hover:bg-accent hover:text-white transition-all shadow-sm">
-                       <Settings2 className="h-4 w-4 mr-2" /> {project.reorganization?.status === 'Pending_Agreement' ? 'Review Proposal' : 'Reorganize Financing'}
+                     <Button 
+                        onClick={() => setIsReorganizingPlan(true)} 
+                        disabled={reorganizationFinalized}
+                        variant="ghost" 
+                        className="h-10 px-6 rounded-none text-accent uppercase tracking-widest text-[10px] font-bold border border-accent/10 hover:bg-accent hover:text-white transition-all shadow-sm"
+                      >
+                       <Settings2 className="h-4 w-4 mr-2" /> 
+                       {reorganizationFinalized ? 'Reorganization Locked' : project.reorganization?.status === 'Pending_Agreement' ? 'Review Proposal' : 'Reorganize Financing'}
                      </Button>
                    </div>
                  )}

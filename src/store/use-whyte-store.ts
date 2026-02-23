@@ -184,6 +184,12 @@ export interface ClientProject {
   handoverStatus?: 'Pending' | 'Failed' | 'Passed' | null;
   handoverNotes?: string;
   reorganization?: ReorganizationDetails;
+  reorganizationCount?: number;
+  pendingActivationData?: {
+    amount: number;
+    reference: string;
+    timestamp: string;
+  };
 }
 
 export interface Inquiry {
@@ -360,7 +366,8 @@ const initialClientProjects: ClientProject[] = [
     ],
     initializedBy: 'Admin',
     assignedDesignerId: 'DES-01',
-    assignedStewardId: 'STW-01'
+    assignedStewardId: 'STW-01',
+    reorganizationCount: 0
   }
 ];
 

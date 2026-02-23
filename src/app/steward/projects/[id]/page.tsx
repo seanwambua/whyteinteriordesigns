@@ -1,8 +1,9 @@
+
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, AuditAllocation, AuditIncoming, FinancialAudit, ReorganizationDetails } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, AuditAllocation, AuditIncoming, FinancialAudit, ReorganizationDetails, Installment } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,7 +46,8 @@ import {
   ChevronRight,
   Handshake,
   FileSearch,
-  Signature
+  Signature,
+  Calendar as CalendarIcon
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -53,10 +55,12 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 export default function StewardAuditWorkbench({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { clientProjects, updateClientProject, financialSteward } = useWhyteStore();
+  const { clientProjects, updateClientProject, financialSteward, stewards } = useWhyteStore();
   const { toast } = useToast();
   
   const [isMounted, setIsMounted] = useState(false);
@@ -66,6 +70,13 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
   const [isWitnessingReorg, setIsWitnessingReorg] = useState(false);
   const [isSyncingWitness, setIsSyncingWitness] = useState(false);
+
+  // ACTIVATION VERIFICATION STATE
+  const [isVerifyingActivation, setIsVerifyingActivation] = useState(false);
+  const [activationCode, setActivationCode] = useState("");
+  const [activationAmount, setActivationAmount] = useState<number>(0);
+  const [activationDate, setActivationDate] = useState<Date>(new Date());
+  const [isSyncingActivation, setIsSyncingActivation] = useState(false);
 
   const project = clientProjects.find(p => p.id === id);
 
@@ -84,6 +95,11 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         setStewardComments(existing.stewardComments || "");
         setRefundAmount(existing.refundAmount || 0);
         setLastSyncTimestamp(existing.submissionDate || null);
+      }
+      
+      if (project.pendingActivationData) {
+        setActivationCode(project.pendingActivationData.reference);
+        setActivationAmount(project.pendingActivationData.amount);
       }
     }
   }, [project]);
@@ -112,6 +128,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   if (!isMounted || !project) return null;
 
   const isVerified = project.financialReportStatus === 'Verified' || project.financialReportStatus === 'Awaiting Admin';
+  const isAwaitingActivation = !project.isActivated && project.pendingActivationData;
 
   const handleRunSyncCheck = () => {
     setIsSyncingRegistry(true);
@@ -139,11 +156,45 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
           stewardWitnessed: true,
           finalizedDate: format(new Date(), "MMM dd, yyyy")
         },
+        reorganizationCount: (project.reorganizationCount || 0) + 1,
         lastActivity: `Financing Protocol Authorized: Custom Payout Plan Witnessed by ${financialSteward}`
       });
       setIsSyncingWitness(false);
       setIsWitnessingReorg(false);
       toast({ title: "Reorganization Witnessed", description: "The project master ledger has been synchronized with the new terms." });
+    }, 2000);
+  };
+
+  const handleVerifyActivation = () => {
+    if (!activationCode || activationAmount <= 0) return;
+    setIsSyncingActivation(true);
+    
+    setTimeout(() => {
+      const updatedInstallments = project.installments.map(ins => 
+        ins.label.toLowerCase().includes('deposit') 
+          ? { 
+              ...ins, 
+              status: 'Paid' as const, 
+              transactionCode: activationCode, 
+              amount: activationAmount,
+              date: format(activationDate, "MMM dd, yyyy")
+            } 
+          : ins
+      );
+
+      updateClientProject(project.id, {
+        isActivated: true,
+        initialDepositPaid: true,
+        depositCode: activationCode,
+        status: 'Execution',
+        lastActivity: `Commission Activated — Initial Deposit of KES ${activationAmount.toLocaleString()} Forensic Verified by ${financialSteward}`,
+        installments: updatedInstallments,
+        pendingActivationData: undefined // Clear pending
+      });
+
+      setIsSyncingActivation(false);
+      setIsVerifyingActivation(false);
+      toast({ title: "Activation Authorized", description: "Project has transitioned to Live Implementation phase." });
     }, 2000);
   };
 
@@ -195,6 +246,23 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           <span className="text-[11px] font-bold uppercase tracking-[0.3em]">Back to Terminal Registry</span>
         </Link>
+
+        {isAwaitingActivation && (
+          <Alert className="rounded-none border-orange-500/20 bg-orange-50 p-8 shadow-xl">
+            <ShieldAlert className="h-6 w-6 text-orange-600" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 w-full ml-4">
+              <div className="space-y-1">
+                <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Initial Activation Verification Required</AlertTitle>
+                <AlertDescription className="text-[13px] font-light italic text-orange-600/80">
+                  The client has submitted onboarding payment details. Forensic verification of the initial deposit is required to activate the dossier.
+                </AlertDescription>
+              </div>
+              <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold shadow-lg hover:bg-orange-700 transition-all flex gap-3">
+                <Banknote className="h-4 w-4" /> Verify Activation Deposit
+              </Button>
+            </div>
+          </Alert>
+        )}
 
         {project.reorganization?.status === 'Pending_Agreement' && (
           <Alert className="rounded-none border-blue-500/20 bg-blue-50 p-8 shadow-xl">
@@ -309,6 +377,75 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         </div>
       </div>
 
+      {/* ACTIVATION VERIFICATION DIALOG */}
+      <Dialog open={isVerifyingActivation} onOpenChange={setIsVerifyingActivation}>
+        <DialogContent className="rounded-none border-slate-200 font-body sm:max-w-md p-0 overflow-hidden bg-white">
+          <div className="bg-orange-600 h-1.5 w-full" />
+          <div className="p-10 space-y-8 max-h-[85vh] overflow-y-auto custom-scrollbar">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-orange-600" /><span className="text-orange-600 text-[12px] font-bold uppercase tracking-[0.4em]">Forensic Activation Protocol</span></div>
+              <DialogTitle className="text-3xl font-headline italic">Verify Activation Deposit</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-sm leading-relaxed">As the Financial Steward, certify that the client's initial deposit reference and amount are valid. Authorized certification will activate the commission journey.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-8">
+              <div className="p-6 bg-orange-50/50 border border-orange-100 space-y-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-orange-600/60">Client Reported Reference</span>
+                  <span className="text-lg font-mono font-bold text-slate-900">{project.pendingActivationData?.reference}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-orange-600/60">Client Reported Amount</span>
+                  <span className="text-lg font-headline italic text-slate-900">KES {project.pendingActivationData?.amount.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Certified Amount (KES)</Label>
+                  <Input 
+                    type="number" 
+                    className="rounded-none border-slate-200 h-14 text-xl font-headline italic focus:ring-orange-600" 
+                    value={activationAmount} 
+                    onChange={(e) => setActivationAmount(Number(e.target.value))} 
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Verified Transaction Reference</Label>
+                  <Input 
+                    className="rounded-none border-slate-200 h-14 text-lg tracking-widest font-bold focus:ring-orange-600 uppercase" 
+                    value={activationCode} 
+                    onChange={(e) => setActivationCode(e.target.value)} 
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Verification Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[13px] border-slate-200 font-bold uppercase tracking-widest">
+                        <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
+                        {format(activationDate, "MMM dd, yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 rounded-none">
+                      <Calendar mode="single" selected={activationDate} onSelect={(d) => d && setActivationDate(d)} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="pt-4">
+              <Button 
+                className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all" 
+                onClick={handleVerifyActivation} 
+                disabled={isSyncingActivation || !activationCode || activationAmount <= 0}
+              >
+                {isSyncingActivation ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Certifying...</span> : "Authorize & Activate Commission"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isWitnessingReorg} onOpenChange={setIsWitnessingReorg}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-3xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
           <div className="bg-blue-600 h-1.5 w-full" />
@@ -343,7 +480,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   <div key={i} className="p-6 flex items-center justify-between bg-white">
                     <div className="space-y-1">
                       <p className="text-sm font-bold uppercase tracking-widest">{ins.label}</p>
-                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{ins.percentage}% Allocation</p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{ins.percentage}% Allocation Protocol</p>
                     </div>
                     <p className="text-xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p>
                   </div>

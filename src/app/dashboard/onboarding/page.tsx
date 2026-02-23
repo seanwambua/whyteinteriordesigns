@@ -38,11 +38,14 @@ import {
   Banknote,
   FileText,
   Handshake,
-  LayoutList
+  LayoutList,
+  AlertTriangle,
+  RefreshCcw
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useWhyteStore } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
@@ -50,7 +53,7 @@ export default function OnboardingPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
-  const { clientProjects } = useWhyteStore();
+  const { clientProjects, updateClientProject, addInquiry } = useWhyteStore();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -60,8 +63,11 @@ export default function OnboardingPage() {
     agreedToTerms: false,
     agreedToNDA: false,
     depositRef: "",
+    depositAmount: "",
     notifications: true
   });
+
+  const [currentProject, setCurrentProject] = useState<ClientProject | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -70,10 +76,20 @@ export default function OnboardingPage() {
   const totalSteps = 4;
   const progress = (step / totalSteps) * 100;
 
+  const getExpectedDeposit = () => {
+    if (!currentProject) return 0;
+    const depositInstallment = currentProject.installments.find(i => i.label.toLowerCase().includes('deposit'));
+    return depositInstallment?.amount || 0;
+  };
+
+  const expectedDeposit = getExpectedDeposit();
+  const isAmountMatching = Number(formData.depositAmount) === expectedDeposit;
+
   const handleNext = () => {
     if (step === 1) {
       const project = clientProjects.find(p => p.id.toUpperCase() === formData.projectRef.toUpperCase());
       if (project) {
+        setCurrentProject(project);
         setFormData({
           ...formData,
           fullName: project.name,
@@ -90,8 +106,28 @@ export default function OnboardingPage() {
     } else if (step < totalSteps) {
       setStep(step + 1);
     } else {
+      if (!isAmountMatching) {
+        toast({
+          title: "Protocol Mismatch",
+          description: "The payment amount does not match the commission's financial framework. Request a reorganization to proceed.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       setLoading(true);
       setTimeout(() => {
+        if (currentProject) {
+          updateClientProject(currentProject.id, {
+            pendingActivationData: {
+              amount: Number(formData.depositAmount),
+              reference: formData.depositRef,
+              timestamp: new Date().toISOString()
+            },
+            lastActivity: "Client Onboarding Protocols Executed — Awaiting Steward Verification"
+          });
+        }
+        
         localStorage.setItem("whyte_onboarded", "true");
         localStorage.setItem("whyte_verified_project_id", formData.projectRef.toUpperCase());
         setLoading(false);
@@ -103,13 +139,53 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleRequestReorg = () => {
+    if (!currentProject) return;
+    
+    const reorgInquiry = {
+      id: `REQ-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      name: formData.fullName,
+      email: formData.email,
+      type: 'project_support' as const,
+      serviceType: 'bundle' as const,
+      message: `Formal Request for Financing Reorganization during Onboarding. Reported Deposit: KES ${Number(formData.depositAmount).toLocaleString()}. Expected: KES ${expectedDeposit.toLocaleString()}.`,
+      status: 'new' as const,
+      urgency: 'high' as const,
+      date: format(new Date(), "MMM dd, yyyy"),
+      projectId: currentProject.id
+    };
+    
+    addInquiry(reorgInquiry);
+    updateClientProject(currentProject.id, {
+      reorganization: {
+        status: 'Requested',
+        requestedBy: 'Client',
+        terms: "",
+        proposedInstallments: [],
+        clientAgreed: false,
+        stewardWitnessed: false
+      },
+      lastActivity: "Financing Reorganization Requested during Onboarding"
+    });
+    
+    toast({ title: "Request Transmitted", description: "A Senior Partner will review your reorganization request. You may proceed with onboarding." });
+    
+    // Allow proceeding after request
+    localStorage.setItem("whyte_onboarded", "true");
+    localStorage.setItem("whyte_verified_project_id", formData.projectRef.toUpperCase());
+    setShowSuccess(true);
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 4000);
+  };
+
   const handleBack = () => setStep(step - 1);
 
   if (!isMounted) return null;
 
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-accent flex items-center justify-center p-6 overflow-hidden">
+      <div className="min-h-screen bg-accent flex items-center justify-center p-6 overflow-hidden font-body">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -361,28 +437,63 @@ export default function OnboardingPage() {
                       </div>
                       <h2 className="text-2xl font-headline italic">Initial Capital Verification</h2>
                       <p className="text-muted-foreground font-light text-sm leading-relaxed">
-                        To finalize dossier synchronization, please provide the transaction reference code for your initial commission deposit.
+                        To finalize dossier synchronization, please provide the transaction reference and exact amount paid for your initial commission deposit.
                       </p>
                     </div>
                     
-                    <div className="p-8 bg-accent/[0.03] border border-accent/5 space-y-6">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Authorized Transaction Reference</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-accent/[0.03] border border-accent/5">
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Amount Transferred (KES)</Label>
                         <Input 
-                          placeholder="E.g., TRX-9921-WHYTE" 
-                          className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] focus:ring-accent uppercase font-bold"
-                          value={formData.depositRef}
-                          onChange={(e) => setFormData({...formData, depositRef: e.target.value})}
+                          type="number"
+                          placeholder="0.00" 
+                          className="rounded-none border-accent/20 h-14 text-xl font-headline italic focus:ring-accent"
+                          value={formData.depositAmount}
+                          onChange={(e) => setFormData({...formData, depositAmount: e.target.value})}
                         />
-                        <p className="text-[9px] text-muted-foreground italic uppercase tracking-widest mt-2">
-                          This reference will be validated by the Financial Steward to unlock your full workspace.
-                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Expected Deposit</Label>
+                        <div className="h-14 flex items-center px-4 bg-secondary/20 border border-accent/5">
+                          <span className="text-xl font-headline italic text-accent opacity-60">KES {expectedDeposit.toLocaleString()}</span>
+                        </div>
                       </div>
                     </div>
 
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Authorized Transaction Reference</Label>
+                      <Input 
+                        placeholder="E.g., TRX-9921-WHYTE" 
+                        className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] focus:ring-accent uppercase font-bold"
+                        value={formData.depositRef}
+                        onChange={(e) => setFormData({...formData, depositRef: e.target.value})}
+                      />
+                    </div>
+
+                    {!isAmountMatching && formData.depositAmount !== "" && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 bg-orange-50 border border-orange-200">
+                        <div className="flex gap-4 items-start">
+                          <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
+                          <div className="space-y-3">
+                            <p className="text-xs font-bold text-orange-600 uppercase tracking-widest">Financial Protocol Mismatch</p>
+                            <p className="text-[11px] italic text-orange-700 leading-relaxed">
+                              The reported payment amount does not match the commission's assigned payout framework. You may request a professional financing reorganization to synchronize your custom payment with the studio ledger.
+                            </p>
+                            <Button 
+                              onClick={handleRequestReorg}
+                              variant="outline" 
+                              className="rounded-none h-10 border-orange-200 text-orange-600 hover:bg-orange-600 hover:text-white uppercase tracking-widest text-[9px] font-bold"
+                            >
+                              <RefreshCcw className="h-3 w-3 mr-2" /> Request Reorganization
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
                     <div className="p-6 border border-dashed border-accent/20 text-center">
                       <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40 italic">
-                        Verification establishes the legally binding start of the commission lifecycle.
+                        All transaction data is subject to forensic verification by the Financial Steward.
                       </p>
                     </div>
                   </div>
@@ -405,7 +516,7 @@ export default function OnboardingPage() {
                     disabled={
                       (step === 1 && !formData.projectRef) || 
                       (step === 3 && (!formData.agreedToTerms || !formData.agreedToNDA)) ||
-                      (step === 4 && !formData.depositRef)
+                      (step === 4 && (!formData.depositRef || !formData.depositAmount || (!isAmountMatching && formData.depositAmount !== "")))
                     }
                     className="bg-accent text-white hover:bg-accent/90 rounded-none h-14 px-12 uppercase tracking-[0.3em] transition-all min-w-[200px] text-[10px] font-bold shadow-xl"
                   >
