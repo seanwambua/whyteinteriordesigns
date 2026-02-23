@@ -27,7 +27,9 @@ import {
   Handshake,
   User,
   PencilRuler,
-  AlertCircle
+  AlertCircle,
+  FileClock,
+  RotateCcw
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -84,6 +86,18 @@ export default function ProjectClosingPage() {
       lastActivity: "Financial Audit Verified by Studio Steward"
     });
     toast({ title: "Report Synchronized" });
+  };
+
+  const handleReturnToHandover = (projectId: string) => {
+    updateClientProject(projectId, {
+      handoverStatus: 'Pending',
+      financialReportStatus: 'Awaiting Steward',
+      lastActivity: "Dossier returned to Handover Protocol for re-verification."
+    });
+    toast({ 
+      title: "Protocol Re-initialized", 
+      description: "Dossier transmitted back to the Handover queue." 
+    });
   };
 
   const handleArchiveProject = (projectId: string) => {
@@ -220,10 +234,10 @@ export default function ProjectClosingPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col gap-4 min-w-[240px]">
                         {isVerified ? (
-                          <>
-                            <Button asChild variant="outline" className="h-14 px-8 rounded-none border-accent/10 hover:bg-accent/5 flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-sm">
+                          <div className="flex flex-col gap-3">
+                            <Button asChild variant="outline" className="h-14 w-full rounded-none border-accent/10 hover:bg-accent/5 flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-sm">
                               <Link href={`/transparency/${project.id}`} target="_blank">
                                 <Eye className="h-4.5 w-4.5" /> View Breakdown
                               </Link>
@@ -232,42 +246,50 @@ export default function ProjectClosingPage() {
                               onClick={() => handleArchiveProject(project.id)} 
                               disabled={archivingId === project.id} 
                               variant="outline" 
-                              className="h-14 w-14 rounded-full hover:bg-black hover:text-white transition-all p-0 shadow-sm border-black/10 group/archive"
-                              title="Archive Dossier"
+                              className="h-14 w-full rounded-none hover:bg-black hover:text-white transition-all flex gap-3 uppercase tracking-widest text-[11px] font-bold shadow-sm border-black/10 group/archive"
                             >
-                              {archivingId === project.id ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6 group-hover/archive:scale-110 transition-transform" />}
+                              {archivingId === project.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Archive className="h-5 w-5 group-hover/archive:scale-110 transition-transform" /> Archive Dossier</>}
                             </Button>
-                          </>
+                          </div>
                         ) : (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="inline-block">
-                                  <Button 
-                                    onClick={() => handleVerifyReport(project.id)} 
-                                    disabled={isBlocked}
-                                    className={cn(
-                                      "h-16 px-10 rounded-none flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-xl",
-                                      !isBlocked ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
-                                    )}
-                                  >
-                                    <FileCheck className="h-5 w-5" /> Authorize Audit
-                                  </Button>
-                                </div>
-                              </TooltipTrigger>
-                              {isBlocked && (
-                                <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl space-y-2">
-                                  <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Protocol Blocked:</p>
-                                  <ul className="text-[10px] text-muted-foreground font-light italic list-disc pl-4">
-                                    {!isHandoverComplete && <li>Handover Authorization Required (Awaiting Auth)</li>}
-                                    {!allInstallmentsPaid && <li>Ledger Liquidation Required (Pending Payments)</li>}
-                                    {hasPendingInquiries && <li>Resolution of {projectInquiries.length} Inquiry(s) Required</li>}
-                                    {!hasStewardSync && <li>Steward Audit Synchronization Required</li>}
-                                  </ul>
-                                </TooltipContent>
-                              )}
-                            </Tooltip>
-                          </TooltipProvider>
+                          <div className="flex flex-col gap-3">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="inline-block">
+                                    <Button 
+                                      onClick={() => handleVerifyReport(project.id)} 
+                                      disabled={isBlocked}
+                                      className={cn(
+                                        "h-16 w-full rounded-none flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-xl",
+                                        !isBlocked ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
+                                      )}
+                                    >
+                                      <FileCheck className="h-5 w-5" /> Authorize Audit
+                                    </Button>
+                                  </div>
+                                </TooltipTrigger>
+                                {isBlocked && (
+                                  <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl space-y-2">
+                                    <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Protocol Blocked:</p>
+                                    <ul className="text-[10px] text-muted-foreground font-light italic list-disc pl-4">
+                                      {!isHandoverComplete && <li>Handover Authorization Required (Awaiting Auth)</li>}
+                                      {!allInstallmentsPaid && <li>Ledger Liquidation Required (Pending Payments)</li>}
+                                      {hasPendingInquiries && <li>Resolution of {projectInquiries.length} Inquiry(s) Required</li>}
+                                      {!hasStewardSync && <li>Steward Audit Synchronization Required</li>}
+                                    </ul>
+                                  </TooltipContent>
+                                )}
+                              </Tooltip>
+                            </TooltipProvider>
+                            <Button 
+                              onClick={() => handleReturnToHandover(project.id)}
+                              variant="outline"
+                              className="h-14 w-full rounded-none border-accent/10 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 transition-all"
+                            >
+                              <RotateCcw className="h-4 w-4" /> Review Handover
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </CardContent>
