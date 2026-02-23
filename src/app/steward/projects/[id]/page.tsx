@@ -19,6 +19,13 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
   ArrowLeft, 
   Plus, 
   Trash2, 
@@ -50,7 +57,10 @@ import {
   Calendar as CalendarIcon,
   Activity,
   Layout,
-  PencilRuler
+  PencilRuler,
+  AlertCircle,
+  FileClock,
+  PenTool
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
