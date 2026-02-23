@@ -3,16 +3,17 @@
 
 import { motion } from "framer-motion";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { LayoutDashboard, History, LogOut, Activity } from "lucide-react";
+import { LayoutDashboard, History, LogOut, Activity, Signature } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useWhyteStore } from "@/store/use-whyte-store";
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 export default function StewardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { financialSteward } = useWhyteStore();
+  const { financialSteward, clientProjects } = useWhyteStore();
   const [isMounted, setIsMounted] = useState(false);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
@@ -33,8 +34,20 @@ export default function StewardLayout({ children }: { children: React.ReactNode 
     return <div className="min-h-screen bg-white">{children}</div>;
   }
 
+  const pendingWitnessCount = clientProjects.filter(p => 
+    p.reorganization?.status === 'Pending_Agreement' && 
+    p.reorganization.clientAgreed && 
+    !p.reorganization.stewardWitnessed
+  ).length;
+
   const navItems = [
     { title: "Audit Terminal", icon: LayoutDashboard, href: "/steward" },
+    { 
+      title: "Witnessing Terminal", 
+      icon: Signature, 
+      href: "/steward/agreements",
+      badge: pendingWitnessCount > 0 ? pendingWitnessCount : null
+    },
     { title: "Audit History", icon: History, href: "/steward/history" },
   ];
 
@@ -60,7 +73,7 @@ export default function StewardLayout({ children }: { children: React.ReactNode 
                       <SidebarMenuButton 
                         asChild 
                         isActive={pathname === item.href} 
-                        className="px-6 h-12 hover:bg-slate-50 rounded-none" 
+                        className="px-6 h-12 hover:bg-slate-50 rounded-none relative" 
                         tooltip={item.title}
                       >
                         <Link href={item.href} className="flex items-center gap-4">
@@ -68,6 +81,11 @@ export default function StewardLayout({ children }: { children: React.ReactNode 
                           <span className={`text-[12px] uppercase tracking-widest font-bold truncate group-data-[collapsible=icon]:hidden ${pathname === item.href ? 'text-slate-900' : 'text-slate-400'}`}>
                             {item.title}
                           </span>
+                          {item.badge && (
+                            <Badge className="absolute right-4 bg-orange-600 text-white rounded-none text-[8px] h-4 min-w-4 flex items-center justify-center p-0 group-data-[collapsible=icon]:hidden">
+                              {item.badge}
+                            </Badge>
+                          )}
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
