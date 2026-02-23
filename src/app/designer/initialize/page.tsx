@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -206,7 +205,7 @@ export default function DesignerInitializePage() {
       <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
         <Info className="h-5 w-5 text-accent" />
         <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Administrative Authorization Required</AlertTitle>
-        <AlertDescription className="text-[13px] font-light italic text-muted-foreground">
+        <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
           Dossiers initialized by designers require senior partner authorization and initial deposit verification before site implementation tasks are unlocked.
         </AlertDescription>
       </Alert>
@@ -238,8 +237,8 @@ export default function DesignerInitializePage() {
                   <div className="flex items-center gap-4 mb-2"><Briefcase className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Project Scope</h3></div>
                   <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Designation</Label><Input placeholder="E.g., Muthaiga Penthouse Renovation" className="rounded-none border-neutral-200 h-14 text-xl font-headline italic focus:ring-accent" value={formData.project} onChange={(e) => setFormData({...formData, project: e.target.value})} /></div>
                   <div className="grid grid-cols-1 gap-8">
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea placeholder="Creative briefing summary..." className="min-h-[120px] rounded-none border-neutral-200 text-lg p-6 font-light italic leading-relaxed focus:ring-accent bg-neutral-50/30" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} /></div>
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><LayoutList className="h-3.5 w-3.5" /> Technical Scope of Works</Label><Textarea placeholder="Structural and implementation requirements..." className="min-h-[120px] rounded-none border-neutral-200 text-base p-6 font-light italic leading-relaxed focus:ring-accent bg-neutral-50/10" value={formData.workScope} onChange={(e) => setFormData({...formData, workScope: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea placeholder="Creative briefing summary..." className="min-h-[120px] rounded-none border-neutral-200 text-lg p-6 font-light italic focus:ring-accent bg-neutral-50/30" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><LayoutList className="h-3.5 w-3.5" /> Technical Scope of Works</Label><Textarea placeholder="Structural and implementation requirements..." className="min-h-[120px] rounded-none border-neutral-200 text-base p-6 font-light italic focus:ring-accent bg-neutral-50/10" value={formData.workScope} onChange={(e) => setFormData({...formData, workScope: e.target.value})} /></div>
                   </div>
                 </motion.div>
               )}
@@ -251,13 +250,13 @@ export default function DesignerInitializePage() {
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
                       <Select onValueChange={(v: any) => setFormData({...formData, tier: v})} defaultValue={formData.tier}>
-                        <SelectTrigger className="rounded-none border-neutral-200 h-14 text-[12px] font-bold uppercase tracking-widest focus:ring-accent">
+                        <SelectTrigger className="rounded-none border-neutral-200 h-14 text-[12px] font-bold uppercase focus:ring-accent">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-none">
-                          <SelectItem value="Premium" className="uppercase tracking-widest text-[11px] font-bold py-3">Premium (50/30/20 Plan)</SelectItem>
-                          <SelectItem value="Deluxe" className="uppercase tracking-widest text-[11px] font-bold py-3">Deluxe (60/20/20 Plan)</SelectItem>
-                          <SelectItem value="Golden" className="uppercase tracking-widest text-[11px] font-bold py-3">Golden (70/30 Priority Plan)</SelectItem>
+                          <SelectItem value="Premium" className="uppercase font-bold py-3">Premium (50/30/20 Plan)</SelectItem>
+                          <SelectItem value="Deluxe" className="uppercase font-bold py-3">Deluxe (60/20/20 Plan)</SelectItem>
+                          <SelectItem value="Golden" className="uppercase font-bold py-3">Golden (70/30 Priority Plan)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -281,7 +280,7 @@ export default function DesignerInitializePage() {
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Protocol</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase tracking-widest font-bold">
+                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold">
                             <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
                             {format(formData.startDate, "MMM dd, yyyy")}
                           </Button>
@@ -292,10 +291,10 @@ export default function DesignerInitializePage() {
                       </Popover>
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Projected Delivery Target</Label>
+                      <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Delivery Target</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase tracking-widest font-bold">
+                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold">
                             <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
                             {format(formData.endDate, "MMM dd, yyyy")}
                           </Button>
@@ -316,26 +315,24 @@ export default function DesignerInitializePage() {
                       <Flag className="h-5 w-5 text-accent/40" />
                       <h3 className="text-2xl font-headline italic">Strategic Milestones</h3>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-neutral-200 hover:bg-accent hover:text-white transition-all">
+                    <Button type="button" variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white">
                       <Plus className="h-4 w-4 mr-2" /> Append Target
                     </Button>
                   </div>
                   <div className="space-y-6">
                     {formData.milestones.map((m, idx) => (
-                      <div key={m.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-6 relative group transition-all hover:bg-white hover:shadow-xl">
-                        <Button variant="ghost" size="icon" onClick={() => removeMilestone(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive transition-all">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div key={m.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-6 relative group hover:bg-white hover:shadow-xl transition-all">
+                        <Button variant="ghost" size="icon" onClick={() => removeMilestone(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                           <div className="space-y-2">
-                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Target Label</Label>
-                            <Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-neutral-100 focus:ring-accent" placeholder="E.g., Structural Handover" />
+                            <Label className="text-[11px] uppercase font-bold opacity-40">Target Label</Label>
+                            <Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent" placeholder="E.g., Structural Handover" />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Sync Date</Label>
+                            <Label className="text-[11px] uppercase font-bold opacity-40">Sync Date</Label>
                             <Popover>
                               <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-neutral-100 font-bold uppercase tracking-widest">
+                                <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-neutral-100 font-bold">
                                   <CalendarIcon className="mr-3 h-4 w-4 opacity-40" />
                                   {format(m.date, "MMM dd, yyyy")}
                                 </Button>
@@ -359,31 +356,29 @@ export default function DesignerInitializePage() {
                       <Zap className="h-5 w-5 text-accent/40" />
                       <h3 className="text-2xl font-headline italic">Initial Site Protocols</h3>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addTask} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-neutral-200 hover:bg-accent hover:text-white transition-all">
+                    <Button type="button" variant="outline" size="sm" onClick={addTask} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white">
                       <Plus className="h-4 w-4 mr-2" /> Append Protocol
                     </Button>
                   </div>
                   <div className="space-y-6">
                     {formData.tasks.map((task, idx) => (
-                      <div key={task.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-6 relative group transition-all hover:bg-white hover:shadow-xl">
-                        <Button variant="ghost" size="icon" onClick={() => removeTask(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive transition-all">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div key={task.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-6 relative group hover:bg-white hover:shadow-xl transition-all">
+                        <Button variant="ghost" size="icon" onClick={() => removeTask(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                           <div className="md:col-span-8 space-y-2">
-                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Protocol Identity</Label>
-                            <Input value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-neutral-100 focus:ring-accent" placeholder="E.g., Initial Site Measurements" />
+                            <Label className="text-[11px] uppercase font-bold opacity-40">Protocol Identity</Label>
+                            <Input value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent" placeholder="E.g., Initial Site Measurements" />
                           </div>
                           <div className="md:col-span-4 space-y-2">
-                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Urgency</Label>
+                            <Label className="text-[11px] uppercase font-bold opacity-40">Urgency</Label>
                             <Select value={task.priority} onValueChange={(v: any) => updateTask(idx, 'priority', v)}>
-                              <SelectTrigger className="rounded-none border-neutral-100 h-12 text-[11px] font-bold uppercase tracking-widest">
+                              <SelectTrigger className="rounded-none border-neutral-100 h-12 text-[11px] font-bold">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent className="rounded-none">
-                                <SelectItem value="Low" className="uppercase tracking-widest text-[10px] font-bold">Low Priority</SelectItem>
-                                <SelectItem value="Medium" className="uppercase tracking-widest text-[10px] font-bold">Medium Priority</SelectItem>
-                                <SelectItem value="High" className="uppercase tracking-widest text-[10px] font-bold">High Urgency</SelectItem>
+                                <SelectItem value="Low" className="uppercase font-bold">Low</SelectItem>
+                                <SelectItem value="Medium" className="uppercase font-bold">Medium</SelectItem>
+                                <SelectItem value="High" className="uppercase font-bold">High</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -401,57 +396,43 @@ export default function DesignerInitializePage() {
                       <Users className="h-5 w-5 text-accent/40" />
                       <h3 className="text-2xl font-headline italic">Partner Synergy</h3>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-neutral-200 hover:bg-accent hover:text-white transition-all">
+                    <Button type="button" variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white">
                       <Plus className="h-4 w-4 mr-2" /> Link Partner
                     </Button>
                   </div>
                   <div className="space-y-6">
                     {formData.vendorAllocations.map((alloc, idx) => (
-                      <div key={alloc.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-8 relative group transition-all hover:bg-white hover:shadow-xl">
+                      <div key={alloc.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-8 relative group hover:bg-white hover:shadow-xl transition-all">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="space-y-2">
-                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Registry Resource</Label>
+                            <Label className="text-[11px] uppercase font-bold opacity-40">Registry Resource</Label>
                             <Select value={alloc.vendorName} onValueChange={(v) => updateAllocation(idx, 'vendorName', v)}>
-                              <SelectTrigger className="rounded-none h-12 text-[12px] font-bold uppercase border-neutral-100">
+                              <SelectTrigger className="rounded-none h-12 text-[12px] font-bold border-neutral-100 focus:ring-accent">
                                 <SelectValue placeholder="SELECT FROM REGISTRY" />
                               </SelectTrigger>
                               <SelectContent className="rounded-none">
-                                {collaborators.map(c => <SelectItem key={c.id} value={c.name} className="uppercase text-[10px] font-bold tracking-widest">{c.name} ({c.specialty})</SelectItem>)}
+                                {collaborators.map(c => <SelectItem key={c.id} value={c.name} className="uppercase font-bold">{c.name} ({c.specialty})</SelectItem>)}
                               </SelectContent>
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Professional Role</Label>
-                            <Input value={alloc.role} onChange={(e) => updateAllocation(idx, 'role', e.target.value)} className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-neutral-100 focus:ring-accent" placeholder="E.g., Structural Consultant" />
+                            <Label className="text-[11px] uppercase font-bold opacity-40">Professional Role</Label>
+                            <Input value={alloc.role} onChange={(e) => updateAllocation(idx, 'role', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent" placeholder="E.g., Structural Consultant" />
                           </div>
                         </div>
                       </div>
                     ))}
-                    {formData.vendorAllocations.length === 0 && (
-                      <div className="text-center py-12 border border-dashed border-neutral-200 bg-neutral-50/50 italic text-muted-foreground uppercase tracking-[0.3em] font-light text-[11px]">
-                        Optional: Link registry resources to this creative brief
-                      </div>
-                    )}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
             <div className="pt-12 flex items-center justify-between border-t border-neutral-100">
-              {step > 1 ? (
-                <Button type="button" variant="ghost" onClick={handleBack} className="text-muted-foreground hover:text-accent font-bold uppercase tracking-widest text-[12px] group">
-                  <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" /> Previous Step
-                </Button>
-              ) : <div />}
-              
+              {step > 1 ? <Button type="button" variant="ghost" onClick={handleBack} className="text-muted-foreground hover:text-accent font-bold uppercase text-[12px] group"><ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1" /> Previous</Button> : <div />}
               {step < totalSteps ? (
-                <Button type="submit" disabled={!isStepValid()} className="bg-accent text-white rounded-none h-16 px-12 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em] flex gap-3">
-                  Continue Briefing <ChevronRight className="h-5 w-5" />
-                </Button>
+                <Button type="submit" disabled={!isStepValid()} className="bg-accent text-white rounded-none h-16 px-12 uppercase tracking-widest text-[12px] font-bold shadow-2xl flex gap-3">Continue Briefing <ChevronRight className="h-5 w-5" /></Button>
               ) : (
-                <Button type="button" onClick={() => setIsConfirmOpen(true)} disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em] flex gap-3">
-                  <CheckCircle2 className="h-5 w-5" /> Transmit Briefing
-                </Button>
+                <Button type="button" onClick={() => setIsConfirmOpen(true)} disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-2xl flex gap-3">Authorize & Transmit <CheckCircle2 className="h-5 w-5" /></Button>
               )}
             </div>
           </form>
@@ -460,17 +441,8 @@ export default function DesignerInitializePage() {
 
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <AlertDialogContent className="rounded-none border-accent/20 font-body p-10">
-          <AlertDialogHeader className="space-y-6">
-            <div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Designer Protocol</span></div>
-            <AlertDialogTitle className="text-3xl font-headline italic">Confirm Briefing Transmission?</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">
-              This will register the dossier for <strong>{formData.project}</strong> in the Master Registry. The brief will await senior partner authorization before site implementation can commence.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="pt-10">
-            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-neutral-100">Abort Transmission</AlertDialogCancel>
-            <AlertDialogAction onClick={executeFinalSubmit} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 hover:bg-accent/90 shadow-xl">Authorize & Transmit</AlertDialogAction>
-          </AlertDialogFooter>
+          <AlertDialogHeader className="space-y-6"><div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Designer Protocol</span></div><AlertDialogTitle className="text-3xl font-headline italic">Confirm Briefing Transmission?</AlertDialogTitle><AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">This will register **{formData.project}** in the Master Registry. The brief will await senior partner authorization before site implementation can commence.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter className="pt-10"><AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-neutral-100">Abort</AlertDialogCancel><AlertDialogAction onClick={executeFinalSubmit} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 shadow-xl">Authorize & Transmit</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

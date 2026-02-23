@@ -557,7 +557,7 @@ export default function ProjectPlanningPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-10">
-              <div className="p-8 bg-orange-500/5 border border-orange-500/10 space-y-4 relative overflow-hidden">
+              <div className="p-8 bg-orange-500/5 border border-orange-500/10 space-y-4 relative overflow-hidden shadow-inner">
                 <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-16 w-16" /></div>
                 <div className="flex flex-col gap-1 relative z-10">
                   <span className="text-[11px] uppercase tracking-widest font-bold text-orange-600/60">Expected Deposit Value</span>
