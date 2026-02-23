@@ -19,11 +19,15 @@ import {
   BadgeCheck,
   Loader2,
   RefreshCcw,
-  Banknote
+  Banknote,
+  Activity,
+  ClipboardList,
+  Eye
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useState, useMemo, useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -32,6 +36,7 @@ export default function StewardDashboardPage() {
   const { clientProjects } = useWhyteStore();
   const [search, setSearch] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const [activeStewardId, setActiveStewardId] = useState<string | null>(null);
   const router = useRouter();
 
   // AUTOMATED ONBOARDING INITIALIZATION
@@ -41,29 +46,36 @@ export default function StewardDashboardPage() {
     if (isMounted && !onboarded) {
       router.replace("/steward/onboarding");
     }
+    setActiveStewardId(localStorage.getItem("whyte_active_steward_id"));
   }, [isMounted, router]);
 
-  const relevantProjects = useMemo(() => {
-    // RECONCILIATION GUARDRAIL: Stewards see:
-    // 1. Projects that have passed technical handover but need final audit
-    // 2. Projects in Planning that need Activation verification
-    return clientProjects.filter(p => 
-      !p.isArchived && 
-      (
-        (p.isActivated && p.handoverStatus === 'Passed' && p.financialReportStatus !== 'Verified') ||
-        (!p.isActivated && p.pendingActivationData)
-      )
+  const projects = useMemo(() => {
+    const activation = clientProjects.filter(p => 
+      !p.isArchived && !p.isActivated && p.pendingActivationData
     );
-  }, [clientProjects]);
+    
+    const live = clientProjects.filter(p => 
+      !p.isArchived && p.isActivated && p.status === 'Execution' && p.assignedStewardId === activeStewardId
+    );
 
-  const filtered = relevantProjects.filter(p => 
-    p.project.toLowerCase().includes(search.toLowerCase()) || 
-    p.id.toLowerCase().includes(search.toLowerCase()) ||
-    p.name.toLowerCase().includes(search.toLowerCase())
+    const audit = clientProjects.filter(p => 
+      !p.isArchived && p.isActivated && p.handoverStatus === 'Passed' && p.financialReportStatus !== 'Verified'
+    );
+
+    return { activation, live, audit };
+  }, [clientProjects, activeStewardId]);
+
+  const filteredActivation = projects.activation.filter(p => 
+    p.project.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase())
   );
 
-  const activationRequests = relevantProjects.filter(p => !p.isActivated).length;
-  const pendingAuditsCount = relevantProjects.filter(p => p.isActivated && p.financialReportStatus !== 'Awaiting Admin').length;
+  const filteredLive = projects.live.filter(p => 
+    p.project.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredAudit = projects.audit.filter(p => 
+    p.project.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase())
+  );
 
   if (!isMounted) {
     return (
@@ -75,10 +87,71 @@ export default function StewardDashboardPage() {
   }
 
   const stats = [
-    { label: "Activation Requests", value: activationRequests.toString(), icon: Banknote, sub: "Pending Activation" },
-    { label: "Audit Pipeline", value: pendingAuditsCount.toString(), icon: Clock, sub: "Requires Action" },
-    { label: "Audit Accuracy", value: "99.8%", icon: BadgeCheck, sub: "Stewardship Integrity" },
+    { label: "Activation Requests", value: projects.activation.length.toString(), icon: Banknote, sub: "Forensic Queue" },
+    { label: "Active Commissions", value: projects.live.length.toString(), icon: Activity, sub: "Ongoing Oversight" },
+    { label: "Final Reconciliations", value: projects.audit.length.toString(), icon: Scale, sub: "Closing Phase" },
   ];
+
+  const ProjectTable = ({ data, emptyMessage, actionLabel }: { data: ClientProject[], emptyMessage: string, actionLabel: string }) => (
+    <div className="bg-white border border-slate-200 shadow-xl overflow-hidden">
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="bg-slate-50 border-b border-slate-200">
+            <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Dossier ID</th>
+            <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Project Context</th>
+            <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Capital Plan</th>
+            <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Lifecycle</th>
+            <th className="p-6 text-right text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Protocol</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {data.map((p) => (
+            <tr key={p.id} className="group hover:bg-slate-50/50 transition-colors">
+              <td className="p-6">
+                <span className="text-[12px] font-bold text-slate-900 uppercase tracking-widest">{p.id}</span>
+              </td>
+              <td className="p-6">
+                <div className="space-y-1">
+                  <p className="text-base font-headline italic text-slate-900">{p.project}</p>
+                  <p className="text-[11px] uppercase font-bold text-slate-400">{p.name}</p>
+                </div>
+              </td>
+              <td className="p-6">
+                <div className="space-y-1">
+                  <p className="text-[13px] font-bold text-slate-900">KES {p.totalBudget.toLocaleString()}</p>
+                  <p className="text-[10px] text-slate-400 uppercase font-bold">Tier: {p.tier}</p>
+                </div>
+              </td>
+              <td className="p-6">
+                <Badge variant="outline" className={cn(
+                  "rounded-none uppercase tracking-widest text-[9px] font-bold px-3 py-1",
+                  p.status === 'Planning' ? "bg-orange-50 text-orange-600 border-orange-200" :
+                  p.status === 'Execution' ? "bg-blue-50 text-blue-600 border-blue-200" :
+                  "bg-green-50 text-green-600 border-green-200"
+                )}>
+                  {p.status}
+                </Badge>
+              </td>
+              <td className="p-6 text-right">
+                <Button asChild variant="ghost" size="sm" className="rounded-none border border-slate-200 hover:bg-slate-900 hover:text-white transition-all uppercase tracking-widest text-[10px] font-bold gap-2">
+                  <Link href={`/steward/projects/${p.id}`}>
+                    {actionLabel} <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </td>
+            </tr>
+          ))}
+          {data.length === 0 && (
+            <tr>
+              <td colSpan={5} className="p-20 text-center text-slate-400 italic text-[13px] uppercase tracking-widest">
+                {emptyMessage}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <div className="space-y-12 max-w-7xl mx-auto pb-24">
@@ -94,8 +167,8 @@ export default function StewardDashboardPage() {
         <div className="relative w-80">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input 
-            placeholder="Search Dossier ID or Client..." 
-            className="w-full pl-12 pr-4 rounded-none border border-slate-200 h-14 text-[12px] uppercase tracking-widest bg-white focus:outline-none focus:border-slate-900 shadow-sm transition-all"
+            placeholder="Search Registry..." 
+            className="w-full pl-12 pr-4 rounded-none border border-slate-200 h-14 text-[12px] uppercase tracking-widest bg-white focus:outline-none focus:border-slate-900 shadow-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -121,79 +194,47 @@ export default function StewardDashboardPage() {
         ))}
       </div>
 
-      <div className="space-y-8">
-        <div className="flex items-center gap-4">
-          <Scale className="h-5 w-5 text-slate-400" />
-          <h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-900">Pending Reconciliation & Activation Protocols</h2>
-        </div>
+      <Tabs defaultValue="activation" className="space-y-10">
+        <TabsList className="bg-transparent border-b border-slate-200 w-full justify-start rounded-none h-auto p-0 gap-12">
+          <TabsTrigger value="activation" className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-3">
+            <Banknote className="h-4 w-4" /> Activations ({projects.activation.length})
+          </TabsTrigger>
+          <TabsTrigger value="live" className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-3">
+            <Activity className="h-4 w-4" /> My Active Portfolio ({projects.live.length})
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[12px] font-bold pb-5 px-0 flex gap-3">
+            <Scale className="h-4 w-4" /> Final Reconciliations ({projects.audit.length})
+          </TabsTrigger>
+        </TabsList>
 
-        <div className="bg-white border border-slate-200 shadow-xl overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Dossier ID</th>
-                <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Project Context</th>
-                <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Capital Commitment</th>
-                <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Audit/Activation</th>
-                <th className="p-6 text-right text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Protocol</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.map((p) => (
-                <tr key={p.id} className="group hover:bg-slate-50/50 transition-colors">
-                  <td className="p-6">
-                    <span className="text-[12px] font-bold text-slate-900 uppercase tracking-widest">{p.id}</span>
-                  </td>
-                  <td className="p-6">
-                    <div className="space-y-1">
-                      <p className="text-base font-headline italic text-slate-900">{p.project}</p>
-                      <p className="text-[11px] uppercase font-bold text-slate-400">{p.name}</p>
-                    </div>
-                  </td>
-                  <td className="p-6">
-                    <div className="space-y-1">
-                      <p className="text-[13px] font-bold text-slate-900 uppercase tracking-widest">KES {p.totalBudget.toLocaleString()}</p>
-                      <p className="text-[10px] text-slate-400 uppercase font-bold">Tier: {p.tier}</p>
-                    </div>
-                  </td>
-                  <td className="p-6">
-                    {!p.isActivated ? (
-                      <Badge className="bg-orange-600 text-white rounded-none uppercase tracking-widest text-[8px] py-1 px-3">
-                        Activation Authorization
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className={cn(
-                        "rounded-none uppercase tracking-widest text-[9px] font-bold py-1 px-3",
-                        p.financialReportStatus === 'Awaiting Admin' ? "bg-accent/10 text-accent border-accent/20" : "bg-blue-50 text-blue-600 border-blue-200"
-                      )}>
-                        {p.financialReportStatus === 'Awaiting Admin' ? 'Findings Submitted' : 'Final Audit Protocol'}
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="p-6 text-right">
-                    <Button asChild variant="ghost" size="sm" className="rounded-none border border-slate-200 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all uppercase tracking-widest text-[10px] font-bold gap-2">
-                      <Link href={`/steward/projects/${p.id}`}>
-                        {!p.isActivated ? 'Certify Activation' : p.financialReportStatus === 'Awaiting Admin' ? 'Review Audit' : 'Perform Audit'} <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="p-20 text-center text-slate-400 italic text-[13px] uppercase tracking-widest">
-                    No dossiers currently prioritized for activation or reconciliation
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        <TabsContent value="activation" className="m-0">
+          <ProjectTable 
+            data={filteredActivation} 
+            emptyMessage="No pending activation requests identified." 
+            actionLabel="Certify Deposit"
+          />
+        </TabsContent>
+
+        <TabsContent value="live" className="m-0">
+          <ProjectTable 
+            data={filteredLive} 
+            emptyMessage="No active execution dossiers currently assigned." 
+            actionLabel="Operation Log"
+          />
+        </TabsContent>
+
+        <TabsContent value="audit" className="m-0">
+          <ProjectTable 
+            data={filteredAudit} 
+            emptyMessage="No dossiers prioritized for final reconciliation." 
+            actionLabel="Final Audit"
+          />
+        </TabsContent>
+      </Tabs>
 
       <div className="p-10 border border-dashed border-slate-200 text-center bg-white/50">
         <p className="text-[11px] uppercase tracking-[0.5em] text-slate-400 font-bold italic leading-relaxed">
-          Forensic activation protocol — Commissions are authorized strictly upon verified receipt of initial capital commitment.
+          Professional Stewardship — Continuous financial monitoring throughout the commission lifecycle.
         </p>
       </div>
     </div>

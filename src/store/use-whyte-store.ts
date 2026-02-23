@@ -49,6 +49,14 @@ export interface SiteReport {
   urgency: 'Normal' | 'High' | 'Critical';
 }
 
+export interface StewardLog {
+  id: string;
+  date: string;
+  type: 'Fiscal Review' | 'Compliance Audit' | 'Procurement Sync' | 'Governance Note';
+  content: string;
+  urgency: 'Routine' | 'Attention' | 'Flagged';
+}
+
 export interface SubTask {
   id: string;
   title: string;
@@ -170,6 +178,7 @@ export interface ClientProject {
   milestones: Milestone[];
   installments: Installment[];
   siteReports?: SiteReport[];
+  stewardLogs?: StewardLog[];
   tasks?: ProjectTask[];
   description?: string;
   roomsCount?: number;
