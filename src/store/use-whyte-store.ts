@@ -76,6 +76,7 @@ export interface AuditIncoming {
   amount: number;
   reference: string;
   date: string;
+  isVerified?: boolean;
 }
 
 export interface FinancialAudit {

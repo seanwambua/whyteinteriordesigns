@@ -83,6 +83,8 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   const remainingBalance = totalIncomingLogged - totalAllocated - refundAmount;
   const hasDiscrepancy = remainingBalance < 0;
   
+  const allFundsVerified = incomingFunds.length > 0 && incomingFunds.every(f => f.isVerified);
+  
   // Sync Discrepancy: Steward log doesn't match Studio Registry
   const hasSyncDiscrepancy = lastSyncTimestamp && totalIncomingLogged !== totalRegistryPaid;
 
@@ -120,7 +122,8 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
       label: "",
       amount: 0,
       reference: "",
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      isVerified: false
     };
     setIncomingFunds([...incomingFunds, newEntry]);
   };
@@ -128,6 +131,12 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   const updateIncoming = (id: string, field: keyof AuditIncoming, value: any) => {
     if (isVerified) return;
     setIncomingFunds(incomingFunds.map(f => f.id === id ? { ...f, [field]: value } : f));
+  };
+
+  const handleToggleVerifyIncoming = (id: string) => {
+    if (isVerified) return;
+    setIncomingFunds(incomingFunds.map(f => f.id === id ? { ...f, isVerified: !f.isVerified } : f));
+    toast({ title: "Entry Protocol Synchronized" });
   };
 
   const removeIncoming = (id: string) => {
@@ -157,7 +166,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   };
 
   const handleAuthorizeAudit = () => {
-    if (isVerified || !lastSyncTimestamp || hasSyncDiscrepancy) return;
+    if (isVerified || !lastSyncTimestamp || hasSyncDiscrepancy || !allFundsVerified) return;
     setIsSubmitting(true);
     
     const finalAudit: FinancialAudit = {
@@ -271,7 +280,10 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             <div className="space-y-4">
               {incomingFunds.map((entry) => (
                 <motion.div key={entry.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
-                  <Card className="rounded-none border-slate-200 bg-white group relative overflow-hidden">
+                  <Card className={cn(
+                    "rounded-none border transition-all group relative overflow-hidden",
+                    entry.isVerified ? "border-green-600/20 bg-green-600/[0.01]" : "border-slate-200 bg-white"
+                  )}>
                     {!isVerified && (
                       <Button 
                         onClick={() => removeIncoming(entry.id)}
@@ -284,7 +296,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                     )}
                     <CardContent className="p-8">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                        <div className="md:col-span-4 space-y-2">
+                        <div className="md:col-span-3 space-y-2">
                           <Label className="text-[10px] uppercase font-bold text-slate-400">Payment Label</Label>
                           <Input 
                             value={entry.label} 
@@ -326,6 +338,21 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                             placeholder="MMM DD, YYYY" 
                             className="rounded-none h-12 text-[11px] font-bold border-slate-100 focus:ring-slate-900"
                           />
+                        </div>
+                        <div className="md:col-span-1 flex items-end">
+                          <Button
+                            variant={entry.isVerified ? "default" : "outline"}
+                            size="icon"
+                            disabled={isVerified}
+                            onClick={() => handleToggleVerifyIncoming(entry.id)}
+                            className={cn(
+                              "h-12 w-full rounded-none transition-all",
+                              entry.isVerified ? "bg-green-600 hover:bg-green-700 text-white" : "border-slate-200 text-slate-400 hover:text-slate-900"
+                            )}
+                            title={entry.isVerified ? "Protocol Verified" : "Awaiting Verification"}
+                          >
+                            {entry.isVerified ? <CheckCircle2 className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -476,12 +503,18 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                     <p className="text-[10px] text-red-200 italic leading-relaxed">Registry Sync Failed. Logged funds do not match studio records.</p>
                   </div>
                 )}
+                {!allFundsVerified && incomingFunds.length > 0 && (
+                  <div className="p-4 bg-orange-500/10 border border-orange-500/20 flex gap-3 items-center">
+                    <ShieldCheck className="h-4 w-4 text-orange-400 shrink-0" />
+                    <p className="text-[10px] text-orange-200 italic leading-relaxed">Mandatory Verification Required. Certify all incoming entries to unlock authorization.</p>
+                  </div>
+                )}
                 <Button 
                   onClick={handleAuthorizeAudit}
-                  disabled={isSubmitting || totalIncomingLogged === 0 || !lastSyncTimestamp || hasDiscrepancy || hasSyncDiscrepancy}
+                  disabled={isSubmitting || totalIncomingLogged === 0 || !lastSyncTimestamp || hasDiscrepancy || hasSyncDiscrepancy || !allFundsVerified}
                   className={cn(
                     "w-full h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all flex gap-4",
-                    (!lastSyncTimestamp || hasSyncDiscrepancy) ? "bg-white/5 text-white/40 cursor-not-allowed border-white/10" : "bg-white text-slate-900 hover:bg-slate-100"
+                    (!lastSyncTimestamp || hasSyncDiscrepancy || !allFundsVerified) ? "bg-white/5 text-white/40 cursor-not-allowed border-white/10" : "bg-white text-slate-900 hover:bg-slate-100"
                   )}
                 >
                   {isSubmitting ? (
