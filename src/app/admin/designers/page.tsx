@@ -25,7 +25,9 @@ import {
   BadgeCheck,
   Award,
   XCircle,
-  Link2Off
+  Link2Off,
+  UserCheck,
+  AlertCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -46,7 +48,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 export default function DesignerRegistryPage() {
-  const { designers, addDesigner, updateDesigner, removeDesigner, clientProjects, updateClientProject } = useWhyteStore();
+  const { designers, addDesigner, updateDesigner, removeDesigner, clientProjects, updateClientProject, inquiries, updateInquiryStatus } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [search, setSearch] = useState("");
@@ -65,7 +67,6 @@ export default function DesignerRegistryPage() {
   });
 
   const generateRandomToken = () => {
-    // Generates a 64-bit style random token (16 chars alphanumeric)
     const part1 = Math.random().toString(36).substring(2, 10).toUpperCase();
     const part2 = Math.random().toString(36).substring(2, 10).toUpperCase();
     return `${part1}-${part2}`;
@@ -120,6 +121,20 @@ export default function DesignerRegistryPage() {
       lastActivity: `Creative Lead Unassigned`
     });
     toast({ title: "Commission Unlinked", variant: "destructive" });
+  };
+
+  const handleApproveRequest = (inquiryId: string, projectId: string, designerId: string) => {
+    updateClientProject(projectId, { 
+      assignedDesignerId: designerId,
+      lastActivity: `Creative Lead Assigned via Request Authorization`
+    });
+    updateInquiryStatus(inquiryId, 'closed');
+    toast({ title: "Authorization Approved", description: "Designer successfully assigned to dossier." });
+  };
+
+  const handleDeclineRequest = (inquiryId: string) => {
+    updateInquiryStatus(inquiryId, 'closed');
+    toast({ title: "Authorization Declined", variant: "destructive", description: "Lead request formally rejected." });
   };
 
   const handleRemove = (id: string) => {
@@ -184,6 +199,10 @@ export default function DesignerRegistryPage() {
         <AnimatePresence mode="popLayout">
           {filteredDesigners.map((designer, index) => {
             const assignedProjects = clientProjects.filter(p => p.assignedDesignerId === designer.id && !p.isArchived);
+            const leadRequests = inquiries.filter(inq => 
+              inq.status === 'new' && 
+              inq.message.includes(`Lead Request: Designer ${designer.id}`)
+            );
 
             return (
               <motion.div
@@ -239,53 +258,95 @@ export default function DesignerRegistryPage() {
                     </div>
 
                     <div className="flex-1 p-8 flex flex-col justify-between">
-                      <div className="space-y-8">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40 flex items-center gap-3">
-                            <Briefcase className="h-4 w-4" /> Implementation Load ({assignedProjects.length})
-                          </h4>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => { setSelectedDesigner(designer); setIsAssignDialogOpen(true); }}
-                            className="rounded-none text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent/5"
-                          >
-                            <Plus className="h-3.5 w-3.5 mr-2" /> Assign Dossier
-                          </Button>
-                        </div>
+                      <div className="space-y-10">
+                        {/* PENDING AUTHORIZATIONS */}
+                        {leadRequests.length > 0 && (
+                          <div className="space-y-4">
+                            <h4 className="text-[12px] font-bold uppercase tracking-[0.3em] text-orange-600 flex items-center gap-3">
+                              <AlertCircle className="h-4 w-4" /> Pending Lead Authorizations ({leadRequests.length})
+                            </h4>
+                            <div className="space-y-3">
+                              {leadRequests.map(req => {
+                                const projectIdMatch = req.message.match(/dossier (WP-\d+)/);
+                                const projectId = projectIdMatch ? projectIdMatch[1] : "";
+                                return (
+                                  <div key={req.id} className="p-6 bg-orange-50 border border-orange-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                    <div className="space-y-1">
+                                      <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/60">Dossier Access Request</p>
+                                      <p className="text-sm font-bold uppercase tracking-widest text-accent">{projectId || "Unknown Dossier"}</p>
+                                      <p className="text-[11px] italic text-orange-600/80">"Requesting Implementation Lead status via Observation Mode"</p>
+                                    </div>
+                                    <div className="flex gap-3">
+                                      <Button 
+                                        onClick={() => handleDeclineRequest(req.id)}
+                                        variant="ghost" 
+                                        className="h-10 px-4 text-[10px] font-bold uppercase text-destructive hover:bg-destructive/5"
+                                      >
+                                        Decline
+                                      </Button>
+                                      <Button 
+                                        onClick={() => handleApproveRequest(req.id, projectId, designer.id)}
+                                        className="h-10 px-6 bg-orange-600 text-white rounded-none text-[10px] font-bold uppercase shadow-lg hover:bg-orange-700"
+                                      >
+                                        Approve & Assign
+                                      </Button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {assignedProjects.map(p => (
-                            <div key={p.id} className="p-4 border border-accent/5 hover:border-accent/20 transition-all flex flex-col justify-between group/p bg-white shadow-sm">
-                              <div className="flex justify-between items-start">
-                                <span className="text-[10px] font-bold text-accent/30 uppercase tracking-widest">{p.id}</span>
-                                <div className="flex gap-2">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    onClick={() => handleUnassignProject(p.id)}
-                                    className="h-6 w-6 text-destructive/40 hover:text-destructive hover:bg-destructive/5"
-                                    title="Unassign Lead"
-                                  >
-                                    <Link2Off className="h-3.5 w-3.5" />
-                                  </Button>
-                                  <Link href={`/admin/clients/${p.id}`}>
-                                    <Eye className="h-3.5 w-3.5 text-accent/20 hover:text-accent cursor-pointer" />
-                                  </Link>
+                        {/* ACTIVE LOAD */}
+                        <div className="space-y-6">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40 flex items-center gap-3">
+                              <Briefcase className="h-4 w-4" /> Implementation Load ({assignedProjects.length})
+                            </h4>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => { setSelectedDesigner(designer); setIsAssignDialogOpen(true); }}
+                              className="rounded-none text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent/5"
+                            >
+                              <Plus className="h-3.5 w-3.5 mr-2" /> Assign Dossier
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {assignedProjects.map(p => (
+                              <div key={p.id} className="p-4 border border-accent/5 hover:border-accent/20 transition-all flex flex-col justify-between group/p bg-white shadow-sm">
+                                <div className="flex justify-between items-start">
+                                  <span className="text-[10px] font-bold text-accent/30 uppercase tracking-widest">{p.id}</span>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      onClick={() => handleUnassignProject(p.id)}
+                                      className="h-6 w-6 text-destructive/40 hover:text-destructive hover:bg-destructive/5"
+                                      title="Unassign Lead"
+                                    >
+                                      <Link2Off className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Link href={`/admin/clients/${p.id}`}>
+                                      <Eye className="h-3.5 w-3.5 text-accent/20 hover:text-accent cursor-pointer" />
+                                    </Link>
+                                  </div>
                                 </div>
+                                <p className="text-sm font-bold uppercase tracking-widest text-accent/80 mt-2">{p.project}</p>
                               </div>
-                              <p className="text-sm font-bold uppercase tracking-widest text-accent/80 mt-2">{p.project}</p>
-                            </div>
-                          ))}
-                          {assignedProjects.length === 0 && (
-                            <div className="col-span-full py-8 text-center border border-dashed border-accent/10 italic text-[11px] text-muted-foreground uppercase tracking-widest">
-                              No active implementation dossiers assigned
-                            </div>
-                          )}
+                            ))}
+                            {assignedProjects.length === 0 && (
+                              <div className="col-span-full py-8 text-center border border-dashed border-accent/10 italic text-[11px] text-muted-foreground uppercase tracking-widest">
+                                No active implementation dossiers assigned
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex justify-end pt-8 border-t border-accent/5 mt-8 gap-4">
+                      <div className="flex justify-end pt-8 border-t border-accent/5 mt-12 gap-4">
                         <Button 
                           variant="ghost" 
                           size="icon" 
@@ -307,6 +368,7 @@ export default function DesignerRegistryPage() {
         </AnimatePresence>
       </div>
 
+      {/* DIALOGS REMAIN SAME */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg p-0 overflow-hidden bg-white">
           <div className="bg-accent h-1.5 w-full" />
@@ -358,7 +420,7 @@ export default function DesignerRegistryPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Status Protocol</Label>
-                  <Select value={formData.status} onValueChange={(v: any) => setFormData({...formData, status: v})}>
+                  <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
                     <SelectTrigger className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase"><SelectValue /></SelectTrigger>
                     <SelectContent className="rounded-none">
                       <SelectItem value="Active">Active</SelectItem>

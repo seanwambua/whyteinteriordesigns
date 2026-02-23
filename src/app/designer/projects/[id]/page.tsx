@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
@@ -90,11 +89,20 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   const isAssignedLead = activeDesignerId === project.assignedDesignerId;
   const isReadOnly = project.financialReportStatus === 'Verified' || project.isArchived || project.handoverStatus === 'Pending' || project.status === 'Completion' || !isAssignedLead;
   
+  // CHECK FOR PENDING REQUEST
+  const hasPendingRequest = useMemo(() => {
+    return projectInquiries.some(inq => 
+      inq.status === 'new' && 
+      inq.message.includes(`Lead Request: Designer ${activeDesignerId}`)
+    );
+  }, [projectInquiries, activeDesignerId]);
+
   const tasks = project.tasks || [];
   const allTasksDone = tasks.length > 0 && tasks.every(t => t.status === 'Done');
   const pendingTasks = tasks.filter(t => t.status !== 'Done');
 
   const handleRequestAccess = () => {
+    if (hasPendingRequest) return;
     setIsRequestingAccess(true);
     const newInquiry: Inquiry = {
       id: `REQ-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
@@ -278,15 +286,20 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
               <div className="space-y-1">
                 <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Restricted Lead Permissions — Observation Mode</AlertTitle>
                 <AlertDescription className="text-[13px] font-light italic text-orange-600/80">
-                  You are viewing this dossier as an external observer. Write-access is restricted to the assigned Creative Lead.
+                  {hasPendingRequest 
+                    ? "Your request for Implementation Lead status has been transmitted and is awaiting senior partner authorization." 
+                    : "You are viewing this dossier as an external observer. Write-access is restricted to the assigned Creative Lead."}
                 </AlertDescription>
               </div>
               <Button 
                 onClick={handleRequestAccess}
-                disabled={isRequestingAccess}
-                className="bg-orange-600 text-white hover:bg-orange-700 rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-lg"
+                disabled={isRequestingAccess || hasPendingRequest}
+                className={cn(
+                  "rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-lg transition-all",
+                  hasPendingRequest ? "bg-orange-200 text-orange-800 cursor-default" : "bg-orange-600 text-white hover:bg-orange-700"
+                )}
               >
-                {isRequestingAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserCheck className="h-4 w-4" /> Request Implementation Lead</>}
+                {isRequestingAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : hasPendingRequest ? <><Clock className="h-4 w-4" /> Authorization Pending</> : <><UserCheck className="h-4 w-4" /> Request Implementation Lead</>}
               </Button>
             </div>
           </Alert>
