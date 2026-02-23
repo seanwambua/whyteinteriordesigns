@@ -58,6 +58,92 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { parse, differenceInDays, isValid, format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
+interface KanbanColumnProps {
+  status: ProjectTask['status'];
+  tasks: ProjectTask[];
+  isReadOnly: boolean;
+  handleAddTask: (status: ProjectTask['status']) => void;
+  handleMoveTask: (taskId: string, newStatus: ProjectTask['status']) => void;
+  handleDeleteTask: (taskId: string) => void;
+  handleUpdateTask: (taskId: string, updates: Partial<ProjectTask>) => void;
+  handleAddSubtask: (taskId: string) => void;
+  handleToggleSubtask: (taskId: string, subId: string) => void;
+  handleUpdateSubtask: (taskId: string, subId: string, title: string) => void;
+}
+
+const KanbanColumn = ({ 
+  status, 
+  tasks, 
+  isReadOnly, 
+  handleAddTask, 
+  handleMoveTask, 
+  handleDeleteTask, 
+  handleUpdateTask,
+  handleAddSubtask,
+  handleToggleSubtask,
+  handleUpdateSubtask
+}: KanbanColumnProps) => (
+  <div className="flex-1 flex flex-col gap-6 min-w-[320px]">
+    <div className="flex items-center justify-between pb-4 border-b border-neutral-200">
+      <div className="flex items-center gap-3">
+        <div className={cn("h-2.5 w-2.5 rounded-full", status === 'Todo' ? 'bg-neutral-200' : status === 'In Progress' ? 'bg-orange-400' : 'bg-green-500')} />
+        <h3 className="text-[13px] font-bold uppercase tracking-[0.3em] text-muted-foreground">{status} ({tasks.length})</h3>
+      </div>
+      {!isReadOnly && (
+        <Button variant="ghost" size="icon" onClick={() => handleAddTask(status)} className="h-8 w-8 hover:bg-neutral-100">
+          <Plus className="h-4.5 w-4.5 opacity-40" />
+        </Button>
+      )}
+    </div>
+    <div className="flex flex-col gap-4 flex-1">
+      {tasks.map(task => (
+        <motion.div key={task.id} layoutId={task.id} className={cn("group relative bg-white border border-neutral-100 p-6 shadow-sm hover:shadow-xl transition-all space-y-4", isReadOnly && "opacity-80")}>
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold text-accent/20 uppercase tracking-widest">{task.id}</span>
+            {!isReadOnly && (
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {status !== 'Todo' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Done' ? 'In Progress' : 'Todo')}><ChevronLeft className="h-4 w-4" /></Button>}
+                {status !== 'Done' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Todo' ? 'In Progress' : 'Done')}><ChevronRight className="h-4 w-4" /></Button>}
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive" onClick={() => handleDeleteTask(task.id)}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+            )}
+          </div>
+          <div className="space-y-3">
+            <Textarea 
+              value={task.title}
+              onChange={(e) => handleUpdateTask(task.id, { title: e.target.value })}
+              readOnly={isReadOnly}
+              className="bg-transparent border-none p-0 resize-none focus-visible:ring-0 text-base font-bold uppercase tracking-widest leading-tight min-h-0 h-auto shadow-none"
+            />
+            <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest opacity-40">{task.priority} Priority</Badge>
+          </div>
+          <div className="pt-4 border-t border-neutral-50 space-y-3">
+            <div className="flex justify-between items-center"><span className="text-[12px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span>{!isReadOnly && <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddSubtask(task.id)}><Plus className="h-3.5 w-3.5" /></Button>}</div>
+            <div className="space-y-2">
+              {(task.subtasks || []).map(sub => (
+                <div key={sub.id} className="flex items-center gap-3">
+                  <button onClick={() => !isReadOnly && handleToggleSubtask(task.id, sub.id)} disabled={isReadOnly} className={cn("h-4 w-4 border flex items-center justify-center transition-colors", sub.isCompleted ? "bg-accent border-accent" : "border-neutral-200")}>
+                    {sub.isCompleted && <Check className="h-2.5 w-2.5 text-white" />}
+                  </button>
+                  <Input 
+                    value={sub.title}
+                    onChange={(e) => handleUpdateSubtask(task.id, sub.id, e.target.value)}
+                    readOnly={isReadOnly}
+                    className={cn(
+                      "bg-transparent border-none p-0 h-auto focus-visible:ring-0 text-[13px] font-light italic shadow-none", 
+                      sub.isCompleted ? "text-accent/30 line-through" : "text-accent/70"
+                    )}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+);
+
 export default function DesignerProjectWorkbench({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { clientProjects, updateClientProject, inquiries, addInquiry } = useWhyteStore();
@@ -244,68 +330,6 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
     };
   })();
 
-  const KanbanColumn = ({ status, tasks }: { status: ProjectTask['status'], tasks: ProjectTask[] }) => (
-    <div className="flex-1 flex flex-col gap-6 min-w-[320px]">
-      <div className="flex items-center justify-between pb-4 border-b border-neutral-200">
-        <div className="flex items-center gap-3">
-          <div className={cn("h-2.5 w-2.5 rounded-full", status === 'Todo' ? 'bg-neutral-200' : status === 'In Progress' ? 'bg-orange-400' : 'bg-green-500')} />
-          <h3 className="text-[13px] font-bold uppercase tracking-[0.3em] text-muted-foreground">{status} ({tasks.length})</h3>
-        </div>
-        {!isReadOnly && (
-          <Button variant="ghost" size="icon" onClick={() => handleAddTask(status)} className="h-8 w-8 hover:bg-neutral-100">
-            <Plus className="h-4.5 w-4.5 opacity-40" />
-          </Button>
-        )}
-      </div>
-      <div className="flex flex-col gap-4 flex-1">
-        {tasks.map(task => (
-          <motion.div key={task.id} layoutId={task.id} className={cn("group relative bg-white border border-neutral-100 p-6 shadow-sm hover:shadow-xl transition-all space-y-4", isReadOnly && "opacity-80")}>
-            <div className="flex justify-between items-start">
-              <span className="text-[11px] font-bold text-accent/20 uppercase tracking-widest">{task.id}</span>
-              {!isReadOnly && (
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {status !== 'Todo' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Done' ? 'In Progress' : 'Todo')}><ChevronLeft className="h-4 w-4" /></Button>}
-                  {status !== 'Done' && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveTask(task.id, status === 'Todo' ? 'In Progress' : 'Done')}><ChevronRight className="h-4 w-4" /></Button>}
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/40 hover:text-destructive" onClick={() => handleDeleteTask(task.id)}><Trash2 className="h-4 w-4" /></Button>
-                </div>
-              )}
-            </div>
-            <div className="space-y-3">
-              <Textarea 
-                value={task.title}
-                onChange={(e) => handleUpdateTask(task.id, { title: e.target.value })}
-                readOnly={isReadOnly}
-                className="bg-transparent border-none p-0 resize-none focus-visible:ring-0 text-base font-bold uppercase tracking-widest leading-tight min-h-0 h-auto shadow-none"
-              />
-              <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest opacity-40">{task.priority} Priority</Badge>
-            </div>
-            <div className="pt-4 border-t border-neutral-50 space-y-3">
-              <div className="flex justify-between items-center"><span className="text-[12px] font-bold uppercase tracking-widest text-accent/30">Sub-protocols</span>{!isReadOnly && <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleAddSubtask(task.id)}><Plus className="h-3.5 w-3.5" /></Button>}</div>
-              <div className="space-y-2">
-                {(task.subtasks || []).map(sub => (
-                  <div key={sub.id} className="flex items-center gap-3">
-                    <button onClick={() => !isReadOnly && handleToggleSubtask(task.id, sub.id)} disabled={isReadOnly} className={cn("h-4 w-4 border flex items-center justify-center transition-colors", sub.isCompleted ? "bg-accent border-accent" : "border-neutral-200")}>
-                      {sub.isCompleted && <Check className="h-2.5 w-2.5 text-white" />}
-                    </button>
-                    <Input 
-                      value={sub.title}
-                      onChange={(e) => handleUpdateSubtask(task.id, sub.id, e.target.value)}
-                      readOnly={isReadOnly}
-                      className={cn(
-                        "bg-transparent border-none p-0 h-auto focus-visible:ring-0 text-[13px] font-light italic shadow-none", 
-                        sub.isCompleted ? "text-accent/30 line-through" : "text-accent/70"
-                      )}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-24 font-body">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
@@ -454,9 +478,42 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
 
         <TabsContent value="workflow" className="m-0">
           <div className="flex gap-8 overflow-x-auto pb-8 custom-scrollbar">
-            <KanbanColumn status="Todo" tasks={tasks.filter(t => t.status === 'Todo')} />
-            <KanbanColumn status="In Progress" tasks={tasks.filter(t => t.status === 'In Progress')} />
-            <KanbanColumn status="Done" tasks={tasks.filter(t => t.status === 'Done')} />
+            <KanbanColumn 
+              status="Todo" 
+              tasks={tasks.filter(t => t.status === 'Todo')} 
+              isReadOnly={isReadOnly}
+              handleAddTask={handleAddTask}
+              handleMoveTask={handleMoveTask}
+              handleDeleteTask={handleDeleteTask}
+              handleUpdateTask={handleUpdateTask}
+              handleAddSubtask={handleAddSubtask}
+              handleToggleSubtask={handleToggleSubtask}
+              handleUpdateSubtask={handleUpdateSubtask}
+            />
+            <KanbanColumn 
+              status="In Progress" 
+              tasks={tasks.filter(t => t.status === 'In Progress')} 
+              isReadOnly={isReadOnly}
+              handleAddTask={handleAddTask}
+              handleMoveTask={handleMoveTask}
+              handleDeleteTask={handleDeleteTask}
+              handleUpdateTask={handleUpdateTask}
+              handleAddSubtask={handleAddSubtask}
+              handleToggleSubtask={handleToggleSubtask}
+              handleUpdateSubtask={handleUpdateSubtask}
+            />
+            <KanbanColumn 
+              status="Done" 
+              tasks={tasks.filter(t => t.status === 'Done')} 
+              isReadOnly={isReadOnly}
+              handleAddTask={handleAddTask}
+              handleMoveTask={handleMoveTask}
+              handleDeleteTask={handleDeleteTask}
+              handleUpdateTask={handleUpdateTask}
+              handleAddSubtask={handleAddSubtask}
+              handleToggleSubtask={handleToggleSubtask}
+              handleUpdateSubtask={handleUpdateSubtask}
+            />
           </div>
         </TabsContent>
 
