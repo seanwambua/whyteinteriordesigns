@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,27 +35,35 @@ import {
   ExternalLink,
   Loader2,
   PencilRuler,
-  X
+  X,
+  FileEdit,
+  PenTool,
+  ChevronRight,
+  ShieldCheck
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { ClientSupportDialog } from "@/components/dashboard/client-support-dialog";
-import { useWhyteStore, ClientProject, ProjectTask } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, ReorganizationDetails } from "@/store/use-whyte-store";
 import { Badge } from "@/components/ui/badge";
 import { parse, differenceInDays, isAfter, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export default function ClientDashboardPage() {
-  const { clientProjects, designers, updateClientProject, financialSteward } = useWhyteStore();
+  const { clientProjects, designers, updateClientProject, financialSteward, addInquiry } = useWhyteStore();
   const [verifiedProjectId, setVerifiedProjectId] = useState<string | null>(null);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request">("project_support");
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+
+  const [isReviewingReorg, setIsReviewingReorg] = useState(false);
+  const [isSigningReorg, setIsSigningReorg] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -98,6 +107,51 @@ export default function ClientDashboardPage() {
     });
   };
 
+  const handleRequestReorg = () => {
+    const reorgInquiry = {
+      id: `REQ-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      name: activeProject.name,
+      email: activeProject.email,
+      type: 'project_support' as const,
+      serviceType: 'design' as const,
+      message: "Formal Request for Financing Reorganization: I would like to discuss a custom payout schedule for my commission.",
+      status: 'new' as const,
+      urgency: 'high' as const,
+      date: format(new Date(), "MMM dd, yyyy"),
+      projectId: activeProject.id
+    };
+    
+    addInquiry(reorgInquiry);
+    updateClientProject(activeProject.id, {
+      reorganization: {
+        status: 'Requested',
+        requestedBy: 'Client',
+        terms: "",
+        proposedInstallments: [],
+        clientAgreed: false,
+        stewardWitnessed: false
+      }
+    });
+    toast({ title: "Request Transmitted", description: "A Senior Partner will review your reorganization request." });
+  };
+
+  const handleAgreeToReorg = () => {
+    if (!activeProject.reorganization) return;
+    setIsSigningReorg(true);
+    setTimeout(() => {
+      updateClientProject(activeProject.id, {
+        reorganization: {
+          ...activeProject.reorganization,
+          clientAgreed: true
+        },
+        lastActivity: "Financing Protocol: Client Authorized Custom Payout Terms"
+      });
+      setIsReviewingReorg(false);
+      setIsSigningReorg(false);
+      toast({ title: "Terms Authorized", description: "Agreement transmitted to Financial Steward for witnessing." });
+    }, 1500);
+  };
+
   const openSupport = (type: "project_support" | "complaint" | "termination_request") => {
     setSupportType(type);
     setIsSupportOpen(true);
@@ -119,6 +173,8 @@ export default function ClientDashboardPage() {
   const totalPaid = activeProject.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
   const dueBalance = activeProject.totalBudget - totalPaid;
   const hasOutstandingBalance = dueBalance > 0;
+
+  const isReorgPending = activeProject.reorganization?.status === 'Pending_Agreement' && !activeProject.reorganization.clientAgreed;
 
   if (activeProject.status === 'Termination') {
     const audit = activeProject.termination?.audit;
@@ -311,6 +367,24 @@ export default function ClientDashboardPage() {
         </div>
       </motion.div>
 
+      {isReorgPending && (
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="relative">
+          <Card className="rounded-none border-orange-500/20 bg-orange-50 p-10 shadow-2xl overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5"><FileEdit className="h-32 w-32" /></div>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <PenTool className="h-6 w-6 text-orange-600" />
+                  <h3 className="text-2xl font-headline italic text-orange-600">Financing Protocol Review</h3>
+                </div>
+                <p className="text-base font-light italic text-orange-600/80 leading-relaxed max-w-2xl">A new custom payout plan has been proposed for your commission. Professional review and digital authorization are required to synchronize the ledger.</p>
+              </div>
+              <Button onClick={() => setIsReviewingReorg(true)} className="bg-orange-600 text-white rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl hover:bg-orange-700 transition-all flex gap-3"><FileSearch className="h-4 w-4" /> Review Terms</Button>
+            </div>
+          </Card>
+        </motion.div>
+      )}
+
       {(activeProject.isArchived || activeProject.status === 'Terminated') && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -472,7 +546,12 @@ export default function ClientDashboardPage() {
               </div>
             )}
             {!activeProject.isArchived && activeProject.status !== 'Terminated' && (
-              <div className="pt-6 border-t border-accent/5">
+              <div className="pt-6 border-t border-accent/5 space-y-4">
+                {!activeProject.reorganization?.status || activeProject.reorganization.status === 'Inactive' ? (
+                  <Button onClick={handleRequestReorg} variant="outline" className="w-full h-14 rounded-none border-orange-500/20 text-orange-600 hover:bg-orange-600 hover:text-white uppercase tracking-widest text-[9px] font-bold flex gap-3 transition-all"><RefreshCcw className="h-4 w-4" /> Request Financing Review</Button>
+                ) : (
+                  <Badge className="w-full justify-center rounded-none bg-orange-100 text-orange-800 border-orange-200 uppercase tracking-widest text-[8px] py-3">{activeProject.reorganization.status.replace('_', ' ')}</Badge>
+                )}
                 <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[9px] font-bold">Raise Studio Inquiry</Button>
               </div>
             )}
@@ -504,6 +583,49 @@ export default function ClientDashboardPage() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={isReviewingReorg} onOpenChange={setIsReviewingReorg}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-3xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+          <div className="bg-orange-600 h-1.5 w-full" />
+          <div className="p-12 space-y-10 overflow-y-auto custom-scrollbar flex-1">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3"><FileEdit className="h-5 w-5 text-orange-600" /><span className="text-orange-600 text-[12px] font-bold uppercase tracking-[0.4em]">Financing Protocol Agreement</span></div>
+              <DialogTitle className="text-4xl font-headline italic">Review Custom Payout Terms</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">Please review the proposed architectural financing reorganization. Authorization establishes a new legally binding payout framework for your commission.</DialogDescription>
+            </DialogHeader>
+
+            <div className="p-10 bg-secondary/30 border border-accent/5 space-y-6">
+              <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Agreement Rationale</h4>
+              <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/20 pl-8">"{activeProject.reorganization?.terms}"</p>
+            </div>
+
+            <div className="space-y-6">
+              <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Proposed Installment Schedule</h4>
+              <div className="divide-y divide-accent/5 border border-accent/5">
+                {activeProject.reorganization?.proposedInstallments.map((ins, i) => (
+                  <div key={i} className="p-6 flex items-center justify-between bg-white">
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold uppercase tracking-widest">{ins.label}</p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{ins.percentage}% Allocation Protocol</p>
+                    </div>
+                    <p className="text-xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-8 border border-dashed border-accent/20 text-center">
+              <p className="text-[11px] uppercase tracking-[0.4em] font-bold text-accent/40 italic leading-relaxed">Agreement requires Client signature and Steward certification.</p>
+            </div>
+          </div>
+          <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between gap-6">
+            <Button onClick={() => setIsReviewingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest">Abort Protocol Sync</Button>
+            <Button onClick={handleAgreeToReorg} disabled={isSigningReorg} className="bg-orange-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all hover:tracking-[0.2em] flex gap-4">
+              {isSigningReorg ? <><Loader2 className="h-5 w-5 animate-spin" /> Digitally Signing...</> : <><PenTool className="h-5 w-5" /> Authorize & Sign Terms</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ClientSupportDialog isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} projectId={activeProject.id} defaultType={supportType} />
     </div>

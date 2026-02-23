@@ -106,6 +106,16 @@ export interface TerminationDetails {
   audit?: FinancialAudit;
 }
 
+export interface ReorganizationDetails {
+  status: 'Requested' | 'Pending_Agreement' | 'Authorized' | 'Inactive';
+  requestedBy: 'Client' | 'Admin';
+  terms: string;
+  proposedInstallments: Installment[];
+  clientAgreed: boolean;
+  stewardWitnessed: boolean;
+  finalizedDate?: string;
+}
+
 export interface Designer {
   id: string;
   name: string;
@@ -173,6 +183,7 @@ export interface ClientProject {
   assignedStewardId?: string;
   handoverStatus?: 'Pending' | 'Failed' | 'Passed' | null;
   handoverNotes?: string;
+  reorganization?: ReorganizationDetails;
 }
 
 export interface Inquiry {

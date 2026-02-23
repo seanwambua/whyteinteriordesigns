@@ -3,7 +3,7 @@
 
 import { use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask, Inquiry, SiteReport, Installment } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Inquiry, SiteReport, Installment, ReorganizationDetails } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +52,9 @@ import {
   Landmark,
   Settings2,
   FileEdit,
-  Coins
+  Coins,
+  FileText,
+  Handshake
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -87,6 +89,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   // FINANCING REORGANIZATION STATE
   const [isReorganizingPlan, setIsReorganizingPlan] = useState(false);
   const [tempInstallments, setTempInstallments] = useState<Installment[]>([]);
+  const [reorgTerms, setReorgTerms] = useState("");
 
   useEffect(() => {
     setIsMounted(true);
@@ -111,7 +114,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   useEffect(() => {
     if (isReorganizingPlan && project) {
-      setTempInstallments([...project.installments]);
+      setTempInstallments(project.reorganization?.status === 'Pending_Agreement' 
+        ? [...project.reorganization.proposedInstallments]
+        : [...project.installments]);
+      setReorgTerms(project.reorganization?.terms || "");
     }
   }, [isReorganizingPlan, project]);
 
@@ -168,7 +174,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const handleUpdateTempInstallment = (idx: number, field: keyof Installment, value: any) => {
     const updated = [...tempInstallments];
     updated[idx] = { ...updated[idx], [field]: value };
-    // Automatically recalculate percentage based on amount relative to total budget
     if (field === 'amount') {
       const budget = project.totalBudget || 1;
       updated[idx].percentage = Math.round((Number(value) / budget) * 100);
@@ -191,13 +196,22 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     toast({ title: "Reconciliation Balance Established" });
   };
 
-  const handleAuthorizeFinancing = () => {
+  const handleProposeReorganization = () => {
+    const reorg: ReorganizationDetails = {
+      status: 'Pending_Agreement',
+      requestedBy: project.reorganization?.status === 'Requested' ? 'Client' : 'Admin',
+      terms: reorgTerms,
+      proposedInstallments: tempInstallments,
+      clientAgreed: false,
+      stewardWitnessed: false
+    };
+    
     updateClientProject(project.id, { 
-      installments: tempInstallments,
-      lastActivity: "Financing Protocol Reorganized — Custom Payout Schedule Synchronized"
+      reorganization: reorg,
+      lastActivity: "Financing Protocol: Custom Payout Plan Proposted for Client Agreement"
     });
     setIsReorganizingPlan(false);
-    toast({ title: "Ledger Synchronized", description: "The custom payout plan is now active." });
+    toast({ title: "Proposal Transmitted", description: "The client must now authorize the reorganization terms." });
   };
 
   const handleUpdateTask = (taskId: string, updates: Partial<ProjectTask>) => {
@@ -354,6 +368,18 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
         <Link href="/admin/clients" className="inline-flex items-center gap-2 text-accent/40 hover:text-accent transition-all group"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /><span className="text-[12px] font-bold uppercase tracking-[0.3em]">Back to Master Registry</span></Link>
         {isAuditVerified && (<Alert className="rounded-none border-green-600/20 bg-green-600/[0.02]"><Lock className="h-4 w-4 text-green-600" /><AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-green-600">Dossier Locked — Audit Verified</AlertTitle><AlertDescription className="text-[13px] font-light italic">This commission has been reconciled and verified. All protocols are now read-only.</AlertDescription></Alert>)}
+        {project.reorganization?.status === 'Requested' && (
+          <Alert className="rounded-none border-orange-500/20 bg-orange-50 p-6 shadow-xl">
+            <ShieldAlert className="h-5 w-5 text-orange-600" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 w-full ml-4">
+              <div className="space-y-1">
+                <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Financing Protocol Review Requested</AlertTitle>
+                <AlertDescription className="text-[13px] font-light italic text-orange-600/80">The client has requested a formal review of the current payout schedule. Open the Financing Protocol Workbench to initialize a new proposal.</AlertDescription>
+              </div>
+              <Button onClick={() => setIsReorganizingPlan(true)} className="bg-orange-600 text-white rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold shadow-lg hover:bg-orange-700 transition-all flex gap-3"><FileEdit className="h-4 w-4" /> Initialize Review</Button>
+            </div>
+          </Alert>
+        )}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
           <div className="space-y-2">
             <div className="flex items-center gap-4"><div className="h-px w-8 bg-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.4em]">Project Terminal</span></div>
@@ -480,9 +506,16 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                    <h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Financial Reconciliation Index</h3>
                  </div>
                  {!isAuditVerified && (
-                   <Button onClick={() => setIsReorganizingPlan(true)} variant="ghost" className="h-10 px-6 rounded-none text-accent uppercase tracking-widest text-[10px] font-bold border border-accent/10 hover:bg-accent hover:text-white transition-all shadow-sm">
-                     <Settings2 className="h-4 w-4 mr-2" /> Reorganize Financing
-                   </Button>
+                   <div className="flex gap-4">
+                     {project.reorganization?.status === 'Pending_Agreement' && (
+                       <Badge variant="outline" className="rounded-none bg-orange-50 text-orange-600 border-orange-200 uppercase tracking-widest text-[9px] px-4 py-2 flex gap-2">
+                         <Clock className="h-3 w-3" /> Awaiting Client Agreement
+                       </Badge>
+                     )}
+                     <Button onClick={() => setIsReorganizingPlan(true)} variant="ghost" className="h-10 px-6 rounded-none text-accent uppercase tracking-widest text-[10px] font-bold border border-accent/10 hover:bg-accent hover:text-white transition-all shadow-sm">
+                       <Settings2 className="h-4 w-4 mr-2" /> {project.reorganization?.status === 'Pending_Agreement' ? 'Review Proposal' : 'Reorganize Financing'}
+                     </Button>
+                   </div>
                  )}
                </div>
                
@@ -707,10 +740,18 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             <DialogHeader className="space-y-4">
               <div className="flex items-center gap-3"><Coins className="h-5 w-5 text-accent" /><span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Financing Protocol Workbench</span></div>
               <DialogTitle className="text-4xl font-headline italic">Reorganize Financing</DialogTitle>
-              <DialogDescription className="font-light italic text-muted-foreground text-base">
-                Transition to a custom payout schedule. Verified transactions are locked to preserve historical audit integrity.
-              </DialogDescription>
+              <DialogDescription className="font-light italic text-muted-foreground text-base">Transition to a custom payout schedule. A formal agreement will be generated for Client authorization and Steward witnessing.</DialogDescription>
             </DialogHeader>
+
+            {project.reorganization?.status === 'Pending_Agreement' && (
+              <Alert className="rounded-none border-orange-500/20 bg-orange-50 p-6">
+                <Clock className="h-5 w-5 text-orange-600" />
+                <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Pending Protocol Agreement</AlertTitle>
+                <AlertDescription className="text-[13px] font-light italic text-orange-600/80">
+                  A proposal is currently active. Modifying it now will reset the Client and Steward signature protocols.
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-8 bg-secondary/30 border border-accent/5">
               <div className="space-y-1">
@@ -722,18 +763,24 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                 <p className="text-2xl font-headline italic">KES {tempTotalAssigned.toLocaleString()}</p>
               </div>
               <div className="space-y-1">
-                <p className={cn("text-[10px] font-bold uppercase tracking-widest", tempVariance === 0 ? "text-green-600" : "text-orange-600")}>
-                  Plan Variance
-                </p>
-                <p className={cn("text-2xl font-headline italic", tempVariance === 0 ? "text-green-600" : "text-orange-600")}>
-                  KES {Math.abs(tempVariance).toLocaleString()} {tempVariance > 0 ? '(Over)' : tempVariance < 0 ? '(Under)' : ''}
-                </p>
+                <p className={cn("text-[10px] font-bold uppercase tracking-widest", tempVariance === 0 ? "text-green-600" : "text-orange-600")}>Plan Variance</p>
+                <p className={cn("text-2xl font-headline italic", tempVariance === 0 ? "text-green-600" : "text-orange-600")}>KES {Math.abs(tempVariance).toLocaleString()} {tempVariance > 0 ? '(Over)' : tempVariance < 0 ? '(Under)' : ''}</p>
               </div>
             </div>
 
             <div className="space-y-6">
+              <div className="space-y-3">
+                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Agreement Terms & Rationale</Label>
+                <Textarea 
+                  value={reorgTerms} 
+                  onChange={(e) => setReorgTerms(e.target.value)} 
+                  placeholder="Detail the rationale for reorganization and any specific legal clauses..." 
+                  className="min-h-[120px] rounded-none border-accent/10 p-6 font-light italic text-base focus:ring-accent bg-secondary/5"
+                />
+              </div>
+
               <div className="flex items-center justify-between border-b border-accent/5 pb-4">
-                <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Active Payout Schedule</h4>
+                <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Proposed Payout Schedule</h4>
                 <Button onClick={handleAddTempInstallment} variant="outline" className="h-10 px-6 rounded-none text-[10px] uppercase font-bold tracking-widest border-accent/10 hover:bg-accent hover:text-white transition-all">
                   <Plus className="h-3.5 w-3.5 mr-2" /> Append Installment
                 </Button>
@@ -767,27 +814,17 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                               className="rounded-none h-10 border-accent/10 text-sm font-bold pl-8 pr-12"
                             />
                             <Coins className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-accent/40">
-                              {ins.percentage}%
-                            </span>
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-accent/40">{ins.percentage}%</span>
                           </div>
                         </div>
                         <div className="md:col-span-3 flex gap-2">
                           {ins.status === 'Pending' && (
                             <>
-                              <Button onClick={() => handleSyncFinalToBalance(idx)} variant="ghost" size="icon" className="h-10 w-10 text-accent/40 hover:text-accent hover:bg-accent/5" title="Sync to Remaining Balance">
-                                <RefreshCcw className="h-4 w-4" />
-                              </Button>
-                              <Button onClick={() => handleRemoveTempInstallment(idx)} variant="ghost" size="icon" className="h-10 w-10 text-destructive/40 hover:text-destructive hover:bg-destructive/5" title="Remove Installment">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <Button onClick={() => handleSyncFinalToBalance(idx)} variant="ghost" size="icon" className="h-10 w-10 text-accent/40 hover:text-accent hover:bg-accent/5" title="Sync to Remaining Balance"><RefreshCcw className="h-4 w-4" /></Button>
+                              <Button onClick={() => handleRemoveTempInstallment(idx)} variant="ghost" size="icon" className="h-10 w-10 text-destructive/40 hover:text-destructive hover:bg-destructive/5" title="Remove Installment"><Trash2 className="h-4 w-4" /></Button>
                             </>
                           )}
-                          {ins.status === 'Paid' && (
-                            <Badge className="bg-green-600 text-white rounded-none uppercase text-[8px] h-10 px-4 flex items-center gap-2">
-                              <Lock className="h-3 w-3" /> Verified
-                            </Badge>
-                          )}
+                          {ins.status === 'Paid' && <Badge className="bg-green-600 text-white rounded-none uppercase text-[8px] h-10 px-4 flex items-center gap-2"><Lock className="h-3 w-3" /> Verified</Badge>}
                         </div>
                       </div>
                     </div>
@@ -798,16 +835,16 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
           </div>
           <DialogFooter className="p-10 border-t border-accent/5 bg-secondary/5 flex flex-col sm:flex-row justify-between gap-6">
             <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-accent/40 italic">
-              <ShieldAlert className="h-4 w-4" /> Final reconciliation requires zero plan variance.
+              <ShieldAlert className="h-4 w-4" /> Proposing a custom schedule requires zero plan variance.
             </div>
             <div className="flex gap-4">
               <Button onClick={() => setIsReorganizingPlan(false)} variant="ghost" className="rounded-none h-14 px-8 text-[11px] font-bold uppercase tracking-widest">Abort Reorganization</Button>
               <Button 
-                onClick={handleAuthorizeFinancing} 
-                disabled={Math.abs(tempVariance) > 1}
+                onClick={handleProposeReorganization} 
+                disabled={Math.abs(tempVariance) > 1 || !reorgTerms}
                 className="bg-accent text-white rounded-none h-14 px-12 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-3 hover:tracking-[0.2em]"
               >
-                Authorize financing <ChevronRight className="h-4 w-4" />
+                Propose for Agreement <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </DialogFooter>
