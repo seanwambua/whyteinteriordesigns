@@ -120,7 +120,7 @@ export default function ProjectClosingPage() {
   const handleArchiveProject = (projectId: string) => {
     setArchivingId(projectId);
     setTimeout(() => {
-      updateClientProject(project.id, { isArchived: true, lastActivity: "Commission Transferred to Studio Archives" });
+      updateClientProject(projectId, { isArchived: true, lastActivity: "Commission Transferred to Studio Archives" });
       toast({ title: "Commission Archived" });
       setArchivingId(null);
     }, 1500);
@@ -168,7 +168,7 @@ export default function ProjectClosingPage() {
               const isVerified = project.financialReportStatus === 'Verified';
               
               const isHandoverComplete = project.handoverStatus === 'Passed';
-              const hasStewardSync = !!project.auditDetails || !!project.termination?.audit;
+              const hasStewardSync = project.auditDetails?.isVerified || project.termination?.audit?.isVerified;
               const assignedDesigner = designers.find(d => d.id === project.assignedDesignerId);
               
               const isBlocked = !allInstallmentsPaid || hasPendingInquiries || !hasStewardSync || !isHandoverComplete;
@@ -293,7 +293,7 @@ export default function ProjectClosingPage() {
                                       {!isHandoverComplete && <li>Handover Authorization Required (Awaiting Auth)</li>}
                                       {!allInstallmentsPaid && <li>Ledger Liquidation Required (Pending Payments)</li>}
                                       {hasPendingInquiries && <li>Resolution of {projectInquiries.length} Inquiry(s) Required</li>}
-                                      {!hasStewardSync && <li>Steward Audit Synchronization Required</li>}
+                                      {!hasStewardSync && <li>Steward Audit Verification Required</li>}
                                     </ul>
                                   </TooltipContent>
                                 )}

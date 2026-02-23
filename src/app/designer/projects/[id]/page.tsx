@@ -78,7 +78,6 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   const project = clientProjects.find(p => p.id === id);
   const projectInquiries = inquiries.filter(inq => inq.projectId === id);
 
-  // CHECK FOR PENDING REQUEST
   const hasPendingRequest = useMemo(() => {
     if (!project || !activeDesignerId) return false;
     return projectInquiries.some(inq => 

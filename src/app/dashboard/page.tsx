@@ -492,9 +492,9 @@ export default function ClientDashboardPage() {
         </div>
 
         <div className="lg:col-span-4 space-y-8">
-          <Card className={cn("rounded-none shadow-xl bg-white p-8 space-y-8 transition-all border", hasOutstandingBalance ? "border-orange-500/20 ring-1 ring-orange-500/10" : "border-accent/5")}>
+          <Card className={cn("rounded-none shadow-xl bg-white p-8 space-y-8 transition-all border", hasOutstandingBalance && activeProject.status === 'Completion' ? "border-orange-500/20 ring-1 ring-orange-500/10" : "border-accent/5")}>
             <div className="text-center space-y-2">
-              <h3 className={cn("text-[10px] font-bold uppercase tracking-[0.4em]", hasOutstandingBalance ? "text-orange-600" : "text-accent/40")}>Financial Ledger</h3>
+              <h3 className={cn("text-[10px] font-bold uppercase tracking-[0.4em]", hasOutstandingBalance && activeProject.status === 'Completion' ? "text-orange-600" : "text-accent/40")}>Financial Ledger</h3>
               <p className="text-xs font-light italic text-muted-foreground">Commission Tier: {activeProject.tier}</p>
             </div>
             <div className="space-y-4">

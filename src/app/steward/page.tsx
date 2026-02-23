@@ -41,11 +41,12 @@ export default function StewardDashboardPage() {
   }, [isMounted, router]);
 
   const relevantProjects = useMemo(() => {
-    // Stewards see projects in Completion phase or Termination Pending
+    // RECONCILIATION GUARDRAIL: Stewards only see projects that have Passed technical handover
     return clientProjects.filter(p => 
       !p.isArchived && 
       p.isActivated && 
-      (p.status === 'Completion' || p.status === 'Termination')
+      p.handoverStatus === 'Passed' &&
+      p.financialReportStatus !== 'Verified'
     );
   }, [clientProjects]);
 
@@ -56,7 +57,7 @@ export default function StewardDashboardPage() {
   );
 
   const totalCapitalUnderReview = relevantProjects.reduce((sum, p) => sum + p.totalBudget, 0);
-  const pendingAuditsCount = relevantProjects.filter(p => p.financialReportStatus !== 'Verified').length;
+  const pendingAuditsCount = relevantProjects.length;
 
   if (!isMounted) {
     return (
