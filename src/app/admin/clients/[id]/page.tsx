@@ -44,7 +44,9 @@ import {
   Activity,
   PencilRuler,
   AlertCircle,
-  Building2
+  Building2,
+  TrendingDown,
+  Scale
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -207,7 +209,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
   const remainingBalance = (project.totalBudget || 0) - totalPaid;
-  const isLegerSynchronized = remainingBalance <= 0;
+  const isLegerSynchronized = Math.abs(remainingBalance) < 1;
+  const isOverpaid = remainingBalance < -1;
 
   const temporal = (() => {
     if (!project.isActivated) return { label: "Temporal Status", value: "Locked", icon: <ZapOff className="h-5 w-5" />, sub: "Pending Activation" };
@@ -391,8 +394,115 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         </TabsContent>
 
         <TabsContent value="ledger" className="m-0 space-y-12">
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-8"><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p><p className="text-3xl font-headline italic text-accent">KES {(project.totalBudget || 0).toLocaleString()}</p></div></Card><Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group"><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className="text-[11px) font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p><p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p></div></Card><Card className={cn("rounded-none p-10 relative overflow-hidden group transition-all", isLegerSynchronized ? "bg-white border-accent/10" : "bg-orange-50 border-orange-500/20 shadow-xl")}><div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><History className="h-12 w-12" /></div><div className="space-y-4 relative z-10"><p className={cn("text-[11px] font-bold uppercase tracking-[0.4em]", isLegerSynchronized ? "text-accent/40" : "text-orange-600/60")}>Outstanding Balance</p><p className={cn("text-3xl font-headline italic", isLegerSynchronized ? "text-accent" : "text-orange-600")}>KES {remainingBalance.toLocaleString()}</p></div></Card></div>
-           <Card className="rounded-none border-accent/5 p-0 bg-white shadow-2xl overflow-hidden"><div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center"><h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3"><CreditCard className="h-5 w-5" /> Architectural Registry</h3><Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">Stewardship Verified</Badge></div><div className="divide-y divide-accent/5">{project.installments.map((ins, i) => (<div key={i} className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8 hover:bg-accent/[0.01] transition-colors"><div className="flex items-center gap-8"><div className={cn("h-12 w-12 rounded-full flex items-center justify-center shrink-0 border", ins.status === 'Paid' ? "bg-green-600/5 border-green-600/20 text-green-600" : "bg-orange-600/5 border-orange-600/20 text-orange-600")}>{ins.status === 'Paid' ? <CheckCircle2 className="h-5 w-5" /> : <Timer className="h-5 w-5 animate-pulse" />}</div><div className="space-y-1.5"><div className="flex items-center gap-3"><p className="text-base font-bold uppercase tracking-[0.2em]">{ins.label}</p><Badge className={cn("rounded-none text-[10px] uppercase tracking-widest px-2.5 py-0.5 font-bold", ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white")}>{ins.status}</Badge></div><div className="flex items-center gap-4 text-[12px] text-muted-foreground font-bold uppercase tracking-widest"><span>Ref: {ins.transactionCode || 'Awaiting Sync'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.date || 'TBD'}</span><div className="h-1.5 w-1.5 rounded-full bg-accent/10" /><span>{ins.percentage}% Allocation</span></div></div></div><div className="flex items-center gap-12 justify-between lg:justify-end"><div className="text-right"><p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Value</p><p className={cn("text-2xl font-headline italic", ins.status === 'Pending' ? 'text-orange-600' : 'text-accent')}>KES {ins.amount.toLocaleString()}</p></div>{ins.status === 'Pending' && !isAuditVerified && (<Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-12 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn"><ShieldCheck className="h-4 w-4" /> Verify Entry</Button>)}{ins.status === 'Paid' && (<div className="h-12 w-12 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]"><Check className="h-6 w-6" /></div>)}</div></div>))}</div></Card>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             <Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group">
+               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><TrendingUp className="h-12 w-12" /></div>
+               <div className="space-y-4 relative z-10">
+                 <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Capital Commitment</p>
+                 <p className="text-3xl font-headline italic text-accent">KES {(project.totalBudget || 0).toLocaleString()}</p>
+               </div>
+             </Card>
+             <Card className="rounded-none border-accent/10 bg-white p-10 relative overflow-hidden group">
+               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-12 w-12" /></div>
+               <div className="space-y-4 relative z-10">
+                 <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-green-600/60">Liquidated Funds</p>
+                 <p className="text-3xl font-headline italic text-green-600">KES {totalPaid.toLocaleString()}</p>
+               </div>
+             </Card>
+             <Card className={cn(
+               "rounded-none p-10 relative overflow-hidden group transition-all", 
+               isLegerSynchronized ? "bg-white border-accent/10" : isOverpaid ? "bg-green-50 border-green-500/20 shadow-xl" : "bg-orange-50 border-orange-500/20 shadow-xl"
+             )}>
+               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                 {isOverpaid ? <Scale className="h-12 w-12" /> : <History className="h-12 w-12" />}
+               </div>
+               <div className="space-y-4 relative z-10">
+                 <p className={cn(
+                   "text-[11px] font-bold uppercase tracking-[0.4em]", 
+                   isLegerSynchronized ? "text-accent/40" : isOverpaid ? "text-green-600/60" : "text-orange-600/60"
+                 )}>
+                   {isOverpaid ? "Surplus Balance" : "Outstanding Balance"}
+                 </p>
+                 <p className={cn(
+                   "text-3xl font-headline italic", 
+                   isLegerSynchronized ? "text-accent" : isOverpaid ? "text-green-600" : "text-orange-600"
+                 )}>
+                   KES {Math.abs(remainingBalance).toLocaleString()}
+                 </p>
+               </div>
+             </Card>
+           </div>
+
+           <Card className="rounded-none border-accent/5 p-0 bg-white shadow-2xl overflow-hidden">
+             <div className="bg-accent/5 px-10 py-6 border-b border-accent/5 flex justify-between items-center">
+               <h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent/60 flex items-center gap-3">
+                 <CreditCard className="h-5 w-5" /> Architectural Registry
+               </h3>
+               <Badge variant="outline" className="rounded-none text-[11px] uppercase tracking-widest border-accent/10 text-accent/40 font-bold">Stewardship Verified</Badge>
+             </div>
+             <div className="divide-y divide-accent/5">
+               {project.installments.map((ins, i) => {
+                 const projectedAmount = project.totalBudget * (ins.percentage / 100);
+                 const variance = ins.amount - projectedAmount;
+                 const hasVariance = ins.status === 'Paid' && Math.abs(variance) > 1;
+
+                 return (
+                   <div key={i} className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8 hover:bg-accent/[0.01] transition-colors">
+                     <div className="flex items-center gap-8">
+                       <div className={cn(
+                         "h-12 w-12 rounded-full flex items-center justify-center shrink-0 border", 
+                         ins.status === 'Paid' ? "bg-green-600/5 border-green-600/20 text-green-600" : "bg-orange-600/5 border-orange-600/20 text-orange-600"
+                       )}>
+                         {ins.status === 'Paid' ? <CheckCircle2 className="h-5 w-5" /> : <Timer className="h-5 w-5 animate-pulse" />}
+                       </div>
+                       <div className="space-y-1.5">
+                         <div className="flex items-center gap-3">
+                           <p className="text-base font-bold uppercase tracking-[0.2em]">{ins.label}</p>
+                           <Badge className={cn("rounded-none text-[10px] uppercase tracking-widest px-2.5 py-0.5 font-bold", ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white")}>
+                             {ins.status}
+                           </Badge>
+                         </div>
+                         <div className="flex flex-wrap items-center gap-4 text-[12px] text-muted-foreground font-bold uppercase tracking-widest">
+                           <span>Ref: {ins.transactionCode || 'Awaiting Sync'}</span>
+                           <div className="h-1.5 w-1.5 rounded-full bg-accent/10" />
+                           <span>{ins.date || 'TBD'}</span>
+                           <div className="h-1.5 w-1.5 rounded-full bg-accent/10" />
+                           <span>{ins.percentage}% Allocation (Projected KES {projectedAmount.toLocaleString()})</span>
+                         </div>
+                       </div>
+                     </div>
+                     <div className="flex items-center gap-12 justify-between lg:justify-end">
+                       <div className="text-right">
+                         <p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">Liquidated Value</p>
+                         <p className={cn("text-2xl font-headline italic", ins.status === 'Pending' ? 'text-orange-600' : 'text-accent')}>
+                           KES {ins.amount.toLocaleString()}
+                         </p>
+                         {hasVariance && (
+                           <div className={cn(
+                             "text-[10px] font-bold uppercase tracking-widest mt-1 flex items-center justify-end gap-1.5",
+                             variance > 0 ? "text-green-600" : "text-red-600"
+                           )}>
+                             {variance > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                             {variance > 0 ? 'Overpaid' : 'Underpaid'} by KES {Math.abs(variance).toLocaleString()}
+                           </div>
+                         )}
+                       </div>
+                       {ins.status === 'Pending' && !isAuditVerified && (
+                         <Button onClick={() => setVerifyingInstallment(i)} variant="outline" className="rounded-none h-12 px-8 border-accent/20 text-[11px] uppercase tracking-widest font-bold hover:bg-accent hover:text-white transition-all flex gap-3 shadow-sm group/btn">
+                           <ShieldCheck className="h-4 w-4" /> Verify Entry
+                         </Button>
+                       )}
+                       {ins.status === 'Paid' && (
+                         <div className="h-12 w-12 rounded-full border border-green-600/10 flex items-center justify-center text-green-600 bg-green-600/[0.02]">
+                           <Check className="h-6 w-6" />
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 );
+               })}
+             </div>
+           </Card>
         </TabsContent>
       </Tabs>
 
