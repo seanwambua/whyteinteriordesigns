@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -35,6 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Send, Loader2, LifeBuoy, AlertTriangle, XCircle, RefreshCcw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useWhyteStore, Inquiry } from "@/store/use-whyte-store";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   type: z.enum(["project_support", "complaint", "termination_request", "financial_reorganization"], {
@@ -318,7 +318,8 @@ export function ClientSupportDialog({
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className={`w-full text-white rounded-none h-14 uppercase tracking-[0.2em] transition-all ${
+              className={cn(
+                "w-full text-white rounded-none h-14 uppercase tracking-[0.2em] transition-all",
                 requestType === 'termination_request' 
                   ? 'bg-destructive hover:bg-destructive/90' 
                   : requestType === 'financial_reorganization' 
@@ -326,7 +327,7 @@ export function ClientSupportDialog({
                   : requestType === 'complaint' 
                   ? 'bg-orange-600 hover:bg-orange-700' 
                   : 'bg-accent hover:bg-accent/90'
-              }`}
+              )}
             >
               {isSubmitting ? (
                 <>
