@@ -96,7 +96,6 @@ export function ClientSupportDialog({
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     
-    // Find client info for the inquiry
     const project = clientProjects.find(p => p.id === projectId);
     
     const newInquiry: Inquiry = {
@@ -104,7 +103,7 @@ export function ClientSupportDialog({
       name: project?.name || "Client Portal User",
       email: project?.email || "portal@client.com",
       type: values.type as any,
-      serviceType: 'bundle', // Default for portal inquiries
+      serviceType: 'bundle',
       message: `[${values.subject}] ${values.message}`,
       status: 'new',
       urgency: values.type === 'termination_request' || values.type === 'financial_reorganization' ? 'critical' : values.type === 'complaint' ? 'high' : 'normal',
@@ -127,7 +126,6 @@ export function ClientSupportDialog({
         title = "Reorganization Requested";
         description = "Your formal request for financing review has been transmitted. Senior Partners and Stewards will review your current payout schedule.";
         
-        // Also update the project state if applicable
         if (project) {
           updateClientProject(project.id, {
             reorganization: {

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,7 +39,6 @@ import {
   PenTool,
   ChevronRight,
   ShieldCheck,
-  RefreshCcw,
   FileSearch
 } from "lucide-react";
 import Link from "next/link";
@@ -77,7 +75,6 @@ export default function ClientDashboardPage() {
     || clientProjects.find(p => p.isActivated && !p.isArchived)
     || clientProjects.find(p => p.isArchived);
 
-  // AUTOMATED ONBOARDING INITIALIZATION
   useEffect(() => {
     if (isMounted && !activeProject) {
       router.replace("/dashboard/onboarding");
@@ -524,7 +521,6 @@ export default function ClientDashboardPage() {
                 {activeProject.reorganization?.status && activeProject.reorganization.status !== 'Inactive' && (
                   <Badge className="w-full justify-center rounded-none bg-orange-100 text-orange-800 border-orange-200 uppercase tracking-widest text-[8px] py-3">{activeProject.reorganization.status.replace('_', ' ')}</Badge>
                 )}
-                <Button onClick={() => openSupport("financial_reorganization")} variant="outline" className="w-full h-14 rounded-none border-orange-500/20 text-orange-600 hover:bg-orange-600 hover:text-white uppercase tracking-widest text-[9px] font-bold flex gap-3 transition-all"><RefreshCcw className="h-4 w-4" /> Request Financing Review</Button>
                 <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[9px] font-bold">Raise Studio Inquiry</Button>
               </div>
             )}
