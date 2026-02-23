@@ -43,6 +43,16 @@ import {
   DialogDescription, 
   DialogFooter
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
@@ -58,6 +68,7 @@ export default function ProjectClosingPage() {
   const [newStewardName, setNewStewardName] = useState(financialSteward);
   const [isSyncing, setIsSyncing] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [returningProjectId, setReturningProjectId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -100,10 +111,16 @@ export default function ProjectClosingPage() {
     });
   };
 
+  const handleConfirmReturnToHandover = () => {
+    if (!returningProjectId) return;
+    handleReturnToHandover(returningProjectId);
+    setReturningProjectId(null);
+  };
+
   const handleArchiveProject = (projectId: string) => {
     setArchivingId(projectId);
     setTimeout(() => {
-      updateClientProject(projectId, { isArchived: true, lastActivity: "Commission Transferred to Studio Archives" });
+      updateClientProject(project.id, { isArchived: true, lastActivity: "Commission Transferred to Studio Archives" });
       toast({ title: "Commission Archived" });
       setArchivingId(null);
     }, 1500);
@@ -283,7 +300,7 @@ export default function ProjectClosingPage() {
                               </Tooltip>
                             </TooltipProvider>
                             <Button 
-                              onClick={() => handleReturnToHandover(project.id)}
+                              onClick={() => setReturningProjectId(project.id)}
                               variant="outline"
                               className="h-14 w-full rounded-none border-accent/10 text-accent hover:bg-accent hover:text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 transition-all"
                             >
@@ -390,6 +407,22 @@ export default function ProjectClosingPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!returningProjectId} onOpenChange={(open) => !open && setReturningProjectId(null)}>
+        <AlertDialogContent className="rounded-none border-accent/20 font-body p-10">
+          <AlertDialogHeader className="space-y-6">
+            <div className="flex items-center gap-3"><RotateCcw className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Protocol Re-initialization</span></div>
+            <AlertDialogTitle className="text-3xl font-headline italic">Confirm Handover Re-initialization?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">
+              This will programmatically reset the technical handover status for dossier <strong>{returningProjectId}</strong>. The project will be removed from the reconciliation queue and transmitted back to the <strong>Handover Protocol</strong> terminal for re-verification of site quality audits.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="pt-10">
+            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-accent/10">Abort Protocol Reset</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmReturnToHandover} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 shadow-xl transition-all hover:tracking-widest">Authorize Reset</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
