@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -16,21 +15,28 @@ import {
   Activity,
   Zap,
   MapPin,
-  FilePlus
+  FilePlus,
+  ArrowUpRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function DesignerDashboardPage() {
   const { clientProjects } = useWhyteStore();
   const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    const onboarded = localStorage.getItem("whyte_designer_onboarded") === "true";
+    if (!onboarded) {
+      router.push("/designer/onboarding");
+    }
+  }, [router]);
 
   const activeDossiers = useMemo(() => 
     clientProjects.filter(p => !p.isArchived && p.isActivated && p.status === 'Execution'),
@@ -63,7 +69,7 @@ export default function DesignerDashboardPage() {
   ];
 
   return (
-    <div className="space-y-12 max-w-7xl mx-auto pb-24">
+    <div className="space-y-12 max-w-7xl mx-auto pb-24 font-body">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-2">
           <div className="flex items-center gap-4">
@@ -112,7 +118,7 @@ export default function DesignerDashboardPage() {
               <Briefcase className="h-5 w-5 text-accent/40" />
               <h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent">Active Site Dossiers</h2>
             </div>
-            <Link href="/designer/projects" className="text-[10px] font-bold uppercase tracking-widest text-accent/40 hover:text-accent">View Full Registry</Link>
+            <Link href="/designer/projects" className="text-[10px] font-bold uppercase tracking-widest text-accent/40 hover:text-accent flex items-center gap-2">View Full Registry <ArrowUpRight className="h-3 w-3" /></Link>
           </div>
 
           <div className="grid grid-cols-1 gap-6">
@@ -147,7 +153,7 @@ export default function DesignerDashboardPage() {
               </motion.div>
             ))}
             {activeDossiers.length === 0 && (
-              <div className="py-20 text-center border border-dashed border-neutral-200 bg-neutral-50 italic text-[12px] uppercase tracking-widest text-muted-foreground font-light">
+              <div className="py-24 text-center border border-dashed border-neutral-200 bg-neutral-50/50 italic text-[12px] uppercase tracking-widest text-muted-foreground font-light">
                 No active implementation dossiers assigned
               </div>
             )}
@@ -164,14 +170,14 @@ export default function DesignerDashboardPage() {
             
             <div className="space-y-8 relative z-10">
               {urgentTasks.map((item, i) => (
-                <div key={i} className="space-y-2 group cursor-pointer">
+                <Link key={i} href={`/designer/projects/${item.projectId}`} className="block space-y-2 group cursor-pointer border-b border-white/5 pb-6 last:border-0 last:pb-0">
                   <div className="flex justify-between items-start">
                     <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">{item.projectId}</span>
                     <Badge variant="outline" className="rounded-none text-[8px] border-white/20 text-white uppercase px-2">High Priority</Badge>
                   </div>
                   <p className="text-sm font-bold uppercase tracking-widest leading-tight group-hover:underline">{item.task.title}</p>
                   <p className="text-[10px] text-white/60 italic font-light">Dossier: {item.projectName}</p>
-                </div>
+                </Link>
               ))}
               {urgentTasks.length === 0 && (
                 <p className="text-[11px] text-white/40 italic uppercase tracking-widest">No critical site protocols outstanding</p>
@@ -183,7 +189,7 @@ export default function DesignerDashboardPage() {
             </Button>
           </Card>
 
-          <div className="p-10 border border-dashed border-neutral-200 bg-neutral-50 text-center space-y-6">
+          <div className="p-10 border border-dashed border-neutral-200 bg-neutral-50/50 text-center space-y-6">
             <p className="text-[11px] uppercase tracking-widest font-bold text-muted-foreground/60 leading-relaxed italic">
               "Every architectural detail is a signature of our studio's uncompromising pursuit of excellence."
             </p>

@@ -1,21 +1,33 @@
-
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { LayoutDashboard, Briefcase, Camera, ClipboardList, Users, Compass, PencilRuler, LogOut, Home, Activity, FilePlus } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function DesignerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    const isOnboarded = localStorage.getItem("whyte_designer_onboarded") === "true";
+    setOnboarded(isOnboarded);
 
-  if (!isMounted) return null;
+    if (!isOnboarded && pathname !== "/designer/onboarding") {
+      router.push("/designer/onboarding");
+    }
+  }, [pathname, router]);
+
+  if (!isMounted || onboarded === null) return null;
+
+  // Don't show sidebar on onboarding page
+  if (pathname === "/designer/onboarding") {
+    return <div className="min-h-screen bg-white">{children}</div>;
+  }
 
   const navItems = [
     { title: "Workbench", icon: LayoutDashboard, href: "/designer" },
@@ -103,7 +115,11 @@ export default function DesignerLayout({ children }: { children: React.ReactNode
                   <p className="text-[9px] text-muted-foreground truncate uppercase">Execution Authorized</p>
                 </div>
               </div>
-              <Link href="/" className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors group-data-[collapsible=icon]:hidden">
+              <Link 
+                href="/" 
+                className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors group-data-[collapsible=icon]:hidden"
+                onClick={() => localStorage.removeItem("whyte_designer_onboarded")}
+              >
                 <LogOut className="h-3.5 w-3.5" /> Exit Portal
               </Link>
             </div>
