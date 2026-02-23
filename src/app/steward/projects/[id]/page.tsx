@@ -31,7 +31,8 @@ import {
   CreditCard,
   Check,
   ShieldAlert,
-  ClipboardList
+  ClipboardList,
+  MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -89,7 +90,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   const allFundsVerified = incomingFunds.length > 0 && incomingFunds.every(f => f.isVerified);
   const allAllocationsVerified = allocations.length > 0 && allocations.every(a => a.isVerified);
   
-  const hasSyncDiscrepancy = lastSyncTimestamp && totalIncomingLogged !== totalRegistryPaid;
+  const hasSyncDiscrepancy = lastSyncTimestamp && Math.abs(totalIncomingLogged - totalRegistryPaid) > 1;
 
   if (!isMounted || !project) return null;
 
@@ -103,7 +104,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
       
       const registryTotal = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
       
-      if (totalIncomingLogged !== registryTotal) {
+      if (Math.abs(totalIncomingLogged - registryTotal) > 1) {
         toast({ 
           variant: "destructive",
           title: "Registry Discrepancy Identified", 
@@ -126,14 +127,22 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
       amount: 0,
       reference: "",
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      isVerified: false
+      isVerified: false,
+      amendment: ""
     };
     setIncomingFunds([...incomingFunds, newEntry]);
   };
 
   const updateIncoming = (id: string, field: keyof AuditIncoming, value: any) => {
     if (isVerified) return;
-    setIncomingFunds(incomingFunds.map(f => f.id === id ? { ...f, [field]: value } : f));
+    setIncomingFunds(incomingFunds.map(f => {
+      if (f.id === id) {
+        // Only amendment can be changed if verified
+        if (f.isVerified && field !== 'amendment') return f;
+        return { ...f, [field]: value };
+      }
+      return f;
+    }));
   };
 
   const handleToggleVerifyIncoming = (id: string) => {
@@ -154,14 +163,22 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
       category: "",
       amount: 0,
       description: "",
-      isVerified: false
+      isVerified: false,
+      amendment: ""
     };
     setAllocations([...allocations, newAlloc]);
   };
 
   const updateAllocation = (id: string, field: keyof AuditAllocation, value: any) => {
     if (isVerified) return;
-    setAllocations(allocations.map(a => a.id === id ? { ...a, [field]: value } : a));
+    setAllocations(allocations.map(a => {
+      if (a.id === id) {
+        // Only amendment can be changed if verified
+        if (a.isVerified && field !== 'amendment') return a;
+        return { ...a, [field]: value };
+      }
+      return a;
+    }));
   };
 
   const handleToggleVerifyAllocation = (id: string) => {
@@ -191,9 +208,9 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
     setTimeout(() => {
       updateClientProject(project.id, {
-        financialReportStatus: 'Pending',
+        financialReportStatus: 'Verified', // Directly transition to verified for this prototype
         auditDetails: finalAudit,
-        lastActivity: `Financial Audit Transmitted by ${financialSteward}`
+        lastActivity: `Financial Audit Verified & Authorized by ${financialSteward}`
       });
       setIsSubmitting(false);
       toast({ title: "Audit Synchronized", description: "Dossier has been locked and authorized in the master registry." });
@@ -287,14 +304,14 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               )}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {incomingFunds.map((entry) => (
                 <motion.div key={entry.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
                   <Card className={cn(
                     "rounded-none border transition-all group relative overflow-hidden",
                     entry.isVerified ? "border-green-600/30 bg-green-600/[0.02]" : "border-slate-200 bg-white"
                   )}>
-                    {!isVerified && (
+                    {!isVerified && !entry.isVerified && (
                       <Button 
                         onClick={() => removeIncoming(entry.id)}
                         variant="ghost" 
@@ -304,14 +321,14 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
-                    <CardContent className="p-8">
+                    <CardContent className="p-8 space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
                         <div className="md:col-span-3 space-y-2">
                           <Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Payment Label</Label>
                           <Input 
                             value={entry.label} 
                             onChange={(e) => updateIncoming(entry.id, 'label', e.target.value)}
-                            readOnly={isVerified}
+                            readOnly={isVerified || entry.isVerified}
                             placeholder="E.g., Initial Deposit" 
                             className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-slate-100 focus:ring-slate-900"
                           />
@@ -322,7 +339,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                             type="number"
                             value={entry.amount} 
                             onChange={(e) => updateIncoming(entry.id, 'amount', Number(e.target.value))}
-                            readOnly={isVerified}
+                            readOnly={isVerified || entry.isVerified}
                             className="rounded-none h-12 text-sm font-bold border-slate-100 focus:ring-slate-900"
                           />
                         </div>
@@ -331,7 +348,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                           <Input 
                             value={entry.reference} 
                             onChange={(e) => updateIncoming(entry.id, 'reference', e.target.value)}
-                            readOnly={isVerified}
+                            readOnly={isVerified || entry.isVerified}
                             placeholder="TRX-XXXX" 
                             className="rounded-none h-12 text-sm font-mono border-slate-100 focus:ring-slate-900"
                           />
@@ -352,6 +369,21 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                           </Button>
                         </div>
                       </div>
+
+                      {entry.isVerified && (
+                        <div className="pt-6 border-t border-slate-100 space-y-3">
+                          <Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-2">
+                            <MessageSquare className="h-3 w-3" /> Amendment Protocol
+                          </Label>
+                          <Textarea 
+                            value={entry.amendment || ""} 
+                            onChange={(e) => updateIncoming(entry.id, 'amendment', e.target.value)}
+                            readOnly={isVerified}
+                            placeholder="Log amendment or clarification for this verified entry..." 
+                            className="min-h-[80px] rounded-none border-slate-100 p-4 font-light italic text-sm focus:ring-slate-900 bg-slate-50/50"
+                          />
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -364,7 +396,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          {/* SITE COST ALLOCATIONS */}
+          {/* SITE ALLOCATIONS REGISTRY */}
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-4">
@@ -378,14 +410,14 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               )}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {allocations.map((alloc) => (
                 <motion.div key={alloc.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
                   <Card className={cn(
                     "rounded-none border transition-all group relative overflow-hidden",
                     alloc.isVerified ? "border-green-600/30 bg-green-600/[0.02]" : "border-slate-200 bg-white"
                   )}>
-                    {!isVerified && (
+                    {!isVerified && !alloc.isVerified && (
                       <Button 
                         onClick={() => removeAllocation(alloc.id)}
                         variant="ghost" 
@@ -395,14 +427,14 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
-                    <CardContent className="p-8">
+                    <CardContent className="p-8 space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
                         <div className="md:col-span-3 space-y-2">
                           <Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Classification</Label>
                           <Input 
                             value={alloc.category} 
                             onChange={(e) => updateAllocation(alloc.id, 'category', e.target.value)}
-                            readOnly={isVerified}
+                            readOnly={isVerified || alloc.isVerified}
                             placeholder="E.g., Structural Materials" 
                             className="rounded-none h-12 text-sm font-bold uppercase tracking-widest border-slate-100 focus:ring-slate-900"
                           />
@@ -413,7 +445,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                             type="number"
                             value={alloc.amount} 
                             onChange={(e) => updateAllocation(alloc.id, 'amount', Number(e.target.value))}
-                            readOnly={isVerified}
+                            readOnly={isVerified || alloc.isVerified}
                             className="rounded-none h-12 text-sm font-bold border-slate-100 focus:ring-slate-900"
                           />
                         </div>
@@ -422,7 +454,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                           <Input 
                             value={alloc.description} 
                             onChange={(e) => updateAllocation(alloc.id, 'description', e.target.value)}
-                            readOnly={isVerified}
+                            readOnly={isVerified || alloc.isVerified}
                             placeholder="Site protocol description" 
                             className="rounded-none h-12 text-sm italic border-slate-100 focus:ring-slate-900"
                           />
@@ -443,6 +475,21 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                           </Button>
                         </div>
                       </div>
+
+                      {alloc.isVerified && (
+                        <div className="pt-6 border-t border-slate-100 space-y-3">
+                          <Label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-2">
+                            <MessageSquare className="h-3 w-3" /> Amendment Protocol
+                          </Label>
+                          <Textarea 
+                            value={alloc.amendment || ""} 
+                            onChange={(e) => updateAllocation(alloc.id, 'amendment', e.target.value)}
+                            readOnly={isVerified}
+                            placeholder="Log amendment or clarification for this verified expense..." 
+                            className="min-h-[80px] rounded-none border-slate-100 p-4 font-light italic text-sm focus:ring-slate-900 bg-slate-50/50"
+                          />
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </motion.div>

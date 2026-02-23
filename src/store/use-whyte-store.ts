@@ -69,6 +69,7 @@ export interface AuditAllocation {
   amount: number;
   description: string;
   isVerified?: boolean;
+  amendment?: string;
 }
 
 export interface AuditIncoming {
@@ -78,6 +79,7 @@ export interface AuditIncoming {
   reference: string;
   date: string;
   isVerified?: boolean;
+  amendment?: string;
 }
 
 export interface FinancialAudit {
