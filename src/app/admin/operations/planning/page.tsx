@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,7 +24,8 @@ import {
   Calculator,
   Briefcase,
   Mail,
-  Info
+  Info,
+  PencilRuler
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -264,13 +266,21 @@ export default function ProjectPlanningPage() {
       <div className="grid grid-cols-1 gap-8">
         {pendingPlanning.map((project, index) => (
           <motion.div key={project.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
-            <Card className="rounded-none border-accent/5 shadow-2xl bg-white overflow-hidden group min-h-[300px] border-l-4 border-l-orange-500/40">
+            <Card className={cn(
+              "rounded-none border-accent/5 shadow-2xl bg-white overflow-hidden group min-h-[300px] border-l-4",
+              project.initializedBy === 'Designer' ? 'border-l-accent' : 'border-l-orange-500/40'
+            )}>
               <div className="flex flex-col md:flex-row items-stretch h-full">
                 <div className="p-10 border-b md:border-b-0 md:border-r border-accent/5 flex flex-col justify-between min-w-[300px] bg-secondary/5">
                   <div className="space-y-6">
                     <div className="space-y-1">
                       <span className="text-[11px] font-bold text-accent/40 uppercase tracking-[0.4em] block">{project.id}</span>
                       <Badge className="bg-accent text-white rounded-none uppercase tracking-widest text-[10px] font-bold py-1.5 px-4">{project.tier} Commission</Badge>
+                      {project.initializedBy === 'Designer' && (
+                        <div className="flex items-center gap-2 mt-2 text-accent text-[9px] font-bold uppercase tracking-widest">
+                          <PencilRuler className="h-3 w-3" /> Designer-Led Briefing
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-3 pt-4 border-t border-accent/5">
                       <p className="text-[10px] font-bold text-accent/30 uppercase tracking-[0.3em]">Temporal Frame</p>

@@ -1,7 +1,8 @@
+
 "use client";
 
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarTrigger, SidebarInset, useSidebar } from "@/components/ui/sidebar";
-import { LayoutDashboard, Briefcase, Camera, ClipboardList, Users, Compass, PencilRuler, LogOut, Home, Activity } from "lucide-react";
+import { LayoutDashboard, Briefcase, Camera, ClipboardList, Users, Compass, PencilRuler, LogOut, Home, Activity, FilePlus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -18,6 +19,7 @@ export default function DesignerLayout({ children }: { children: React.ReactNode
 
   const navItems = [
     { title: "Workbench", icon: LayoutDashboard, href: "/designer" },
+    { title: "Initialize Brief", icon: FilePlus, href: "/designer/initialize" },
     { title: "Active Site Dossiers", icon: Briefcase, href: "/designer/projects" },
     { title: "Site Log Registry", icon: ClipboardList, href: "/designer/logs" },
   ];

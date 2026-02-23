@@ -121,6 +121,7 @@ export interface ClientProject {
   vendorAllocations?: VendorAllocation[];
   termination?: TerminationDetails;
   auditDetails?: FinancialAudit;
+  initializedBy?: 'Admin' | 'Designer';
 }
 
 export interface Inquiry {
@@ -150,6 +151,7 @@ export interface Collaborator {
   id: string;
   name: string;
   category: 'Collaborator' | 'Vendor';
+  species?: string;
   specialty: string;
   contact: string;
   email: string;
@@ -278,7 +280,8 @@ const initialClientProjects: ClientProject[] = [
         timelineDays: 14,
         materials: ["Sustainably Sourced Teak", "Brass Inlays"]
       }
-    ]
+    ],
+    initializedBy: 'Admin'
   }
 ];
 

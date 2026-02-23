@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion } from "framer-motion";
@@ -14,7 +15,8 @@ import {
   AlertTriangle,
   Activity,
   Zap,
-  MapPin
+  MapPin,
+  FilePlus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -35,6 +37,11 @@ export default function DesignerDashboardPage() {
     [clientProjects]
   );
 
+  const pendingBriefs = useMemo(() =>
+    clientProjects.filter(p => p.status === 'Planning' && p.initializedBy === 'Designer'),
+    [clientProjects]
+  );
+
   const urgentTasks = useMemo(() => {
     const tasks: { projectId: string, projectName: string, task: ProjectTask }[] = [];
     activeDossiers.forEach(p => {
@@ -51,7 +58,7 @@ export default function DesignerDashboardPage() {
 
   const stats = [
     { label: "Active Site Protocols", value: activeDossiers.length.toString(), icon: Briefcase, sub: "Synchronized Dossiers" },
-    { label: "Urgent Requirements", value: urgentTasks.length.toString(), icon: AlertTriangle, sub: "Action Required" },
+    { label: "Pending Briefs", value: pendingBriefs.length.toString(), icon: FilePlus, sub: "Awaiting Admin Auth" },
     { label: "Deployment Velocity", value: "92%", icon: Activity, sub: "Across Commissions" },
   ];
 
@@ -66,6 +73,11 @@ export default function DesignerDashboardPage() {
           <h1 className="text-5xl font-headline italic">Lead <span className="not-italic">Execution.</span></h1>
         </div>
         <div className="flex gap-4">
+          <Button asChild className="bg-accent text-white rounded-none h-12 uppercase tracking-widest text-[10px] font-bold px-8 shadow-xl hover:tracking-[0.2em] transition-all">
+            <Link href="/designer/initialize" className="flex items-center gap-2">
+              <FilePlus className="h-4 w-4" /> Initialize New Brief
+            </Link>
+          </Button>
           <Button asChild variant="outline" className="rounded-none border-accent/10 text-accent h-12 uppercase tracking-widest text-[10px] font-bold px-8 shadow-sm">
             <Link href="/designer/logs">View All Site Logs</Link>
           </Button>
