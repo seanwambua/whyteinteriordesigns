@@ -22,7 +22,9 @@ import {
   Lock,
   Settings2,
   FolderOpen,
-  PencilRuler
+  PencilRuler,
+  Eye,
+  FileClock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -129,11 +131,11 @@ export default function ClientDirectoryPage() {
     setDeleteId(null);
   };
 
-  const ClientDossierCard = ({ client }: { client: GroupedClient }) => (
+  const ClientDossierCard = ({ client, isArchivedView }: { client: GroupedClient, isArchivedView?: boolean }) => (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-      <Card className="rounded-none border-accent/5 shadow-xl bg-white overflow-hidden">
+      <Card className={cn("rounded-none border-accent/5 shadow-xl bg-white overflow-hidden", isArchivedView && "opacity-90")}>
         {/* Client Identity Header */}
-        <div className="bg-accent/5 p-8 border-b border-accent/5 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className={cn("p-8 border-b border-accent/5 flex flex-col lg:flex-row lg:items-center justify-between gap-6", isArchivedView ? "bg-slate-50" : "bg-accent/5")}>
           <div className="flex items-center gap-6">
             <div className="h-14 w-14 rounded-full bg-white flex items-center justify-center text-accent font-headline italic text-xl border border-accent/10 shadow-sm">
               {client.name.split(' ').map(n => n[0]).join('')}
@@ -143,12 +145,12 @@ export default function ClientDirectoryPage() {
               <div className="flex items-center gap-4 text-[12px] text-muted-foreground uppercase tracking-widest font-bold">
                 <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 opacity-40" /> {client.email}</span>
                 <div className="h-1 w-1 bg-accent/20 rounded-full" />
-                <span className="text-accent/40">{client.projects.length} Linked Dossier(s)</span>
+                <span className="text-accent/40">{client.projects.length} {isArchivedView ? 'Archived' : 'Linked'} Dossier(s)</span>
               </div>
             </div>
           </div>
           <Badge variant="outline" className="rounded-none uppercase tracking-[0.3em] text-[10px] border-accent/20 text-accent/60 h-fit py-1.5 px-4 bg-white/50">
-            Verified Account Portfolio
+            {isArchivedView ? 'Historical Records' : 'Verified Account Portfolio'}
           </Badge>
         </div>
 
@@ -165,7 +167,7 @@ export default function ClientDirectoryPage() {
                       <span className="text-[11px] font-bold text-accent/40 uppercase tracking-[0.4em]">{project.id}</span>
                       <h4 className="text-xl font-headline italic text-accent/80">{project.project}</h4>
                       <Badge variant="outline" className={cn("rounded-none uppercase tracking-widest text-[9px] font-bold px-2 py-0.5", getStatusColor(project.status))}>
-                        {project.status}
+                        {isArchivedView ? 'Retired' : project.status}
                       </Badge>
                       {project.financialReportStatus === 'Verified' && (
                         <Lock className="h-3.5 w-3.5 text-green-600 opacity-60" title="Audit Verified" />
@@ -175,7 +177,7 @@ export default function ClientDirectoryPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-end">
                       <div className="space-y-3 lg:col-span-1">
                         <div className="flex justify-between text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40">
-                          <span>Implementation Velocity</span>
+                          <span>{isArchivedView ? 'Final Handover Value' : 'Implementation Velocity'}</span>
                           <span>{project.progress}%</span>
                         </div>
                         <Progress value={project.progress} className="h-1 bg-secondary rounded-none" />
@@ -183,7 +185,7 @@ export default function ClientDirectoryPage() {
                       
                       <div className="flex flex-col gap-1.5">
                         <span className="text-[10px] uppercase tracking-widest font-bold text-accent/40 flex items-center gap-2">
-                          <PencilRuler className="h-3 w-3" /> Creative Lead
+                          <PencilRuler className="h-3 w-3" /> {isArchivedView ? 'Historical Lead' : 'Creative Lead'}
                         </span>
                         <span className="text-[12px] uppercase tracking-widest font-bold text-accent/80">
                           {assignedDesigner ? assignedDesigner.name : "Unassigned"}
@@ -192,21 +194,30 @@ export default function ClientDirectoryPage() {
 
                       <div className="flex items-center gap-8 text-[11px] uppercase tracking-widest font-bold text-muted-foreground/60">
                         <div className="space-y-1">
-                          <span className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5 opacity-40" /> Registered</span>
-                          <span className="text-accent/60 font-medium">{project.startDate}</span>
+                          <span className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5 opacity-40" /> {isArchivedView ? 'Closed On' : 'Registered'}</span>
+                          <span className="text-accent/60 font-medium">{isArchivedView ? project.endDate : project.startDate}</span>
                         </div>
-                        <div className="space-y-1">
-                          <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 opacity-40" /> Latest Sync</span>
-                          <span className="text-accent/60 font-medium truncate max-w-[140px] block italic">"{project.lastActivity}"</span>
-                        </div>
+                        {!isArchivedView && (
+                          <div className="space-y-1">
+                            <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 opacity-40" /> Latest Sync</span>
+                            <span className="text-accent/60 font-medium truncate max-w-[140px] block italic">"{project.lastActivity}"</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 pl-8 lg:border-l border-accent/5">
-                    <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/5 hover:bg-accent hover:text-white transition-all p-0 shadow-sm">
-                      <Link href={`/admin/clients/${project.id}`}><ChevronRight className="h-5 w-5" /></Link>
-                    </Button>
+                    {isArchivedView ? (
+                      <Button asChild variant="outline" className="rounded-none h-12 px-8 border-slate-200 text-[10px] font-bold uppercase tracking-widest flex gap-3 hover:bg-slate-900 hover:text-white transition-all">
+                        <Link href={`/admin/clients/${project.id}`}><FileClock className="h-4 w-4" /> Review Dossier</Link>
+                      </Button>
+                    ) : (
+                      <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/5 hover:bg-accent hover:text-white transition-all p-0 shadow-sm">
+                        <Link href={`/admin/clients/${project.id}`}><ChevronRight className="h-5 w-5" /></Link>
+                      </Button>
+                    )}
+                    
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-10 w-10 p-0 rounded-full hover:bg-accent/5"><MoreVertical className="h-5 w-5 text-accent/20" /></Button>
@@ -299,7 +310,7 @@ export default function ClientDirectoryPage() {
         </TabsContent>
 
         <TabsContent value="archives" className="space-y-10 m-0">
-          {archivedProjects.map((client) => <ClientDossierCard key={client.email} client={client} />)}
+          {archivedProjects.map((client) => <ClientDossierCard key={client.email} client={client} isArchivedView />)}
           {archivedProjects.length === 0 && <div className="text-center py-32 border border-dashed border-accent/10 bg-secondary/5 italic text-muted-foreground uppercase tracking-[0.3em] font-light">The historical archives are currently empty</div>}
         </TabsContent>
       </Tabs>

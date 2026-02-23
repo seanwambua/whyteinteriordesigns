@@ -58,7 +58,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type SyncPath = 'Implementation' | 'Handover' | 'Archive';
+type SyncPath = 'Implementation' | 'Handover' | 'Archive_Review';
 
 interface HistoricalSettlement {
   id: string;
@@ -81,7 +81,7 @@ export default function LegacyReconciliationPage() {
   }, []);
 
   const [formData, setFormData] = useState({
-    syncPath: 'Archive' as SyncPath,
+    syncPath: 'Handover' as SyncPath,
     name: "",
     email: "",
     project: "",
@@ -96,13 +96,12 @@ export default function LegacyReconciliationPage() {
     assignedDesignerId: "",
     linkedCollaborators: [] as string[],
     archivalNotes: "",
-    // Path Specifics
     handoverChecklist: [] as string[],
     activeTasks: [] as ProjectTask[],
     milestones: [] as Milestone[]
   });
 
-  const totalSteps = formData.syncPath === 'Archive' ? 5 : 6;
+  const totalSteps = 6;
   const progress = (step / totalSteps) * 100;
 
   const handleNext = () => setStep(prev => prev + 1);
@@ -172,9 +171,6 @@ export default function LegacyReconciliationPage() {
       };
     });
 
-    const isArchived = formData.syncPath === 'Archive';
-    const isHandover = formData.syncPath === 'Handover';
-
     const settlementInstallments: Installment[] = formData.settlements.map(s => ({
       label: "Historical Settlement",
       percentage: Math.round(((Number(s.amount) || 0) / Math.max(1, budget)) * 100),
@@ -199,49 +195,39 @@ export default function LegacyReconciliationPage() {
       email: formData.email, 
       project: formData.project, 
       tier: formData.tier, 
-      status: isArchived ? 'Completion' : isHandover ? 'Completion' : 'Execution', 
-      progress: isArchived ? 100 : isHandover ? 95 : 50, 
+      status: 'Completion', 
+      progress: 95, 
       startDate: format(formData.startDate, "MMM dd, yyyy"), 
       endDate: format(formData.endDate, "MMM dd, yyyy"), 
-      lastActivity: `Legacy Sync: ${formData.syncPath} protocol established.`, 
+      lastActivity: `Legacy Reconciliation: Dossier Transmitted to Handover Review.`, 
       isActivated: true, 
       initialDepositPaid: true, 
       totalBudget: budget, 
-      milestones: isArchived ? [{ id: 'M-HIST', label: "Legacy Conclusion", date: format(formData.endDate, "MMM dd, yyyy"), isCompleted: true, description: "Historical record finalized." }] : formData.milestones, 
+      milestones: formData.milestones.length > 0 ? formData.milestones : [{ id: 'M-LEG', label: "Legacy Data Sync", date: format(new Date(), "MMM dd, yyyy"), isCompleted: true, description: "Historical record synchronization." }], 
       tasks: formData.activeTasks, 
       installments: settlementInstallments, 
       description: formData.description,
       vendorAllocations: allocations,
       assignedDesignerId: formData.assignedDesignerId,
-      isArchived: isArchived,
-      financialReportStatus: isArchived ? 'Verified' : 'Pending',
-      handoverStatus: isHandover ? 'Pending' : null,
-      auditDetails: isArchived ? {
-        totalReceived: liquidatedTotal,
-        allocations: [],
-        refundAmount: 0,
-        stewardComments: `Historical reconciliation for project ${id}.`,
-        isVerified: true,
-        submissionDate: format(new Date(), "MMM dd, yyyy")
-      } : undefined
+      isArchived: false,
+      financialReportStatus: 'Pending',
+      handoverStatus: 'Pending',
     };
 
     setTimeout(() => { 
       addClientProject(legacyDossier); 
       setLoading(false); 
-      toast({ title: "Legacy Sync Authorized", description: `Dossier ${id} registered. ${isArchived ? 'Direct Archive inject complete.' : 'Commission injected into pipeline for audit.'}` });
-      router.push("/admin/clients"); 
+      toast({ title: "Legacy Sync Authorized", description: `Dossier ${id} registered. Injected into pipeline for Handover and Financial Audit.` });
+      router.push("/admin/operations/handover"); 
     }, 1500);
   };
 
   const isStepValid = () => { 
     if (step === 1) return formData.syncPath;
     if (step === 2) return formData.name && formData.email && formData.project; 
-    if (step === 3 && formData.syncPath === 'Handover') return formData.handoverChecklist.length > 0;
-    if (step === 4 || (formData.syncPath === 'Archive' && step === 3)) return formData.assignedDesignerId !== "";
-    if (step === 5 || (formData.syncPath === 'Archive' && step === 4)) {
-      return formData.totalBudget && formData.settlements.every(s => s.amount && s.code);
-    }
+    if (step === 3) return formData.handoverChecklist.length > 0 || formData.activeTasks.length > 0 || formData.syncPath === 'Archive_Review';
+    if (step === 4) return formData.assignedDesignerId !== "";
+    if (step === 5) return formData.totalBudget && formData.settlements.every(s => s.amount && s.code);
     return true; 
   };
 
@@ -259,9 +245,9 @@ export default function LegacyReconciliationPage() {
 
       <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
         <ShieldAlert className="h-5 w-5 text-accent" />
-        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Operational Lifecycle Guardrail</AlertTitle>
+        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Operational Mandate</AlertTitle>
         <AlertDescription className="text-base font-light italic text-muted-foreground leading-relaxed">
-          Historical ledger synchronization requires **Verified Transaction References**. Any identified due amount will be highlighted across all portal registries.
+          Historical items synchronized via implementation or handover paths **must** pass technical handover and financial audit before archival.
         </AlertDescription>
       </Alert>
 
@@ -282,9 +268,9 @@ export default function LegacyReconciliationPage() {
                   <div className="flex items-center gap-4 mb-2"><History className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Protocol Context</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {[
-                      { id: 'Implementation', label: 'Active Implementation', icon: PlayCircle, sub: 'Needs Handover + Audit' },
-                      { id: 'Handover', label: 'Final Handover', icon: Handshake, sub: 'Needs Admin Review + Audit' },
-                      { id: 'Archive', label: 'Historical Record', icon: Archive, sub: 'Bypass Pipeline — Direct Archive' },
+                      { id: 'Implementation', label: 'Active Site Sync', icon: PlayCircle, sub: 'Needs Execution Completion' },
+                      { id: 'Handover', label: 'Handover Entry', icon: Handshake, sub: 'Direct to Handover review' },
+                      { id: 'Archive_Review', label: 'Archival Review', icon: Archive, sub: 'Historical Data Entry only' },
                     ].map((path) => (
                       <button
                         key={path.id}
@@ -320,74 +306,49 @@ export default function LegacyReconciliationPage() {
 
               {step === 3 && (
                 <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
-                  {formData.syncPath === 'Implementation' && (
-                    <div className="space-y-10">
-                      <div className="flex items-center gap-4 mb-2"><PlayCircle className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Implementation Protocol</h3></div>
-                      <Alert className="rounded-none border-accent/10 bg-accent/[0.02]">
-                        <Info className="h-4 w-4" />
-                        <AlertDescription className="text-[12px] font-light italic">Define primary site tasks to initialize active tracking. This dossier must pass formal handover review.</AlertDescription>
-                      </Alert>
-                      <Button type="button" variant="outline" className="rounded-none h-12 uppercase tracking-widest text-[10px] font-bold border-accent/10 hover:bg-accent hover:text-white transition-all" onClick={() => setFormData({...formData, activeTasks: [...formData.activeTasks, { id: `T-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, title: "", status: 'Todo', priority: 'Medium' }]})}><Plus className="h-4 w-4 mr-2" /> Append Protocol</Button>
-                      <div className="space-y-4">
-                        {formData.activeTasks.map((t, idx) => (
-                          <div key={t.id} className="flex gap-4 items-center">
-                            <Input value={t.title} onChange={(e) => { const nt = [...formData.activeTasks]; nt[idx].title = e.target.value; setFormData({...formData, activeTasks: nt}); }} className="rounded-none border-accent/10 h-12 flex-1" placeholder="Protocol Label" />
-                            <Button variant="ghost" size="icon" onClick={() => setFormData({...formData, activeTasks: formData.activeTasks.filter((_, i) => i !== idx)})} className="h-12 w-12 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {formData.syncPath === 'Handover' && (
-                    <div className="space-y-10">
-                      <div className="flex items-center gap-4 mb-2"><Handshake className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Handover Reconciliation</h3></div>
-                      <Alert className="rounded-none border-accent/10 bg-accent/[0.02] mb-6">
-                        <Info className="h-4 w-4" />
-                        <AlertDescription className="text-[12px] font-light italic">This dossier will be injected directly into the Handover Review queue for Senior Partner verification.</AlertDescription>
-                      </Alert>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {[
-                          { id: 'qa', label: 'Site Quality Audit', icon: FileCheck, sub: 'Structural QA Verified' },
-                          { id: 'media', label: 'Digital Registry', icon: Camera, sub: 'Site Assets Archived' },
-                          { id: 'keys', label: 'Access Protocol', icon: Key, sub: 'Key Transfer Authorized' },
-                          { id: 'review', label: 'Review Session', icon: Star, sub: 'Final Consult Completed' },
-                        ].map((check) => (
-                          <button
-                            key={check.id}
-                            type="button"
-                            onClick={() => toggleHandoverCheck(check.id)}
-                            className={cn(
-                              "p-6 border text-left flex items-center justify-between group transition-all",
-                              formData.handoverChecklist.includes(check.id) ? "bg-accent/5 border-accent/20" : "bg-white border-accent/5 hover:border-accent/20"
-                            )}
-                          >
-                            <div className="flex items-center gap-4">
-                              <check.icon className={cn("h-5 w-5", formData.handoverChecklist.includes(check.id) ? "text-accent" : "text-accent/20")} />
-                              <div className="space-y-0.5">
-                                <p className={cn("text-[12px] font-bold uppercase tracking-widest", formData.handoverChecklist.includes(check.id) ? "text-accent" : "text-accent/40")}>{check.label}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase font-light italic tracking-widest">{check.sub}</p>
-                              </div>
-                            </div>
-                            <div className={cn("h-4 w-4 border flex items-center justify-center", formData.handoverChecklist.includes(check.id) ? "bg-accent border-accent" : "border-accent/10")}>
-                              {formData.handoverChecklist.includes(check.id) && <CheckCircle2 className="h-2.5 w-2.5 text-white" />}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {formData.syncPath === 'Archive' && (
+                  <div className="flex items-center gap-4 mb-2"><LayoutList className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Operational Status</h3></div>
+                  {formData.syncPath === 'Archive_Review' ? (
                     <div className="text-center py-20 border border-dashed border-accent/10 space-y-4">
                       <Archive className="h-12 w-12 text-accent/10 mx-auto" />
-                      <p className="text-[13px] font-light italic text-muted-foreground uppercase tracking-[0.3em]">Protocol steps bypassed for historical archive inject.</p>
+                      <p className="text-[13px] font-light italic text-muted-foreground uppercase tracking-[0.3em]">Direct historical archival Review selected.</p>
                       <Button variant="ghost" onClick={handleNext} className="text-accent uppercase text-[10px] font-bold tracking-widest">Proceed to Attribution <ChevronRight className="h-3 w-3 ml-2" /></Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {[
+                        { id: 'qa', label: 'Site Quality Audit', icon: FileCheck, sub: 'Structural QA Verified' },
+                        { id: 'media', label: 'Digital Registry', icon: Camera, sub: 'Site Assets Archived' },
+                        { id: 'keys', label: 'Access Protocol', icon: Key, sub: 'Key Transfer Authorized' },
+                        { id: 'review', label: 'Review Session', icon: Star, sub: 'Final Consult Completed' },
+                      ].map((check) => (
+                        <button
+                          key={check.id}
+                          type="button"
+                          onClick={() => toggleHandoverCheck(check.id)}
+                          className={cn(
+                            "p-6 border text-left flex items-center justify-between group transition-all",
+                            formData.handoverChecklist.includes(check.id) ? "bg-accent/5 border-accent/20" : "bg-white border-accent/5 hover:border-accent/20"
+                          )}
+                        >
+                          <div className="flex items-center gap-4">
+                            <check.icon className={cn("h-5 w-5", formData.handoverChecklist.includes(check.id) ? "text-accent" : "text-accent/20")} />
+                            <div className="space-y-0.5">
+                              <p className={cn("text-[12px] font-bold uppercase tracking-widest", formData.handoverChecklist.includes(check.id) ? "text-accent" : "text-accent/40")}>{check.label}</p>
+                              <p className="text-[10px] text-muted-foreground uppercase font-light italic tracking-widest">{check.sub}</p>
+                            </div>
+                          </div>
+                          <div className={cn("h-4 w-4 border flex items-center justify-center", formData.handoverChecklist.includes(check.id) ? "bg-accent border-accent" : "border-accent/10")}>
+                            {formData.handoverChecklist.includes(check.id) && <CheckCircle2 className="h-2.5 w-2.5 text-white" />}
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   )}
                 </motion.div>
               )}
 
-              {(step === 4 || (formData.syncPath === 'Archive' && step === 3)) && (
-                <motion.div key="s-entities" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+              {step === 4 && (
+                <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><PencilRuler className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Creative & Network Attribution</h3></div>
                   <div className="space-y-6">
                     <div className="space-y-3">
@@ -422,79 +383,43 @@ export default function LegacyReconciliationPage() {
                 </motion.div>
               )}
 
-              {(step === 5 || (formData.syncPath === 'Archive' && step === 4)) && (
-                <motion.div key="s-fiscal" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+              {step === 5 && (
+                <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><Calculator className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Fiscal Reconciliation</h3></div>
-                  
                   <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Contract Value (KES)</Label><Input type="number" placeholder="Original Budget" className="rounded-none border-accent/20 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} /></div>
-
                   <div className="space-y-8">
-                    <div className="flex items-center justify-between border-b border-accent/5 pb-4">
-                      <h4 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Historical Settlement Ledger</h4>
-                      <Button type="button" variant="outline" size="sm" onClick={addSettlement} className="rounded-none h-10 px-6 text-[10px] uppercase tracking-widest font-bold border-accent/10 hover:bg-accent hover:text-white"><Plus className="h-3.5 w-3.5 mr-2" /> Append Entry</Button>
-                    </div>
-
+                    <div className="flex items-center justify-between border-b border-accent/5 pb-4"><h4 className="text-[12px] font-bold uppercase tracking-[0.3em] text-accent/40">Historical Settlement Ledger</h4><Button type="button" variant="outline" size="sm" onClick={addSettlement} className="rounded-none h-10 px-6 text-[10px] uppercase tracking-widest font-bold border-accent/10 hover:bg-accent hover:text-white"><Plus className="h-3.5 w-3.5 mr-2" /> Append Entry</Button></div>
                     <div className="space-y-6">
                       {formData.settlements.map((s, idx) => (
                         <div key={s.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-8 relative group hover:bg-white hover:shadow-xl transition-all">
                           <Button variant="ghost" size="icon" onClick={() => removeSettlement(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                          
                           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                            <div className="md:col-span-4 space-y-2">
-                              <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Liquidated Amount (KES)</Label>
-                              <Input type="number" value={s.amount} onChange={(e) => updateSettlement(idx, 'amount', e.target.value)} className="rounded-none h-12 text-sm font-bold border-accent/10" placeholder="0.00" />
-                            </div>
-                            <div className="md:col-span-4 space-y-2">
-                              <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Transaction Code</Label>
-                              <div className="relative">
-                                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
-                                <Input value={s.code} onChange={(e) => updateSettlement(idx, 'code', e.target.value)} className="pl-10 rounded-none h-12 text-sm font-bold border-accent/10" placeholder="E.g., TRX-9921" />
-                              </div>
-                            </div>
-                            <div className="md:col-span-4 space-y-2">
-                              <Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Settlement Date</Label>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-accent/10 font-bold uppercase tracking-widest"><CalendarIcon className="mr-3 h-4 w-4 opacity-40" />{format(s.date, "MMM dd, yyyy")}</Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={s.date} onSelect={(d) => d && updateSettlement(idx, 'date', d)} initialFocus /></PopoverContent>
-                              </Popover>
-                            </div>
+                            <div className="md:col-span-4 space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Amount (KES)</Label><Input type="number" value={s.amount} onChange={(e) => updateSettlement(idx, 'amount', e.target.value)} className="rounded-none h-12 text-sm font-bold border-accent/10" placeholder="0.00" /></div>
+                            <div className="md:col-span-4 space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Ref Code</Label><div className="relative"><CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" /><Input value={s.code} onChange={(e) => updateSettlement(idx, 'code', e.target.value)} className="pl-10 rounded-none h-12 text-sm font-bold border-accent/10" placeholder="TRX-9921" /></div></div>
+                            <div className="md:col-span-4 space-y-2"><Label className="text-[11px] uppercase tracking-widest font-bold opacity-40">Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-accent/10 font-bold uppercase tracking-widest"><CalendarIcon className="mr-3 h-4 w-4 opacity-40" />{format(s.date, "MMM dd, yyyy")}</Button></PopoverTrigger><PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={s.date} onSelect={(d) => d && updateSettlement(idx, 'date', d)} initialFocus /></PopoverContent></Popover></div>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-
                   <div className="p-8 bg-accent/[0.03] border border-accent/10 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-bold uppercase tracking-widest text-accent/40">Historical Due Balance</span>
-                        <p className="text-[10px] text-orange-600 font-bold uppercase tracking-widest italic">Highlighted across portal registries</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[9px] uppercase font-bold text-accent/20 mb-1">Liquidated: KES {liquidatedTotal.toLocaleString()}</p>
-                        <span className={cn("text-3xl font-headline italic", dueBalance > 0 ? "text-orange-600" : "text-green-600")}>
-                          KES {dueBalance.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
+                    <div className="flex justify-between items-center"><div className="space-y-1"><span className="text-[11px] font-bold uppercase tracking-widest text-accent/40">Historical Due Balance</span><p className="text-[10px] text-orange-600 font-bold uppercase tracking-widest italic">Automatically flagged for review</p></div><div className="text-right"><p className="text-[9px] uppercase font-bold text-accent/20 mb-1">Liquidated: KES {liquidatedTotal.toLocaleString()}</p><span className={cn("text-3xl font-headline italic", dueBalance > 0 ? "text-orange-600" : "text-green-600")}>KES {dueBalance.toLocaleString()}</span></div></div>
                     <Progress value={(liquidatedTotal / Math.max(1, Number(formData.totalBudget))) * 100} className="h-1 bg-accent/5 rounded-none" />
                   </div>
                 </motion.div>
               )}
 
-              {(step === 6 || (formData.syncPath === 'Archive' && step === 5)) && (
-                <motion.div key="s-final" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
-                  <div className="flex items-center gap-4 mb-2"><FileClock className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Archival Finalization</h3></div>
+              {step === 6 && (
+                <motion.div key="s6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                  <div className="flex items-center gap-4 mb-2"><FileClock className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Sync Authorization</h3></div>
                   <div className="space-y-6">
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Internal Archival Metadata</Label><Textarea placeholder="Confidential reconciliation notes for stewardship audit..." className="min-h-[180px] rounded-none border-accent/20 text-lg p-8 font-light italic leading-relaxed focus:ring-accent bg-secondary/5" value={formData.archivalNotes} onChange={(e) => setFormData({...formData, archivalNotes: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Archival Metadata</Label><Textarea placeholder="Verification notes for handover review..." className="min-h-[180px] rounded-none border-accent/20 text-lg p-8 font-light italic leading-relaxed focus:ring-accent bg-secondary/5" value={formData.archivalNotes} onChange={(e) => setFormData({...formData, archivalNotes: e.target.value})} /></div>
                     <div className="p-8 border border-dashed border-accent/20 flex flex-col md:flex-row items-center justify-between gap-8">
                       <div className="space-y-1">
-                        <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Verification Protocol</p>
-                        <p className="text-[13px] italic font-light text-muted-foreground">Confirming all historical site protocols and verified transaction references.</p>
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Handover Protocol Required</p>
+                        <p className="text-[13px] italic font-light text-muted-foreground">Commission will be injected into Handover queue for final authorization.</p>
                       </div>
-                      <Button type="button" onClick={() => setIsConfirmOpen(true)} className="h-14 px-12 bg-accent text-white rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all hover:tracking-[0.2em] flex gap-3"><ShieldCheck className="h-5 w-5" /> Authorize Sync</Button>
+                      <Button type="button" onClick={() => setIsConfirmOpen(true)} className="h-14 px-12 bg-accent text-white rounded-none uppercase tracking-widest text-[11px] font-bold shadow-xl transition-all hover:tracking-[0.2em] flex gap-3"><ShieldCheck className="h-5 w-5" /> Authorize & Sync</Button>
                     </div>
                   </div>
                 </motion.div>
@@ -503,15 +428,10 @@ export default function LegacyReconciliationPage() {
 
             <div className="pt-12 flex items-center justify-between border-t border-accent/5">
               {step > 1 ? (
-                <Button type="button" variant="ghost" onClick={handleBack} className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[12px] group">
-                  <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" /> Previous Protocol
-                </Button>
+                <Button type="button" variant="ghost" onClick={handleBack} className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[12px] group"><ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" /> Previous Step</Button>
               ) : <div />}
-              
               {step < totalSteps && (
-                <Button type="submit" disabled={!isStepValid()} className="bg-accent text-white rounded-none h-16 px-12 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em] flex gap-3">
-                  Continue Synchronization <ChevronRight className="h-5 w-5" />
-                </Button>
+                <Button type="submit" disabled={!isStepValid()} className="bg-accent text-white rounded-none h-16 px-12 uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.2em] flex gap-3">Continue Synchronization <ChevronRight className="h-5 w-5" /></Button>
               )}
             </div>
           </form>
@@ -521,13 +441,9 @@ export default function LegacyReconciliationPage() {
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <AlertDialogContent className="rounded-none border-accent/20 font-body p-10">
           <AlertDialogHeader className="space-y-6">
-            <div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Archival Protocol</span></div>
-            <AlertDialogTitle className="text-3xl font-headline italic">Authorize Legacy Sync?</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">
-              {formData.syncPath === 'Archive' 
-                ? `This will permanently register the historical dossier for ${formData.project} directly into the Master Archives.` 
-                : `This will register the historical dossier for ${formData.project} into the active pipeline. It MUST pass handover authorization and financial audit before permanent archival.`}
-            </AlertDialogDescription>
+            <div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Protocol Gate</span></div>
+            <AlertDialogTitle className="text-3xl font-headline italic">Confirm Pipeline Injection?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">This will register **{formData.project}** in the active Handover queue. It must pass formal technical review and financial audit before permanent archival.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-10">
             <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-accent/10">Abort Sync</AlertDialogCancel>
