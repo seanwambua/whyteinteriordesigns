@@ -66,6 +66,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const [verifyingInstallment, setVerifyingInstallment] = useState<number | null>(null);
   const [txnCode, setTxnCode] = useState("");
   const [paymentDate, setPaymentDate] = useState<Date>(new Date());
+  const [verifiedAmount, setVerifiedAmount] = useState<number>(0);
   const [isVerifying, setIsVerifying] = useState(false);
 
   const [isAddingReport, setIsAddingReport] = useState(false);
@@ -88,6 +89,14 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const isPendingActivation = project ? !project.isActivated : false;
   const isReadOnly = isAuditVerified || isPendingActivation || project?.status === 'Completion';
 
+  useEffect(() => {
+    if (verifyingInstallment !== null && project) {
+      setVerifiedAmount(project.installments[verifyingInstallment].amount);
+      setPaymentDate(new Date());
+      setTxnCode("");
+    }
+  }, [verifyingInstallment, project]);
+
   if (!isMounted) return null;
   if (!project) return null;
 
@@ -105,9 +114,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         ...updatedInstallments[verifyingInstallment],
         status: 'Paid',
         transactionCode: txnCode,
+        amount: verifiedAmount,
         date: format(paymentDate, "MMM dd, yyyy")
       };
-      updateClientProject(project.id, { installments: updatedInstallments, lastActivity: `Payment Verified: ${updatedInstallments[verifyingInstallment].label}` });
+      updateClientProject(project.id, { installments: updatedInstallments, lastActivity: `Stewardship Protocol: Payment Verified — KES ${verifiedAmount.toLocaleString()} via Ref ${txnCode}` });
       toast({ title: "Financial Protocol Synchronized", description: `Installment verified with code ${txnCode}.` });
       setIsVerifying(false);
       setVerifyingInstallment(null);
@@ -437,40 +447,54 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       <Dialog open={verifyingInstallment !== null} onOpenChange={(open) => !open && setVerifyingInstallment(null)}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden bg-white">
           <div className="bg-accent h-1.5 w-full" />
-          <div className="p-10 space-y-8">
+          <div className="p-10 space-y-8 max-h-[85vh] overflow-y-auto custom-scrollbar">
             <DialogHeader className="space-y-4">
               <div className="flex items-center gap-3"><Lock className="h-5 w-5 text-accent" /><span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Stewardship Protocol</span></div>
               <DialogTitle className="text-3xl font-headline italic">Verify Transaction</DialogTitle>
-              <DialogDescription className="font-light italic text-muted-foreground text-base">Confirming receipt of <strong>{verifyingInstallment !== null ? project.installments[verifyingInstallment].label : ""}</strong>.</DialogDescription>
+              <DialogDescription className="font-light italic text-muted-foreground text-base">Confirm receipt of <strong>{verifyingInstallment !== null ? project.installments[verifyingInstallment].label : ""}</strong>.</DialogDescription>
             </DialogHeader>
             <div className="space-y-8">
               <div className="p-8 bg-secondary/30 border border-accent/5 space-y-4 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-14 w-14" /></div>
-                <div className="flex justify-between items-end relative z-10"><span className="text-[12px] uppercase tracking-widest font-bold text-accent/40">Authorized Amount</span><span className="text-2xl font-headline italic text-accent">KES {verifyingInstallment !== null ? project.installments[verifyingInstallment].amount.toLocaleString() : 0}</span></div>
+                <div className="flex flex-col gap-1 relative z-10">
+                  <span className="text-[11px] uppercase tracking-widest font-bold text-accent/40">Authorized Entry Value</span>
+                  <span className="text-2xl font-headline italic text-accent">KES {verifiedAmount.toLocaleString()}</span>
+                </div>
               </div>
               <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Verified Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[13px] border-accent/20 font-bold uppercase tracking-widest">
+                          <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
+                          {format(paymentDate, "MMM dd, yyyy")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 rounded-none">
+                        <Calendar mode="single" selected={paymentDate} onSelect={(d) => d && setPaymentDate(d)} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Verified Amount (KES)</Label>
+                    <Input 
+                      type="number" 
+                      className="rounded-none border-accent/20 h-14 text-xl font-headline italic" 
+                      value={verifiedAmount} 
+                      onChange={(e) => setVerifiedAmount(Number(e.target.value))} 
+                    />
+                  </div>
+                </div>
                 <div className="space-y-3">
                   <Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label>
                   <Input placeholder="E.g., TRX-9921-WHYTE" className="rounded-none border-accent/20 h-14 text-xl tracking-[0.2em] font-medium" value={txnCode} onChange={(e) => setTxnCode(e.target.value)} />
                 </div>
-                <div className="space-y-3">
-                  <Label className="text-[13px] font-bold uppercase tracking-widest opacity-60">Verification Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[13px] border-accent/20 font-bold uppercase tracking-widest">
-                        <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
-                        {format(paymentDate, "MMM dd, yyyy")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-none">
-                      <Calendar mode="single" selected={paymentDate} onSelect={(d) => d && setPaymentDate(d)} initialFocus />
-                    </PopoverContent>
-                  </Popover>
-                </div>
               </div>
             </div>
             <DialogFooter className="pt-4">
-              <Button className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all" onClick={handleVerifyPayment} disabled={isVerifying || !txnCode}>
+              <Button className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all" onClick={handleVerifyPayment} disabled={isVerifying || !txnCode || verifiedAmount <= 0}>
                 {isVerifying ? <span className="flex items-center gap-2 font-bold"><Loader2 className="h-5 w-5 animate-spin" /> Syncing...</span> : "Authorize Entry"}
               </Button>
             </DialogFooter>
