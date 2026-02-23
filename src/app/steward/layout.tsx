@@ -53,32 +53,32 @@ export default function StewardLayout({ children }: { children: React.ReactNode 
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-slate-50 w-full font-body">
-        <Sidebar collapsible="icon" className="border-r border-slate-200 bg-white">
+      <div className="flex min-h-screen bg-secondary/10 w-full font-body">
+        <Sidebar collapsible="icon" className="border-r border-accent/10 bg-white">
           <SidebarHeader className="p-8">
             <Link href="/steward" className="group flex flex-col">
-              <span className="text-sm font-headline font-bold tracking-[0.2em] text-slate-900 uppercase block truncate">
-                Steward Portal
+              <span className="text-base font-headline font-bold tracking-[0.2em] text-accent uppercase block truncate">
+                Whyte Interiors
               </span>
-              <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400 truncate group-data-[collapsible=icon]:hidden">Auditing Workbench</span>
+              <span className="text-[11px] uppercase tracking-[0.4em] text-accent/40 truncate group-data-[collapsible=icon]:hidden">Auditing Terminal</span>
             </Link>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
-              <SidebarGroupLabel className="px-6 text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-4 group-data-[collapsible=icon]:hidden">Reconciliation Hub</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-6 text-[12px] uppercase tracking-[0.3em] text-accent/30 font-bold mb-6 group-data-[collapsible=icon]:hidden">Reconciliation Hub</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="gap-2">
                   {navItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild 
                         isActive={pathname === item.href} 
-                        className="px-6 h-12 hover:bg-slate-50 rounded-none relative" 
+                        className="px-6 h-14 hover:bg-accent/5 rounded-none relative" 
                         tooltip={item.title}
                       >
                         <Link href={item.href} className="flex items-center gap-4">
-                          <item.icon className={`h-4 w-4 shrink-0 ${pathname === item.href ? 'text-slate-900' : 'text-slate-400'}`} />
-                          <span className={`text-[12px] uppercase tracking-widest font-bold truncate group-data-[collapsible=icon]:hidden ${pathname === item.href ? 'text-slate-900' : 'text-slate-400'}`}>
+                          <item.icon className={`h-5 w-5 shrink-0 ${pathname === item.href ? 'text-accent' : 'text-accent/40'}`} />
+                          <span className={`text-[13px] uppercase tracking-[0.2em] font-bold truncate group-data-[collapsible=icon]:hidden ${pathname === item.href ? 'text-accent' : 'text-accent/60'}`}>
                             {item.title}
                           </span>
                           {item.badge && (
@@ -94,43 +94,43 @@ export default function StewardLayout({ children }: { children: React.ReactNode 
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <div className="mt-auto p-8 border-t border-slate-100">
-            <div className="space-y-4">
+          <div className="mt-auto p-8 border-t border-accent/5">
+            <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 shrink-0 rounded-none bg-slate-900 flex items-center justify-center text-white text-[10px] font-bold">
+                <div className="h-10 w-10 shrink-0 rounded-none bg-accent flex items-center justify-center text-white text-[11px] font-bold">
                   FS
                 </div>
                 <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                  <p className="text-[11px] font-bold uppercase tracking-widest truncate text-slate-900">Financial Steward</p>
-                  <p className="text-[9px] text-slate-400 truncate uppercase">Partner Authorized</p>
+                  <p className="text-[11px] font-bold uppercase tracking-widest truncate text-accent">Financial Steward</p>
+                  <p className="text-[9px] text-accent/40 truncate uppercase font-bold">Partner Authorized</p>
                 </div>
               </div>
               <Link 
                 href="/" 
-                className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors group-data-[collapsible=icon]:hidden"
+                className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-accent/40 hover:text-accent transition-colors group-data-[collapsible=icon]:hidden"
                 onClick={() => localStorage.removeItem("whyte_steward_onboarded")}
               >
-                <LogOut className="h-3.5 w-3.5" /> Exit Terminal
+                <LogOut className="h-4 w-4" /> Exit Terminal
               </Link>
             </div>
           </div>
         </Sidebar>
         <SidebarInset className="flex flex-col flex-1">
-          <header className="h-20 flex items-center px-10 border-b border-slate-200 bg-white sticky top-0 z-30 justify-between">
+          <header className="h-20 flex items-center px-10 border-b border-accent/10 bg-white/50 backdrop-blur-md sticky top-0 z-30 justify-between">
             <div className="flex items-center gap-6">
-              <SidebarTrigger className="text-slate-400 hover:text-slate-900" />
-              <div className="h-4 w-px bg-slate-200" />
+              <SidebarTrigger className="text-accent/60 hover:text-accent" />
+              <div className="h-4 w-px bg-accent/10" />
               <div className="flex items-center gap-3">
-                <Activity className="h-4 w-4 text-slate-400" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-900">{financialSteward}</span>
+                <Activity className="h-4 w-4 text-accent/40" />
+                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">{financialSteward}</span>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Secure Sync Active</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">Secure Sync Established</span>
             </div>
           </header>
-          <main className="flex-1 p-10 lg:p-16 overflow-y-auto">
+          <main className="flex-1 p-10 lg:p-16 overflow-y-auto custom-scrollbar">
             {children}
           </main>
         </SidebarInset>
