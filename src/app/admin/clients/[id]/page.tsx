@@ -318,9 +318,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     const studioClaimAmt = studioClaim?.amount || 0;
     const reimbursementAmt = reimbursement?.amount || 0;
     
-    // Target = original + studio claim - reimbursement
     const targetTotal = project.totalBudget + studioClaimAmt - reimbursementAmt;
-    const balanceNeeded = Math.max(0, targetTotal - otherAllocations);
+    const balanceNeeded = targetTotal - otherAllocations;
     
     const updated = [...tempInstallments];
     updated[idx] = { 
@@ -386,7 +385,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const tempReimbursementAmt = reimbursement?.amount || 0;
   const tempStudioClaimAmt = studioClaim?.amount || 0;
   
-  // Variance check: Total Proposed Installments should equal (Total Budget + Studio Claim - Reimbursement)
   const targetTotal = project.totalBudget + tempStudioClaimAmt - tempReimbursementAmt;
   const tempVariance = tempTotalAssigned - targetTotal;
 
@@ -1085,7 +1083,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Forensic Rationale</Label>
+                      <Label className="text-[11px) font-bold uppercase tracking-widest opacity-60">Forensic Rationale</Label>
                       <Textarea value={studioClaim.rationale} onChange={(e) => setStudioClaim({...studioClaim, rationale: e.target.value})} placeholder="Detail the technical or architectural justification for this price adjustment..." className="min-h-[100px] rounded-none border-accent/10 p-6 font-light italic text-base focus:ring-accent bg-white transition-none" />
                     </div>
                   </div>
