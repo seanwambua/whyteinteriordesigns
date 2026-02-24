@@ -178,6 +178,14 @@ export interface StudioAccount {
   status: 'Active' | 'Under Audit' | 'Locked';
 }
 
+export interface ClientIdentity {
+  id: string;
+  name: string;
+  email: string;
+  accessCode: string;
+  dateRegistered: string;
+}
+
 export interface ClientProject {
   id: string;
   name: string;
@@ -275,6 +283,7 @@ export type StyleResult = {
 
 interface WhyteState {
   projects: Project[];
+  clients: ClientIdentity[];
   clientProjects: ClientProject[];
   designers: Designer[];
   stewards: Steward[];
@@ -289,6 +298,10 @@ interface WhyteState {
   addProject: (project: Project) => void;
   removeProject: (id: string) => void;
   
+  addClient: (client: ClientIdentity) => void;
+  updateClient: (id: string, updates: Partial<ClientIdentity>) => void;
+  removeClient: (id: string) => void;
+
   addClientProject: (clientProject: ClientProject) => void;
   updateClientProject: (id: string, updates: Partial<ClientProject>) => void;
   removeClientProject: (id: string) => void;
@@ -340,6 +353,16 @@ const initialProjects: Project[] = [
     location: "Financial District",
     size: "small",
     imageUrl: "https://picsum.photos/seed/whyte3/800/600",
+  }
+];
+
+const initialClients: ClientIdentity[] = [
+  {
+    id: "CL-001",
+    name: "Jonathan Muthaiga",
+    email: "jonathan@muthaiga.com",
+    accessCode: "MUTHAIGA-VIP-2024",
+    dateRegistered: "Jan 10, 2024"
   }
 ];
 
@@ -457,6 +480,7 @@ export const useWhyteStore = create<WhyteState>()(
   persist(
     (set) => ({
       projects: initialProjects,
+      clients: initialClients,
       clientProjects: initialClientProjects,
       designers: initialDesigners,
       stewards: initialStewards,
@@ -474,6 +498,14 @@ export const useWhyteStore = create<WhyteState>()(
 
       addProject: (project) => set((state) => ({ projects: [...state.projects, project] })),
       removeProject: (id) => set((state) => ({ projects: state.projects.filter(p => p.id !== id) })),
+
+      addClient: (client) => set((state) => ({ clients: [...state.clients, client] })),
+      updateClient: (id, updates) => set((state) => ({
+        clients: state.clients.map(c => c.id === id ? { ...c, ...updates } : c)
+      })),
+      removeClient: (id) => set((state) => ({
+        clients: state.clients.filter(c => c.id !== id)
+      })),
 
       addClientProject: (clientProject) => set((state) => ({ clientProjects: [...state.clientProjects, clientProject] })),
       updateClientProject: (id, updates) => set((state) => ({
@@ -545,6 +577,7 @@ export const useWhyteStore = create<WhyteState>()(
 
         set({
           projects: [],
+          clients: [],
           clientProjects: [],
           designers: [],
           stewards: [],

@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useMemo, Suspense } from "react";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone, VendorAllocation } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone, VendorAllocation, ClientIdentity } from "@/store/use-whyte-store";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
@@ -56,7 +56,7 @@ function AddClientForm() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addClientProject, collaborators, stewards, clientProjects } = useWhyteStore();
+  const { addClientProject, addClient, collaborators, stewards, clients } = useWhyteStore();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -90,34 +90,25 @@ function AddClientForm() {
     vendorAllocations: [] as VendorAllocation[]
   });
 
-  // Unique clients derived from projects
-  const existingClients = useMemo(() => {
-    const clients: Record<string, { name: string, email: string, accessCode: string }> = {};
-    clientProjects.forEach(p => {
-      clients[p.email.toLowerCase()] = { name: p.name, email: p.email, accessCode: p.accessCode };
-    });
-    return Object.values(clients);
-  }, [clientProjects]);
-
   const filteredClients = useMemo(() => {
     if (!clientSearch) return [];
-    return existingClients.filter(c => 
+    return clients.filter(c => 
       c.name.toLowerCase().includes(clientSearch.toLowerCase()) || 
       c.email.toLowerCase().includes(clientSearch.toLowerCase())
     ).slice(0, 5);
-  }, [existingClients, clientSearch]);
+  }, [clients, clientSearch]);
 
   // Handle query params for specific client pre-fill
   useEffect(() => {
     const emailParam = searchParams.get('email');
     if (emailParam) {
-      const found = existingClients.find(c => c.email.toLowerCase() === emailParam.toLowerCase());
+      const found = clients.find(c => c.email.toLowerCase() === emailParam.toLowerCase());
       if (found) {
         setFormData(prev => ({ ...prev, name: found.name, email: found.email, accessCode: found.accessCode }));
         setStep(2); // Jump to project scope if client is already known
       }
     }
-  }, [searchParams, existingClients]);
+  }, [searchParams, clients]);
 
   const totalSteps = 7;
   const progress = (step / totalSteps) * 100;
@@ -192,11 +183,24 @@ function AddClientForm() {
 
   const executeFinalSubmit = () => {
     setLoading(true);
-    const id = `WP-${Math.floor(Math.random() * 9000) + 1000}`;
+    const projectId = `WP-${Math.floor(Math.random() * 9000) + 1000}`;
     const budget = Number(formData.totalBudget) || 0;
     
+    // 1. Check if client exists in persistent registry
+    const existingClient = clients.find(c => c.email.toLowerCase() === formData.email.toLowerCase());
+    if (!existingClient) {
+      const newClient: ClientIdentity = {
+        id: `CL-${Math.floor(Math.random() * 9000) + 1000}`,
+        name: formData.name,
+        email: formData.email,
+        accessCode: formData.accessCode,
+        dateRegistered: format(new Date(), "MMM dd, yyyy")
+      };
+      addClient(newClient);
+    }
+
     const newProject: ClientProject = { 
-      id, 
+      id: projectId, 
       name: formData.name, 
       email: formData.email, 
       accessCode: formData.accessCode,
@@ -213,7 +217,7 @@ function AddClientForm() {
       workScope: formData.workScope,
       roomsCount: Number(formData.roomsCount) || 0,
       milestones: formData.milestones.map(m => ({ ...m, date: format(m.date, "MMM dd, yyyy") })), 
-      tasks: formData.tasks.map((t, i) => ({ ...t, id: t.id || `T-${id}-${i + 1}`, status: 'Todo' })), 
+      tasks: formData.tasks.map((t, i) => ({ ...t, id: t.id || `T-${projectId}-${i + 1}`, status: 'Todo' })), 
       installments: getInstallmentPlan(formData.tier, budget), 
       description: formData.description,
       vendorAllocations: formData.vendorAllocations,
@@ -223,7 +227,7 @@ function AddClientForm() {
     setTimeout(() => { 
       addClientProject(newProject); 
       setLoading(false); 
-      toast({ title: "Commission Initialized", description: `Dossier ${id} registered under client ${formData.accessCode}.` });
+      toast({ title: "Commission Initialized", description: `Dossier ${projectId} registered under client ${formData.accessCode}.` });
       router.push("/admin/clients"); 
     }, 1500);
   };
@@ -236,7 +240,7 @@ function AddClientForm() {
     return true; 
   };
 
-  const selectExistingClient = (client: { name: string, email: string, accessCode: string }) => {
+  const selectExistingClient = (client: ClientIdentity) => {
     setFormData({ ...formData, name: client.name, email: client.email, accessCode: client.accessCode });
     setClientSearch("");
     setStep(2);
@@ -271,12 +275,12 @@ function AddClientForm() {
                 <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 mb-2"><User className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Client Identity</h3></div>
-                    {existingClients.length > 0 && (
+                    {clients.length > 0 && (
                       <div className="relative w-72">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
                           <Input 
-                            placeholder="Link Existing Portfolio..." 
+                            placeholder="Link Existing Profile..." 
                             className="pl-10 h-10 text-[10px] uppercase tracking-widest rounded-none border-accent/10 focus:ring-accent transition-none shadow-none"
                             value={clientSearch}
                             onChange={(e) => setClientSearch(e.target.value)}
@@ -286,7 +290,7 @@ function AddClientForm() {
                           <div className="absolute top-full left-0 w-full bg-white border border-accent/10 shadow-2xl z-20 mt-1">
                             {filteredClients.map(c => (
                               <button
-                                key={c.email}
+                                key={c.id}
                                 type="button"
                                 onClick={() => selectExistingClient(c)}
                                 className="w-full text-left p-4 hover:bg-accent hover:text-white flex flex-col gap-1 border-b border-accent/5 last:border-0 transition-none"
@@ -362,7 +366,7 @@ function AddClientForm() {
               )}
 
               {step === 4 && (
-                <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><Clock className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Temporal Configuration</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-3">
@@ -384,7 +388,7 @@ function AddClientForm() {
               )}
 
               {step === 5 && (
-                <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <div className="flex items-center gap-4"><Flag className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Strategic Milestones</h3></div>
                     <Button type="button" variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-accent/20 hover:bg-accent hover:text-white transition-none shadow-none">
@@ -406,7 +410,7 @@ function AddClientForm() {
               )}
 
               {step === 6 && (
-                <motion.div key="s6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <div className="flex items-center gap-4"><Zap className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Initial Site Protocols</h3></div>
                     <Button type="button" variant="outline" size="sm" onClick={addTask} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-accent/20 hover:bg-accent hover:text-white transition-none shadow-none">
@@ -434,7 +438,7 @@ function AddClientForm() {
               )}
 
               {step === 7 && (
-                <motion.div key="s7" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s7" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <div className="flex items-center gap-4"><Users className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Network Matrix</h3></div>
                     <Button type="button" variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-accent/20 hover:bg-accent hover:text-white transition-none shadow-none">

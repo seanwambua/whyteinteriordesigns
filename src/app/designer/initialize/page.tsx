@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useMemo } from "react";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone, VendorAllocation } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone, VendorAllocation, ClientIdentity } from "@/store/use-whyte-store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
@@ -55,7 +55,7 @@ import {
 export default function DesignerInitializePage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { addClientProject, collaborators, clientProjects } = useWhyteStore();
+  const { addClientProject, addClient, collaborators, clients } = useWhyteStore();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -93,21 +93,13 @@ export default function DesignerInitializePage() {
     vendorAllocations: [] as VendorAllocation[]
   });
 
-  const existingClients = useMemo(() => {
-    const clients: Record<string, { name: string, email: string, accessCode: string }> = {};
-    clientProjects.forEach(p => {
-      clients[p.email.toLowerCase()] = { name: p.name, email: p.email, accessCode: p.accessCode };
-    });
-    return Object.values(clients);
-  }, [clientProjects]);
-
   const filteredClients = useMemo(() => {
     if (!clientSearch) return [];
-    return existingClients.filter(c => 
+    return clients.filter(c => 
       c.name.toLowerCase().includes(clientSearch.toLowerCase()) || 
       c.email.toLowerCase().includes(clientSearch.toLowerCase())
     ).slice(0, 5);
-  }, [existingClients, clientSearch]);
+  }, [clients, clientSearch]);
 
   const totalSteps = 7;
   const progress = (step / totalSteps) * 100;
@@ -176,11 +168,24 @@ export default function DesignerInitializePage() {
 
   const executeFinalSubmit = () => {
     setLoading(true);
-    const id = `WP-${Math.floor(Math.random() * 9000) + 1000}`;
+    const projectId = `WP-${Math.floor(Math.random() * 9000) + 1000}`;
     const budget = Number(formData.totalBudget) || 0;
     
+    // 1. Ensure Client Identity exists
+    const existingClient = clients.find(c => c.email.toLowerCase() === formData.email.toLowerCase());
+    if (!existingClient) {
+      const newClient: ClientIdentity = {
+        id: `CL-${Math.floor(Math.random() * 9000) + 1000}`,
+        name: formData.name,
+        email: formData.email,
+        accessCode: formData.accessCode,
+        dateRegistered: format(new Date(), "MMM dd, yyyy")
+      };
+      addClient(newClient);
+    }
+
     const newProject: ClientProject = { 
-      id, 
+      id: projectId, 
       name: formData.name, 
       email: formData.email, 
       accessCode: formData.accessCode,
@@ -197,7 +202,7 @@ export default function DesignerInitializePage() {
       roomsCount: Number(formData.roomsCount) || 0,
       workScope: formData.workScope,
       milestones: formData.milestones.map(m => ({ ...m, date: format(m.date, "MMM dd, yyyy") })), 
-      tasks: formData.tasks.map((t, i) => ({ ...t, id: t.id || `T-${id}-${i + 1}`, status: 'Todo' })), 
+      tasks: formData.tasks.map((t, i) => ({ ...t, id: t.id || `T-${projectId}-${i + 1}`, status: 'Todo' })), 
       installments: getInstallmentPlan(formData.tier, budget), 
       description: formData.description,
       vendorAllocations: formData.vendorAllocations,
@@ -207,7 +212,7 @@ export default function DesignerInitializePage() {
     setTimeout(() => { 
       addClientProject(newProject); 
       setLoading(false); 
-      toast({ title: "Briefing Synchronized", description: `Dossier ${id} transmitted under access code ${formData.accessCode}.` });
+      toast({ title: "Briefing Synchronized", description: `Dossier ${projectId} transmitted under access code ${formData.accessCode}.` });
       router.push("/designer"); 
     }, 1500);
   };
@@ -219,7 +224,7 @@ export default function DesignerInitializePage() {
     return true; 
   };
 
-  const selectExistingClient = (client: { name: string, email: string, accessCode: string }) => {
+  const selectExistingClient = (client: ClientIdentity) => {
     setFormData({ ...formData, name: client.name, email: client.email, accessCode: client.accessCode });
     setClientSearch("");
     setStep(2);
@@ -256,7 +261,7 @@ export default function DesignerInitializePage() {
                 <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 mb-2"><User className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Client Identity</h3></div>
-                    {existingClients.length > 0 && (
+                    {clients.length > 0 && (
                       <div className="relative w-72">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
@@ -271,7 +276,7 @@ export default function DesignerInitializePage() {
                           <div className="absolute top-full left-0 w-full bg-white border border-accent/10 shadow-2xl z-20 mt-1">
                             {filteredClients.map(c => (
                               <button
-                                key={c.email}
+                                key={c.id}
                                 type="button"
                                 onClick={() => selectExistingClient(c)}
                                 className="w-full text-left p-4 hover:bg-accent hover:text-white flex flex-col gap-1 border-b border-accent/5 last:border-0 transition-none"
@@ -314,7 +319,7 @@ export default function DesignerInitializePage() {
               )}
 
               {step === 3 && (
-                <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><Calculator className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Framework & Spatial</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-3">
@@ -343,7 +348,7 @@ export default function DesignerInitializePage() {
               )}
 
               {step === 4 && (
-                <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><Clock className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Temporal Configuration</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-3">
@@ -365,7 +370,7 @@ export default function DesignerInitializePage() {
               )}
 
               {step === 5 && (
-                <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <div className="flex items-center gap-4">
                       <Flag className="h-5 w-5 text-accent/40" />
@@ -406,7 +411,7 @@ export default function DesignerInitializePage() {
               )}
 
               {step === 6 && (
-                <motion.div key="s6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <div className="flex items-center gap-4">
                       <Zap className="h-5 w-5 text-accent/40" />
@@ -446,7 +451,7 @@ export default function DesignerInitializePage() {
               )}
 
               {step === 7 && (
-                <motion.div key="s7" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <motion.div key="s7" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <div className="flex items-center gap-4">
                       <Users className="h-5 w-5 text-accent/40" />

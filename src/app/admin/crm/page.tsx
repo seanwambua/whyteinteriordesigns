@@ -28,12 +28,13 @@ import {
   Trash2,
   Settings2,
   Edit3,
-  BadgeCheck
+  BadgeCheck,
+  History
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useWhyteStore, ClientProject, Inquiry, Collaborator } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, Inquiry, Collaborator, ClientIdentity } from "@/store/use-whyte-store";
 import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -50,22 +51,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type UniqueClient = {
-  name: string;
-  email: string;
-  accessCode: string;
-  projectCount: number;
-  projects: string[];
-};
-
 export default function RelationshipIntelligencePage() {
-  const { clientProjects, inquiries, collaborators, updateClientProject, updateCollaborator } = useWhyteStore();
+  const { clients, clientProjects, inquiries, collaborators, updateClient, updateClientProject, updateCollaborator, removeClient } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("pipeline");
 
-  const [editingClient, setEditingClient] = useState<UniqueClient | null>(null);
+  const [editingClient, setEditingClient] = useState<ClientIdentity | null>(null);
   const [editingCollaborator, setEditingCollaborator] = useState<Collaborator | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -89,32 +82,13 @@ export default function RelationshipIntelligencePage() {
     setIsMounted(true);
   }, []);
 
-  const uniqueClients = useMemo(() => {
-    const clients: Record<string, UniqueClient> = {};
-    clientProjects.forEach(p => {
-      const emailKey = p.email.toLowerCase();
-      if (!clients[emailKey]) {
-        clients[emailKey] = { 
-          name: p.name, 
-          email: p.email, 
-          accessCode: p.accessCode,
-          projectCount: 0,
-          projects: []
-        };
-      }
-      clients[emailKey].projectCount++;
-      clients[emailKey].projects.push(p.id);
-    });
-    return Object.values(clients);
-  }, [clientProjects]);
-
   const filteredClients = useMemo(() => {
-    return uniqueClients.filter(c => 
+    return clients.filter(c => 
       c.name.toLowerCase().includes(search.toLowerCase()) || 
       c.email.toLowerCase().includes(search.toLowerCase()) ||
       c.accessCode.toLowerCase().includes(search.toLowerCase())
     );
-  }, [uniqueClients, search]);
+  }, [clients, search]);
 
   const filteredCollaborators = useMemo(() => {
     return collaborators.filter(c => 
@@ -123,7 +97,7 @@ export default function RelationshipIntelligencePage() {
     );
   }, [collaborators, search]);
 
-  const handleOpenEdit = (client: UniqueClient) => {
+  const handleOpenEdit = (client: ClientIdentity) => {
     setEditingClient(client);
     setEditFormData({
       name: client.name,
@@ -153,6 +127,14 @@ export default function RelationshipIntelligencePage() {
     const associatedProjects = clientProjects.filter(p => p.email.toLowerCase() === oldEmail);
 
     setTimeout(() => {
+      // 1. Update Persistent Client Record
+      updateClient(editingClient.id, {
+        name: editFormData.name,
+        email: editFormData.email,
+        accessCode: editFormData.accessCode
+      });
+
+      // 2. Sync Active Projects
       associatedProjects.forEach(p => {
         updateClientProject(p.id, {
           name: editFormData.name,
@@ -195,6 +177,13 @@ export default function RelationshipIntelligencePage() {
     }, 1200);
   };
 
+  const handleDeleteClient = (id: string) => {
+    if (confirm("Confirm removal of Client Identity from the CRM registry? Associated project dossiers will persist but will be unlinked from this unified profile.")) {
+      removeClient(id);
+      toast({ title: "Identity Removed", variant: "destructive" });
+    }
+  };
+
   if (!isMounted) return null;
 
   const activeInquiries = inquiries.filter(i => i.status !== 'closed');
@@ -202,7 +191,7 @@ export default function RelationshipIntelligencePage() {
   
   const stats = [
     { label: "Lead Velocity", value: inquiries.filter(i => i.status === 'new').length.toString(), sub: "Awaiting Sync", icon: Zap },
-    { label: "Client Base", value: uniqueClients.length.toString(), sub: "Verified Identities", icon: Fingerprint },
+    { label: "Client Base", value: clients.length.toString(), sub: "Verified Identities", icon: Fingerprint },
     { label: "Partner Network", value: collaborators.length.toString(), sub: "Verified Trades", icon: HeartHandshake },
     { label: "Active Dossiers", value: activeProjects.length.toString(), sub: "In Execution", icon: Briefcase },
   ];
@@ -266,7 +255,7 @@ export default function RelationshipIntelligencePage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto custom-scrollbar">
           <TabsTrigger value="pipeline" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3"><Zap className="h-4 w-4" /> Lead Pipeline</TabsTrigger>
-          <TabsTrigger value="identities" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3"><Fingerprint className="h-4 w-4" /> Client Identities ({uniqueClients.length})</TabsTrigger>
+          <TabsTrigger value="identities" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3"><Fingerprint className="h-4 w-4" /> Client Identities ({clients.length})</TabsTrigger>
           <TabsTrigger value="clients" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3"><Briefcase className="h-4 w-4" /> Active Journeys</TabsTrigger>
           <TabsTrigger value="partners" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3"><HeartHandshake className="h-4 w-4" /> Network Matrix</TabsTrigger>
         </TabsList>
@@ -316,38 +305,49 @@ export default function RelationshipIntelligencePage() {
                 <tr className="bg-accent/5 border-b border-accent/10">
                   <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Verified Identity</th>
                   <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Unified Access Code</th>
-                  <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Portfolio Depth</th>
+                  <th className="p-6 text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Registry Date</th>
                   <th className="p-6 text-right text-[11px] font-bold uppercase tracking-[0.3em] text-accent/60">Protocol</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-accent/5">
-                {filteredClients.map((client) => (
-                  <tr key={client.email} className="group hover:bg-accent/[0.01] transition-colors">
-                    <td className="p-6">
-                      <div className="space-y-1">
-                        <p className="text-base font-headline italic text-accent">{client.name}</p>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{client.email}</p>
-                      </div>
-                    </td>
-                    <td className="p-6">
-                      <div className="flex items-center gap-3">
-                        <Key className="h-3.5 w-3.5 text-accent/20" />
-                        <code className="text-[12px] font-mono font-bold tracking-widest text-accent/80">{client.accessCode}</code>
-                      </div>
-                    </td>
-                    <td className="p-6">
-                      <div className="flex items-center gap-3">
-                        <Briefcase className="h-3.5 w-3.5 text-accent/20" />
-                        <span className="text-[12px] uppercase font-bold text-accent/60">{client.projectCount} Dossiers Linked</span>
-                      </div>
-                    </td>
-                    <td className="p-6 text-right">
-                      <Button onClick={() => handleOpenEdit(client)} variant="ghost" size="icon" className="rounded-full hover:bg-accent hover:text-white transition-all">
-                        <UserCog className="h-4.5 w-4.5" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredClients.map((client) => {
+                  const pCount = clientProjects.filter(p => p.email.toLowerCase() === client.email.toLowerCase()).length;
+                  return (
+                    <tr key={client.id} className="group hover:bg-accent/[0.01] transition-colors">
+                      <td className="p-6">
+                        <div className="space-y-1">
+                          <p className="text-base font-headline italic text-accent">{client.name}</p>
+                          <div className="flex items-center gap-3">
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{client.email}</p>
+                            <Badge variant="ghost" className="text-[8px] uppercase tracking-widest p-0 h-auto opacity-40">{pCount} Active Dossiers</Badge>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-6">
+                        <div className="flex items-center gap-3">
+                          <Key className="h-3.5 w-3.5 text-accent/20" />
+                          <code className="text-[12px] font-mono font-bold tracking-widest text-accent/80">{client.accessCode}</code>
+                        </div>
+                      </td>
+                      <td className="p-6">
+                        <div className="flex items-center gap-3">
+                          <History className="h-3.5 w-3.5 text-accent/20" />
+                          <span className="text-[12px] uppercase font-bold text-accent/60">{client.dateRegistered || "Legacy Registry"}</span>
+                        </div>
+                      </td>
+                      <td className="p-6 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button onClick={() => handleOpenEdit(client)} variant="ghost" size="icon" className="rounded-full hover:bg-accent hover:text-white transition-all">
+                            <UserCog className="h-4.5 w-4.5" />
+                          </Button>
+                          <Button onClick={() => handleDeleteClient(client.id)} variant="ghost" size="icon" className="rounded-full text-destructive/20 hover:text-destructive hover:bg-destructive/5 transition-all">
+                            <Trash2 className="h-4.5 w-4.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
