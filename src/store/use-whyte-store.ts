@@ -113,6 +113,12 @@ export interface TerminationDetails {
   audit?: FinancialAudit;
 }
 
+export interface ReimbursementClaim {
+  type: 'Overpayment Return' | 'Site Damage Adjustment' | 'Operational Credit';
+  amount: number;
+  rationale: string;
+}
+
 export interface ReorganizationDetails {
   status: 'Requested' | 'Pending_Agreement' | 'Authorized' | 'Inactive';
   requestedBy: 'Client' | 'Admin';
@@ -121,6 +127,7 @@ export interface ReorganizationDetails {
   clientAgreed: boolean;
   stewardWitnessed: boolean;
   finalizedDate?: string;
+  reimbursement?: ReimbursementClaim;
 }
 
 export interface Designer {

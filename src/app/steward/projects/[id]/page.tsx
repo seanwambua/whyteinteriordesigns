@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, AuditAllocation, AuditIncoming, FinancialAudit, ReorganizationDetails, Installment, StewardLog } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, AuditAllocation, AuditIncoming, FinancialAudit, ReorganizationDetails, Installment, StewardLog, ReimbursementClaim } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,7 +59,8 @@ import {
   PencilRuler,
   AlertCircle,
   FileClock,
-  PenTool
+  PenTool,
+  RotateCcw
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -302,6 +303,23 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               </div>
               <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl hover:bg-orange-700 transition-all flex gap-3">
                 <Banknote className="h-4 w-4" /> Certify Activation
+              </Button>
+            </div>
+          </Alert>
+        )}
+
+        {project.reorganization?.status === 'Pending_Agreement' && project.reorganization.clientAgreed && !project.reorganization.stewardWitnessed && (
+          <Alert className="rounded-none border-blue-500/20 bg-blue-50 p-8 shadow-2xl">
+            <Signature className="h-6 w-6 text-blue-600" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 w-full ml-4">
+              <div className="space-y-1">
+                <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-blue-600">Witnessing Protocol Required</AlertTitle>
+                <AlertDescription className="text-[13px] font-light italic text-blue-600/80 max-w-xl leading-relaxed">
+                  The client has authorized a new financing framework. Professional witness signature is required to synchronize the master ledger.
+                </AlertDescription>
+              </div>
+              <Button onClick={() => setIsWitnessingReorg(true)} className="bg-blue-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl hover:bg-blue-700 transition-all flex gap-3">
+                <PenTool className="h-4 w-4" /> Witness Agreement
               </Button>
             </div>
           </Alert>
@@ -592,6 +610,68 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             </div>
             <DialogFooter><Button onClick={handleAddLog} disabled={!newLog.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all">Transmit to Registry</Button></DialogFooter>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isWitnessingReorg} onOpenChange={setIsWitnessingReorg}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-3xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+          <div className="bg-blue-600 h-1.5 w-full" />
+          <div className="p-12 space-y-10 overflow-y-auto custom-scrollbar flex-1">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3"><PenTool className="h-5 w-5 text-blue-600" /><span className="text-blue-600 text-[12px] font-bold uppercase tracking-[0.4em]">Professional Witness Workbench</span></div>
+              <DialogTitle className="text-4xl font-headline italic">Certify Financing Reorganization</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">Certify the custom payout terms authorized by the Client and Senior Partners.</DialogDescription>
+            </DialogHeader>
+
+            <div className="p-10 bg-blue-50/50 border border-blue-100 space-y-6">
+              <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-blue-600/60">Agreement Rationale</h4>
+              <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-blue-600/20 pl-8">"{project.reorganization?.terms}"</p>
+            </div>
+
+            {project.reorganization?.reimbursement && (
+              <div className="p-10 border border-orange-500/20 bg-orange-50/30 space-y-6">
+                <div className="flex items-center gap-4">
+                  <RotateCcw className="h-5 w-5 text-orange-600" />
+                  <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Authorized Reimbursement Component</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase font-bold opacity-40">Classification</p>
+                    <p className="text-lg font-headline italic">{project.reorganization.reimbursement.type}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase font-bold opacity-40">Forensic Amount</p>
+                    <p className="text-2xl font-headline italic text-orange-600">KES {project.reorganization.reimbursement.amount.toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="space-y-2 border-t border-orange-500/10 pt-6">
+                  <p className="text-[10px] uppercase font-bold opacity-40">Rationale</p>
+                  <p className="text-base font-light italic text-accent/70 leading-relaxed pl-6 border-l-2 border-orange-500/20">"{project.reorganization.reimbursement.rationale}"</p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-6">
+              <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Synchronized Installment Schedule</h4>
+              <div className="divide-y divide-accent/5 border border-accent/5 bg-white shadow-sm">
+                {project.reorganization?.proposedInstallments.map((ins, i) => (
+                  <div key={i} className="p-6 flex items-center justify-between bg-white">
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold uppercase tracking-widest">{ins.label}</p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{ins.percentage}% Allocation Protocol</p>
+                    </div>
+                    <p className="text-xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between gap-6">
+            <Button onClick={() => setIsWitnessingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest">Abort Sync</Button>
+            <Button onClick={handleWitnessReorg} disabled={isSyncingWitness} className="bg-blue-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-4">
+              {isSyncingWitness ? <><Loader2 className="h-5 w-5 animate-spin" /> Certifying Agreement...</> : <><Signature className="h-5 w-5" /> Witness & Authorize Protocol</>}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

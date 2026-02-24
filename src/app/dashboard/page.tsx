@@ -41,7 +41,8 @@ import {
   ShieldCheck,
   FileSearch,
   LayoutGrid,
-  ChevronDown
+  ChevronDown,
+  RotateCcw
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
@@ -143,27 +144,13 @@ export default function ClientDashboardPage() {
     toast({ title: "Workspace Context Shifted", description: `Synchronizing protocols for Dossier ${id}.` });
   };
 
-  const handleClientAgreeTermination = () => {
-    if (!activeProject.termination) return;
-    updateClientProject(activeProject.id, {
-      termination: {
-        ...activeProject.termination,
-        clientAgreed: true
-      }
-    });
-    toast({
-      title: "Resolution Terms Accepted",
-      description: "You have digitally signed the dissolution agreement.",
-    });
-  };
-
   const handleAgreeToReorg = () => {
     if (!activeProject.reorganization) return;
     setIsSigningReorg(true);
     setTimeout(() => {
       updateClientProject(activeProject.id, {
         reorganization: {
-          ...activeProject.reorganization,
+          ...activeProject.reorganization!,
           clientAgreed: true
         },
         lastActivity: "Financing Protocol: Client Authorized Custom Payout Terms"
@@ -446,6 +433,29 @@ export default function ClientDashboardPage() {
               <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Agreement Rationale</h4>
               <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/20 pl-8">"{activeProject.reorganization?.terms}"</p>
             </div>
+
+            {activeProject.reorganization?.reimbursement && (
+              <div className="p-10 border border-orange-500/20 bg-orange-50/30 space-y-6">
+                <div className="flex items-center gap-4">
+                  <RotateCcw className="h-5 w-5 text-orange-600" />
+                  <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Reimbursement Protocol Attachment</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-orange-500/10 pt-6">
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase font-bold opacity-40">Claim Type</p>
+                    <p className="text-lg font-headline italic">{activeProject.reorganization.reimbursement.type}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase font-bold opacity-40">Authorized Capital Return</p>
+                    <p className="text-2xl font-headline italic text-orange-600">KES {activeProject.reorganization.reimbursement.amount.toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase font-bold opacity-40">Forensic Justification</p>
+                  <p className="text-base font-light italic text-accent/70 leading-relaxed border-l-2 border-orange-500/20 pl-6">"{activeProject.reorganization.reimbursement.rationale}"</p>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-6">
               <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Proposed Installment Schedule</h4>

@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask, Inquiry, SiteReport, Installment, ReorganizationDetails, Milestone, VendorAllocation } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Inquiry, SiteReport, Installment, ReorganizationDetails, Milestone, VendorAllocation, ReimbursementClaim } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +58,8 @@ import {
   FileSearch,
   LayoutList,
   Calculator,
-  Users
+  Users,
+  RotateCcw
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -181,6 +182,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const [isReorganizingPlan, setIsReorganizingPlan] = useState(false);
   const [tempInstallments, setTempInstallments] = useState<Installment[]>([]);
   const [reorgTerms, setReorgTerms] = useState("");
+  const [reimbursement, setReimbursement] = useState<ReimbursementClaim | null>(null);
 
   const [isMasterEditing, setIsMasterEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<ClientProject>>({});
@@ -215,10 +217,16 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   useEffect(() => {
     if (isReorganizingPlan && project) {
-      setTempInstallments(project.reorganization?.status === 'Pending_Agreement' 
-        ? [...project.reorganization.proposedInstallments]
-        : [...project.installments]);
-      setReorgTerms(project.reorganization?.terms || "");
+      const reorg = project.reorganization;
+      if (reorg && (reorg.status === 'Pending_Agreement' || reorg.status === 'Requested')) {
+        setTempInstallments(reorg.proposedInstallments.length > 0 ? [...reorg.proposedInstallments] : [...project.installments]);
+        setReorgTerms(reorg.terms || "");
+        setReimbursement(reorg.reimbursement || null);
+      } else {
+        setTempInstallments([...project.installments]);
+        setReorgTerms("");
+        setReimbursement(null);
+      }
     }
   }, [isReorganizingPlan, project]);
 
@@ -299,7 +307,8 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   const handleSyncFinalToBalance = (idx: number) => {
     const otherAllocations = tempInstallments.reduce((sum, ins, i) => i === idx ? sum : sum + ins.amount, 0);
-    const balanceNeeded = Math.max(0, project.totalBudget - otherAllocations);
+    const reimbursementAmt = reimbursement?.amount || 0;
+    const balanceNeeded = Math.max(0, project.totalBudget - otherAllocations + reimbursementAmt);
     const budget = project.totalBudget || 1;
     
     const updated = [...tempInstallments];
@@ -319,16 +328,53 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       terms: reorgTerms,
       proposedInstallments: tempInstallments,
       clientAgreed: false,
-      stewardWitnessed: false
+      stewardWitnessed: false,
+      reimbursement: reimbursement || undefined
     };
     
     updateClientProject(project.id, { 
       reorganization: reorg,
-      lastActivity: "Financing Protocol: Custom Payout Plan Proposted for Client Agreement"
+      lastActivity: "Financing Protocol: Custom Payout Plan Proposed for Client Agreement"
     });
     setIsReorganizingPlan(false);
     toast({ title: "Proposal Transmitted", description: "The client must now authorize the reorganization terms." });
   };
+
+  const handleAddReimbursement = () => {
+    setReimbursement({
+      type: 'Overpayment Return',
+      amount: 0,
+      rationale: ""
+    });
+  };
+
+  const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
+  const remainingBalance = project.totalBudget - totalPaid;
+  const isLegerSynchronized = Math.abs(remainingBalance) < 1;
+  const isOverpaid = remainingBalance < -1;
+
+  const temporal = (() => {
+    if (!project.isActivated) return { label: "Temporal Status", value: "Locked", icon: <ZapOff className="h-5 w-5" />, sub: "Pending Activation" };
+    const startStr = project.startDate || format(new Date(), "MMM dd, yyyy");
+    const endStr = project.endDate || format(new Date(), "MMM dd, yyyy");
+    const start = parse(startStr, "MMM dd, yyyy", new Date());
+    const end = parse(endStr, "MMM dd, yyyy", new Date());
+    if (!isValid(start) || !isValid(end)) return null;
+    const remaining = differenceInDays(end, new Date());
+    return { 
+      label: remaining < 0 ? "Overdue Protocol" : "Days to Handover", 
+      value: Math.abs(remaining).toString(), 
+      icon: remaining < 0 ? <AlertTriangle className="h-5 w-5 text-destructive" /> : <Hourglass className="h-5 w-5" />,
+      sub: `${differenceInDays(end, start)} Day Timeline`,
+      isUrgent: remaining < 0
+    };
+  })();
+
+  const tempTotalAssigned = tempInstallments.reduce((sum, i) => sum + i.amount, 0);
+  const tempReimbursementAmt = reimbursement?.amount || 0;
+  // Variance check: (Total Budget + Reimbursement) should equal Total Proposed Installments
+  // Actually simpler: Total Proposed Installments - Reimbursement = Total Budget
+  const tempVariance = (tempTotalAssigned - tempReimbursementAmt) - project.totalBudget;
 
   const handleUpdateTask = (taskId: string, updates: Partial<ProjectTask>) => {
     if (isReadOnly) return;
@@ -421,31 +467,6 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
     updateInquiryStatus(inqId, status);
     toast({ title: "Pipeline Synchronized", description: `Inquiry status updated to ${status}.` });
   };
-
-  const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
-  const remainingBalance = project.totalBudget - totalPaid;
-  const isLegerSynchronized = Math.abs(remainingBalance) < 1;
-  const isOverpaid = remainingBalance < -1;
-
-  const temporal = (() => {
-    if (!project.isActivated) return { label: "Temporal Status", value: "Locked", icon: <ZapOff className="h-5 w-5" />, sub: "Pending Activation" };
-    const startStr = project.startDate || format(new Date(), "MMM dd, yyyy");
-    const endStr = project.endDate || format(new Date(), "MMM dd, yyyy");
-    const start = parse(startStr, "MMM dd, yyyy", new Date());
-    const end = parse(endStr, "MMM dd, yyyy", new Date());
-    if (!isValid(start) || !isValid(end)) return null;
-    const remaining = differenceInDays(end, new Date());
-    return { 
-      label: remaining < 0 ? "Overdue Protocol" : "Days to Handover", 
-      value: Math.abs(remaining).toString(), 
-      icon: remaining < 0 ? <AlertTriangle className="h-5 w-5 text-destructive" /> : <Hourglass className="h-5 w-5" />,
-      sub: `${differenceInDays(end, start)} Day Timeline`,
-      isUrgent: remaining < 0
-    };
-  })();
-
-  const tempTotalAssigned = tempInstallments.reduce((sum, i) => sum + i.amount, 0);
-  const tempVariance = tempTotalAssigned - project.totalBudget;
 
   return (
     <div className="max-w-7xl mx-auto space-y-12 font-body pb-24">
@@ -917,7 +938,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             </DialogHeader>
             <div className="space-y-8">
               <div className="p-8 bg-secondary/30 border border-accent/5 space-y-4 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-2 opacity-5"><Banknote className="h-14 w-14" /></div>
+                <div className="absolute top-0 right-0 p-4 opacity-5"><Banknote className="h-14 w-14" /></div>
                 <div className="flex flex-col gap-1 relative z-10">
                   <span className="text-[11px] uppercase tracking-widest font-bold text-accent/40">Authorized Entry Value</span>
                   <span className="text-2xl font-headline italic text-accent">KES {verifiedAmount.toLocaleString()}</span>
@@ -984,14 +1005,18 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               </Alert>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-8 bg-secondary/30 border border-accent/5">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 p-8 bg-secondary/30 border border-accent/5">
               <div className="space-y-1">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Commission Commitment</p>
                 <p className="text-2xl font-headline italic">KES {project.totalBudget.toLocaleString()}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Total Assigned Plan</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Proposed Plan Total</p>
                 <p className="text-2xl font-headline italic">KES {tempTotalAssigned.toLocaleString()}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/60">Authorized Reimbursement</p>
+                <p className="text-2xl font-headline italic text-orange-600">KES {tempReimbursementAmt.toLocaleString()}</p>
               </div>
               <div className="space-y-1">
                 <p className={cn("text-[10px] font-bold uppercase tracking-widest", tempVariance === 0 ? "text-green-600" : "text-orange-600")}>Plan Variance</p>
@@ -999,74 +1024,112 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Agreement Terms & Rationale</Label>
-                <Textarea 
-                  value={reorgTerms} 
-                  onChange={(e) => setReorgTerms(e.target.value)} 
-                  placeholder="Detail the rationale for reorganization and any specific legal clauses..." 
-                  className="min-h-[120px] rounded-none border-accent/10 p-6 font-light italic text-base focus:ring-accent bg-secondary/5 transition-none"
-                />
+            <div className="space-y-10">
+              {/* REIMBURSEMENT SECTION */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-accent/5 pb-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 flex items-center gap-3"><RotateCcw className="h-4 w-4" /> Reimbursement Protocol</h4>
+                  {!reimbursement && <Button onClick={handleAddReimbursement} variant="outline" className="h-10 px-6 rounded-none text-[10px] uppercase font-bold tracking-widest border-accent/10 hover:bg-accent hover:text-white bg-transparent shadow-none transition-none">Add Claim</Button>}
+                </div>
+                {reimbursement && (
+                  <div className="p-8 border border-orange-500/20 bg-orange-50/30 space-y-6 relative group">
+                    <Button onClick={() => setReimbursement(null)} variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive rounded-none border-none transition-none"><Trash2 className="h-4 w-4" /></Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-3">
+                        <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Claim Classification</Label>
+                        <Select value={reimbursement.type} onValueChange={(v: any) => setReimbursement({...reimbursement, type: v})}>
+                          <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold shadow-none bg-white transition-none">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-none">
+                            <SelectItem value="Overpayment Return">Overpayment Return</SelectItem>
+                            <SelectItem value="Site Damage Adjustment">Site Damage Adjustment</SelectItem>
+                            <SelectItem value="Operational Credit">Operational Credit</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Reimbursement Value (KES)</Label>
+                        <Input type="number" value={reimbursement.amount} onChange={(e) => setReimbursement({...reimbursement, amount: Number(e.target.value)})} className="rounded-none h-12 border-accent/10 text-xl font-headline italic bg-white" />
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Forensic Rationale</Label>
+                      <Textarea value={reimbursement.rationale} onChange={(e) => setReimbursement({...reimbursement, rationale: e.target.value})} placeholder="Detail the technical or financial justification for this claim..." className="min-h-[100px] rounded-none border-accent/10 p-6 font-light italic text-base focus:ring-accent bg-white transition-none" />
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center justify-between border-b border-accent/5 pb-4">
-                <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Proposed Payout Schedule</h4>
-                <Button onClick={handleAddTempInstallment} variant="outline" className="h-10 px-6 rounded-none text-[10px] uppercase font-bold tracking-widest border-accent/10 hover:bg-accent hover:text-white bg-transparent shadow-none transition-none">
-                  <Plus className="h-3.5 w-3.5 mr-2" /> Append Installment
-                </Button>
-              </div>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Agreement Terms & Rationale</Label>
+                  <Textarea 
+                    value={reorgTerms} 
+                    onChange={(e) => setReorgTerms(e.target.value)} 
+                    placeholder="Detail the rationale for reorganization and any specific legal clauses..." 
+                    className="min-h-[120px] rounded-none border-accent/10 p-6 font-light italic text-base focus:ring-accent bg-secondary/5 transition-none"
+                  />
+                </div>
 
-              <div className="space-y-4">
-                {tempInstallments.map((ins, idx) => (
-                  <div key={idx} className={cn(
-                    "p-6 border flex flex-col md:flex-row items-center gap-6 rounded-none",
-                    ins.status === 'Paid' ? "bg-green-50/50 border-green-600/10" : "bg-white border-accent/5 hover:border-accent/20"
-                  )}>
-                    <div className="flex-1 space-y-4 w-full">
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-                        <div className="md:col-span-5 space-y-2">
-                          <Label className="text-[10px] uppercase font-bold opacity-40">Label</Label>
-                          <Input 
-                            value={ins.label} 
-                            onChange={(e) => handleUpdateTempInstallment(idx, 'label', e.target.value)}
-                            readOnly={ins.status === 'Paid'}
-                            className="rounded-none h-10 border-accent/10 text-xs font-bold uppercase tracking-widest transition-none"
-                          />
-                        </div>
-                        <div className="md:col-span-4 space-y-2">
-                          <Label className="text-[10px] uppercase font-bold opacity-40">Amount (KES)</Label>
-                          <div className="relative">
+                <div className="flex items-center justify-between border-b border-accent/5 pb-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Proposed Payout Schedule</h4>
+                  <Button onClick={handleAddTempInstallment} variant="outline" className="h-10 px-6 rounded-none text-[10px] uppercase font-bold tracking-widest border-accent/10 hover:bg-accent hover:text-white bg-transparent shadow-none transition-none">
+                    <Plus className="h-3.5 w-3.5 mr-2" /> Append Installment
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {tempInstallments.map((ins, idx) => (
+                    <div key={idx} className={cn(
+                      "p-6 border flex flex-col md:flex-row items-center gap-6 rounded-none",
+                      ins.status === 'Paid' ? "bg-green-50/50 border-green-600/10" : "bg-white border-accent/5 hover:border-accent/20"
+                    )}>
+                      <div className="flex-1 space-y-4 w-full">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                          <div className="md:col-span-5 space-y-2">
+                            <Label className="text-[10px] uppercase font-bold opacity-40">Label</Label>
                             <Input 
-                              type="number"
-                              value={ins.amount} 
-                              onChange={(e) => handleUpdateTempInstallment(idx, 'amount', Number(e.target.value))}
+                              value={ins.label} 
+                              onChange={(e) => handleUpdateTempInstallment(idx, 'label', e.target.value)}
                               readOnly={ins.status === 'Paid'}
-                              className="rounded-none h-10 border-accent/10 text-sm font-bold pl-8 pr-12 transition-none"
+                              className="rounded-none h-10 border-accent/10 text-xs font-bold uppercase tracking-widest transition-none"
                             />
-                            <Coins className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-accent/40">{ins.percentage}%</span>
                           </div>
-                        </div>
-                        <div className="md:col-span-3 flex gap-2">
-                          {ins.status === 'Pending' && (
-                            <>
-                              <Button onClick={() => handleSyncFinalToBalance(idx)} variant="ghost" size="icon" className="h-10 w-10 text-accent/40 hover:text-accent hover:bg-accent/5 rounded-none border-none transition-none" title="Sync to Remaining Balance"><RefreshCcw className="h-4 w-4" /></Button>
-                              <Button onClick={() => handleRemoveTempInstallment(idx)} variant="ghost" size="icon" className="h-10 w-10 text-destructive/40 hover:text-destructive hover:bg-destructive/5 rounded-none border-none transition-none" title="Remove Installment"><Trash2 className="h-4 w-4" /></Button>
-                            </>
-                          )}
-                          {ins.status === 'Paid' && <Badge className="bg-green-600 text-white rounded-none uppercase text-[8px] h-10 px-4 flex items-center gap-2"><Lock className="h-3 w-3" /> Verified</Badge>}
+                          <div className="md:col-span-4 space-y-2">
+                            <Label className="text-[10px] uppercase font-bold opacity-40">Amount (KES)</Label>
+                            <div className="relative">
+                              <Input 
+                                type="number"
+                                value={ins.amount} 
+                                onChange={(e) => handleUpdateTempInstallment(idx, 'amount', Number(e.target.value))}
+                                readOnly={ins.status === 'Paid'}
+                                className="rounded-none h-10 border-accent/10 text-sm font-bold pl-8 pr-12 transition-none"
+                              />
+                              <Coins className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-accent/40">{ins.percentage}%</span>
+                            </div>
+                          </div>
+                          <div className="md:col-span-3 flex gap-2">
+                            {ins.status === 'Pending' && (
+                              <>
+                                <Button onClick={() => handleSyncFinalToBalance(idx)} variant="ghost" size="icon" className="h-10 w-10 text-accent/40 hover:text-accent hover:bg-accent/5 rounded-none border-none transition-none" title="Sync to Remaining Balance"><RefreshCcw className="h-4 w-4" /></Button>
+                                <Button onClick={() => handleRemoveTempInstallment(idx)} variant="ghost" size="icon" className="h-10 w-10 text-destructive/40 hover:text-destructive hover:bg-destructive/5 rounded-none border-none transition-none" title="Remove Installment"><Trash2 className="h-4 w-4" /></Button>
+                              </>
+                            )}
+                            {ins.status === 'Paid' && <Badge className="bg-green-600 text-white rounded-none uppercase text-[8px] h-10 px-4 flex items-center gap-2"><Lock className="h-3 w-3" /> Verified</Badge>}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
           <DialogFooter className="p-10 border-t border-accent/5 bg-secondary/5 flex flex-col sm:flex-row justify-between gap-6">
             <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-accent/40 italic">
-              <ShieldAlert className="h-4 w-4" /> Proposing a custom schedule requires zero plan variance.
+              <ShieldAlert className="h-4 w-4" /> Zero plan variance required for authorization.
             </div>
             <div className="flex gap-4">
               <Button onClick={() => setIsReorganizingPlan(false)} variant="ghost" className="rounded-none h-14 px-8 text-[11px] font-bold uppercase tracking-widest bg-transparent border-none transition-none">Abort Reorganization</Button>
