@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -41,12 +42,17 @@ import {
   AlertTriangle,
   RefreshCcw,
   Clock,
-  Key
+  Key,
+  FileSearch,
+  PenTool,
+  TrendingUp,
+  RotateCcw
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
@@ -74,11 +80,18 @@ export default function OnboardingPage() {
     setIsMounted(true);
   }, []);
 
-  const totalSteps = 4;
+  const isReorgPending = currentProject?.reorganization?.status === 'Pending_Agreement' && !currentProject.reorganization.clientAgreed;
+  const totalSteps = isReorgPending ? 5 : 4;
   const progress = (step / totalSteps) * 100;
 
   const getExpectedDeposit = () => {
     if (!currentProject) return 0;
+    
+    // If a reorg is pending agreement, we use the first installment from the PROPOSED plan
+    if (isReorgPending && currentProject.reorganization?.proposedInstallments.length) {
+      return currentProject.reorganization.proposedInstallments[0].amount;
+    }
+
     const depositInstallment = currentProject.installments.find(i => i.label.toLowerCase().includes('deposit'));
     return depositInstallment?.amount || 0;
   };
@@ -89,7 +102,6 @@ export default function OnboardingPage() {
   const handleNext = () => {
     if (step === 1) {
       const normalizedCode = formData.accessCode.trim().toUpperCase();
-      // Find ANY project linked to this client's access code
       const project = clientProjects.find(p => p.accessCode.toUpperCase() === normalizedCode);
       
       if (project) {
@@ -107,9 +119,13 @@ export default function OnboardingPage() {
           variant: "destructive"
         });
       }
+    } else if (step === 4 && isReorgPending) {
+      // Transition from restructuring review to final deposit confirmation
+      setStep(5);
     } else if (step < totalSteps) {
       setStep(step + 1);
     } else {
+      // Final Step Submission
       if (!isAmountMatching) {
         toast({
           title: "Protocol Mismatch",
@@ -122,13 +138,24 @@ export default function OnboardingPage() {
       setLoading(true);
       setTimeout(() => {
         if (currentProject) {
+          // If we were in a reorg approval flow, we mark the reorg as agreed
+          const reorgUpdates = isReorgPending ? {
+            reorganization: {
+              ...currentProject.reorganization!,
+              clientAgreed: true
+            }
+          } : {};
+
           updateClientProject(currentProject.id, {
+            ...reorgUpdates,
             pendingActivationData: {
               amount: Number(formData.depositAmount),
               reference: formData.depositRef,
               timestamp: new Date().toISOString()
             },
-            lastActivity: "Client Onboarding Executed — Awaiting Steward Sync"
+            lastActivity: isReorgPending 
+              ? "Client Onboarding: Restructuring Authorized & Final Deposit Logged" 
+              : "Client Onboarding Executed — Awaiting Steward Sync"
           });
         }
         
@@ -221,7 +248,7 @@ export default function OnboardingPage() {
             </div>
             <h2 className="text-4xl md:text-5xl font-headline italic">Credentials <span className="not-italic">Submitted.</span></h2>
             <p className="text-white/60 font-light text-base italic leading-relaxed max-w-md mx-auto">
-              Your identity has been synchronized. The workspace will unlock once forensic verification is complete.
+              Your identity has been synchronized. The workspace will unlock once forensic verification is complete by the studio steward.
             </p>
           </div>
 
@@ -329,10 +356,10 @@ export default function OnboardingPage() {
                     <div className="space-y-6">
                       <ScrollArea className="h-40 w-full border border-accent/10 p-6 bg-secondary/5">
                         <div className="text-[11px] font-light leading-relaxed text-accent/70 space-y-4 italic">
-                          <p><strong>1. Architectural Lead:</strong> Whyte Interiors maintains total artistic lead.</p>
-                          <p><strong>2. Financial Integrity:</strong> Capital realization occurs via the authorized plan.</p>
-                          <p><strong>3. Data Sovereignty:</strong> Plans and site logs are protected assets.</p>
-                          <p><strong>4. Non-Compete:</strong> Refrain from engaging trades partners directly.</p>
+                          <p><strong>1. Architectural Lead:</strong> Whyte Interiors maintains total artistic lead over architectural site protocols.</p>
+                          <p><strong>2. Financial Integrity:</strong> Capital realization occurs strictly via the authorized payment plan synchronized in this portal.</p>
+                          <p><strong>3. Data Sovereignty:</strong> Plans and site logs are protected assets of the Studio.</p>
+                          <p><strong>4. Non-Compete:</strong> Refrain from engaging trade partners directly outside the synchronized ecosystem.</p>
                         </div>
                       </ScrollArea>
                       <div className="space-y-3 pt-2">
@@ -343,16 +370,64 @@ export default function OnboardingPage() {
                   </div>
                 )}
 
-                {step === 4 && (
+                {step === 4 && isReorgPending && (
+                  <div className="space-y-10">
+                    <div className="space-y-3">
+                      <div className="h-10 w-10 bg-orange-50 flex items-center justify-center text-orange-600 mb-4 border border-orange-100"><FileSearch className="h-5 w-5" /></div>
+                      <h2 className="text-2xl font-headline italic text-orange-600">Restructuring Review</h2>
+                      <p className="text-muted-foreground font-light text-sm">Review the proposed financing reorganization for your commission.</p>
+                    </div>
+                    
+                    <div className="space-y-8">
+                      <div className="p-8 bg-secondary/30 border border-accent/5 space-y-4">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Agreement Rationale</Label>
+                        <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/20 pl-8">
+                          "{currentProject?.reorganization?.terms}"
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {currentProject?.reorganization?.studioClaim && (
+                          <div className="p-6 border border-orange-200 bg-orange-50/30 space-y-3">
+                            <div className="flex items-center gap-3"><TrendingUp className="h-4 w-4 text-orange-600" /><span className="text-[10px] font-bold uppercase tracking-widest text-orange-600">Studio Claim</span></div>
+                            <p className="text-[11px] italic font-light">"{currentProject.reorganization.studioClaim.rationale}"</p>
+                            <p className="text-xl font-headline text-orange-700">+ KES {currentProject.reorganization.studioClaim.amount.toLocaleString()}</p>
+                          </div>
+                        )}
+                        {currentProject?.reorganization?.reimbursement && (
+                          <div className="p-6 border border-blue-200 bg-blue-50/30 space-y-3">
+                            <div className="flex items-center gap-3"><RotateCcw className="h-4 w-4 text-blue-600" /><span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Credit Return</span></div>
+                            <p className="text-[11px] italic font-light">"{currentProject.reorganization.reimbursement.rationale}"</p>
+                            <p className="text-xl font-headline text-blue-700">- KES {currentProject.reorganization.reimbursement.amount.toLocaleString()}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-4">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Proposed Payout Schedule</Label>
+                        <div className="divide-y divide-accent/5 border border-accent/5">
+                          {currentProject?.reorganization?.proposedInstallments.map((ins, i) => (
+                            <div key={i} className="p-4 flex justify-between items-center bg-white">
+                              <span className="text-[11px] font-bold uppercase tracking-widest">{ins.label}</span>
+                              <span className="text-sm font-headline italic">KES {ins.amount.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {((step === 4 && !isReorgPending) || (step === 5 && isReorgPending)) && (
                   <div className="space-y-8">
                     <div className="space-y-3">
                       <div className="h-10 w-10 bg-accent/5 flex items-center justify-center text-accent mb-4 border border-accent/10"><Banknote className="h-5 w-5" /></div>
                       <h2 className="text-2xl font-headline italic">Capital Verification</h2>
-                      <p className="text-muted-foreground font-light text-sm">Provide transaction details for the initial deposit of your primary commission.</p>
+                      <p className="text-muted-foreground font-light text-sm">Provide transaction details for the initial deposit of your {isReorgPending ? 'restructured' : 'primary'} commission.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-accent/[0.03] border border-accent/5">
                       <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Amount (KES)</Label><Input type="number" placeholder="0.00" className="rounded-none border-accent/20 h-12 text-xl focus:ring-accent shadow-none transition-none" value={formData.depositAmount} onChange={(e) => setFormData({...formData, depositAmount: e.target.value})} /></div>
-                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Expected</Label><div className="h-12 flex items-center px-4 bg-secondary/20"><span className="text-lg font-headline italic text-accent opacity-60">KES {expectedDeposit.toLocaleString()}</span></div></div>
+                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Requirement</Label><div className="h-12 flex items-center px-4 bg-secondary/20"><span className="text-lg font-headline italic text-accent opacity-60">KES {expectedDeposit.toLocaleString()}</span></div></div>
                     </div>
                     <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Reference Code</Label><Input placeholder="TRX-XXXX" className="rounded-none border-accent/20 h-12 text-lg tracking-widest focus:ring-accent uppercase font-bold shadow-none transition-none" value={formData.depositRef} onChange={(e) => setFormData({...formData, depositRef: e.target.value})} /></div>
                     {!isAmountMatching && formData.depositAmount !== "" && (
@@ -360,7 +435,7 @@ export default function OnboardingPage() {
                         <div className="flex items-start gap-3">
                           <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
                           <p className="text-[11px] italic text-orange-700 leading-relaxed font-light">
-                            Protocol Variance Identified: The reported amount does not match the projected commissioning requirement. To proceed, please request a **Financing Reorganization** for forensic review by a Senior Partner.
+                            Protocol Variance Identified: The reported amount does not match the {isReorgPending ? 'restructured' : 'projected'} requirement. To proceed, please request a **Financing Reorganization** for forensic review.
                           </p>
                         </div>
                         <Button 
@@ -378,8 +453,8 @@ export default function OnboardingPage() {
 
                 <div className="pt-8 flex items-center justify-between border-t border-accent/10 mt-8">
                   {step > 1 ? <Button variant="ghost" onClick={handleBack} className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 h-10 px-0 transition-none shadow-none bg-transparent"> <ArrowLeft className="h-3 w-3" /> Back</Button> : <div />}
-                  <Button onClick={handleNext} disabled={loading || (step === 1 && !formData.accessCode) || (step === 3 && (!formData.agreedToTerms || !formData.agreedToNonCompete)) || (step === 4 && (!formData.depositRef || !formData.depositAmount || (!isAmountMatching && formData.depositAmount !== "")))} className="bg-accent text-white rounded-none h-12 px-10 uppercase tracking-[0.2em] text-[10px] font-bold shadow-xl border-none transition-none">
-                    {loading ? <span className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin" /> Syncing...</span> : <span className="flex items-center gap-3">{step === totalSteps ? "Finalize" : "Continue"} <ChevronRight className="h-4 w-4" /></span>}
+                  <Button onClick={handleNext} disabled={loading || (step === 1 && !formData.accessCode) || (step === 3 && (!formData.agreedToTerms || !formData.agreedToNonCompete)) || (step === totalSteps && (!formData.depositRef || !formData.depositAmount || (!isAmountMatching && formData.depositAmount !== "")))} className="bg-accent text-white rounded-none h-12 px-10 uppercase tracking-[0.2em] text-[10px] font-bold shadow-xl border-none transition-none">
+                    {loading ? <span className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin" /> Syncing...</span> : <span className="flex items-center gap-3">{step === totalSteps ? "Authorize & Finalize" : "Continue Protocol"} <ChevronRight className="h-4 w-4" /></span>}
                   </Button>
                 </div>
               </CardContent>
