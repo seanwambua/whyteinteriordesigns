@@ -100,14 +100,12 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   const [witnessTxDate, setWitnessTxDate] = useState<Date>(new Date());
   const [isConfirmingTransfer, setIsConfirmingTransfer] = useState(false);
 
-  // ACTIVATION VERIFICATION STATE
   const [isVerifyingActivation, setIsVerifyingActivation] = useState(false);
   const [activationCode, setActivationCode] = useState("");
   const [activationAmount, setActivationAmount] = useState<number>(0);
   const [activationDate, setActivationDate] = useState<Date>(new Date());
   const [isSyncingActivation, setIsSyncingActivation] = useState(false);
 
-  // STEWARD LOG STATE
   const [isAddingLog, setIsAddingLog] = useState(false);
   const [newLog, setNewLog] = useState<Partial<StewardLog>>({
     type: 'Fiscal Review',
@@ -778,21 +776,21 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
       </Dialog>
 
       <AlertDialog open={isConfirmingTransfer} onOpenChange={setIsConfirmingTransfer}>
-        <DialogContent className="rounded-none border-accent/20 font-body p-12 bg-white max-w-lg">
-          <DialogHeader className="space-y-6">
+        <AlertDialogContent className="rounded-none border-accent/20 font-body p-12 bg-white max-w-lg">
+          <AlertDialogHeader className="space-y-6">
             <div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-blue-600" /><span className="text-blue-600 text-[13px] font-bold uppercase tracking-[0.3em]">Forensic Certification</span></div>
-            <DialogTitle className="text-3xl font-headline italic">Confirm Fund Transfer?</DialogTitle>
-            <DialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">
+            <AlertDialogTitle className="text-3xl font-headline italic">Confirm Fund Transfer?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">
               By authorizing, you certify that you have forensically verified the transfer of <strong>KES {reorgNeedsLiquidation ? (Math.abs(project.reorganization?.reimbursement?.amount || 0) || project.reorganization?.studioClaim?.amount || 0).toLocaleString() : "0"}</strong> via reference <strong>{witnessTxCode}</strong>. This entry will be permanently logged in the master ledger.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="pt-12 flex justify-between">
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="pt-12 flex justify-between">
             <Button variant="ghost" onClick={() => setIsConfirmingTransfer(false)} className="rounded-none uppercase tracking-widest text-[11px] font-bold h-12 px-8 border-none shadow-none transition-none bg-transparent">Abort</Button>
             <Button onClick={handleWitnessReorg} disabled={isSyncingWitness} className="bg-blue-600 text-white rounded-none uppercase tracking-widest text-[11px] font-bold h-14 px-12 shadow-xl transition-none flex gap-3 border-none">
               {isSyncingWitness ? <Loader2 className="h-4 w-4 animate-spin" /> : "Authorize & Log Entry"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
 
       <Dialog open={isVerifyingActivation} onOpenChange={setIsVerifyingActivation}>
