@@ -211,15 +211,28 @@ export default function ClientDashboardPage() {
                 </p>
               </div>
               
-              {activeProject.reorganization?.status === 'Requested' || activeProject.reorganization?.status === 'Pending_Agreement' ? (
+              {activeProject.reorganization?.status === 'Requested' ? (
                 <div className="p-6 bg-orange-50 border border-orange-100 space-y-4">
                   <div className="flex items-center justify-center gap-3 text-orange-600">
                     <RefreshCcw className="h-4 w-4 animate-spin" />
                     <span className="text-[10px] font-bold uppercase tracking-widest">Financing Review in Progress</span>
                   </div>
-                  <p className="text-[11px] text-orange-700/70 italic font-light">
+                  <p className="text-[11px] text-orange-700/70 italic font-light leading-relaxed">
                     The studio is calibrating your custom payout schedule. Review and authorization will be required before activation.
                   </p>
+                </div>
+              ) : activeProject.reorganization?.status === 'Pending_Agreement' && !activeProject.reorganization.clientAgreed ? (
+                <div className="p-6 bg-orange-50 border border-orange-100 space-y-6">
+                  <div className="flex items-center justify-center gap-3 text-orange-600">
+                    <PenTool className="h-4 w-4" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Awaiting Your Authorization</span>
+                  </div>
+                  <p className="text-[11px] text-orange-700/70 italic font-light leading-relaxed">
+                    The studio has proposed updated financing terms. Forensic review and digital authorization are mandatory to proceed with activation.
+                  </p>
+                  <Button onClick={() => { setSignatureStep(1); setIsReviewingReorg(true); }} className="w-full bg-orange-600 text-white rounded-none h-12 uppercase tracking-widest text-[10px] font-bold shadow-lg border-none transition-none shadow-none">
+                    Review & Authorize Terms
+                  </Button>
                 </div>
               ) : activeProject.pendingActivationData ? (
                 <div className="p-6 bg-accent/[0.02] border border-accent/10 space-y-2">
