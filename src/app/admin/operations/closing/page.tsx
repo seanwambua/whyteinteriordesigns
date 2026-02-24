@@ -134,7 +134,7 @@ export default function ProjectClosingPage() {
   };
 
   return (
-    <div className="space-y-12 max-w-7xl mx-auto font-body">
+    <div className="space-y-12 max-w-7xl mx-auto font-body pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-4">
@@ -289,24 +289,24 @@ export default function ProjectClosingPage() {
                                   <div className="inline-block">
                                     <Button 
                                       onClick={() => setReviewingAuditProject(project)} 
-                                      disabled={!hasStewardSync}
+                                      disabled={!hasStewardSync || !isAwaitingAdmin}
                                       className={cn(
                                         "h-16 w-full rounded-none flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-xl",
-                                        hasStewardSync ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
+                                        (hasStewardSync && isAwaitingAdmin) ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
                                       )}
                                     >
                                       <FileSearch className="h-5 w-5" /> Review & Authorize
                                     </Button>
                                   </div>
                                 </TooltipTrigger>
-                                {!hasStewardSync && (
+                                {isBlocked && (
                                   <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl space-y-2">
                                     <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Gate Protocol Blocked:</p>
                                     <ul className="text-[10px] text-muted-foreground font-light italic list-disc pl-4">
                                       {!isHandoverComplete && <li>Handover Authorization Required</li>}
                                       {!allInstallmentsPaid && <li>Ledger Liquidation Required</li>}
                                       {hasPendingInquiries && <li>Resolution of Inquiries Required</li>}
-                                      {!hasStewardSync && <li>Steward Audit Submission Required</li>}
+                                      {!isAwaitingAdmin && <li>Steward Audit Submission Required</li>}
                                     </ul>
                                   </TooltipContent>
                                 )}

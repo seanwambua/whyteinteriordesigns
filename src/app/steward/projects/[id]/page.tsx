@@ -667,7 +667,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
           </div>
           <div className="space-y-6">
             {(project.stewardLogs || []).map((log, index) => (
-              <motion.div key={log.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
+              <motion.div key={log.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
                 <Card className="rounded-none border-accent/5 bg-white group shadow-sm hover:shadow-md transition-all overflow-hidden">
                   <div className="flex flex-col md:flex-row h-full">
                     <div className={cn("w-1.5 shrink-0", log.urgency === 'Flagged' ? 'bg-red-600' : log.urgency === 'Attention' ? 'bg-orange-500' : 'bg-accent/40')} />
@@ -806,7 +806,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                       <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Liquidation Date</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-orange-200 font-bold uppercase transition-none shadow-none bg-white">
+                          <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[12px] border-orange-200 font-bold uppercase transition-none shadow-none bg-white">
                             <CalendarIcon className="mr-3 h-4 w-4 opacity-40" />
                             {format(witnessTxDate, "MMM dd, yyyy")}
                           </Button>
