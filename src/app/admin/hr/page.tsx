@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Plus, 
@@ -132,7 +132,7 @@ export default function NetworkEcosystemPage() {
   const getStatusBadge = (status: Collaborator['status']) => {
     switch (status) {
       case 'active': return "bg-green-600/5 text-green-600 border-green-600/20";
-      case 'on_hold': return "bg-orange-500/5 text-orange-600 border-orange-500/20";
+      case 'on_hold': return "bg-orange-50/5 text-orange-600 border-orange-500/20";
       case 'blacklisted': return "bg-destructive/5 text-destructive border-destructive/20";
       default: return "bg-secondary text-muted-foreground";
     }
