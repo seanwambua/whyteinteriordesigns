@@ -371,16 +371,33 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         )}
 
         {project.reorganization?.status === 'Requested' && (
-          <Alert className="rounded-none border-orange-500/20 bg-orange-50 p-8 shadow-2xl">
+          <Alert className="rounded-none border-orange-500/20 bg-orange-50 p-10 shadow-2xl">
             <FileEdit className="h-6 w-6 text-orange-600" />
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 w-full ml-4">
-              <div className="space-y-1">
-                <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-orange-600">Financing Review Requested</AlertTitle>
-                <AlertDescription className="text-[13px] font-light italic text-orange-600/80 max-w-xl leading-relaxed">
-                  A formal reorganization protocol has been launched. Awaiting senior partner terms proposal.
-                </AlertDescription>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-12 w-full ml-4">
+              <div className="space-y-6 flex-1">
+                <div>
+                  <AlertTitle className="text-[14px] font-bold uppercase tracking-widest text-orange-600 mb-2">Financing Review Workbench Active</AlertTitle>
+                  <AlertDescription className="text-[13px] font-light italic text-orange-600/80 max-w-2xl leading-relaxed">
+                    A formal reorganization protocol has been launched. Review the reported rationale below and log forensic observations to inform the terms proposal.
+                  </AlertDescription>
+                </div>
+                <div className="p-8 bg-white/60 border border-orange-100 italic space-y-4 shadow-inner">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-orange-600/40">Onboarding Request Rationale</p>
+                  <p className="text-lg font-light text-orange-900/80 leading-relaxed border-l-2 border-orange-200 pl-8">
+                    "{project.reorganization.terms}"
+                  </p>
+                </div>
               </div>
-              <Badge variant="outline" className="rounded-none h-10 px-6 uppercase tracking-widest text-[9px] font-bold border-orange-200 text-orange-600">Review in Progress</Badge>
+              <div className="flex flex-col gap-4 min-w-[240px]">
+                <Button onClick={() => setIsAddingLog(true)} className="w-full h-14 bg-orange-600 text-white rounded-none uppercase tracking-widest text-[10px] font-bold shadow-xl border-none transition-all hover:tracking-[0.2em]">
+                  Log Forensic Finding
+                </Button>
+                <div className="p-4 border border-dashed border-orange-200 text-center">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-orange-600/60 flex items-center justify-center gap-2">
+                    <Clock className="h-3 w-3 animate-spin" /> Awaiting Admin Proposal
+                  </p>
+                </div>
+              </div>
             </div>
           </Alert>
         )}
