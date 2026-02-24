@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -67,6 +68,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function ClientDashboardPage() {
   const { clientProjects, designers, updateClientProject, financialSteward, addInquiry } = useWhyteStore();
@@ -80,6 +83,8 @@ export default function ClientDashboardPage() {
 
   const [isReviewingReorg, setIsReviewingReorg] = useState(false);
   const [isSigningReorg, setIsSigningReorg] = useState(false);
+  const [signatureStep, setSignatureStep] = useState<1 | 2>(1);
+  const [signatureText, setSignatureText] = useState("");
 
   useEffect(() => {
     setIsMounted(true);
@@ -155,7 +160,7 @@ export default function ClientDashboardPage() {
   };
 
   const handleAgreeToReorg = () => {
-    if (!activeProject.reorganization) return;
+    if (!activeProject.reorganization || signatureText !== "AUTHORIZE") return;
     setIsSigningReorg(true);
     setTimeout(() => {
       updateClientProject(activeProject.id, {
@@ -167,6 +172,8 @@ export default function ClientDashboardPage() {
       });
       setIsReviewingReorg(false);
       setIsSigningReorg(false);
+      setSignatureStep(1);
+      setSignatureText("");
       toast({ title: "Terms Authorized", description: "Agreement transmitted to Financial Steward for witnessing." });
     }, 1500);
   };
@@ -326,7 +333,7 @@ export default function ClientDashboardPage() {
                   <div className="flex items-center gap-3"><PenTool className="h-6 w-6 text-orange-600" /><h3 className="text-2xl font-headline italic text-orange-600">Financing Protocol Review Required</h3></div>
                   <p className="text-base font-light italic text-orange-600/80 leading-relaxed max-w-2xl">A new custom payout plan has been proposed for **{activeProject.project}**. Review and digital authorization are required.</p>
                 </div>
-                <Button onClick={() => setIsReviewingReorg(true)} className="bg-orange-600 text-white rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl flex gap-3 border-none transition-none shadow-none"><FileSearch className="h-4 w-4" /> Review Terms</Button>
+                <Button onClick={() => { setSignatureStep(1); setIsReviewingReorg(true); }} className="bg-orange-600 text-white rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl flex gap-3 border-none transition-none shadow-none"><FileSearch className="h-4 w-4" /> Review Terms</Button>
               </div>
             </Alert>
           </motion.div>
@@ -529,61 +536,94 @@ export default function ClientDashboardPage() {
               <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">Please review the proposed architectural financing reorganization for **{activeProject.project}**.</DialogDescription>
             </DialogHeader>
 
-            <div className="p-10 bg-secondary/30 border border-accent/5 space-y-6">
-              <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Agreement Rationale</h4>
-              <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/20 pl-8">"{activeProject.reorganization?.terms}"</p>
-            </div>
+            <AnimatePresence mode="wait">
+              {signatureStep === 1 ? (
+                <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                  <div className="p-10 bg-secondary/30 border border-accent/5 space-y-6">
+                    <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Agreement Rationale</h4>
+                    <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/20 pl-8">"{activeProject.reorganization?.terms}"</p>
+                  </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {activeProject.reorganization?.studioClaim && (
-                <div className="p-10 border border-orange-500/20 bg-orange-50/30 space-y-6">
-                  <div className="flex items-center gap-4">
-                    <TrendingUp className="h-5 w-5 text-orange-600" />
-                    <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Studio Claim Attachment</h4>
-                  </div>
-                  <div className="space-y-4 pt-4 border-t border-orange-500/10">
-                    <p className="text-[9px] uppercase font-bold opacity-40">Reasoning</p>
-                    <p className="text-base font-light italic text-accent/80">"{activeProject.reorganization.studioClaim.rationale}"</p>
-                    <p className="text-2xl font-headline italic text-orange-600">+ KES {activeProject.reorganization.studioClaim.amount.toLocaleString()}</p>
-                  </div>
-                </div>
-              )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {activeProject.reorganization?.studioClaim && (
+                      <div className="p-10 border border-orange-500/20 bg-orange-50/30 space-y-6">
+                        <div className="flex items-center gap-4">
+                          <TrendingUp className="h-5 w-5 text-orange-600" />
+                          <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Studio Claim</h4>
+                        </div>
+                        <div className="space-y-4 pt-4 border-t border-orange-500/10">
+                          <p className="text-base font-light italic text-accent/80">"{activeProject.reorganization.studioClaim.rationale}"</p>
+                          <p className="text-2xl font-headline italic text-orange-600">+ KES {activeProject.reorganization.studioClaim.amount.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    )}
 
-              {activeProject.reorganization?.reimbursement && (
-                <div className="p-10 border border-accent/10 bg-accent/[0.02] space-y-6">
-                  <div className="flex items-center gap-4">
-                    <RotateCcw className="h-5 w-5 text-accent" />
-                    <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent">Reimbursement Protocol</h4>
+                    {activeProject.reorganization?.reimbursement && (
+                      <div className="p-10 border border-accent/10 bg-accent/[0.02] space-y-6">
+                        <div className="flex items-center gap-4">
+                          <RotateCcw className="h-5 w-5 text-accent" />
+                          <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent">Reimbursement</h4>
+                        </div>
+                        <div className="space-y-4 pt-4 border-t border-accent/10">
+                          <p className="text-base font-light italic text-accent/80">"{activeProject.reorganization.reimbursement.rationale}"</p>
+                          <p className="text-2xl font-headline italic text-accent">- KES {activeProject.reorganization.reimbursement.amount.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-4 pt-4 border-t border-accent/10">
-                    <p className="text-[9px] uppercase font-bold opacity-40">Justification</p>
-                    <p className="text-base font-light italic text-accent/80">"{activeProject.reorganization.reimbursement.rationale}"</p>
-                    <p className="text-2xl font-headline italic text-accent">- KES {activeProject.reorganization.reimbursement.amount.toLocaleString()}</p>
-                  </div>
-                </div>
-              )}
-            </div>
 
-            <div className="space-y-6">
-              <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Proposed Installment Schedule</h4>
-              <div className="divide-y divide-accent/5 border border-accent/5 bg-white shadow-sm">
-                {activeProject.reorganization?.proposedInstallments.map((ins, i) => (
-                  <div key={i} className="p-6 flex items-center justify-between bg-white">
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold uppercase tracking-widest">{ins.label}</p>
-                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{ins.percentage}% Allocation Protocol</p>
+                  <div className="space-y-6">
+                    <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Proposed Installment Schedule</h4>
+                    <div className="divide-y divide-accent/5 border border-accent/5 bg-white shadow-sm">
+                      {activeProject.reorganization?.proposedInstallments.map((ins, i) => (
+                        <div key={i} className="p-6 flex items-center justify-between bg-white">
+                          <div className="space-y-1">
+                            <p className="text-sm font-bold uppercase tracking-widest">{ins.label}</p>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{ins.percentage}% Allocation Protocol</p>
+                          </div>
+                          <p className="text-xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p>
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-xl font-headline italic text-accent">KES {ins.amount.toLocaleString()}</p>
                   </div>
-                ))}
-              </div>
-            </div>
+                </motion.div>
+              ) : (
+                <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10 py-12">
+                  <div className="text-center space-y-6">
+                    <div className="h-20 w-20 bg-accent/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-accent/10">
+                      <PenTool className="h-10 w-10 text-accent" />
+                    </div>
+                    <h3 className="text-3xl font-headline italic">Digital Authorization</h3>
+                    <p className="text-muted-foreground font-light text-base italic max-w-sm mx-auto leading-relaxed">By authorizing, you agree to the updated capital commitment and payout terms for your architectural commission.</p>
+                  </div>
+                  
+                  <div className="max-w-md mx-auto space-y-6 p-10 bg-secondary/20 border border-accent/5">
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/60 block text-center">Type "AUTHORIZE" to digitally sign</Label>
+                      <Input 
+                        value={signatureText}
+                        onChange={(e) => setSignatureText(e.target.value.toUpperCase())}
+                        placeholder="AUTHORIZE"
+                        className="rounded-none h-16 text-2xl font-headline italic tracking-[0.2em] text-center border-accent/20 focus:ring-accent uppercase shadow-none transition-none"
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between gap-6">
-            <Button onClick={() => setIsReviewingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest transition-none border-none shadow-none bg-transparent">Abort Protocol Sync</Button>
-            <Button onClick={handleAgreeToReorg} disabled={isSigningReorg} className="bg-orange-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-none flex gap-4 border-none">
-              {isSigningReorg ? <><Loader2 className="h-5 w-5 animate-spin" /> Digitally Signing...</> : <><PenTool className="h-5 w-5" /> Authorize & Sign Terms</>}
-            </Button>
+            <Button onClick={() => { setIsReviewingReorg(false); setSignatureStep(1); }} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest transition-none border-none shadow-none bg-transparent">Abort Protocol Sync</Button>
+            
+            {signatureStep === 1 ? (
+              <Button onClick={() => setSignatureStep(2)} className="bg-orange-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-none flex gap-4 border-none">
+                Continue to Authorization <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button onClick={handleAgreeToReorg} disabled={isSigningReorg || signatureText !== "AUTHORIZE"} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-none flex gap-4 border-none">
+                {isSigningReorg ? <><Loader2 className="h-5 w-5 animate-spin" /> Authorizing...</> : <><ShieldCheck className="h-5 w-5" /> Sign & Sync Ledger</>}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

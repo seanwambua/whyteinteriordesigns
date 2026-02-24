@@ -71,7 +71,8 @@ export default function OnboardingPage() {
     agreedToNonCompete: false,
     depositRef: "",
     depositAmount: "",
-    notifications: true
+    notifications: true,
+    signature: ""
   });
 
   const [currentProject, setCurrentProject] = useState<ClientProject | null>(null);
@@ -120,7 +121,11 @@ export default function OnboardingPage() {
         });
       }
     } else if (step === 4 && isReorgPending) {
-      // Transition from restructuring review to final deposit confirmation
+      // Formal Agreement Step
+      if (formData.signature !== "AUTHORIZE") {
+        toast({ title: "Authorization Mismatch", description: "Please type AUTHORIZE to digitally sign the new terms.", variant: "destructive" });
+        return;
+      }
       setStep(5);
     } else if (step < totalSteps) {
       setStep(step + 1);
@@ -378,7 +383,7 @@ export default function OnboardingPage() {
                       <p className="text-muted-foreground font-light text-sm">Review the proposed financing reorganization for your commission.</p>
                     </div>
                     
-                    <div className="space-y-8">
+                    <div className="space-y-10">
                       <div className="p-8 bg-secondary/30 border border-accent/5 space-y-4">
                         <Label className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Agreement Rationale</Label>
                         <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/20 pl-8">
@@ -413,6 +418,16 @@ export default function OnboardingPage() {
                             </div>
                           ))}
                         </div>
+                      </div>
+
+                      <div className="pt-8 border-t border-accent/10 space-y-4">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent block text-center">Digital Authorization</Label>
+                        <Input 
+                          placeholder="TYPE AUTHORIZE TO SIGN" 
+                          value={formData.signature}
+                          onChange={(e) => setFormData({...formData, signature: e.target.value.toUpperCase()})}
+                          className="rounded-none h-14 border-accent/20 text-center font-headline italic text-xl tracking-widest shadow-none"
+                        />
                       </div>
                     </div>
                   </div>
