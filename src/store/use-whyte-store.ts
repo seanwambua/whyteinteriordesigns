@@ -1,4 +1,3 @@
-
 'use client';
 
 import { create } from 'zustand';
@@ -243,6 +242,14 @@ export interface BusinessTargets {
   efficiencyTarget: number;
 }
 
+export type StyleResult = {
+  designStyleName: string;
+  summary: string;
+  keyElements: string[];
+  colorScheme: string;
+  furnitureSuggestions: string[];
+};
+
 interface WhyteState {
   projects: Project[];
   clientProjects: ClientProject[];
@@ -254,6 +261,7 @@ interface WhyteState {
   collaborators: Collaborator[];
   financialSteward: string;
   businessTargets: BusinessTargets;
+  currentQuizResult: StyleResult | null;
   
   addProject: (project: Project) => void;
   removeProject: (id: string) => void;
@@ -287,6 +295,7 @@ interface WhyteState {
   
   setFinancialSteward: (steward: string) => void;
   updateBusinessTargets: (targets: Partial<BusinessTargets>) => void;
+  setQuizResult: (result: StyleResult | null) => void;
   
   clearAllData: () => void;
 }
@@ -431,6 +440,7 @@ export const useWhyteStore = create<WhyteState>()(
       feedback: [],
       collaborators: initialCollaborators,
       financialSteward: "Imani Financial Services (IFS-KE)",
+      currentQuizResult: null,
       businessTargets: {
         monthlyRevenueGoal: 50000000,
         projectVolumeGoal: 10,
@@ -493,6 +503,7 @@ export const useWhyteStore = create<WhyteState>()(
       updateBusinessTargets: (updates) => set((state) => ({
         businessTargets: { ...state.businessTargets, ...updates }
       })),
+      setQuizResult: (result) => set({ currentQuizResult: result }),
 
       clearAllData: () => {
         if (typeof window !== 'undefined') {
@@ -512,6 +523,7 @@ export const useWhyteStore = create<WhyteState>()(
           feedback: [],
           collaborators: [],
           financialSteward: "Imani Financial Services (IFS-KE)",
+          currentQuizResult: null,
           businessTargets: {
             monthlyRevenueGoal: 50000000,
             projectVolumeGoal: 10,

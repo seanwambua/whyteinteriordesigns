@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useWhyteStore } from "@/store/use-whyte-store";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -53,6 +54,7 @@ export function ServiceInquiryDialog({
   defaultService = "design",
 }: ServiceInquiryDialogProps) {
   const { toast } = useToast();
+  const { currentQuizResult } = useWhyteStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -68,9 +70,28 @@ export function ServiceInquiryDialog({
   // Update default value when dialog opens or defaultService changes
   useEffect(() => {
     if (isOpen) {
-      form.setValue("serviceType", defaultService);
+      const initialValues: Partial<z.infer<typeof formSchema>> = {
+        serviceType: defaultService,
+      };
+
+      if (currentQuizResult) {
+        initialValues.message = `[DECRYPTED AESTHETIC DNA]
+Style Profile: ${currentQuizResult.designStyleName}
+Summary: ${currentQuizResult.summary}
+Technical Pillars: ${currentQuizResult.keyElements.join(', ')}
+Palette Protocol: ${currentQuizResult.colorScheme}
+
+[CLIENT OBJECTIVES]: 
+`;
+        initialValues.serviceType = 'bundle'; // DNA-led projects usually imply a full transformation
+      }
+
+      form.reset({
+        ...form.getValues(),
+        ...initialValues,
+      });
     }
-  }, [isOpen, defaultService, form]);
+  }, [isOpen, defaultService, form, currentQuizResult]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -109,7 +130,7 @@ export function ServiceInquiryDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-xs uppercase tracking-widest opacity-70">Project Scope</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="rounded-none border-accent/20 h-12 focus:ring-accent">
                         <SelectValue placeholder="Select service category" />
@@ -164,7 +185,7 @@ export function ServiceInquiryDialog({
                   <FormControl>
                     <Textarea 
                       placeholder="Describe your space and requirements..." 
-                      className="min-h-[120px] rounded-none border-accent/20 focus:ring-accent resize-none" 
+                      className="min-h-[120px] rounded-none border-accent/20 focus:ring-accent resize-none shadow-none" 
                       {...field} 
                     />
                   </FormControl>

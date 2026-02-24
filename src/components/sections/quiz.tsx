@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,20 +7,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, Sparkles, Check, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-
-type StyleResult = {
-  designStyleName: string;
-  summary: string;
-  keyElements: string[];
-  colorScheme: string;
-  furnitureSuggestions: string[];
-};
+import { useWhyteStore, type StyleResult } from "@/store/use-whyte-store";
+import { ServiceInquiryDialog } from "@/components/service-inquiry-dialog";
 
 export function StyleQuiz() {
+  const { setQuizResult } = useWhyteStore();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<StyleResult | null>(null);
   const [step, setStep] = useState(1);
   const [isMounted, setIsMounted] = useState(false);
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     roomType: "Living Room",
@@ -76,6 +71,7 @@ export function StyleQuiz() {
         : styles["Default"];
 
       setResult(matchedStyle);
+      setQuizResult(matchedStyle);
       setLoading(false);
     }, 1500);
   };
@@ -139,8 +135,11 @@ export function StyleQuiz() {
                 </div>
 
                 <div className="pt-12 flex flex-col sm:flex-row gap-6">
-                  <Button asChild className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold flex-1 shadow-xl">
-                    <a href="#contact">Request Design Dossier</a>
+                  <Button 
+                    onClick={() => setIsInquiryOpen(true)} 
+                    className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold flex-1 shadow-xl"
+                  >
+                    Request Design Dossier
                   </Button>
                   <Button onClick={() => {setResult(null); setStep(1);}} variant="outline" className="rounded-none h-14 px-10 border-accent/10 text-accent uppercase tracking-widest text-[11px] font-bold">
                     Re-initialize Engine
@@ -150,6 +149,11 @@ export function StyleQuiz() {
             </div>
           </motion.div>
         </div>
+        <ServiceInquiryDialog 
+          isOpen={isInquiryOpen} 
+          onClose={() => setIsInquiryOpen(false)} 
+          defaultService="bundle" 
+        />
       </section>
     );
   }
