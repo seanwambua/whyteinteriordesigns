@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, AuditAllocation, AuditIncoming, FinancialAudit, ReorganizationDetails, Installment, StewardLog, ReimbursementClaim } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, AuditAllocation, AuditIncoming, FinancialAudit, ReorganizationDetails, Installment, StewardLog, ReimbursementClaim, StudioClaim } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -60,7 +60,8 @@ import {
   AlertCircle,
   FileClock,
   PenTool,
-  RotateCcw
+  RotateCcw,
+  Scale as ScaleIcon
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -85,6 +86,9 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
   const [isWitnessingReorg, setIsWitnessingReorg] = useState(false);
   const [isSyncingWitness, setIsSyncingWitness] = useState(false);
+  const [witnessTxCode, setWitnessTxCode] = useState("");
+  const [witnessTxDate, setWitnessTxDate] = useState<Date>(new Date());
+  const [isConfirmingTransfer, setIsConfirmingTransfer] = useState(false);
 
   // ACTIVATION VERIFICATION STATE
   const [isVerifyingActivation, setIsVerifyingActivation] = useState(false);
@@ -190,22 +194,62 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
   const handleWitnessReorg = () => {
     if (!project.reorganization || !project.reorganization.clientAgreed) return;
+    
+    const needsLiquidation = !!project.reorganization.reimbursement || !!project.reorganization.studioClaim;
+    if (needsLiquidation && !witnessTxCode) {
+      toast({ title: "Liquidation Protocol Error", description: "Transaction reference required for fund movements.", variant: "destructive" });
+      return;
+    }
+
     setIsSyncingWitness(true);
     setTimeout(() => {
+      const reorg = project.reorganization!;
+      let updatedInstallments = [...reorg.proposedInstallments];
+
+      // Injection logic: Add the claim/reimbursement to the master ledger as a verified entry
+      if (reorg.reimbursement) {
+        updatedInstallments.push({
+          label: `Liquidated Return: ${reorg.reimbursement.type}`,
+          percentage: 0,
+          amount: -reorg.reimbursement.amount,
+          status: 'Paid',
+          transactionCode: witnessTxCode,
+          date: format(witnessTxDate, "MMM dd, yyyy"),
+          type: 'Reimbursement'
+        });
+      }
+
+      if (reorg.studioClaim) {
+        updatedInstallments.push({
+          label: `Liquidated Expense: ${reorg.studioClaim.type}`,
+          percentage: 0,
+          amount: reorg.studioClaim.amount,
+          status: 'Paid',
+          transactionCode: witnessTxCode,
+          date: format(witnessTxDate, "MMM dd, yyyy"),
+          type: 'Studio_Claim'
+        });
+      }
+
       updateClientProject(project.id, {
-        installments: project.reorganization!.proposedInstallments,
+        installments: updatedInstallments,
         reorganization: {
-          ...project.reorganization!,
+          ...reorg,
           status: 'Authorized',
           stewardWitnessed: true,
-          finalizedDate: format(new Date(), "MMM dd, yyyy")
+          finalizedDate: format(new Date(), "MMM dd, yyyy"),
+          liquidationVerified: true,
+          reimbursement: reorg.reimbursement ? { ...reorg.reimbursement, status: 'Liquidated', transactionCode: witnessTxCode, date: format(witnessTxDate, "MMM dd, yyyy") } : undefined,
+          studioClaim: reorg.studioClaim ? { ...reorg.studioClaim, status: 'Liquidated', transactionCode: witnessTxCode, date: format(witnessTxDate, "MMM dd, yyyy") } : undefined
         },
         reorganizationCount: (project.reorganizationCount || 0) + 1,
-        lastActivity: `Financing Protocol Authorized: Custom Payout Plan Witnessed by ${financialSteward}`
+        lastActivity: `Financing Protocol Authorized: Custom Payout Plan Liquidated & Witnessed by ${financialSteward}`
       });
+
       setIsSyncingWitness(false);
       setIsWitnessingReorg(false);
-      toast({ title: "Reorganization Witnessed", description: "The project master ledger has been synchronized with the new terms." });
+      setIsConfirmingTransfer(false);
+      toast({ title: "Reorganization Witnessed", description: "Master ledger synchronized and fund transfer certified." });
     }, 2000);
   };
 
@@ -231,7 +275,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         initialDepositPaid: true,
         depositCode: activationCode,
         status: 'Execution',
-        lastActivity: `Commission Activated — Initial Deposit of KES ${activationAmount.toLocaleString()} Forensic Verified by ${financialSteward}`,
+        lastActivity: `Commission Activated — Initial Deposit Forensic Verified by ${financialSteward}`,
         installments: updatedInstallments,
         pendingActivationData: undefined
       });
@@ -283,6 +327,8 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
     }, 1500);
   };
 
+  const reorgNeedsLiquidation = !!project.reorganization?.reimbursement || !!project.reorganization?.studioClaim;
+
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-24 font-body">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
@@ -301,7 +347,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   Forensic certification of the initial deposit is mandatory to unlock the Execution phase.
                 </AlertDescription>
               </div>
-              <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl hover:bg-orange-700 transition-all flex gap-3 border-none transition-none">
+              <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl flex gap-3 border-none transition-none">
                 <Banknote className="h-4 w-4" /> Certify Activation
               </Button>
             </div>
@@ -318,8 +364,8 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   The client has authorized a new financing framework. Professional witness signature is required to synchronize the master ledger.
                 </AlertDescription>
               </div>
-              <Button onClick={() => setIsWitnessingReorg(true)} className="bg-blue-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl hover:bg-blue-700 transition-all flex gap-3 border-none transition-none">
-                <PenTool className="h-4 w-4" /> Witness Agreement
+              <Button onClick={() => setIsWitnessingReorg(true)} className="bg-blue-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl flex gap-3 border-none transition-none">
+                <PenTool className="h-4 w-4" /> Witness & Certify
               </Button>
             </div>
           </Alert>
@@ -420,7 +466,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   </AlertDescription>
                 </div>
               </div>
-              <Button onClick={handleRunSyncCheck} disabled={isSyncingRegistry || isVerified} className="rounded-none h-12 px-8 bg-accent text-white hover:tracking-[0.2em] uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl transition-all border-none transition-none">
+              <Button onClick={handleRunSyncCheck} disabled={isSyncingRegistry || isVerified} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl border-none transition-none">
                 {isSyncingRegistry ? <><Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...</> : <><RefreshCcw className="h-4 w-4" /> Execute Sync Check</>}
               </Button>
             </Alert>
@@ -496,7 +542,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
 
             <div className="space-y-8">
               <Card className="rounded-none border-accent/20 bg-accent p-10 text-white space-y-10 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><Scale className="h-32 w-32" /></div>
+                <div className="absolute top-0 right-0 p-4 opacity-10"><ScaleIcon className="h-32 w-32" /></div>
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.5em] text-white/40 relative z-10">Forensic Index</h3>
                 <div className="space-y-8 relative z-10">
                   <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Incoming Capital</p><p className="text-3xl font-headline italic text-green-400">KES {totalIncomingLogged.toLocaleString()}</p></div>
@@ -578,7 +624,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Classification</Label>
                   <Select value={newLog.type} onValueChange={(v: any) => setNewLog({...newLog, type: v})}>
-                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold">
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold shadow-none bg-transparent transition-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -592,7 +638,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Urgency Protocol</Label>
                   <Select value={newLog.urgency} onValueChange={(v: any) => setNewLog({...newLog, urgency: v})}>
-                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold">
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold shadow-none bg-transparent transition-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -605,7 +651,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Findings</Label>
-                <Textarea value={newLog.content} onChange={(e) => setNewLog({...newLog, content: e.target.value})} placeholder="Professional forensic details..." className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic text-base bg-secondary/5 leading-relaxed" />
+                <Textarea value={newLog.content} onChange={(e) => setNewLog({...newLog, content: e.target.value})} placeholder="Professional forensic details..." className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic text-base bg-secondary/5 leading-relaxed transition-none" />
               </div>
             </div>
             <DialogFooter><Button onClick={handleAddLog} disabled={!newLog.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl border-none transition-none">Transmit to Registry</Button></DialogFooter>
@@ -628,35 +674,66 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-blue-600/20 pl-8">"{project.reorganization?.terms}"</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {project.reorganization?.studioClaim && (
-                <div className="p-10 border border-orange-500/20 bg-orange-50/30 space-y-6">
-                  <div className="flex items-center gap-4">
-                    <TrendingUp className="h-5 w-5 text-orange-600" />
-                    <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Studio Claim Module</h4>
-                  </div>
-                  <div className="space-y-4 pt-4 border-t border-orange-500/10">
-                    <p className="text-[9px] uppercase font-bold opacity-40">Classification</p>
-                    <p className="text-base font-headline italic text-accent">{project.reorganization.studioClaim.type}</p>
-                    <p className="text-2xl font-headline italic text-orange-600">+ KES {project.reorganization.studioClaim.amount.toLocaleString()}</p>
-                  </div>
+            {reorgNeedsLiquidation && (
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 border-b border-accent/5 pb-4">
+                  <Banknote className="h-5 w-5 text-orange-600" />
+                  <h4 className="text-[12px] font-bold uppercase tracking-[0.4em] text-orange-600">Forensic Liquidation Protocol</h4>
                 </div>
-              )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {project.reorganization?.studioClaim && (
+                    <Card className="rounded-none border-orange-500/20 bg-orange-50/30 p-8 space-y-4 relative shadow-sm">
+                      <div className="absolute top-0 right-0 p-3 opacity-5"><TrendingUp className="h-12 w-12" /></div>
+                      <p className="text-[9px] uppercase font-bold text-orange-600/60">Studio Claim Module</p>
+                      <p className="text-base font-headline italic text-accent leading-tight">"{project.reorganization.studioClaim.rationale}"</p>
+                      <p className="text-2xl font-headline italic text-orange-600">+ KES {project.reorganization.studioClaim.amount.toLocaleString()}</p>
+                      <Badge variant="outline" className="rounded-none border-orange-200 text-orange-600 text-[8px] uppercase tracking-widest font-bold">Awaiting Liquidation</Badge>
+                    </Card>
+                  )}
 
-              {project.reorganization?.reimbursement && (
-                <div className="p-10 border border-accent/10 bg-accent/[0.02] space-y-6">
-                  <div className="flex items-center gap-4">
-                    <RotateCcw className="h-5 w-5 text-accent" />
-                    <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent">Authorized Return</h4>
+                  {project.reorganization?.reimbursement && (
+                    <Card className="rounded-none border-accent/10 bg-accent/[0.02] p-8 space-y-4 relative shadow-sm">
+                      <div className="absolute top-0 right-0 p-3 opacity-5"><RotateCcw className="h-12 w-12" /></div>
+                      <p className="text-[9px] uppercase font-bold text-accent/40">Authorized Return</p>
+                      <p className="text-base font-headline italic text-accent leading-tight">"{project.reorganization.reimbursement.rationale}"</p>
+                      <p className="text-2xl font-headline italic text-accent">- KES {project.reorganization.reimbursement.amount.toLocaleString()}</p>
+                      <Badge variant="outline" className="rounded-none border-accent/20 text-accent/60 text-[8px] uppercase tracking-widest font-bold">Awaiting Liquidation</Badge>
+                    </Card>
+                  )}
+                </div>
+
+                <div className="p-10 border border-dashed border-orange-500/30 bg-orange-50/50 space-y-8">
+                  <div className="flex items-center gap-3">
+                    <ShieldAlert className="h-5 w-5 text-orange-600" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.4em] text-orange-600">Forensic Transfer Verification</span>
                   </div>
-                  <div className="space-y-4 pt-4 border-t border-accent/10">
-                    <p className="text-[9px] uppercase font-bold opacity-40">Classification</p>
-                    <p className="text-base font-headline italic text-accent">{project.reorganization.reimbursement.type}</p>
-                    <p className="text-2xl font-headline italic text-accent">- KES {project.reorganization.reimbursement.amount.toLocaleString()}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Liquidation Reference</Label>
+                      <Input 
+                        value={witnessTxCode} 
+                        onChange={(e) => setWitnessTxCode(e.target.value)} 
+                        placeholder="TRX-XXXX-SYNC"
+                        className="rounded-none h-12 border-orange-200 font-mono tracking-widest uppercase font-bold bg-white"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Liquidation Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-orange-200 font-bold uppercase transition-none shadow-none bg-white">
+                            <CalendarIcon className="mr-3 h-4 w-4 opacity-40" />
+                            {format(witnessTxDate, "MMM dd, yyyy")}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={witnessTxDate} onSelect={(d) => d && setWitnessTxDate(d)} initialFocus /></PopoverContent>
+                      </Popover>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="space-y-6">
               <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Synchronized Installment Schedule</h4>
@@ -674,13 +751,35 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             </div>
           </div>
           <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between gap-6">
-            <Button onClick={() => setIsWitnessingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest border-none transition-none">Abort Sync</Button>
-            <Button onClick={handleWitnessReorg} disabled={isSyncingWitness} className="bg-blue-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-4 border-none transition-none">
-              {isSyncingWitness ? <><Loader2 className="h-5 w-5 animate-spin" /> Certifying Agreement...</> : <><Signature className="h-5 w-5" /> Witness & Authorize Protocol</>}
+            <Button onClick={() => setIsWitnessingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest border-none transition-none shadow-none bg-transparent">Abort Sync</Button>
+            <Button 
+              onClick={() => setIsConfirmingTransfer(true)} 
+              disabled={reorgNeedsLiquidation && !witnessTxCode}
+              className="bg-blue-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-none flex gap-4 border-none"
+            >
+              <Signature className="h-5 w-5" /> Witness & Certify Protocol
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isConfirmingTransfer} onOpenChange={setIsConfirmingTransfer}>
+        <DialogContent className="rounded-none border-accent/20 font-body p-12 bg-white max-w-lg">
+          <DialogHeader className="space-y-6">
+            <div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-blue-600" /><span className="text-blue-600 text-[13px] font-bold uppercase tracking-[0.3em]">Forensic Certification</span></div>
+            <DialogTitle className="text-3xl font-headline italic">Confirm Fund Transfer?</DialogTitle>
+            <DialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">
+              By authorizing, you certify that you have forensically verified the transfer of <strong>KES {reorgNeedsLiquidation ? (Math.abs(project.reorganization?.reimbursement?.amount || 0) || project.reorganization?.studioClaim?.amount || 0).toLocaleString() : "0"}</strong> via reference <strong>{witnessTxCode}</strong>. This entry will be permanently logged in the master ledger.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-12 flex justify-between">
+            <Button variant="ghost" onClick={() => setIsConfirmingTransfer(false)} className="rounded-none uppercase tracking-widest text-[11px] font-bold h-12 px-8 border-none shadow-none transition-none bg-transparent">Abort</Button>
+            <Button onClick={handleWitnessReorg} disabled={isSyncingWitness} className="bg-blue-600 text-white rounded-none uppercase tracking-widest text-[11px] font-bold h-14 px-12 shadow-xl transition-none flex gap-3 border-none">
+              {isSyncingWitness ? <Loader2 className="h-4 w-4 animate-spin" /> : "Authorize & Log Entry"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </AlertDialog>
 
       <Dialog open={isVerifyingActivation} onOpenChange={setIsVerifyingActivation}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg p-0 overflow-hidden bg-white">
@@ -707,11 +806,11 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Certified Capital (KES)</Label>
-                  <Input type="number" className="rounded-none border-accent/10 h-12 text-2xl font-headline italic focus:ring-orange-600" value={activationAmount} onChange={(e) => setActivationAmount(Number(e.target.value))} />
+                  <Input type="number" className="rounded-none border-accent/10 h-12 text-2xl font-headline italic focus:ring-orange-600 transition-none" value={activationAmount} onChange={(e) => setActivationAmount(Number(e.target.value))} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Verified Code</Label>
-                  <Input className="rounded-none border-accent/10 h-12 text-lg tracking-widest font-bold focus:ring-orange-600 uppercase" value={activationCode} onChange={(e) => setActivationCode(e.target.value)} />
+                  <Input className="rounded-none border-accent/10 h-12 text-lg tracking-widest font-bold focus:ring-orange-600 uppercase transition-none" value={activationCode} onChange={(e) => setActivationCode(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Certification Date</Label>

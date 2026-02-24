@@ -27,6 +27,7 @@ export interface Installment {
   status: 'Pending' | 'Paid';
   transactionCode?: string;
   date?: string;
+  type?: 'Standard' | 'Reimbursement' | 'Studio_Claim';
 }
 
 export interface VendorAllocation {
@@ -117,12 +118,18 @@ export interface ReimbursementClaim {
   type: 'Overpayment Return' | 'Site Damage Adjustment' | 'Operational Credit';
   amount: number;
   rationale: string;
+  status: 'Pending' | 'Liquidated';
+  transactionCode?: string;
+  date?: string;
 }
 
 export interface StudioClaim {
   type: 'Material Procurement' | 'Project Expense' | 'Service Scope Adjustment';
   amount: number;
   rationale: string;
+  status: 'Pending' | 'Liquidated';
+  transactionCode?: string;
+  date?: string;
 }
 
 export interface ReorganizationDetails {
@@ -135,6 +142,7 @@ export interface ReorganizationDetails {
   finalizedDate?: string;
   reimbursement?: ReimbursementClaim;
   studioClaim?: StudioClaim;
+  liquidationVerified?: boolean;
 }
 
 export interface Designer {
