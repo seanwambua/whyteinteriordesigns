@@ -44,7 +44,8 @@ import {
   ChevronDown,
   RotateCcw,
   TrendingUp,
-  Key
+  Key,
+  Lock
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
@@ -87,20 +88,19 @@ export default function ClientDashboardPage() {
     setVerifiedProjectId(storedId);
   }, []);
 
-  // Universal Portfolio Discovery logic
   const allMyProjects = useMemo(() => {
     if (!accessCode) return [];
     return clientProjects.filter(p => p.accessCode.toUpperCase() === accessCode.toUpperCase());
   }, [clientProjects, accessCode]);
 
-  // Determine active project context
   const activeProject = useMemo(() => {
     if (verifiedProjectId) {
       return allMyProjects.find(p => p.id === verifiedProjectId);
     }
-    // Default to the first active project if no specific one is verified
     return allMyProjects.find(p => !p.isArchived && p.status !== 'Terminated') || allMyProjects[0];
   }, [allMyProjects, verifiedProjectId]);
+
+  const isLocked = activeProject && !activeProject.isActivated;
 
   const portfolioStats = useMemo(() => {
     const active = allMyProjects.filter(p => !p.isArchived && p.status !== 'Terminated');
@@ -118,12 +118,14 @@ export default function ClientDashboardPage() {
   const unifiedActivity = useMemo(() => {
     const activities: { id: string, date: string, project: string, content: string }[] = [];
     allMyProjects.forEach(p => {
-      activities.push({
-        id: `ACT-${p.id}`,
-        date: p.lastActivity.includes('—') ? p.lastActivity.split('—')[0].trim() : "Recent",
-        project: p.project,
-        content: p.lastActivity
-      });
+      if (p.lastActivity) {
+        activities.push({
+          id: `ACT-${p.id}`,
+          date: p.lastActivity.includes('—') ? p.lastActivity.split('—')[0].trim() : "Recent",
+          project: p.project,
+          content: p.lastActivity
+        });
+      }
     });
     return activities.slice(0, 5);
   }, [allMyProjects]);
@@ -180,7 +182,67 @@ export default function ClientDashboardPage() {
   const isReorgPending = activeProject.reorganization?.status === 'Pending_Agreement' && !activeProject.reorganization.clientAgreed;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-12 pb-24 font-body">
+    <div className="max-w-6xl mx-auto space-y-12 pb-24 font-body relative">
+      {/* LOCKED OVERLAY */}
+      <AnimatePresence>
+        {isLocked && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-white/60 backdrop-blur-md flex items-center justify-center p-6"
+          >
+            <Card className="max-w-md w-full rounded-none border-accent/20 shadow-2xl bg-white p-12 space-y-10 text-center">
+              <div className="h-20 w-20 bg-accent/5 rounded-full flex items-center justify-center mx-auto relative">
+                <div className="absolute inset-0 rounded-full border border-accent/20 animate-ping opacity-20" />
+                <Lock className="h-10 w-10 text-accent" />
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-4xl font-headline italic leading-tight">Dossier Locked.</h2>
+                <p className="text-muted-foreground font-light italic text-sm leading-relaxed">
+                  Your architectural workspace is restricted. Access is unlocked upon forensic certification of your initial commissioning deposit.
+                </p>
+              </div>
+              
+              {activeProject.reorganization?.status === 'Requested' || activeProject.reorganization?.status === 'Pending_Agreement' ? (
+                <div className="p-6 bg-orange-50 border border-orange-100 space-y-4">
+                  <div className="flex items-center justify-center gap-3 text-orange-600">
+                    <RefreshCcw className="h-4 w-4 animate-spin" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Financing Review in Progress</span>
+                  </div>
+                  <p className="text-[11px] text-orange-700/70 italic font-light">
+                    The studio is calibrating your custom payout schedule. Review and authorization will be required before activation.
+                  </p>
+                </div>
+              ) : activeProject.pendingActivationData ? (
+                <div className="p-6 bg-accent/[0.02] border border-accent/10 space-y-2">
+                  <div className="flex items-center justify-center gap-3 text-accent">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Awaiting Forensic Sync</span>
+                  </div>
+                  <p className="text-[11px] text-accent/40 italic font-light">
+                    Receipt details transmitted to Financial Steward for verification.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Next Protocol Step</p>
+                  <Button asChild variant="outline" className="w-full rounded-none h-14 border-accent/10 text-accent uppercase tracking-widest text-[10px] font-bold shadow-sm transition-none">
+                    <Link href="/dashboard/onboarding">Complete Activation Protocol</Link>
+                  </Button>
+                </div>
+              )}
+              
+              <div className="pt-6 border-t border-accent/5">
+                <Button asChild variant="ghost" className="text-accent/40 hover:text-accent uppercase tracking-widest text-[9px] font-bold transition-none shadow-none">
+                  <Link href="/">Return to Site</Link>
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
           <div className="space-y-4">

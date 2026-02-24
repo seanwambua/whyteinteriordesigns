@@ -270,17 +270,19 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
     setIsSyncingActivation(true);
     
     setTimeout(() => {
-      const updatedInstallments = project.installments.map(ins => 
-        ins.label.toLowerCase().includes('deposit') 
-          ? { 
-              ...ins, 
-              status: 'Paid' as const, 
-              transactionCode: activationCode, 
-              amount: activationAmount,
-              date: format(activationDate, "MMM dd, yyyy")
-            } 
-          : ins
-      );
+      const updatedInstallments = project.installments.map((ins, i) => {
+        const isDeposit = ins.label.toLowerCase().includes('deposit') || (i === 0 && ins.status === 'Pending');
+        if (isDeposit && ins.status === 'Pending') {
+          return { 
+            ...ins, 
+            status: 'Paid' as const, 
+            transactionCode: activationCode, 
+            amount: activationAmount,
+            date: format(activationDate, "MMM dd, yyyy")
+          };
+        }
+        return ins;
+      });
 
       updateClientProject(project.id, {
         isActivated: true,
@@ -840,7 +842,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             </div>
             <DialogFooter className="pt-4">
               <Button className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all border-none transition-none" onClick={handleVerifyActivation} disabled={isSyncingActivation || !activationCode || activationAmount <= 0}>
-                {isSyncingActivation ? <span className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin" /> Certifying...</span> : "Authorize Activation"}
+                {isSyncingActivation ? <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Certifying...</span> : "Authorize Activation"}
               </Button>
             </DialogFooter>
           </div>
