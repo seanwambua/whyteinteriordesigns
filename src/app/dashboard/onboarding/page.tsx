@@ -146,40 +146,47 @@ export default function OnboardingPage() {
   const handleRequestReorg = () => {
     if (!currentProject) return;
     
+    setLoading(true);
     const reorgInquiry = {
       id: `REQ-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
       name: formData.fullName,
       email: formData.email,
-      type: 'project_support' as const,
+      type: 'financial_reorganization' as const,
       serviceType: 'bundle' as const,
-      message: `Financing Reorganization Request. Reported: KES ${Number(formData.depositAmount).toLocaleString()}.`,
+      message: `Onboarding Phase: Financing Reorganization Request. Reported Capital: KES ${Number(formData.depositAmount).toLocaleString()}. Reference Provided: ${formData.depositRef || 'N/A'}. Reason: Amount mismatch with projected protocol.`,
       status: 'new' as const,
-      urgency: 'high' as const,
+      urgency: 'critical' as const,
       date: format(new Date(), "MMM dd, yyyy"),
       projectId: currentProject.id
     };
     
-    addInquiry(reorgInquiry);
-    updateClientProject(currentProject.id, {
-      reorganization: {
-        status: 'Requested',
-        requestedBy: 'Client',
-        terms: "",
-        proposedInstallments: [],
-        clientAgreed: false,
-        stewardWitnessed: false
-      },
-      lastActivity: "Financing Reorganization Requested"
-    });
-    
-    toast({ title: "Request Transmitted", description: "Senior Partner will review your request." });
-    
-    localStorage.setItem("whyte_onboarded", "true");
-    localStorage.setItem("whyte_client_access_code", formData.accessCode.trim().toUpperCase());
-    setShowSuccess(true);
     setTimeout(() => {
-      router.push("/dashboard");
-    }, 5000);
+      addInquiry(reorgInquiry);
+      updateClientProject(currentProject.id, {
+        reorganization: {
+          status: 'Requested',
+          requestedBy: 'Client',
+          terms: `Initial Onboarding Mismatch: Client reports KES ${Number(formData.depositAmount).toLocaleString()} paid vs KES ${expectedDeposit.toLocaleString()} expected.`,
+          proposedInstallments: [],
+          clientAgreed: false,
+          stewardWitnessed: false
+        },
+        lastActivity: "Financing Reorganization Requested during Onboarding"
+      });
+      
+      localStorage.setItem("whyte_onboarded", "true");
+      localStorage.setItem("whyte_client_access_code", formData.accessCode.trim().toUpperCase());
+      
+      setLoading(false);
+      toast({ 
+        title: "Request Transmitted", 
+        description: "Your financing review has been prioritized. Decrypting portal access..." 
+      });
+      setShowSuccess(true);
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 5000);
+    }, 1500);
   };
 
   const handleBack = () => setStep(step - 1);
@@ -188,7 +195,7 @@ export default function OnboardingPage() {
 
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-accent flex items-center justify-center p-6 overflow-hidden font-body">
+      <div className="min-h-screen bg-accent flex items-center justify-center p-6 overflow-hidden font-body text-white">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -212,7 +219,7 @@ export default function OnboardingPage() {
               <span className="text-white/40 text-[10px] font-bold uppercase tracking-[0.5em]">Authorization Pending</span>
               <div className="h-px w-8 bg-white/20" />
             </div>
-            <h2 className="text-4xl md:text-5xl font-headline text-white italic">Credentials <span className="not-italic">Submitted.</span></h2>
+            <h2 className="text-4xl md:text-5xl font-headline italic">Credentials <span className="not-italic">Submitted.</span></h2>
             <p className="text-white/60 font-light text-base italic leading-relaxed max-w-md mx-auto">
               Your identity has been synchronized. The workspace will unlock once forensic verification is complete.
             </p>
@@ -236,9 +243,9 @@ export default function OnboardingPage() {
       <div className="w-full max-w-3xl flex justify-end mb-4">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" className="text-accent/40 hover:text-accent hover:bg-transparent flex items-center gap-2 group">
+            <Button variant="ghost" className="text-accent/40 hover:text-accent hover:bg-transparent flex items-center gap-2 group transition-none">
               <span className="text-[10px] font-bold uppercase tracking-widest">Exit Session</span>
-              <X className="h-4 w-4 transition-transform group-hover:rotate-90" />
+              <X className="h-4 w-4 transition-none" />
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent className="rounded-none border-accent/20 font-body">
@@ -289,7 +296,7 @@ export default function OnboardingPage() {
                         <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Client Access Code</Label>
                         <Input 
                           placeholder="CLIENT-AUTH-XXXX" 
-                          className="rounded-none border-accent/20 h-12 text-xl tracking-[0.2em] focus:ring-accent uppercase font-bold shadow-none" 
+                          className="rounded-none border-accent/20 h-12 text-xl tracking-[0.2em] focus:ring-accent uppercase font-bold shadow-none transition-none" 
                           value={formData.accessCode} 
                           onChange={(e) => setFormData({...formData, accessCode: e.target.value})} 
                         />
@@ -306,8 +313,8 @@ export default function OnboardingPage() {
                       <p className="text-muted-foreground font-light text-sm">Confirm your registration details for this code.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8 border-b border-accent/5">
-                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label><Input className="rounded-none border-accent/20 h-12 bg-secondary/10 shadow-none" value={formData.fullName} readOnly /></div>
-                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email</Label><Input className="rounded-none border-accent/20 h-12 bg-secondary/10 shadow-none" value={formData.email} readOnly /></div>
+                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label><Input className="rounded-none border-accent/20 h-12 bg-secondary/10 shadow-none transition-none" value={formData.fullName} readOnly /></div>
+                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email</Label><Input className="rounded-none border-accent/20 h-12 bg-secondary/10 shadow-none transition-none" value={formData.email} readOnly /></div>
                     </div>
                   </div>
                 )}
@@ -329,8 +336,8 @@ export default function OnboardingPage() {
                         </div>
                       </ScrollArea>
                       <div className="space-y-3 pt-2">
-                        <div className="flex items-center space-x-3"><Checkbox id="terms" checked={formData.agreedToTerms} onCheckedChange={(v) => setFormData({...formData, agreedToTerms: !!v})} className="rounded-none border-accent/30" /><label htmlFor="terms" className="text-[11px] font-bold uppercase tracking-widest text-accent/60 cursor-pointer">I authorize the Terms of Service</label></div>
-                        <div className="flex items-center space-x-3"><Checkbox id="non-compete" checked={formData.agreedToNonCompete} onCheckedChange={(v) => setFormData({...formData, agreedToNonCompete: !!v})} className="rounded-none border-accent/30" /><label htmlFor="non-compete" className="text-[11px] font-bold uppercase tracking-widest text-accent/60 cursor-pointer">I authorize the Non-Compete Mandate</label></div>
+                        <div className="flex items-center space-x-3"><Checkbox id="terms" checked={formData.agreedToTerms} onCheckedChange={(v) => setFormData({...formData, agreedToTerms: !!v})} className="rounded-none border-accent/30 transition-none" /><label htmlFor="terms" className="text-[11px] font-bold uppercase tracking-widest text-accent/60 cursor-pointer">I authorize the Terms of Service</label></div>
+                        <div className="flex items-center space-x-3"><Checkbox id="non-compete" checked={formData.agreedToNonCompete} onCheckedChange={(v) => setFormData({...formData, agreedToNonCompete: !!v})} className="rounded-none border-accent/30 transition-none" /><label htmlFor="non-compete" className="text-[11px] font-bold uppercase tracking-widest text-accent/60 cursor-pointer">I authorize the Non-Compete Mandate</label></div>
                       </div>
                     </div>
                   </div>
@@ -344,12 +351,27 @@ export default function OnboardingPage() {
                       <p className="text-muted-foreground font-light text-sm">Provide transaction details for the initial deposit of your primary commission.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-accent/[0.03] border border-accent/5">
-                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Amount (KES)</Label><Input type="number" placeholder="0.00" className="rounded-none border-accent/20 h-12 text-xl focus:ring-accent shadow-none" value={formData.depositAmount} onChange={(e) => setFormData({...formData, depositAmount: e.target.value})} /></div>
+                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Amount (KES)</Label><Input type="number" placeholder="0.00" className="rounded-none border-accent/20 h-12 text-xl focus:ring-accent shadow-none transition-none" value={formData.depositAmount} onChange={(e) => setFormData({...formData, depositAmount: e.target.value})} /></div>
                       <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Expected</Label><div className="h-12 flex items-center px-4 bg-secondary/20"><span className="text-lg font-headline italic text-accent opacity-60">KES {expectedDeposit.toLocaleString()}</span></div></div>
                     </div>
-                    <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Reference Code</Label><Input placeholder="TRX-XXXX" className="rounded-none border-accent/20 h-12 text-lg tracking-widest focus:ring-accent uppercase font-bold shadow-none" value={formData.depositRef} onChange={(e) => setFormData({...formData, depositRef: e.target.value})} /></div>
+                    <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Reference Code</Label><Input placeholder="TRX-XXXX" className="rounded-none border-accent/20 h-12 text-lg tracking-widest focus:ring-accent uppercase font-bold shadow-none transition-none" value={formData.depositRef} onChange={(e) => setFormData({...formData, depositRef: e.target.value})} /></div>
                     {!isAmountMatching && formData.depositAmount !== "" && (
-                      <div className="p-4 bg-orange-50 border border-orange-200"><p className="text-[10px] italic text-orange-700 leading-relaxed">Amount mismatch. Request a financing reorganization to synchronize your custom payment.</p><Button onClick={handleRequestReorg} variant="link" className="text-orange-600 p-0 h-auto text-[10px] font-bold uppercase tracking-widest mt-2">Request Reorg</Button></div>
+                      <div className="p-6 bg-orange-50 border border-orange-200 space-y-4">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
+                          <p className="text-[11px] italic text-orange-700 leading-relaxed font-light">
+                            Protocol Variance Identified: The reported amount does not match the projected commissioning requirement. To proceed, please request a **Financing Reorganization** for forensic review by a Senior Partner.
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={handleRequestReorg} 
+                          disabled={loading}
+                          variant="outline" 
+                          className="w-full rounded-none border-orange-200 text-orange-700 hover:bg-orange-600 hover:text-white transition-none h-12 uppercase tracking-widest text-[10px] font-bold flex gap-2"
+                        >
+                          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCcw className="h-3 w-3" /> Initialize Reorganization Review</>}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}
