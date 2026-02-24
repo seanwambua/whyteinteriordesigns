@@ -197,7 +197,7 @@ export default function ClientDashboardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-white/60 backdrop-blur-md flex items-center justify-center p-6"
+            className="fixed inset-0 z-[40] bg-white/60 backdrop-blur-md flex items-center justify-center p-6"
           >
             <Card className="max-w-md w-full rounded-none border-accent/20 shadow-2xl bg-white p-12 space-y-10 text-center">
               <div className="h-20 w-20 bg-accent/5 rounded-full flex items-center justify-center mx-auto relative">
@@ -207,7 +207,7 @@ export default function ClientDashboardPage() {
               <div className="space-y-4">
                 <h2 className="text-4xl font-headline italic leading-tight">Dossier Locked.</h2>
                 <p className="text-muted-foreground font-light italic text-sm leading-relaxed">
-                  Your architectural workspace is restricted. Access is unlocked upon forensic certification of your initial commissioning deposit.
+                  Your architectural workspace is restricted. Access is unlocked upon forensic certification of your initial commissioning commitment.
                 </p>
               </div>
               
@@ -227,8 +227,8 @@ export default function ClientDashboardPage() {
                     <PenTool className="h-4 w-4" />
                     <span className="text-[10px] font-bold uppercase tracking-widest">Awaiting Your Authorization</span>
                   </div>
-                  <p className="text-[11px] text-orange-700/70 italic font-light leading-relaxed">
-                    The studio has proposed updated financing terms. Forensic review and digital authorization are mandatory to proceed with activation.
+                  <p className="text-[11px] text-orange-700/70 italic font-light leading-relaxed text-center">
+                    The studio has proposed updated financing terms. Forensic review and digital authorization are mandatory to proceed.
                   </p>
                   <Button onClick={() => { setSignatureStep(1); setIsReviewingReorg(true); }} className="w-full bg-orange-600 text-white rounded-none h-12 uppercase tracking-widest text-[10px] font-bold shadow-lg border-none transition-none shadow-none">
                     Review & Authorize Terms
@@ -337,7 +337,7 @@ export default function ClientDashboardPage() {
       </motion.div>
 
       <AnimatePresence mode="wait">
-        {isReorgPending && (
+        {isReorgPending && !isLocked && (
           <motion.div key="reorg" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
             <Alert className="rounded-none border-orange-500/20 bg-orange-50 p-10 shadow-2xl overflow-hidden relative">
               <div className="absolute top-0 right-0 p-4 opacity-5"><FileEdit className="h-32 w-32" /></div>
