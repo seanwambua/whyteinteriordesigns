@@ -357,15 +357,41 @@ export default function ClientDashboardPage() {
               <p className="text-xs font-light italic text-muted-foreground">{activeProject.project} — {activeProject.tier}</p>
             </div>
             <div className="space-y-4">
-              {activeProject.installments.map((ins, i) => (
-                <div key={i} className={`p-4 border ${ins.status === 'Paid' ? 'border-green-600/20 bg-green-600/5' : 'border-orange-500/10 bg-orange-500/[0.02]'}`}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{ins.label}</span>
-                    <span className={`text-[8px] font-bold uppercase tracking-widest ${ins.status === 'Paid' ? 'text-green-600' : 'text-orange-600'}`}>{ins.status}</span>
+              {activeProject.installments.map((ins, i) => {
+                const isReimbursement = ins.type === 'Reimbursement';
+                const isClaim = ins.type === 'Studio_Claim';
+                
+                return (
+                  <div key={i} className={cn(
+                    "p-4 border transition-all",
+                    isReimbursement ? "border-blue-200 bg-blue-50/30" :
+                    isClaim ? "border-orange-200 bg-orange-50/30" :
+                    ins.status === 'Paid' ? 'border-green-600/20 bg-green-600/5' : 'border-orange-500/10 bg-orange-500/[0.02]'
+                  )}>
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{ins.label}</span>
+                        {isReimbursement && <Badge variant="outline" className="rounded-none text-[7px] h-3.5 px-1 bg-blue-100 border-blue-200 text-blue-700 font-bold uppercase tracking-widest">Credit Return</Badge>}
+                        {isClaim && <Badge variant="outline" className="rounded-none text-[7px] h-3.5 px-1 bg-orange-100 border-orange-200 text-orange-700 font-bold uppercase tracking-widest">Studio Claim</Badge>}
+                      </div>
+                      <span className={cn(
+                        "text-[8px] font-bold uppercase tracking-widest",
+                        ins.status === 'Paid' ? 'text-green-600' : 'text-orange-600'
+                      )}>
+                        {ins.status}
+                      </span>
+                    </div>
+                    <p className={cn(
+                      "text-sm font-bold tracking-widest", 
+                      isReimbursement ? "text-blue-700" :
+                      isClaim ? "text-orange-700" :
+                      ins.status === 'Paid' ? 'text-accent' : 'text-orange-600'
+                    )}>
+                      {isReimbursement ? "-" : isClaim ? "+" : ""} KES {Math.abs(ins.amount).toLocaleString()}
+                    </p>
                   </div>
-                  <p className={cn("text-sm font-bold tracking-widest", ins.status === 'Paid' ? 'text-accent' : 'text-orange-600')}>KES {ins.amount.toLocaleString()}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
             {isOverpaid ? (
               <div className="p-4 bg-green-600 text-white text-center shadow-lg">

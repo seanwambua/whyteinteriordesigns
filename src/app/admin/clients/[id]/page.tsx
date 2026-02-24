@@ -784,9 +784,10 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                  </div>
                  <div className="divide-y divide-accent/5">
                    {project.installments.map((ins, i) => {
-                     const projectedAmount = project.totalBudget * (ins.percentage / 100);
+                     const isSpecial = ins.type === 'Reimbursement' || ins.type === 'Studio_Claim';
+                     const projectedAmount = isSpecial ? 0 : project.totalBudget * (ins.percentage / 100);
                      const variance = ins.amount - projectedAmount;
-                     const hasVariance = ins.status === 'Paid' && Math.abs(variance) > 1;
+                     const hasVariance = !isSpecial && ins.status === 'Paid' && Math.abs(variance) > 1;
 
                      return (
                        <div key={i} className="flex flex-col lg:flex-row lg:items-center justify-between p-10 gap-8 hover:bg-accent/[0.01] transition-none">
@@ -803,13 +804,19 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                                <Badge className={cn("rounded-none text-[10px] uppercase tracking-widest px-2.5 py-0.5 font-bold", ins.status === 'Paid' ? "bg-green-600 text-white" : "bg-orange-600 text-white")}>
                                  {ins.status}
                                </Badge>
+                               {ins.type === 'Reimbursement' && <Badge variant="outline" className="rounded-none text-[9px] uppercase tracking-widest border-blue-200 text-blue-600 bg-blue-50 font-bold px-2 py-0.5">Credit Return</Badge>}
+                               {ins.type === 'Studio_Claim' && <Badge variant="outline" className="rounded-none text-[9px] uppercase tracking-widest border-orange-200 text-orange-600 bg-orange-50 font-bold px-2 py-0.5">Price Adjustment</Badge>}
                              </div>
                              <div className="flex flex-wrap items-center gap-4 text-[12px] text-muted-foreground font-bold uppercase tracking-widest">
                                <span>Ref: {ins.transactionCode || 'Awaiting Sync'}</span>
                                <div className="h-1.5 w-1.5 rounded-full bg-accent/10" />
                                <span>{ins.date || 'TBD'}</span>
-                               <div className="h-1.5 w-1.5 rounded-full bg-accent/10" />
-                               <span>{ins.percentage}% Allocation Protocol (Target: KES {projectedAmount.toLocaleString()})</span>
+                               {!isSpecial && (
+                                 <>
+                                   <div className="h-1.5 w-1.5 rounded-full bg-accent/10" />
+                                   <span>{ins.percentage}% Allocation Protocol (Target: KES {projectedAmount.toLocaleString()})</span>
+                                 </>
+                               )}
                              </div>
                            </div>
                          </div>
@@ -818,8 +825,12 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                              <p className="text-[11px] font-bold uppercase tracking-widest text-accent/30 mb-1">
                                {ins.status === 'Paid' ? 'Liquidated Value' : 'Projected Value'}
                              </p>
-                             <p className={cn("text-2xl font-headline italic", ins.status === 'Pending' ? 'text-orange-600' : 'text-accent')}>
-                               KES {ins.amount.toLocaleString()}
+                             <p className={cn(
+                                "text-2xl font-headline italic", 
+                                ins.status === 'Pending' ? 'text-orange-600' : 
+                                ins.type === 'Reimbursement' ? 'text-blue-600' : 'text-accent'
+                              )}>
+                               {ins.type === 'Reimbursement' ? "-" : ""}KES {Math.abs(ins.amount).toLocaleString()}
                              </p>
                              {hasVariance && (
                                <div className={cn(

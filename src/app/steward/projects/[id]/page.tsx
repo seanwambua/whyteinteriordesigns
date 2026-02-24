@@ -206,6 +206,10 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
       const reorg = project.reorganization!;
       let updatedInstallments = [...reorg.proposedInstallments];
 
+      const studioClaimAmt = reorg.studioClaim?.amount || 0;
+      const reimbursementAmt = reorg.reimbursement?.amount || 0;
+      const newTotalBudget = project.totalBudget + studioClaimAmt - reimbursementAmt;
+
       // Injection logic: Add the claim/reimbursement to the master ledger as a verified entry
       if (reorg.reimbursement) {
         updatedInstallments.push({
@@ -232,6 +236,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
       }
 
       updateClientProject(project.id, {
+        totalBudget: newTotalBudget,
         installments: updatedInstallments,
         reorganization: {
           ...reorg,
@@ -347,7 +352,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   Forensic certification of the initial deposit is mandatory to unlock the Execution phase.
                 </AlertDescription>
               </div>
-              <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl flex gap-3 border-none transition-none">
+              <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl border-none transition-none">
                 <Banknote className="h-4 w-4" /> Certify Activation
               </Button>
             </div>
