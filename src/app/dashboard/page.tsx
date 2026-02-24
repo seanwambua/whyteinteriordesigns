@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -180,28 +179,14 @@ export default function ClientDashboardPage() {
     setIsSupportOpen(true);
   };
 
-  const completedTasksCount = (activeProject.tasks || []).filter(t => t.status === 'Done').length;
-
-  const deadlineStr = activeProject.endDate || format(new Date(), "MMM dd, yyyy");
-  const startStr = activeProject.startDate || format(new Date(), "MMM dd, yyyy");
-  
-  const deadline = parse(deadlineStr, "MMM dd, yyyy", new Date());
-  const startDate = parse(startStr, "MMM dd, yyyy", new Date());
-  
-  const totalDuration = differenceInDays(deadline, startDate);
-  const efficiencyRating = (activeProject.isArchived || activeProject.status === 'Terminated')
-    ? (activeProject.isExtended ? 88 : 96) 
-    : Math.round((completedTasksCount / Math.max(1, activeProject.tasks?.length || 1)) * 100);
-
   const currentTotalPaid = activeProject.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
   const currentDueBalance = activeProject.totalBudget - currentTotalPaid;
-  const hasOutstandingBalance = currentDueBalance > 0;
+  const isOverpaid = currentDueBalance < -1;
 
   const isReorgPending = activeProject.reorganization?.status === 'Pending_Agreement' && !activeProject.reorganization.clientAgreed;
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-24 font-body">
-      {/* Portfolio Command Center Header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
           <div className="space-y-4">
@@ -270,7 +255,6 @@ export default function ClientDashboardPage() {
         </div>
       </motion.div>
 
-      {/* Specific Dossier Alerts & Notifications */}
       <AnimatePresence mode="wait">
         {isReorgPending && (
           <motion.div key="reorg" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
@@ -303,7 +287,6 @@ export default function ClientDashboardPage() {
       </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        {/* Main Dossier Workspace */}
         <div className="lg:col-span-8 space-y-12">
           <Card className={cn(
             "rounded-none border-accent/10 shadow-2xl overflow-hidden bg-white",
@@ -356,7 +339,6 @@ export default function ClientDashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Unified Activity Feed for the Portfolio */}
           <div className="space-y-8">
             <div className="flex items-center gap-4">
               <Zap className="h-5 w-5 text-accent" />
@@ -380,9 +362,7 @@ export default function ClientDashboardPage() {
           </div>
         </div>
 
-        {/* Portfolio Control Sidebar */}
         <div className="lg:col-span-4 space-y-12">
-          {/* Active Ledger Summary */}
           <Card className="rounded-none shadow-2xl bg-white p-8 space-y-10 border border-accent/5">
             <div className="text-center space-y-2">
               <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Financial Dossier</h3>
@@ -399,7 +379,11 @@ export default function ClientDashboardPage() {
                 </div>
               ))}
             </div>
-            {hasOutstandingBalance && (
+            {isOverpaid ? (
+              <div className="p-4 bg-green-600 text-white text-center shadow-lg">
+                <p className="text-[10px] font-bold uppercase tracking-widest">Surplus Balance: KES {Math.abs(currentDueBalance).toLocaleString()}</p>
+              </div>
+            ) : currentDueBalance > 0 && (
               <div className="p-4 bg-orange-600 text-white text-center shadow-lg">
                 <p className="text-[10px] font-bold uppercase tracking-widest">Net Balance: KES {currentDueBalance.toLocaleString()}</p>
               </div>
@@ -411,7 +395,6 @@ export default function ClientDashboardPage() {
             )}
           </Card>
 
-          {/* Portfolio Matrix Compact */}
           {allMyProjects.length > 1 && (
             <div className="space-y-6">
               <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><LayoutGrid className="h-3 w-3" /> Portfolio Matrix</h4>
@@ -436,7 +419,6 @@ export default function ClientDashboardPage() {
             </div>
           )}
 
-          {/* Attribution Sidebar */}
           <Card className="rounded-none border-accent/5 bg-secondary/30 p-8 space-y-6">
             <div className="space-y-1">
               <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><PencilRuler className="h-3 w-3" /> Creative Lead</h4>

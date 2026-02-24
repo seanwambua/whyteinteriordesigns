@@ -120,6 +120,7 @@ export default function FinancialTransparencyPage({ params }: { params: Promise<
   }
 
   const totalAllocated = audit.allocations.reduce((sum, a) => sum + a.amount, 0);
+  const netEscrow = audit.totalReceived - totalAllocated - audit.refundAmount;
 
   return (
     <div className="min-h-screen bg-white font-body p-8 lg:p-24 max-w-6xl mx-auto space-y-20">
@@ -140,7 +141,6 @@ export default function FinancialTransparencyPage({ params }: { params: Promise<
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
         <div className="lg:col-span-8 space-y-20">
-          {/* VERIFIED INCOME SECTION */}
           <section className="space-y-8">
             <div className="flex items-center gap-4">
               <TrendingUp className="h-4 w-4 text-green-600" />
@@ -168,7 +168,6 @@ export default function FinancialTransparencyPage({ params }: { params: Promise<
             </div>
           </section>
 
-          {/* SITE ALLOCATIONS SECTION */}
           <section className="space-y-8">
             <div className="flex items-center gap-4">
               <TrendingDown className="h-4 w-4 text-orange-600" />
@@ -212,7 +211,7 @@ export default function FinancialTransparencyPage({ params }: { params: Promise<
             </div>
             <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest font-bold opacity-40">
               <Building2 className="h-4 w-4" />
-              <span>Escrow Balance: KES {(audit.totalReceived - totalAllocated - audit.refundAmount).toLocaleString()}</span>
+              <span>Escrow Balance: KES {netEscrow.toLocaleString()}</span>
             </div>
           </Card>
 
