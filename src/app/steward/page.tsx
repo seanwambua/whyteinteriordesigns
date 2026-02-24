@@ -23,7 +23,8 @@ import {
   Activity,
   ClipboardList,
   Eye,
-  Signature
+  Signature,
+  FileEdit
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -55,6 +56,10 @@ export default function StewardDashboardPage() {
       !p.isArchived && !p.isActivated && p.pendingActivationData
     );
     
+    const financing = clientProjects.filter(p => 
+      !p.isArchived && (p.reorganization?.status === 'Requested' || p.reorganization?.status === 'Pending_Agreement')
+    );
+
     const live = clientProjects.filter(p => 
       !p.isArchived && p.isActivated && p.status === 'Execution' && p.assignedStewardId === activeStewardId
     );
@@ -63,10 +68,14 @@ export default function StewardDashboardPage() {
       !p.isArchived && p.isActivated && p.handoverStatus === 'Passed' && p.financialReportStatus !== 'Verified'
     );
 
-    return { activation, live, audit };
+    return { activation, live, audit, financing };
   }, [clientProjects, activeStewardId]);
 
   const filteredActivation = projects.activation.filter(p => 
+    p.project.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredFinancing = projects.financing.filter(p => 
     p.project.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -89,8 +98,8 @@ export default function StewardDashboardPage() {
 
   const stats = [
     { label: "Activation Requests", value: projects.activation.length.toString(), icon: Banknote, sub: "Forensic Queue" },
+    { label: "Financing Protocols", value: projects.financing.length.toString(), icon: FileEdit, sub: "Review & Witness" },
     { label: "Active Portfolio", value: projects.live.length.toString(), icon: Activity, sub: "Ongoing Oversight" },
-    { label: "Final Reconciliations", value: projects.audit.length.toString(), icon: Scale, sub: "Closing Phase" },
   ];
 
   const ProjectTable = ({ data, emptyMessage, actionLabel }: { data: ClientProject[], emptyMessage: string, actionLabel: string }) => (
@@ -126,17 +135,18 @@ export default function StewardDashboardPage() {
               <td className="p-6">
                 <Badge variant="outline" className={cn(
                   "rounded-none uppercase tracking-widest text-[9px] font-bold px-4 py-1.5 border-accent/10",
-                  p.status === 'Planning' ? "bg-orange-50 text-orange-600 border-orange-200" :
-                  p.status === 'Execution' ? "bg-accent/5 text-accent border-accent/20" :
-                  "bg-green-50 text-green-600 border-green-200"
+                  p.reorganization?.status === 'Requested' ? "bg-orange-50 text-orange-600 border-orange-200" :
+                  p.status === 'Planning' ? "bg-accent/5 text-accent border-accent/20" :
+                  p.status === 'Execution' ? "bg-green-50 text-green-600 border-green-200" :
+                  "bg-secondary text-muted-foreground"
                 )}>
-                  {p.status}
+                  {p.reorganization?.status === 'Requested' ? 'Review Requested' : p.status}
                 </Badge>
               </td>
               <td className="p-6 text-right">
                 <Button asChild variant="ghost" size="sm" className="rounded-none border border-accent/5 hover:bg-accent hover:text-white transition-all uppercase tracking-widest text-[10px] font-bold gap-3 h-10 px-6">
                   <Link href={`/steward/projects/${p.id}`}>
-                    {actionLabel} <ArrowRight className="h-4 w-4" />
+                    {p.reorganization?.status === 'Pending_Agreement' && p.reorganization.clientAgreed ? 'Witness' : actionLabel} <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
               </td>
@@ -169,7 +179,7 @@ export default function StewardDashboardPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-accent/30" />
           <input 
             placeholder="Search Registry..." 
-            className="w-full pl-12 pr-4 rounded-none border border-accent/10 h-14 text-[12px] uppercase tracking-widest bg-white focus:outline-none focus:border-accent/40 shadow-xl transition-all"
+            className="w-full pl-12 pr-4 rounded-none border border-accent/10 h-14 text-[12px] uppercase tracking-widest bg-white focus:outline-none focus:border-accent shadow-xl transition-all"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -201,6 +211,9 @@ export default function StewardDashboardPage() {
           <TabsTrigger value="activation" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3">
             <Banknote className="h-4 w-4" /> Activations ({projects.activation.length})
           </TabsTrigger>
+          <TabsTrigger value="financing" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3">
+            <FileEdit className="h-4 w-4" /> Financing Reviews ({projects.financing.length})
+          </TabsTrigger>
           <TabsTrigger value="live" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-3">
             <Activity className="h-4 w-4" /> Active Portfolio ({projects.live.length})
           </TabsTrigger>
@@ -214,6 +227,14 @@ export default function StewardDashboardPage() {
             data={filteredActivation} 
             emptyMessage="No pending activation requests prioritized." 
             actionLabel="Certify Activation"
+          />
+        </TabsContent>
+
+        <TabsContent value="financing" className="m-0">
+          <ProjectTable 
+            data={filteredFinancing} 
+            emptyMessage="No financing reorganizations currently under review." 
+            actionLabel="Review Request"
           />
         </TabsContent>
 

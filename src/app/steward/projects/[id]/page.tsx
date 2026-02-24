@@ -1,3 +1,4 @@
+
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
@@ -71,7 +72,8 @@ import {
   FileClock,
   PenTool,
   RotateCcw,
-  Scale as ScaleIcon
+  Scale as ScaleIcon,
+  FileEdit
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -364,6 +366,21 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl border-none transition-none">
                 <Banknote className="h-4 w-4" /> Certify Activation
               </Button>
+            </div>
+          </Alert>
+        )}
+
+        {project.reorganization?.status === 'Requested' && (
+          <Alert className="rounded-none border-orange-500/20 bg-orange-50 p-8 shadow-2xl">
+            <FileEdit className="h-6 w-6 text-orange-600" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 w-full ml-4">
+              <div className="space-y-1">
+                <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-orange-600">Financing Review Requested</AlertTitle>
+                <AlertDescription className="text-[13px] font-light italic text-orange-600/80 max-w-xl leading-relaxed">
+                  A formal reorganization protocol has been launched. Awaiting senior partner terms proposal.
+                </AlertDescription>
+              </div>
+              <Badge variant="outline" className="rounded-none h-10 px-6 uppercase tracking-widest text-[9px] font-bold border-orange-200 text-orange-600">Review in Progress</Badge>
             </div>
           </Alert>
         )}
