@@ -17,6 +17,16 @@ import {
   DialogDescription, 
   DialogFooter
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Select, 
   SelectContent, 
@@ -210,7 +220,6 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
       const reimbursementAmt = reorg.reimbursement?.amount || 0;
       const newTotalBudget = project.totalBudget + studioClaimAmt - reimbursementAmt;
 
-      // Injection logic: Add the claim/reimbursement to the master ledger as a verified entry
       if (reorg.reimbursement) {
         updatedInstallments.push({
           label: `Liquidated Return: ${reorg.reimbursement.type}`,
@@ -332,7 +341,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
     }, 1500);
   };
 
-  const reorgNeedsLiquidation = !!project.reorganization?.reimbursement || !!project.reorganization?.studioClaim;
+  const reorgNeedsLiquidation = !!project.reorganization?.studioClaim || !!project.reorganization?.reimbursement;
 
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-24 font-body">

@@ -160,6 +160,12 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
   const [activeDesignerId, setActiveDesignerId] = useState<string | null>(null);
   
+  const [newReport, setNewReport] = useState<Partial<SiteReport>>({
+    type: 'Progress',
+    content: '',
+    urgency: 'Normal'
+  });
+
   const [isRaisingClaim, setIsAddingClaim] = useState(false);
   const [newClaim, setNewClaim] = useState<Partial<StudioClaim>>({
     type: 'Material Procurement',
@@ -314,7 +320,8 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
     const claim: StudioClaim = {
       type: newClaim.type as StudioClaim['type'],
       amount: newClaim.amount,
-      rationale: newClaim.rationale
+      rationale: newClaim.rationale,
+      status: 'Pending'
     };
 
     updateClientProject(project.id, {
@@ -383,11 +390,11 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
                 onClick={handleRequestAccess}
                 disabled={isRequestingAccess || hasPendingRequest}
                 className={cn(
-                  "rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-lg",
+                  "rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-lg transition-none",
                   hasPendingRequest ? "bg-orange-200 text-orange-800 cursor-default" : "bg-orange-600 text-white hover:bg-orange-700"
                 )}
               >
-                {isRequestingAccess ? <Loader2 className="h-4 w-4" /> : hasPendingRequest ? <><Clock className="h-4 w-4" /> Authorization Pending</> : <><UserCheck className="h-4 w-4" /> Request Implementation Lead</>}
+                {isRequestingAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : hasPendingRequest ? <><Clock className="h-4 w-4" /> Authorization Pending</> : <><UserCheck className="h-4 w-4" /> Request Implementation Lead</>}
               </Button>
             </div>
           </Alert>
@@ -587,7 +594,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
         <TabsContent value="logs" className="m-0 space-y-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4"><ClipboardList className="h-5 w-5 text-accent/40" /><h2 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent">Site Log Registry</h2></div>
-            {!isReadOnly && <Button onClick={() => setIsAddingReport(true)} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl"><Plus className="h-4 w-4" /> New Site Entry</Button>}
+            {!isReadOnly && <Button onClick={() => setIsAddingReport(true)} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl transition-none border-none"><Plus className="h-4 w-4" /> New Site Entry</Button>}
           </div>
           <div className="space-y-6">
             {(project.siteReports || []).map((log, index) => (
@@ -662,7 +669,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
               <Button 
                 onClick={handleInitiateHandover}
                 disabled={isHandoverSyncing || project.handoverStatus === 'Pending' || isReadOnly}
-                className="rounded-none h-20 px-16 bg-accent text-white uppercase tracking-[0.3em] text-[12px] font-bold shadow-2xl flex gap-4"
+                className="rounded-none h-20 px-16 bg-accent text-white uppercase tracking-[0.3em] text-[12px] font-bold shadow-2xl flex gap-4 transition-none border-none"
               >
                 {isHandoverSyncing ? (
                   <span className="flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span>
@@ -691,7 +698,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Entry Classification</Label>
                   <Select value={newReport.type} onValueChange={(v: any) => setNewReport({...newReport, type: v})}>
-                    <SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold">
+                    <SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold transition-none shadow-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -704,7 +711,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Urgency Protocol</Label>
                   <Select value={newReport.urgency} onValueChange={(v: any) => setNewReport({...newReport, urgency: v})}>
-                    <SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold">
+                    <SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold transition-none shadow-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -717,10 +724,10 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Log Content</Label>
-                <Textarea value={newReport.content} onChange={(e) => setNewReport({...newReport, content: e.target.value})} placeholder="Specific architectural observations..." className="min-h-[150px] rounded-none border-neutral-200 p-6 font-light italic leading-relaxed focus:ring-accent bg-neutral-50/30" />
+                <Textarea value={newReport.content} onChange={(e) => setNewReport({...newReport, content: e.target.value})} placeholder="Specific architectural observations..." className="min-h-[150px] rounded-none border-neutral-200 p-6 font-light italic leading-relaxed focus:ring-accent bg-neutral-50/30 transition-none shadow-none" />
               </div>
             </div>
-            <DialogFooter><Button onClick={handleAddReport} disabled={!newReport.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl">Transmit to Registry</Button></DialogFooter>
+            <DialogFooter><Button onClick={handleAddReport} disabled={!newReport.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl border-none transition-none">Transmit to Registry</Button></DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
@@ -739,7 +746,7 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Claim Classification</Label>
                   <Select value={newClaim.type} onValueChange={(v: any) => setNewClaim({...newClaim, type: v})}>
-                    <SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold">
+                    <SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold transition-none shadow-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -751,15 +758,15 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Adjustment Value (KES)</Label>
-                  <Input type="number" value={newClaim.amount} onChange={(e) => setNewClaim({...newClaim, amount: Number(e.target.value)})} className="rounded-none h-12 border-neutral-200 text-xl font-headline italic focus:ring-orange-600" />
+                  <Input type="number" value={newClaim.amount} onChange={(e) => setNewClaim({...newClaim, amount: Number(e.target.value)})} className="rounded-none h-12 border-neutral-200 text-xl font-headline italic focus:ring-orange-600 transition-none shadow-none" />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Forensic Rationale</Label>
-                <Textarea value={newClaim.rationale} onChange={(e) => setNewClaim({...newClaim, rationale: e.target.value})} placeholder="Detailed technical justification..." className="min-h-[120px] rounded-none border-neutral-200 p-6 font-light italic text-base leading-relaxed focus:ring-orange-600 bg-orange-50/10" />
+                <Textarea value={newClaim.rationale} onChange={(e) => setNewClaim({...newClaim, rationale: e.target.value})} placeholder="Detailed technical justification..." className="min-h-[120px] rounded-none border-neutral-200 p-6 font-light italic text-base leading-relaxed focus:ring-orange-600 bg-orange-50/10 transition-none shadow-none" />
               </div>
             </div>
-            <DialogFooter><Button onClick={handleRaiseClaim} disabled={!newClaim.rationale || !newClaim.amount} className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl">Transmit Claim to Admin</Button></DialogFooter>
+            <DialogFooter><Button onClick={handleRaiseClaim} disabled={!newClaim.rationale || !newClaim.amount} className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl border-none transition-none">Transmit Claim to Admin</Button></DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
