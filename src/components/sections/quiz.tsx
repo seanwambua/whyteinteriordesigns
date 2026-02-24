@@ -1,11 +1,11 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Sparkles, ArrowRight, Check, ChevronRight } from "lucide-react";
+import { Loader2, Sparkles, Check, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -247,13 +247,15 @@ export function StyleQuiz() {
                           <div 
                             key={style} 
                             className={cn(
-                              "flex items-center justify-between p-10 border transition-all cursor-pointer h-32",
+                              "flex items-center justify-between p-10 border cursor-pointer h-32",
                               formData.furnitureStyles.includes(style) ? 'border-accent bg-accent/[0.02] shadow-xl' : 'border-accent/5 hover:border-accent/20'
                             )}
                             onClick={() => toggleFurniture(style)}
                           >
                             <span className={cn("text-[13px] font-bold uppercase tracking-[0.2em]", formData.furnitureStyles.includes(style) ? 'text-accent' : 'text-accent/40')}>{style}</span>
-                            <Checkbox checked={formData.furnitureStyles.includes(style)} className="rounded-none border-accent/20 data-[state=checked]:bg-accent data-[state=checked]:border-accent h-5 w-5" />
+                            <div className={cn("h-5 w-5 border flex items-center justify-center transition-all", formData.furnitureStyles.includes(style) ? 'bg-accent border-accent' : 'border-accent/10')}>
+                              {formData.furnitureStyles.includes(style) && <Check className="h-3 w-3 text-white" />}
+                            </div>
                           </div>
                         ))}
                       </div>

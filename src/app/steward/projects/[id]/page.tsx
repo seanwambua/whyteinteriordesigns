@@ -74,7 +74,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function StewardAuditWorkbench({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { clientProjects, updateClientProject, financialSteward, stewards } = useWhyteStore();
+  const { clientProjects, updateClientProject, financialSteward, stewards, designers } = useWhyteStore();
   const { toast } = useToast();
   
   const [isMounted, setIsMounted] = useState(false);
@@ -102,6 +102,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   });
 
   const project = clientProjects.find(p => p.id === id);
+  const assignedDesigner = designers.find(d => d.id === project?.assignedDesignerId);
 
   const [allocations, setAllocations] = useState<AuditAllocation[]>([]);
   const [incomingFunds, setIncomingFunds] = useState<AuditIncoming[]>([]);
@@ -373,7 +374,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   <PencilRuler className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xl font-headline italic text-accent leading-none">Lead Architect</p>
+                  <p className="text-xl font-headline italic text-accent leading-none">{assignedDesigner?.name || "Unassigned Lead"}</p>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-1">Dossier Attribution</p>
                 </div>
               </div>
