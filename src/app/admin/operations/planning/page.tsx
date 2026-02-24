@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,7 +31,8 @@ import {
   ShieldAlert,
   RefreshCcw,
   LayoutList,
-  Compass
+  Compass,
+  FileEdit
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -384,6 +386,39 @@ export default function ProjectPlanningPage() {
         )}
       </div>
 
+      <Dialog open={!!activationProject} onOpenChange={(open) => !open && setActivationProject(null)}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden bg-white">
+          <div className="bg-accent h-1.5 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-accent" /><span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Activation Protocol</span></div>
+              <DialogTitle className="text-3xl font-headline italic">Transmit Receipt</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-sm">Log the initial deposit details for forensic verification by the Financial Steward.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Assigned Financial Steward</Label>
+                <Select value={assignedStewardId} onValueChange={setAssignedStewardId}>
+                  <SelectTrigger className="rounded-none border-accent/10 h-12 text-[11px] font-bold uppercase focus:ring-accent"><SelectValue placeholder="Select Steward" /></SelectTrigger>
+                  <SelectContent className="rounded-none">{stewards.map(s => <SelectItem key={s.id} value={s.id} className="uppercase font-bold text-[10px] py-3">{s.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Activation Capital (KES)</Label>
+                  <Input type="number" value={activationAmount} onChange={(e) => setActivationAmount(Number(e.target.value))} className="rounded-none h-12 text-xl font-headline italic border-accent/10" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Transaction Reference</Label>
+                  <Input value={depositCode} onChange={(e) => setDepositCode(e.target.value)} placeholder="TRX-XXXX" className="rounded-none h-12 text-lg tracking-widest font-bold border-accent/10 uppercase" />
+                </div>
+              </div>
+            </div>
+            <DialogFooter><Button onClick={handleTransmitToSteward} disabled={isActivating || !depositCode || !assignedStewardId || activationAmount <= 0} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl border-none transition-none">{isActivating ? <><Loader2 className="h-4 w-4 animate-spin" /> Transmitting...</> : "Authorize Transmission"}</Button></DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!editProject} onOpenChange={(open) => !open && setEditProject(null)}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-6xl max-h-[90vh] overflow-hidden flex flex-col p-0 bg-white">
           <div className="bg-accent h-1.5 w-full" />
@@ -512,7 +547,7 @@ export default function ProjectPlanningPage() {
               </TabsContent>
 
               <TabsContent value="network" className="m-0 space-y-10">
-                <div className="flex justify-between items-center pb-6 border-b border-accent/5"><h4 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent/60">Partner Matrix</h4><Button variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white transition-none"><Plus className="h-4 w-4 mr-2" /> Link Resource</Button></div>
+                <div className="flex justify-between items-center pb-6 border-b border-accent/5"><h4 className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent/60">Partner Matrix</h4><Button variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase tracking-widest font-bold border-accent/20 hover:bg-accent hover:text-white transition-none"><Plus className="h-3.5 w-3.5 mr-2" /> Link Resource</Button></div>
                 <div className="space-y-6">
                   {(editFormData.vendorAllocations || []).map((alloc, idx) => (
                     <div key={alloc.id} className="p-8 border border-accent/5 bg-secondary/5 space-y-8 relative group hover:bg-white hover:shadow-xl transition-none">
@@ -550,6 +585,20 @@ export default function ProjectPlanningPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="rounded-none border-accent/20 font-body p-10 bg-white">
+          <AlertDialogHeader className="space-y-6">
+            <div className="flex items-center gap-3"><XCircle className="h-6 w-6 text-destructive" /><span className="text-destructive text-[13px] font-bold uppercase tracking-[0.3em]">Critical Protocol</span></div>
+            <AlertDialogTitle className="text-3xl font-headline italic text-destructive">Confirm Permanent Purge?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">This will permanently remove dossier **{deleteId}** and all associated site logs. The client identity will persist in the Relationship Intelligence registry.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="pt-10">
+            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-accent/10 transition-none shadow-none">Abort</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { removeClientProject(deleteId!); setDeleteId(null); toast({ title: "Dossier Purged", variant: "destructive" }); }} className="bg-destructive text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 hover:bg-destructive/90 shadow-xl transition-none border-none">Authorize Purge</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

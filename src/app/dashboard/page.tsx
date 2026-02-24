@@ -578,7 +578,7 @@ export default function ClientDashboardPage() {
                           <RotateCcw className="h-5 w-5 text-accent" />
                           <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent">Reimbursement</h4>
                         </div>
-                        <div className="space-y-4 pt-4 border-t border-accent/10">
+                        <div className="space-y-4 pt-4 border-t border-orange-500/10">
                           <p className="text-base font-light italic text-accent/80">"{activeProject.reorganization.reimbursement.rationale}"</p>
                           <p className="text-2xl font-headline italic text-accent">- KES {activeProject.reorganization.reimbursement.amount.toLocaleString()}</p>
                         </div>
