@@ -45,7 +45,8 @@ import {
   RotateCcw,
   TrendingUp,
   Key,
-  Lock
+  Lock,
+  RefreshCcw
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
@@ -90,7 +91,7 @@ export default function ClientDashboardPage() {
 
   const allMyProjects = useMemo(() => {
     if (!accessCode) return [];
-    return clientProjects.filter(p => p.accessCode.toUpperCase() === accessCode.toUpperCase());
+    return clientProjects.filter(p => p.accessCode?.toUpperCase() === accessCode.toUpperCase());
   }, [clientProjects, accessCode]);
 
   const activeProject = useMemo(() => {
@@ -183,7 +184,6 @@ export default function ClientDashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-24 font-body relative">
-      {/* LOCKED OVERLAY */}
       <AnimatePresence>
         {isLocked && (
           <motion.div 
