@@ -26,10 +26,11 @@ import {
   FilePlus,
   Info,
   Compass,
-  LayoutList
+  LayoutList,
+  Search
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useWhyteStore, ClientProject, ProjectTask, SubTask, Milestone, VendorAllocation } from "@/store/use-whyte-store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -53,11 +54,12 @@ import {
 export default function DesignerInitializePage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { addClientProject, collaborators } = useWhyteStore();
+  const { addClientProject, collaborators, clientProjects } = useWhyteStore();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [clientSearch, setClientSearch] = useState("");
 
   useEffect(() => {
     setIsMounted(true);
@@ -82,6 +84,22 @@ export default function DesignerInitializePage() {
     ] as ProjectTask[],
     vendorAllocations: [] as VendorAllocation[]
   });
+
+  const existingClients = useMemo(() => {
+    const clients: Record<string, { name: string, email: string }> = {};
+    clientProjects.forEach(p => {
+      clients[p.email.toLowerCase()] = { name: p.name, email: p.email };
+    });
+    return Object.values(clients);
+  }, [clientProjects]);
+
+  const filteredClients = useMemo(() => {
+    if (!clientSearch) return [];
+    return existingClients.filter(c => 
+      c.name.toLowerCase().includes(clientSearch.toLowerCase()) || 
+      c.email.toLowerCase().includes(clientSearch.toLowerCase())
+    ).slice(0, 5);
+  }, [existingClients, clientSearch]);
 
   const totalSteps = 7;
   const progress = (step / totalSteps) * 100;
@@ -187,13 +205,19 @@ export default function DesignerInitializePage() {
     return true; 
   };
 
+  const selectExistingClient = (client: { name: string, email: string }) => {
+    setFormData({ ...formData, name: client.name, email: client.email });
+    setClientSearch("");
+    handleNext();
+  };
+
   if (!isMounted) return null;
 
   return (
     <div className="max-w-5xl mx-auto space-y-12 font-body pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-        <Link href="/designer" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-all group">
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+        <Link href="/designer" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent group transition-none">
+          <ArrowLeft className="h-4 w-4" />
           <span className="text-[11px] font-bold uppercase tracking-[0.3em]">Back to Workbench</span>
         </Link>
         <div className="space-y-4">
@@ -201,14 +225,6 @@ export default function DesignerInitializePage() {
           <h1 className="text-5xl font-headline italic">Initialize <span className="not-italic">New Commission.</span></h1>
         </div>
       </motion.div>
-
-      <Alert className="rounded-none border-accent/10 bg-accent/[0.02] p-6">
-        <Info className="h-5 w-5 text-accent" />
-        <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-accent mb-1">Administrative Authorization Required</AlertTitle>
-        <AlertDescription className="text-[13px] font-light italic text-muted-foreground leading-relaxed">
-          Dossiers initialized by designers require senior partner authorization and initial deposit verification before site implementation tasks are unlocked.
-        </AlertDescription>
-      </Alert>
 
       <div className="max-w-md mx-auto mb-12">
         <div className="flex justify-between text-[11px] uppercase tracking-[0.3em] font-bold text-accent/40 mb-3">
@@ -224,10 +240,40 @@ export default function DesignerInitializePage() {
             <AnimatePresence mode="wait">
               {step === 1 && (
                 <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
-                  <div className="flex items-center gap-4 mb-2"><User className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Client Identity</h3></div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 mb-2"><User className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Client Identity</h3></div>
+                    {existingClients.length > 0 && (
+                      <div className="relative w-72">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
+                          <Input 
+                            placeholder="Pick from Registry..." 
+                            className="pl-10 h-10 text-[10px] uppercase tracking-widest rounded-none border-accent/10 focus:ring-accent transition-none"
+                            value={clientSearch}
+                            onChange={(e) => setClientSearch(e.target.value)}
+                          />
+                        </div>
+                        {filteredClients.length > 0 && (
+                          <div className="absolute top-full left-0 w-full bg-white border border-accent/10 shadow-2xl z-20 mt-1">
+                            {filteredClients.map(c => (
+                              <button
+                                key={c.email}
+                                type="button"
+                                onClick={() => selectExistingClient(c)}
+                                className="w-full text-left p-4 hover:bg-accent hover:text-white flex flex-col gap-1 border-b border-accent/5 last:border-0 transition-none"
+                              >
+                                <span className="text-[10px] font-bold uppercase tracking-widest">{c.name}</span>
+                                <span className="text-[9px] opacity-60 uppercase">{c.email}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Full Name</Label><Input placeholder="E.g., Alara Kibaki" className="rounded-none border-neutral-200 h-14 text-lg focus:ring-accent" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} /></div>
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Email Address</Label><Input type="email" placeholder="client@domain.com" className="rounded-none border-neutral-200 h-14 text-lg focus:ring-accent" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Full Name</Label><Input placeholder="E.g., Alara Kibaki" className="rounded-none border-neutral-200 h-14 text-lg focus:ring-accent transition-none" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Email Address</Label><Input type="email" placeholder="client@domain.com" className="rounded-none border-neutral-200 h-14 text-lg focus:ring-accent transition-none" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} /></div>
                   </div>
                 </motion.div>
               )}
@@ -235,10 +281,10 @@ export default function DesignerInitializePage() {
               {step === 2 && (
                 <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><Briefcase className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Project Scope</h3></div>
-                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Designation</Label><Input placeholder="E.g., Muthaiga Penthouse Renovation" className="rounded-none border-neutral-200 h-14 text-xl font-headline italic focus:ring-accent" value={formData.project} onChange={(e) => setFormData({...formData, project: e.target.value})} /></div>
+                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Designation</Label><Input placeholder="E.g., Muthaiga Penthouse Renovation" className="rounded-none border-neutral-200 h-14 text-xl font-headline italic focus:ring-accent transition-none" value={formData.project} onChange={(e) => setFormData({...formData, project: e.target.value})} /></div>
                   <div className="grid grid-cols-1 gap-8">
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea placeholder="Creative briefing summary..." className="min-h-[120px] rounded-none border-neutral-200 text-lg p-6 font-light italic focus:ring-accent bg-neutral-50/30" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} /></div>
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><LayoutList className="h-3.5 w-3.5" /> Technical Scope of Works</Label><Textarea placeholder="Structural and implementation requirements..." className="min-h-[120px] rounded-none border-neutral-200 text-base p-6 font-light italic focus:ring-accent bg-neutral-50/10" value={formData.workScope} onChange={(e) => setFormData({...formData, workScope: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea placeholder="Creative briefing summary..." className="min-h-[120px] rounded-none border-neutral-200 text-lg p-6 font-light italic focus:ring-accent bg-neutral-50/30 transition-none" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><LayoutList className="h-3.5 w-3.5" /> Technical Scope of Works</Label><Textarea placeholder="Structural requirements..." className="min-h-[120px] rounded-none border-neutral-200 text-base p-6 font-light italic focus:ring-accent bg-neutral-50/10 transition-none" value={formData.workScope} onChange={(e) => setFormData({...formData, workScope: e.target.value})} /></div>
                   </div>
                 </motion.div>
               )}
@@ -250,7 +296,7 @@ export default function DesignerInitializePage() {
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
                       <Select onValueChange={(v: any) => setFormData({...formData, tier: v})} defaultValue={formData.tier}>
-                        <SelectTrigger className="rounded-none border-neutral-200 h-14 text-[12px] font-bold uppercase focus:ring-accent">
+                        <SelectTrigger className="rounded-none border-neutral-200 h-14 text-[12px] font-bold uppercase focus:ring-accent transition-none">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-none">
@@ -262,12 +308,12 @@ export default function DesignerInitializePage() {
                     </div>
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Estimated Commitment (KES)</Label>
-                      <Input type="number" placeholder="5,000,000" className="rounded-none border-neutral-200 h-14 text-2xl font-headline italic focus:ring-accent" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} />
+                      <Input type="number" placeholder="5,000,000" className="rounded-none border-neutral-200 h-14 text-2xl font-headline italic focus:ring-accent transition-none" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} />
                     </div>
                   </div>
                   <div className="space-y-3 pt-6 border-t border-accent/5">
                     <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><Compass className="h-3.5 w-3.5" /> Spatial Capacity (Rooms)</Label>
-                    <Input type="number" placeholder="E.g., 6" className="rounded-none border-neutral-200 h-14 text-2xl font-headline italic focus:ring-accent max-w-xs" value={formData.roomsCount} onChange={(e) => setFormData({...formData, roomsCount: e.target.value})} />
+                    <Input type="number" placeholder="E.g., 6" className="rounded-none border-neutral-200 h-14 text-2xl font-headline italic focus:ring-accent max-w-xs transition-none" value={formData.roomsCount} onChange={(e) => setFormData({...formData, roomsCount: e.target.value})} />
                   </div>
                 </motion.div>
               )}
@@ -280,7 +326,7 @@ export default function DesignerInitializePage() {
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Protocol</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold">
+                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold transition-none">
                             <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
                             {format(formData.startDate, "MMM dd, yyyy")}
                           </Button>
@@ -294,7 +340,7 @@ export default function DesignerInitializePage() {
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Delivery Target</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold">
+                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold transition-none">
                             <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
                             {format(formData.endDate, "MMM dd, yyyy")}
                           </Button>
@@ -315,24 +361,24 @@ export default function DesignerInitializePage() {
                       <Flag className="h-5 w-5 text-accent/40" />
                       <h3 className="text-2xl font-headline italic">Strategic Milestones</h3>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white">
+                    <Button type="button" variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white transition-none">
                       <Plus className="h-4 w-4 mr-2" /> Append Target
                     </Button>
                   </div>
                   <div className="space-y-6">
                     {formData.milestones.map((m, idx) => (
-                      <div key={m.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-6 relative group hover:bg-white hover:shadow-xl transition-all">
-                        <Button variant="ghost" size="icon" onClick={() => removeMilestone(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                      <div key={m.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-6 relative group hover:bg-white hover:shadow-xl transition-none">
+                        <Button variant="ghost" size="icon" onClick={() => removeMilestone(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive transition-none"><Trash2 className="h-4 w-4" /></Button>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                           <div className="space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Target Label</Label>
-                            <Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent" placeholder="E.g., Structural Handover" />
+                            <Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent transition-none" placeholder="E.g., Structural Handover" />
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Sync Date</Label>
                             <Popover>
                               <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-neutral-100 font-bold">
+                                <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-neutral-100 font-bold transition-none">
                                   <CalendarIcon className="mr-3 h-4 w-4 opacity-40" />
                                   {format(m.date, "MMM dd, yyyy")}
                                 </Button>
@@ -356,23 +402,23 @@ export default function DesignerInitializePage() {
                       <Zap className="h-5 w-5 text-accent/40" />
                       <h3 className="text-2xl font-headline italic">Initial Site Protocols</h3>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addTask} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white">
+                    <Button type="button" variant="outline" size="sm" onClick={addTask} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white transition-none">
                       <Plus className="h-4 w-4 mr-2" /> Append Protocol
                     </Button>
                   </div>
                   <div className="space-y-6">
                     {formData.tasks.map((task, idx) => (
-                      <div key={task.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-6 relative group hover:bg-white hover:shadow-xl transition-all">
-                        <Button variant="ghost" size="icon" onClick={() => removeTask(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                      <div key={task.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-6 relative group hover:bg-white hover:shadow-xl transition-none">
+                        <Button variant="ghost" size="icon" onClick={() => removeTask(idx)} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive transition-none"><Trash2 className="h-4 w-4" /></Button>
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                           <div className="md:col-span-8 space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Protocol Identity</Label>
-                            <Input value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent" placeholder="E.g., Initial Site Measurements" />
+                            <Input value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent transition-none" placeholder="E.g., Initial Site Measurements" />
                           </div>
                           <div className="md:col-span-4 space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Urgency</Label>
                             <Select value={task.priority} onValueChange={(v: any) => updateTask(idx, 'priority', v)}>
-                              <SelectTrigger className="rounded-none border-neutral-100 h-12 text-[11px] font-bold">
+                              <SelectTrigger className="rounded-none border-neutral-100 h-12 text-[11px] font-bold transition-none">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent className="rounded-none">
@@ -396,18 +442,19 @@ export default function DesignerInitializePage() {
                       <Users className="h-5 w-5 text-accent/40" />
                       <h3 className="text-2xl font-headline italic">Partner Synergy</h3>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white">
+                    <Button type="button" variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white transition-none">
                       <Plus className="h-4 w-4 mr-2" /> Link Partner
                     </Button>
                   </div>
                   <div className="space-y-6">
                     {formData.vendorAllocations.map((alloc, idx) => (
-                      <div key={alloc.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-8 relative group hover:bg-white hover:shadow-xl transition-all">
+                      <div key={alloc.id} className="p-8 border border-neutral-100 bg-neutral-50/50 space-y-8 relative group hover:bg-white hover:shadow-xl transition-none">
+                        <Button variant="ghost" size="icon" onClick={() => setFormData({...formData, vendorAllocations: formData.vendorAllocations.filter((_, i) => i !== idx)})} className="absolute top-4 right-4 h-8 w-8 text-destructive/20 hover:text-destructive transition-none"><Trash2 className="h-4 w-4" /></Button>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Registry Resource</Label>
                             <Select value={alloc.vendorName} onValueChange={(v) => updateAllocation(idx, 'vendorName', v)}>
-                              <SelectTrigger className="rounded-none h-12 text-[12px] font-bold border-neutral-100 focus:ring-accent">
+                              <SelectTrigger className="rounded-none h-12 text-[12px] font-bold border-neutral-100 focus:ring-accent transition-none">
                                 <SelectValue placeholder="SELECT FROM REGISTRY" />
                               </SelectTrigger>
                               <SelectContent className="rounded-none">
@@ -417,7 +464,7 @@ export default function DesignerInitializePage() {
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Professional Role</Label>
-                            <Input value={alloc.role} onChange={(e) => updateAllocation(idx, 'role', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent" placeholder="E.g., Structural Consultant" />
+                            <Input value={alloc.role} onChange={(e) => updateAllocation(idx, 'role', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent transition-none" placeholder="E.g., Structural Consultant" />
                           </div>
                         </div>
                       </div>
@@ -428,11 +475,11 @@ export default function DesignerInitializePage() {
             </AnimatePresence>
 
             <div className="pt-12 flex items-center justify-between border-t border-neutral-100">
-              {step > 1 ? <Button type="button" variant="ghost" onClick={handleBack} className="text-muted-foreground hover:text-accent font-bold uppercase text-[12px] group"><ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1" /> Previous</Button> : <div />}
+              {step > 1 ? <Button type="button" variant="ghost" onClick={handleBack} className="text-muted-foreground hover:text-accent font-bold uppercase text-[12px] group transition-none"><ArrowLeft className="h-4 w-4 mr-2" /> Previous</Button> : <div />}
               {step < totalSteps ? (
-                <Button type="submit" disabled={!isStepValid()} className="bg-accent text-white rounded-none h-16 px-12 uppercase tracking-widest text-[12px] font-bold shadow-2xl flex gap-3">Continue Briefing <ChevronRight className="h-5 w-5" /></Button>
+                <Button type="submit" disabled={!isStepValid()} className="bg-accent text-white rounded-none h-16 px-12 uppercase tracking-widest text-[12px] font-bold shadow-2xl flex gap-3 transition-none">Continue Briefing <ChevronRight className="h-5 w-5" /></Button>
               ) : (
-                <Button type="button" onClick={() => setIsConfirmOpen(true)} disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-2xl flex gap-3">Authorize & Transmit <CheckCircle2 className="h-5 w-5" /></Button>
+                <Button type="button" onClick={() => setIsConfirmOpen(true)} disabled={loading || !isStepValid()} className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[12px] font-bold shadow-2xl flex gap-3 transition-none">Authorize & Transmit <CheckCircle2 className="h-5 w-5" /></Button>
               )}
             </div>
           </form>
@@ -440,9 +487,9 @@ export default function DesignerInitializePage() {
       </Card>
 
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <AlertDialogContent className="rounded-none border-accent/20 font-body p-10">
+        <AlertDialogContent className="rounded-none border-accent/20 font-body p-10 bg-white">
           <AlertDialogHeader className="space-y-6"><div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Designer Protocol</span></div><AlertDialogTitle className="text-3xl font-headline italic">Confirm Briefing Transmission?</AlertDialogTitle><AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">This will register **{formData.project}** in the Master Registry. The brief will await senior partner authorization before site implementation can commence.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter className="pt-10"><AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-neutral-100">Abort</AlertDialogCancel><AlertDialogAction onClick={executeFinalSubmit} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 shadow-xl">Authorize & Transmit</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter className="pt-10"><AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-neutral-100 transition-none">Abort</AlertDialogCancel><AlertDialogAction onClick={executeFinalSubmit} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 shadow-xl transition-none">Authorize & Transmit</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

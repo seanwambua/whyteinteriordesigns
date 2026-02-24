@@ -25,7 +25,8 @@ import {
   PencilRuler,
   Eye,
   FileClock,
-  Loader2
+  Loader2,
+  Plus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -139,7 +140,6 @@ function ClientRegistryContent() {
 
   const handleToggleArchive = (id: string, currentStatus: boolean) => {
     if (currentStatus) {
-      // RESTORING FROM ARCHIVE -> SEND BACK TO HANDOVER
       handleReviewArchive(id);
     } else {
       updateClientProject(id, { isArchived: true });
@@ -174,9 +174,18 @@ function ClientRegistryContent() {
               </div>
             </div>
           </div>
-          <Badge variant="outline" className="rounded-none uppercase tracking-[0.3em] text-[10px] border-accent/20 text-accent/60 h-fit py-1.5 px-4 bg-white/50">
-            {isArchivedView ? 'Historical Records' : 'Verified Account Portfolio'}
-          </Badge>
+          <div className="flex items-center gap-4">
+            {!isArchivedView && (
+              <Button asChild variant="outline" className="rounded-none border-accent/10 h-10 px-4 text-[10px] font-bold uppercase tracking-widest bg-white hover:bg-accent hover:text-white transition-none shadow-sm flex gap-2">
+                <Link href={`/admin/clients/add?email=${encodeURIComponent(client.email)}`}>
+                  <Plus className="h-3 w-3" /> Add Dossier
+                </Link>
+              </Button>
+            )}
+            <Badge variant="outline" className="rounded-none uppercase tracking-[0.3em] text-[10px] border-accent/20 text-accent/60 h-fit py-1.5 px-4 bg-white/50">
+              {isArchivedView ? 'Historical Records' : 'Verified Account Portfolio'}
+            </Badge>
+          </div>
         </div>
 
         <div className="divide-y divide-accent/5">
@@ -184,7 +193,7 @@ function ClientRegistryContent() {
             const assignedDesigner = designers.find(d => d.id === project.assignedDesignerId);
             
             return (
-              <div key={project.id} className="p-8 hover:bg-accent/[0.01] transition-colors group">
+              <div key={project.id} className="p-8 hover:bg-accent/[0.01] transition-none group">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
                   <div className="flex-1 space-y-6">
                     <div className="flex items-center gap-4">
@@ -236,12 +245,12 @@ function ClientRegistryContent() {
                       <Button 
                         onClick={() => handleReviewArchive(project.id)}
                         variant="outline" 
-                        className="rounded-none h-12 px-8 border-slate-200 text-[10px] font-bold uppercase tracking-widest flex gap-3 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
+                        className="rounded-none h-12 px-8 border-slate-200 text-[10px] font-bold uppercase tracking-widest flex gap-3 hover:bg-slate-900 hover:text-white transition-none shadow-sm"
                       >
                         <FileClock className="h-4 w-4" /> Review Dossier
                       </Button>
                     ) : (
-                      <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/5 hover:bg-accent hover:text-white transition-all p-0 shadow-sm">
+                      <Button asChild variant="ghost" className="h-12 w-12 rounded-full border border-accent/5 hover:bg-accent hover:text-white transition-none p-0 shadow-sm">
                         <Link href={`/admin/clients/${project.id}`}><ChevronRight className="h-5 w-5" /></Link>
                       </Button>
                     )}
@@ -306,7 +315,7 @@ function ClientRegistryContent() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button asChild className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold flex gap-3 shadow-xl hover:tracking-[0.2em] transition-all">
+          <Button asChild className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-widest text-[12px] font-bold flex gap-3 shadow-xl hover:bg-accent/90 transition-none">
             <Link href="/admin/clients/add"><UserPlus className="h-5 w-5" /> New Commission</Link>
           </Button>
         </div>
@@ -352,7 +361,7 @@ function ClientRegistryContent() {
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-10">
             <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-accent/10">Abort Cancellation</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 hover:bg-destructive/90 shadow-xl">Authorize Purge</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 hover:bg-destructive/90 shadow-xl transition-none">Authorize Purge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
