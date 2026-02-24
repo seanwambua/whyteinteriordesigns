@@ -325,29 +325,15 @@ export default function DesignerInitializePage() {
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Protocol</Label>
                       <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold transition-none">
-                            <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
-                            {format(formData.startDate, "MMM dd, yyyy")}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 rounded-none">
-                          <Calendar mode="single" selected={formData.startDate} onSelect={(d) => d && setFormData({...formData, startDate: d})} initialFocus />
-                        </PopoverContent>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold transition-none"><CalendarIcon className="mr-3 h-5 w-5 opacity-40" />{format(formData.startDate, "MMM dd, yyyy")}</Button></PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={formData.startDate} onSelect={(d) => d && setFormData({...formData, startDate: d})} initialFocus /></PopoverContent>
                       </Popover>
                     </div>
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Delivery Target</Label>
                       <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold transition-none">
-                            <CalendarIcon className="mr-3 h-5 w-5 opacity-40" />
-                            {format(formData.endDate, "MMM dd, yyyy")}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 rounded-none">
-                          <Calendar mode="single" selected={formData.endDate} onSelect={(d) => d && setFormData({...formData, endDate: d})} initialFocus />
-                        </PopoverContent>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold transition-none"><CalendarIcon className="mr-3 h-5 w-5 opacity-40" />{format(formData.endDate, "MMM dd, yyyy")}</Button></PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={formData.endDate} onSelect={(d) => d && setFormData({...formData, endDate: d})} initialFocus /></PopoverContent>
                       </Popover>
                     </div>
                   </div>

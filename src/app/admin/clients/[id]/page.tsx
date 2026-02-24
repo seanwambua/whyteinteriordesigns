@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect, memo } from "react";
+import { use, useState, useEffect, memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWhyteStore, ClientProject, ProjectTask, SubTask, Inquiry, SiteReport, Installment, ReorganizationDetails, Milestone, VendorAllocation } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
@@ -443,6 +443,9 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
       isUrgent: remaining < 0
     };
   })();
+
+  const tempTotalAssigned = tempInstallments.reduce((sum, i) => sum + i.amount, 0);
+  const tempVariance = tempTotalAssigned - project.totalBudget;
 
   return (
     <div className="max-w-7xl mx-auto space-y-12 font-body pb-24">

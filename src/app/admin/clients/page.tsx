@@ -360,7 +360,7 @@ function ClientRegistryContent() {
             <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">This will permanently remove dossier **{deleteId}** and all associated site logs. This action cannot be reversed within the studio registry.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-10">
-            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-accent/10">Abort Cancellation</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-accent/10 transition-none">Abort Cancellation</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 hover:bg-destructive/90 shadow-xl transition-none">Authorize Purge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
