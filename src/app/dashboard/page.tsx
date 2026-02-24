@@ -47,7 +47,8 @@ import {
   TrendingUp,
   Key,
   Lock,
-  RefreshCcw
+  RefreshCcw,
+  Check
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
@@ -529,7 +530,7 @@ export default function ClientDashboardPage() {
           <Card className="rounded-none border-accent/5 bg-secondary/30 p-8 space-y-6 shadow-sm">
             <div className="space-y-1">
               <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><PencilRuler className="h-3 w-3" /> Creative Lead</h4>
-              <p className="text-lg font-headline italic text-accent">{assignedDesigner ? assignedDesigner.name : "Unassigned"}</p>
+              <p className="text-lg font-headline italic text-accent">{assignedDesigner ? assignedDesigner.name : "Unassigned Lead"}</p>
             </div>
             <div className="pt-4 border-t border-accent/5 space-y-1">
               <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><Building2 className="h-3 w-3" /> Audit Entity</h4>
@@ -540,7 +541,7 @@ export default function ClientDashboardPage() {
       </div>
 
       <Dialog open={isReviewingReorg} onOpenChange={setIsReviewingReorg}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-3xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col shadow-2xl">
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-3xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col shadow-2xl z-50">
           <div className="bg-orange-600 h-1.5 w-full" />
           <div className="p-12 space-y-10 overflow-y-auto custom-scrollbar flex-1">
             <DialogHeader className="space-y-4">
