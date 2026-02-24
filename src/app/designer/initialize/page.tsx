@@ -27,7 +27,8 @@ import {
   Info,
   Compass,
   LayoutList,
-  Search
+  Search,
+  Key
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useMemo } from "react";
@@ -61,6 +62,12 @@ export default function DesignerInitializePage() {
   const [isMounted, setIsMounted] = useState(false);
   const [clientSearch, setClientSearch] = useState("");
 
+  const generateAccessCode = (name: string) => {
+    const prefix = name.split(' ')[0].toUpperCase() || "WHYTE";
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${prefix}-AUTH-${random}`;
+  };
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -68,6 +75,7 @@ export default function DesignerInitializePage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    accessCode: "",
     project: "",
     tier: "Premium" as ClientProject['tier'],
     description: "",
@@ -86,9 +94,9 @@ export default function DesignerInitializePage() {
   });
 
   const existingClients = useMemo(() => {
-    const clients: Record<string, { name: string, email: string }> = {};
+    const clients: Record<string, { name: string, email: string, accessCode: string }> = {};
     clientProjects.forEach(p => {
-      clients[p.email.toLowerCase()] = { name: p.name, email: p.email };
+      clients[p.email.toLowerCase()] = { name: p.name, email: p.email, accessCode: p.accessCode };
     });
     return Object.values(clients);
   }, [clientProjects]);
@@ -104,7 +112,12 @@ export default function DesignerInitializePage() {
   const totalSteps = 7;
   const progress = (step / totalSteps) * 100;
 
-  const handleNext = () => setStep(prev => prev + 1);
+  const handleNext = () => {
+    if (step === 1 && !formData.accessCode && formData.name) {
+      setFormData(prev => ({ ...prev, accessCode: generateAccessCode(formData.name) }));
+    }
+    setStep(prev => prev + 1);
+  };
   const handleBack = () => setStep(prev => prev - 1);
 
   const addMilestone = () => setFormData({ 
@@ -170,6 +183,7 @@ export default function DesignerInitializePage() {
       id, 
       name: formData.name, 
       email: formData.email, 
+      accessCode: formData.accessCode,
       project: formData.project, 
       tier: formData.tier, 
       status: "Planning", 
@@ -193,7 +207,7 @@ export default function DesignerInitializePage() {
     setTimeout(() => { 
       addClientProject(newProject); 
       setLoading(false); 
-      toast({ title: "Briefing Synchronized", description: `Dossier ${id} transmitted to Admin for authorization.` });
+      toast({ title: "Briefing Synchronized", description: `Dossier ${id} transmitted under access code ${formData.accessCode}.` });
       router.push("/designer"); 
     }, 1500);
   };
@@ -205,10 +219,10 @@ export default function DesignerInitializePage() {
     return true; 
   };
 
-  const selectExistingClient = (client: { name: string, email: string }) => {
-    setFormData({ ...formData, name: client.name, email: client.email });
+  const selectExistingClient = (client: { name: string, email: string, accessCode: string }) => {
+    setFormData({ ...formData, name: client.name, email: client.email, accessCode: client.accessCode });
     setClientSearch("");
-    handleNext();
+    setStep(2);
   };
 
   if (!isMounted) return null;
@@ -248,7 +262,7 @@ export default function DesignerInitializePage() {
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-accent/20" />
                           <Input 
                             placeholder="Pick from Registry..." 
-                            className="pl-10 h-10 text-[10px] uppercase tracking-widest rounded-none border-accent/10 focus:ring-accent transition-none"
+                            className="pl-10 h-10 text-[10px] uppercase tracking-widest rounded-none border-accent/10 focus:ring-accent transition-none shadow-none"
                             value={clientSearch}
                             onChange={(e) => setClientSearch(e.target.value)}
                           />
@@ -272,19 +286,29 @@ export default function DesignerInitializePage() {
                     )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Full Name</Label><Input placeholder="E.g., Alara Kibaki" className="rounded-none border-neutral-200 h-14 text-lg focus:ring-accent transition-none" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} /></div>
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Email Address</Label><Input type="email" placeholder="client@domain.com" className="rounded-none border-neutral-200 h-14 text-lg focus:ring-accent transition-none" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Full Name</Label><Input placeholder="E.g., Alara Kibaki" className="rounded-none border-neutral-200 h-14 text-lg focus:ring-accent transition-none shadow-none" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Email Address</Label><Input type="email" placeholder="client@domain.com" className="rounded-none border-neutral-200 h-14 text-lg focus:ring-accent transition-none shadow-none" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} /></div>
                   </div>
+                  {formData.accessCode && (
+                    <div className="p-6 bg-accent/[0.02] border border-dashed border-accent/20 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">Portfolio Access Code</Label>
+                        <Key className="h-3 w-3 text-accent/20" />
+                      </div>
+                      <p className="text-xl font-mono tracking-[0.2em] font-bold text-accent">{formData.accessCode}</p>
+                      <p className="text-[9px] uppercase tracking-widest text-muted-foreground italic">Unified credential for all commissions linked to this client identity.</p>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
               {step === 2 && (
                 <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                   <div className="flex items-center gap-4 mb-2"><Briefcase className="h-5 w-5 text-accent/40" /><h3 className="text-2xl font-headline italic">Project Scope</h3></div>
-                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Designation</Label><Input placeholder="E.g., Muthaiga Penthouse Renovation" className="rounded-none border-neutral-200 h-14 text-xl font-headline italic focus:ring-accent transition-none" value={formData.project} onChange={(e) => setFormData({...formData, project: e.target.value})} /></div>
+                  <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Project Designation</Label><Input placeholder="E.g., Muthaiga Penthouse Renovation" className="rounded-none border-neutral-200 h-14 text-xl font-headline italic focus:ring-accent transition-none shadow-none" value={formData.project} onChange={(e) => setFormData({...formData, project: e.target.value})} /></div>
                   <div className="grid grid-cols-1 gap-8">
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea placeholder="Creative briefing summary..." className="min-h-[120px] rounded-none border-neutral-200 text-lg p-6 font-light italic focus:ring-accent bg-neutral-50/30 transition-none" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} /></div>
-                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><LayoutList className="h-3.5 w-3.5" /> Technical Scope of Works</Label><Textarea placeholder="Structural requirements..." className="min-h-[120px] rounded-none border-neutral-200 text-base p-6 font-light italic focus:ring-accent bg-neutral-50/10 transition-none" value={formData.workScope} onChange={(e) => setFormData({...formData, workScope: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Architectural Narrative</Label><Textarea placeholder="Creative briefing summary..." className="min-h-[120px] rounded-none border-neutral-200 text-lg p-6 font-light italic focus:ring-accent bg-neutral-50/30 transition-none shadow-none" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} /></div>
+                    <div className="space-y-3"><Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><LayoutList className="h-3.5 w-3.5" /> Technical Scope of Works</Label><Textarea placeholder="Structural requirements..." className="min-h-[120px] rounded-none border-neutral-200 text-base p-6 font-light italic focus:ring-accent bg-neutral-50/10 transition-none shadow-none" value={formData.workScope} onChange={(e) => setFormData({...formData, workScope: e.target.value})} /></div>
                   </div>
                 </motion.div>
               )}
@@ -296,7 +320,7 @@ export default function DesignerInitializePage() {
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commission Tier</Label>
                       <Select onValueChange={(v: any) => setFormData({...formData, tier: v})} defaultValue={formData.tier}>
-                        <SelectTrigger className="rounded-none border-neutral-200 h-14 text-[12px] font-bold uppercase focus:ring-accent transition-none">
+                        <SelectTrigger className="rounded-none border-neutral-200 h-14 text-[12px] font-bold uppercase focus:ring-accent transition-none shadow-none">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-none">
@@ -308,12 +332,12 @@ export default function DesignerInitializePage() {
                     </div>
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Estimated Commitment (KES)</Label>
-                      <Input type="number" placeholder="5,000,000" className="rounded-none border-neutral-200 h-14 text-2xl font-headline italic focus:ring-accent transition-none" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} />
+                      <Input type="number" placeholder="5,000,000" className="rounded-none border-neutral-200 h-14 text-2xl font-headline italic focus:ring-accent transition-none shadow-none" value={formData.totalBudget} onChange={(e) => setFormData({...formData, totalBudget: e.target.value})} />
                     </div>
                   </div>
                   <div className="space-y-3 pt-6 border-t border-accent/5">
                     <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2"><Compass className="h-3.5 w-3.5" /> Spatial Capacity (Rooms)</Label>
-                    <Input type="number" placeholder="E.g., 6" className="rounded-none border-neutral-200 h-14 text-2xl font-headline italic focus:ring-accent max-w-xs transition-none" value={formData.roomsCount} onChange={(e) => setFormData({...formData, roomsCount: e.target.value})} />
+                    <Input type="number" placeholder="E.g., 6" className="rounded-none border-neutral-200 h-14 text-2xl font-headline italic focus:ring-accent max-w-xs transition-none shadow-none" value={formData.roomsCount} onChange={(e) => setFormData({...formData, roomsCount: e.target.value})} />
                   </div>
                 </motion.div>
               )}
@@ -325,14 +349,14 @@ export default function DesignerInitializePage() {
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Commencement Protocol</Label>
                       <Popover>
-                        <PopoverTrigger asChild><Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold transition-none"><CalendarIcon className="mr-3 h-5 w-5 opacity-40" />{format(formData.startDate, "MMM dd, yyyy")}</Button></PopoverTrigger>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold transition-none shadow-none"><CalendarIcon className="mr-3 h-5 w-5 opacity-40" />{format(formData.startDate, "MMM dd, yyyy")}</Button></PopoverTrigger>
                         <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={formData.startDate} onSelect={(d) => d && setFormData({...formData, startDate: d})} initialFocus /></PopoverContent>
                       </Popover>
                     </div>
                     <div className="space-y-3">
                       <Label className="text-[12px] font-bold uppercase tracking-widest opacity-60">Delivery Target</Label>
                       <Popover>
-                        <PopoverTrigger asChild><Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold transition-none"><CalendarIcon className="mr-3 h-5 w-5 opacity-40" />{format(formData.endDate, "MMM dd, yyyy")}</Button></PopoverTrigger>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full h-14 rounded-none justify-start text-[12px] border-neutral-200 uppercase font-bold transition-none shadow-none"><CalendarIcon className="mr-3 h-5 w-5 opacity-40" />{format(formData.endDate, "MMM dd, yyyy")}</Button></PopoverTrigger>
                         <PopoverContent className="w-auto p-0 rounded-none"><Calendar mode="single" selected={formData.endDate} onSelect={(d) => d && setFormData({...formData, endDate: d})} initialFocus /></PopoverContent>
                       </Popover>
                     </div>
@@ -347,7 +371,7 @@ export default function DesignerInitializePage() {
                       <Flag className="h-5 w-5 text-accent/40" />
                       <h3 className="text-2xl font-headline italic">Strategic Milestones</h3>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white transition-none">
+                    <Button type="button" variant="outline" size="sm" onClick={addMilestone} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white transition-none shadow-none">
                       <Plus className="h-4 w-4 mr-2" /> Append Target
                     </Button>
                   </div>
@@ -358,13 +382,13 @@ export default function DesignerInitializePage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                           <div className="space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Target Label</Label>
-                            <Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent transition-none" placeholder="E.g., Structural Handover" />
+                            <Input value={m.label} onChange={(e) => updateMilestone(idx, 'label', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent transition-none shadow-none" placeholder="E.g., Structural Handover" />
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Sync Date</Label>
                             <Popover>
                               <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-neutral-100 font-bold transition-none">
+                                <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[11px] border-neutral-100 font-bold transition-none shadow-none">
                                   <CalendarIcon className="mr-3 h-4 w-4 opacity-40" />
                                   {format(m.date, "MMM dd, yyyy")}
                                 </Button>
@@ -388,7 +412,7 @@ export default function DesignerInitializePage() {
                       <Zap className="h-5 w-5 text-accent/40" />
                       <h3 className="text-2xl font-headline italic">Initial Site Protocols</h3>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addTask} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white transition-none">
+                    <Button type="button" variant="outline" size="sm" onClick={addTask} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white transition-none shadow-none">
                       <Plus className="h-4 w-4 mr-2" /> Append Protocol
                     </Button>
                   </div>
@@ -399,12 +423,12 @@ export default function DesignerInitializePage() {
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                           <div className="md:col-span-8 space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Protocol Identity</Label>
-                            <Input value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent transition-none" placeholder="E.g., Initial Site Measurements" />
+                            <Input value={task.title} onChange={(e) => updateTask(idx, 'title', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent transition-none shadow-none" placeholder="E.g., Initial Site Measurements" />
                           </div>
                           <div className="md:col-span-4 space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Urgency</Label>
                             <Select value={task.priority} onValueChange={(v: any) => updateTask(idx, 'priority', v)}>
-                              <SelectTrigger className="rounded-none border-neutral-100 h-12 text-[11px] font-bold transition-none">
+                              <SelectTrigger className="rounded-none border-neutral-100 h-12 text-[11px] font-bold transition-none shadow-none">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent className="rounded-none">
@@ -428,7 +452,7 @@ export default function DesignerInitializePage() {
                       <Users className="h-5 w-5 text-accent/40" />
                       <h3 className="text-2xl font-headline italic">Partner Synergy</h3>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white transition-none">
+                    <Button type="button" variant="outline" size="sm" onClick={addAllocation} className="rounded-none h-10 px-6 text-[11px] uppercase font-bold border-neutral-200 hover:bg-accent hover:text-white transition-none shadow-none">
                       <Plus className="h-4 w-4 mr-2" /> Link Partner
                     </Button>
                   </div>
@@ -440,7 +464,7 @@ export default function DesignerInitializePage() {
                           <div className="space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Registry Resource</Label>
                             <Select value={alloc.vendorName} onValueChange={(v) => updateAllocation(idx, 'vendorName', v)}>
-                              <SelectTrigger className="rounded-none h-12 text-[12px] font-bold border-neutral-100 focus:ring-accent transition-none">
+                              <SelectTrigger className="rounded-none h-12 text-[12px] font-bold border-neutral-100 focus:ring-accent transition-none shadow-none">
                                 <SelectValue placeholder="SELECT FROM REGISTRY" />
                               </SelectTrigger>
                               <SelectContent className="rounded-none">
@@ -450,7 +474,7 @@ export default function DesignerInitializePage() {
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[11px] uppercase font-bold opacity-40">Professional Role</Label>
-                            <Input value={alloc.role} onChange={(e) => updateAllocation(idx, 'role', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent transition-none" placeholder="E.g., Structural Consultant" />
+                            <Input value={alloc.role} onChange={(e) => updateAllocation(idx, 'role', e.target.value)} className="rounded-none h-12 text-sm font-bold border-neutral-100 focus:ring-accent transition-none shadow-none" placeholder="E.g., Structural Consultant" />
                           </div>
                         </div>
                       </div>
@@ -473,9 +497,9 @@ export default function DesignerInitializePage() {
       </Card>
 
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <AlertDialogContent className="rounded-none border-accent/20 font-body p-10 bg-white">
-          <AlertDialogHeader className="space-y-6"><div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Designer Protocol</span></div><AlertDialogTitle className="text-3xl font-headline italic">Confirm Briefing Transmission?</AlertDialogTitle><AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">This will register **{formData.project}** in the Master Registry. The brief will await senior partner authorization before site implementation can commence.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter className="pt-10"><AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-neutral-100 transition-none">Abort</AlertDialogCancel><AlertDialogAction onClick={executeFinalSubmit} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 shadow-xl transition-none">Authorize & Transmit</AlertDialogAction></AlertDialogFooter>
+        <AlertDialogContent className="rounded-none border-accent/20 font-body p-10 bg-white shadow-2xl">
+          <AlertDialogHeader className="space-y-6"><div className="flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-accent" /><span className="text-accent text-[13px] font-bold uppercase tracking-[0.3em]">Designer Protocol</span></div><AlertDialogTitle className="text-3xl font-headline italic">Confirm Briefing Transmission?</AlertDialogTitle><AlertDialogDescription className="text-muted-foreground font-light leading-relaxed text-lg italic">This will register **{formData.project}** in the Master Registry. The client will utilize the access code **{formData.accessCode}** to synchronize their unified portfolio.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter className="pt-10"><AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-neutral-100 transition-none shadow-none">Abort</AlertDialogCancel><AlertDialogAction onClick={executeFinalSubmit} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 shadow-xl transition-none border-none">Authorize & Transmit</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

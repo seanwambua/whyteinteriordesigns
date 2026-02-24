@@ -43,7 +43,8 @@ import {
   LayoutGrid,
   ChevronDown,
   RotateCcw,
-  TrendingUp
+  TrendingUp,
+  Key
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
@@ -67,6 +68,7 @@ import {
 
 export default function ClientDashboardPage() {
   const { clientProjects, designers, updateClientProject, financialSteward, addInquiry } = useWhyteStore();
+  const [accessCode, setAccessCode] = useState<string | null>(null);
   const [verifiedProjectId, setVerifiedProjectId] = useState<string | null>(null);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [supportType, setSupportType] = useState<"project_support" | "complaint" | "termination_request" | "financial_reorganization">("project_support");
@@ -79,22 +81,26 @@ export default function ClientDashboardPage() {
 
   useEffect(() => {
     setIsMounted(true);
+    const code = localStorage.getItem("whyte_client_access_code");
+    setAccessCode(code);
     const storedId = localStorage.getItem("whyte_verified_project_id");
     setVerifiedProjectId(storedId);
   }, []);
 
-  // Dossier identification logic
-  const activeProject = useMemo(() => {
-    return clientProjects.find(p => p.id === verifiedProjectId) 
-      || clientProjects.find(p => p.isActivated && !p.isArchived)
-      || clientProjects.find(p => p.isArchived);
-  }, [clientProjects, verifiedProjectId]);
-
-  // Consolidated Portfolio Logic
+  // Universal Portfolio Discovery logic
   const allMyProjects = useMemo(() => {
-    if (!activeProject) return [];
-    return clientProjects.filter(p => p.email.toLowerCase() === activeProject.email.toLowerCase());
-  }, [clientProjects, activeProject]);
+    if (!accessCode) return [];
+    return clientProjects.filter(p => p.accessCode.toUpperCase() === accessCode.toUpperCase());
+  }, [clientProjects, accessCode]);
+
+  // Determine active project context
+  const activeProject = useMemo(() => {
+    if (verifiedProjectId) {
+      return allMyProjects.find(p => p.id === verifiedProjectId);
+    }
+    // Default to the first active project if no specific one is verified
+    return allMyProjects.find(p => !p.isArchived && p.status !== 'Terminated') || allMyProjects[0];
+  }, [allMyProjects, verifiedProjectId]);
 
   const portfolioStats = useMemo(() => {
     const active = allMyProjects.filter(p => !p.isArchived && p.status !== 'Terminated');
@@ -123,10 +129,10 @@ export default function ClientDashboardPage() {
   }, [allMyProjects]);
 
   useEffect(() => {
-    if (isMounted && !activeProject) {
+    if (isMounted && allMyProjects.length === 0 && !accessCode) {
       router.replace("/dashboard/onboarding");
     }
-  }, [isMounted, activeProject, router]);
+  }, [isMounted, allMyProjects, accessCode, router]);
 
   if (!isMounted || !activeProject) {
     return (
@@ -182,47 +188,52 @@ export default function ClientDashboardPage() {
               <div className="h-px w-12 bg-accent" />
               <span className="text-accent text-[10px] font-bold uppercase tracking-[0.4em]">Portfolio Command Center</span>
             </div>
-            <div className="flex items-center gap-6">
-              <h1 className="text-6xl font-headline italic">The <span className="not-italic">Workspace.</span></h1>
-              {allMyProjects.length > 1 && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-12 px-6 rounded-none border-accent/10 text-accent font-bold uppercase tracking-widest text-[10px] flex gap-3 shadow-sm bg-white">
-                      <LayoutGrid className="h-4 w-4" /> 
-                      Switch Dossier 
-                      <ChevronDown className="h-3 w-3 opacity-40" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="rounded-none border-accent/10 w-80 p-2 shadow-2xl">
-                    <DropdownMenuLabel className="text-[9px] uppercase tracking-widest text-accent/40 mb-2 px-3">Active Commissions</DropdownMenuLabel>
-                    {allMyProjects.filter(p => !p.isArchived).map(p => (
-                      <DropdownMenuItem 
-                        key={p.id} 
-                        onClick={() => handleSwitchProject(p.id)}
-                        className={cn(
-                          "flex flex-col items-start gap-1 p-4 cursor-pointer mb-1 rounded-none",
-                          p.id === activeProject.id ? "bg-accent text-white" : "hover:bg-accent/5"
-                        )}
-                      >
-                        <span className={cn("text-[9px] font-bold uppercase tracking-widest", p.id === activeProject.id ? "text-white/60" : "text-accent/40")}>{p.id}</span>
-                        <span className="text-sm font-headline italic">{p.project}</span>
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator className="bg-accent/5" />
-                    <DropdownMenuLabel className="text-[9px] uppercase tracking-widest text-accent/40 mb-2 px-3">Historical Dossiers</DropdownMenuLabel>
-                    {allMyProjects.filter(p => p.isArchived).map(p => (
-                      <DropdownMenuItem 
-                        key={p.id} 
-                        onClick={() => handleSwitchProject(p.id)}
-                        className="flex flex-col items-start gap-1 p-4 cursor-pointer mb-1 hover:bg-accent/5 rounded-none opacity-60"
-                      >
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-accent/40">{p.id}</span>
-                        <span className="text-sm font-headline italic">{p.project}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+            <div className="flex flex-col gap-4">
+              <h1 className="text-6xl font-headline italic leading-none">The <span className="not-italic">Workspace.</span></h1>
+              <div className="flex items-center gap-4">
+                <Badge variant="outline" className="rounded-none border-accent/10 text-accent/40 uppercase tracking-widest text-[9px] px-3 py-1 flex gap-2">
+                  <Key className="h-3 w-3" /> {accessCode}
+                </Badge>
+                {allMyProjects.length > 1 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="h-10 px-6 rounded-none border-accent/10 text-accent font-bold uppercase tracking-widest text-[9px] flex gap-3 shadow-sm bg-white transition-none">
+                        <LayoutGrid className="h-3.5 w-3.5" /> 
+                        Switch Dossier 
+                        <ChevronDown className="h-3 w-3 opacity-40" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="rounded-none border-accent/10 w-80 p-2 shadow-2xl">
+                      <DropdownMenuLabel className="text-[9px] uppercase tracking-widest text-accent/40 mb-2 px-3">Active Commissions</DropdownMenuLabel>
+                      {allMyProjects.filter(p => !p.isArchived).map(p => (
+                        <DropdownMenuItem 
+                          key={p.id} 
+                          onClick={() => handleSwitchProject(p.id)}
+                          className={cn(
+                            "flex flex-col items-start gap-1 p-4 cursor-pointer mb-1 rounded-none transition-none",
+                            p.id === activeProject.id ? "bg-accent text-white" : "hover:bg-accent/5"
+                          )}
+                        >
+                          <span className={cn("text-[9px] font-bold uppercase tracking-widest", p.id === activeProject.id ? "text-white/60" : "text-accent/40")}>{p.id}</span>
+                          <span className="text-sm font-headline italic">{p.project}</span>
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator className="bg-accent/5" />
+                      <DropdownMenuLabel className="text-[9px] uppercase tracking-widest text-accent/40 mb-2 px-3">Historical Dossiers</DropdownMenuLabel>
+                      {allMyProjects.filter(p => p.isArchived).map(p => (
+                        <DropdownMenuItem 
+                          key={p.id} 
+                          onClick={() => handleSwitchProject(p.id)}
+                          className="flex flex-col items-start gap-1 p-4 cursor-pointer mb-1 hover:bg-accent/5 rounded-none opacity-60 transition-none"
+                        >
+                          <span className={cn("text-[9px] font-bold uppercase tracking-widest text-accent/40")}>{p.id}</span>
+                          <span className="text-sm font-headline italic">{p.project}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
             </div>
           </div>
 
@@ -253,7 +264,7 @@ export default function ClientDashboardPage() {
                   <div className="flex items-center gap-3"><PenTool className="h-6 w-6 text-orange-600" /><h3 className="text-2xl font-headline italic text-orange-600">Financing Protocol Review Required</h3></div>
                   <p className="text-base font-light italic text-orange-600/80 leading-relaxed max-w-2xl">A new custom payout plan has been proposed for **{activeProject.project}**. Review and digital authorization are required.</p>
                 </div>
-                <Button onClick={() => setIsReviewingReorg(true)} className="bg-orange-600 text-white rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl flex gap-3 transition-none"><FileSearch className="h-4 w-4" /> Review Terms</Button>
+                <Button onClick={() => setIsReviewingReorg(true)} className="bg-orange-600 text-white rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl flex gap-3 border-none transition-none shadow-none"><FileSearch className="h-4 w-4" /> Review Terms</Button>
               </div>
             </Alert>
           </motion.div>
@@ -267,7 +278,7 @@ export default function ClientDashboardPage() {
                   <div className="flex items-center gap-3"><ShieldAlert className="h-6 w-6 text-destructive" /><h3 className="text-2xl font-headline italic text-destructive">Dissolution Protocol Active</h3></div>
                   <p className="text-base font-light italic text-destructive/80 leading-relaxed max-w-2xl">Forensic verification and mutual resolution terms are being synchronized for the termination of **{activeProject.project}**.</p>
                 </div>
-                <Button onClick={() => openSupport("termination_request")} variant="outline" className="border-destructive text-destructive rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl transition-none">View Exit Dossier</Button>
+                <Button onClick={() => openSupport("termination_request")} variant="outline" className="border-destructive text-destructive rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl transition-none shadow-none">View Exit Dossier</Button>
               </div>
             </Alert>
           </motion.div>
@@ -334,7 +345,7 @@ export default function ClientDashboardPage() {
             </div>
             <div className="space-y-4">
               {unifiedActivity.map((act) => (
-                <div key={act.id} className="p-6 border border-accent/5 bg-white shadow-sm flex items-center justify-between group hover:border-accent/20 transition-all">
+                <div key={act.id} className="p-6 border border-accent/5 bg-white shadow-sm flex items-center justify-between group hover:border-accent/20 transition-all cursor-pointer">
                   <div className="space-y-1.5 flex-1">
                     <div className="flex items-center gap-4">
                       <span className="text-[9px] font-bold uppercase tracking-widest text-accent/40">{act.project}</span>
@@ -366,7 +377,7 @@ export default function ClientDashboardPage() {
                     "p-4 border transition-all",
                     isReimbursement ? "border-blue-200 bg-blue-50/30" :
                     isClaim ? "border-orange-200 bg-orange-50/30" :
-                    ins.status === 'Paid' ? 'border-green-600/20 bg-green-600/5' : 'border-orange-500/10 bg-orange-500/[0.02]'
+                    ins.status === 'Paid' ? "border-green-600/20 bg-green-600/5" : "border-orange-500/10 bg-orange-500/[0.02]"
                   )}>
                     <div className="flex justify-between items-center mb-1">
                       <div className="flex items-center gap-2">
@@ -376,7 +387,7 @@ export default function ClientDashboardPage() {
                       </div>
                       <span className={cn(
                         "text-[8px] font-bold uppercase tracking-widest",
-                        ins.status === 'Paid' ? 'text-green-600' : 'text-orange-600'
+                        ins.status === 'Paid' ? "text-green-600" : "text-orange-600"
                       )}>
                         {ins.status}
                       </span>
@@ -385,7 +396,7 @@ export default function ClientDashboardPage() {
                       "text-sm font-bold tracking-widest", 
                       isReimbursement ? "text-blue-700" :
                       isClaim ? "text-orange-700" :
-                      ins.status === 'Paid' ? 'text-accent' : 'text-orange-600'
+                      ins.status === 'Paid' ? "text-accent" : "text-orange-600"
                     )}>
                       {isReimbursement ? "-" : isClaim ? "+" : ""} KES {Math.abs(ins.amount).toLocaleString()}
                     </p>
@@ -404,7 +415,7 @@ export default function ClientDashboardPage() {
             )}
             {!activeProject.isArchived && activeProject.status !== 'Terminated' && (
               <div className="pt-6 border-t border-accent/5 space-y-4">
-                <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent uppercase tracking-widest text-[9px] font-bold transition-none">Raise Studio Inquiry</Button>
+                <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent uppercase tracking-widest text-[9px] font-bold transition-none shadow-none bg-transparent">Raise Studio Inquiry</Button>
               </div>
             )}
           </Card>
@@ -433,7 +444,7 @@ export default function ClientDashboardPage() {
             </div>
           )}
 
-          <Card className="rounded-none border-accent/5 bg-secondary/30 p-8 space-y-6">
+          <Card className="rounded-none border-accent/5 bg-secondary/30 p-8 space-y-6 shadow-sm">
             <div className="space-y-1">
               <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><PencilRuler className="h-3 w-3" /> Creative Lead</h4>
               <p className="text-lg font-headline italic text-accent">{assignedDesigner ? assignedDesigner.name : "Unassigned"}</p>
@@ -447,7 +458,7 @@ export default function ClientDashboardPage() {
       </div>
 
       <Dialog open={isReviewingReorg} onOpenChange={setIsReviewingReorg}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-3xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-3xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col shadow-2xl">
           <div className="bg-orange-600 h-1.5 w-full" />
           <div className="p-12 space-y-10 overflow-y-auto custom-scrollbar flex-1">
             <DialogHeader className="space-y-4">
@@ -507,8 +518,8 @@ export default function ClientDashboardPage() {
             </div>
           </div>
           <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between gap-6">
-            <Button onClick={() => setIsReviewingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest transition-none">Abort Protocol Sync</Button>
-            <Button onClick={handleAgreeToReorg} disabled={isSigningReorg} className="bg-orange-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-none flex gap-4">
+            <Button onClick={() => setIsReviewingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest transition-none border-none shadow-none bg-transparent">Abort Protocol Sync</Button>
+            <Button onClick={handleAgreeToReorg} disabled={isSigningReorg} className="bg-orange-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-none flex gap-4 border-none">
               {isSigningReorg ? <><Loader2 className="h-5 w-5 animate-spin" /> Digitally Signing...</> : <><PenTool className="h-5 w-5" /> Authorize & Sign Terms</>}
             </Button>
           </DialogFooter>

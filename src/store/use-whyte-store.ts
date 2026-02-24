@@ -215,6 +215,7 @@ export interface ClientProject {
   handoverNotes?: string;
   reorganization?: ReorganizationDetails;
   reorganizationCount?: number;
+  accessCode: string;
   pendingActivationData?: {
     amount: number;
     reference: string;
@@ -407,7 +408,8 @@ const initialClientProjects: ClientProject[] = [
     initializedBy: 'Admin',
     assignedDesignerId: 'DES-01',
     assignedStewardId: 'STW-01',
-    reorganizationCount: 0
+    reorganizationCount: 0,
+    accessCode: "MUTHAIGA-VIP-2024"
   }
 ];
 
@@ -530,9 +532,11 @@ export const useWhyteStore = create<WhyteState>()(
       clearAllData: () => {
         if (typeof window !== 'undefined') {
           localStorage.removeItem("whyte_onboarded");
-          localStorage.removeItem("whyte_verified_project_id");
+          localStorage.removeItem("whyte_client_access_code");
           localStorage.removeItem("whyte_designer_onboarded");
+          localStorage.removeItem("whyte_active_designer_id");
           localStorage.removeItem("whyte_steward_onboarded");
+          localStorage.removeItem("whyte_active_steward_id");
         }
 
         set({

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -41,7 +40,8 @@ import {
   LayoutList,
   AlertTriangle,
   RefreshCcw,
-  Clock
+  Clock,
+  Key
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
@@ -58,7 +58,7 @@ export default function OnboardingPage() {
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
-    projectRef: "",
+    accessCode: "",
     fullName: "",
     email: "",
     agreedToTerms: false,
@@ -88,7 +88,10 @@ export default function OnboardingPage() {
 
   const handleNext = () => {
     if (step === 1) {
-      const project = clientProjects.find(p => p.id.toUpperCase() === formData.projectRef.toUpperCase());
+      const normalizedCode = formData.accessCode.trim().toUpperCase();
+      // Find ANY project linked to this client's access code
+      const project = clientProjects.find(p => p.accessCode.toUpperCase() === normalizedCode);
+      
       if (project) {
         setCurrentProject(project);
         setFormData({
@@ -100,7 +103,7 @@ export default function OnboardingPage() {
       } else {
         toast({
           title: "Verification Failed",
-          description: "Project Reference ID not found in studio archives.",
+          description: "Access Code not recognized. Please contact your Studio Manager.",
           variant: "destructive"
         });
       }
@@ -130,7 +133,7 @@ export default function OnboardingPage() {
         }
         
         localStorage.setItem("whyte_onboarded", "true");
-        localStorage.setItem("whyte_verified_project_id", formData.projectRef.toUpperCase());
+        localStorage.setItem("whyte_client_access_code", formData.accessCode.trim().toUpperCase());
         setLoading(false);
         setShowSuccess(true);
         setTimeout(() => {
@@ -172,7 +175,7 @@ export default function OnboardingPage() {
     toast({ title: "Request Transmitted", description: "Senior Partner will review your request." });
     
     localStorage.setItem("whyte_onboarded", "true");
-    localStorage.setItem("whyte_verified_project_id", formData.projectRef.toUpperCase());
+    localStorage.setItem("whyte_client_access_code", formData.accessCode.trim().toUpperCase());
     setShowSuccess(true);
     setTimeout(() => {
       router.push("/dashboard");
@@ -197,8 +200,8 @@ export default function OnboardingPage() {
             transition={{ delay: 0.2 }}
             className="flex justify-center"
           >
-            <div className="h-20 w-20 rounded-full border border-white/20 flex items-center justify-center bg-white/5 relative">
-              <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }} className="absolute inset-0 rounded-full border border-white/40" />
+            <div className="h-20 w-20 rounded-none border border-white/20 flex items-center justify-center bg-white/5 relative">
+              <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }} className="absolute inset-0 rounded-none border border-white/40" />
               <Clock className="h-8 w-8 text-white" />
             </div>
           </motion.div>
@@ -211,7 +214,7 @@ export default function OnboardingPage() {
             </div>
             <h2 className="text-4xl md:text-5xl font-headline text-white italic">Credentials <span className="not-italic">Submitted.</span></h2>
             <p className="text-white/60 font-light text-base italic leading-relaxed max-w-md mx-auto">
-              Your data has been transmitted. The workspace will unlock once forensic verification is complete.
+              Your identity has been synchronized. The workspace will unlock once forensic verification is complete.
             </p>
           </div>
 
@@ -245,8 +248,8 @@ export default function OnboardingPage() {
               <AlertDialogDescription className="text-muted-foreground font-light leading-relaxed">Exiting will pause your digital transition.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="pt-6">
-              <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[10px] font-bold h-12">Return</AlertDialogCancel>
-              <AlertDialogAction onClick={() => router.push("/")} className="bg-accent text-white rounded-none uppercase tracking-widest text-[10px] font-bold h-12">Exit</AlertDialogAction>
+              <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[10px] font-bold h-12 shadow-none transition-none">Return</AlertDialogCancel>
+              <AlertDialogAction onClick={() => router.push("/")} className="bg-accent text-white rounded-none uppercase tracking-widest text-[10px] font-bold h-12 shadow-none border-none transition-none">Exit</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -277,12 +280,20 @@ export default function OnboardingPage() {
                 {step === 1 && (
                   <div className="space-y-8">
                     <div className="space-y-3">
-                      <div className="h-10 w-10 bg-accent/5 flex items-center justify-center text-accent mb-4 border border-accent/10"><Briefcase className="h-5 w-5" /></div>
-                      <h2 className="text-2xl font-headline italic">Project Verification</h2>
-                      <p className="text-muted-foreground font-light text-sm max-w-xl">Enter the Reference ID found on your design contract (e.g., WP-0082).</p>
+                      <div className="h-10 w-10 bg-accent/5 flex items-center justify-center text-accent mb-4 border border-accent/10"><Key className="h-5 w-5" /></div>
+                      <h2 className="text-2xl font-headline italic">Portfolio Access Code</h2>
+                      <p className="text-muted-foreground font-light text-sm max-w-xl">Enter your unique identity code found on your master architectural contract (e.g., KIBET-AUTH-99X1).</p>
                     </div>
                     <div className="space-y-4 max-w-md">
-                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Project Reference ID</Label><Input placeholder="WP-XXXX" className="rounded-none border-accent/20 h-12 text-xl tracking-[0.2em] focus:ring-accent uppercase font-bold" value={formData.projectRef} onChange={(e) => setFormData({...formData, projectRef: e.target.value})} /></div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Client Access Code</Label>
+                        <Input 
+                          placeholder="CLIENT-AUTH-XXXX" 
+                          className="rounded-none border-accent/20 h-12 text-xl tracking-[0.2em] focus:ring-accent uppercase font-bold shadow-none" 
+                          value={formData.accessCode} 
+                          onChange={(e) => setFormData({...formData, accessCode: e.target.value})} 
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -292,11 +303,11 @@ export default function OnboardingPage() {
                     <div className="space-y-3">
                       <div className="h-10 w-10 bg-accent/5 flex items-center justify-center text-accent mb-4 border border-accent/10"><User className="h-5 w-5" /></div>
                       <h2 className="text-2xl font-headline italic">Identity Sync</h2>
-                      <p className="text-muted-foreground font-light text-sm">Confirm your registration details.</p>
+                      <p className="text-muted-foreground font-light text-sm">Confirm your registration details for this code.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8 border-b border-accent/5">
-                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label><Input className="rounded-none border-accent/20 h-12 bg-secondary/10" value={formData.fullName} readOnly /></div>
-                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email</Label><Input className="rounded-none border-accent/20 h-12 bg-secondary/10" value={formData.email} readOnly /></div>
+                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Full Name</Label><Input className="rounded-none border-accent/20 h-12 bg-secondary/10 shadow-none" value={formData.fullName} readOnly /></div>
+                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Email</Label><Input className="rounded-none border-accent/20 h-12 bg-secondary/10 shadow-none" value={formData.email} readOnly /></div>
                     </div>
                   </div>
                 )}
@@ -330,13 +341,13 @@ export default function OnboardingPage() {
                     <div className="space-y-3">
                       <div className="h-10 w-10 bg-accent/5 flex items-center justify-center text-accent mb-4 border border-accent/10"><Banknote className="h-5 w-5" /></div>
                       <h2 className="text-2xl font-headline italic">Capital Verification</h2>
-                      <p className="text-muted-foreground font-light text-sm">Provide transaction details for your initial deposit.</p>
+                      <p className="text-muted-foreground font-light text-sm">Provide transaction details for the initial deposit of your primary commission.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-accent/[0.03] border border-accent/5">
-                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Amount (KES)</Label><Input type="number" placeholder="0.00" className="rounded-none border-accent/20 h-12 text-xl focus:ring-accent" value={formData.depositAmount} onChange={(e) => setFormData({...formData, depositAmount: e.target.value})} /></div>
+                      <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Amount (KES)</Label><Input type="number" placeholder="0.00" className="rounded-none border-accent/20 h-12 text-xl focus:ring-accent shadow-none" value={formData.depositAmount} onChange={(e) => setFormData({...formData, depositAmount: e.target.value})} /></div>
                       <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Expected</Label><div className="h-12 flex items-center px-4 bg-secondary/20"><span className="text-lg font-headline italic text-accent opacity-60">KES {expectedDeposit.toLocaleString()}</span></div></div>
                     </div>
-                    <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Reference Code</Label><Input placeholder="TRX-XXXX" className="rounded-none border-accent/20 h-12 text-lg tracking-widest focus:ring-accent uppercase font-bold" value={formData.depositRef} onChange={(e) => setFormData({...formData, depositRef: e.target.value})} /></div>
+                    <div className="space-y-2"><Label className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Reference Code</Label><Input placeholder="TRX-XXXX" className="rounded-none border-accent/20 h-12 text-lg tracking-widest focus:ring-accent uppercase font-bold shadow-none" value={formData.depositRef} onChange={(e) => setFormData({...formData, depositRef: e.target.value})} /></div>
                     {!isAmountMatching && formData.depositAmount !== "" && (
                       <div className="p-4 bg-orange-50 border border-orange-200"><p className="text-[10px] italic text-orange-700 leading-relaxed">Amount mismatch. Request a financing reorganization to synchronize your custom payment.</p><Button onClick={handleRequestReorg} variant="link" className="text-orange-600 p-0 h-auto text-[10px] font-bold uppercase tracking-widest mt-2">Request Reorg</Button></div>
                     )}
@@ -344,8 +355,8 @@ export default function OnboardingPage() {
                 )}
 
                 <div className="pt-8 flex items-center justify-between border-t border-accent/10 mt-8">
-                  {step > 1 ? <Button variant="ghost" onClick={handleBack} className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 h-10 px-0"><ArrowLeft className="h-3 w-3" /> Back</Button> : <div />}
-                  <Button onClick={handleNext} disabled={loading || (step === 1 && !formData.projectRef) || (step === 3 && (!formData.agreedToTerms || !formData.agreedToNonCompete)) || (step === 4 && (!formData.depositRef || !formData.depositAmount || (!isAmountMatching && formData.depositAmount !== "")))} className="bg-accent text-white rounded-none h-12 px-10 uppercase tracking-[0.2em] text-[10px] font-bold shadow-xl">
+                  {step > 1 ? <Button variant="ghost" onClick={handleBack} className="text-accent/40 hover:text-accent font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 h-10 px-0 transition-none shadow-none bg-transparent"> <ArrowLeft className="h-3 w-3" /> Back</Button> : <div />}
+                  <Button onClick={handleNext} disabled={loading || (step === 1 && !formData.accessCode) || (step === 3 && (!formData.agreedToTerms || !formData.agreedToNonCompete)) || (step === 4 && (!formData.depositRef || !formData.depositAmount || (!isAmountMatching && formData.depositAmount !== "")))} className="bg-accent text-white rounded-none h-12 px-10 uppercase tracking-[0.2em] text-[10px] font-bold shadow-xl border-none transition-none">
                     {loading ? <span className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin" /> Syncing...</span> : <span className="flex items-center gap-3">{step === totalSteps ? "Finalize" : "Continue"} <ChevronRight className="h-4 w-4" /></span>}
                   </Button>
                 </div>
