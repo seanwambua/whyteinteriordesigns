@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
@@ -157,7 +156,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
   }, [allocations]);
 
   const remainingBalance = totalIncomingLogged - totalAllocated - refundAmount;
-  const hasDiscrepancy = remainingBalance < 0;
+  const hasDiscrepancy = Math.abs(remainingBalance) > 1;
   
   const allFundsVerified = incomingFunds.length > 0 && incomingFunds.every(f => f.isVerified);
   const allAllocationsVerified = allocations.length > 0 && allocations.every(a => a.isVerified);
@@ -531,54 +530,91 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         <TabsContent value="audit" className="m-0 space-y-12">
           {!isVerified && (
             <Alert className={cn(
-              "rounded-none p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 border-dashed transition-all shadow-xl",
-              hasSyncDiscrepancy ? "bg-red-50 border-red-200" : lastSyncTimestamp ? "bg-accent/[0.02] border-accent/20" : "bg-secondary/30 border-accent/10"
+              "rounded-none p-10 flex flex-col md:flex-row md:items-center justify-between gap-10 border-dashed transition-all shadow-2xl bg-white",
+              hasSyncDiscrepancy ? "border-red-500 ring-1 ring-red-100" : lastSyncTimestamp ? "border-green-500 ring-1 ring-green-50" : "border-accent/20"
             )}>
-              <div className="flex gap-4 items-start">
-                {hasSyncDiscrepancy ? <AlertTriangle className="h-6 w-6 text-red-600 mt-1" /> : lastSyncTimestamp ? <ShieldCheck className="h-6 w-6 text-green-600 mt-1" /> : <RefreshCcw className="h-6 w-6 text-accent/30 mt-1" />}
-                <div className="space-y-1">
-                  <AlertTitle className="text-[13px] font-bold uppercase tracking-widest text-accent">Protocol Ledger Synchronization</AlertTitle>
-                  <AlertDescription className="text-[14px] font-light italic text-muted-foreground leading-relaxed max-w-2xl">
-                    {hasSyncDiscrepancy ? `Discrepancy Identified: Incoming funds do not match registry.` : lastSyncTimestamp ? `Forensic synchronization established at ${lastSyncTimestamp}.` : "Forensic sync check mandatory before authorization."}
+              <div className="flex gap-6 items-start">
+                <div className={cn(
+                  "h-14 w-14 flex items-center justify-center rounded-none border shrink-0",
+                  hasSyncDiscrepancy ? "bg-red-50 border-red-200 text-red-600" : lastSyncTimestamp ? "bg-green-50 border-green-200 text-green-600" : "bg-accent/5 border-accent/10 text-accent/20"
+                )}>
+                  {hasSyncDiscrepancy ? <AlertTriangle className="h-7 w-7" /> : lastSyncTimestamp ? <ShieldCheck className="h-7 w-7" /> : <RefreshCcw className="h-7 w-7" />}
+                </div>
+                <div className="space-y-2">
+                  <AlertTitle className="text-[14px] font-bold uppercase tracking-[0.4em] text-accent">Protocol Ledger Synchronization</AlertTitle>
+                  <AlertDescription className="text-[15px] font-light italic text-muted-foreground leading-relaxed max-w-2xl">
+                    {hasSyncDiscrepancy 
+                      ? "Critical Discrepancy Identified: The Verified Incoming capital does not synchronize with the Project Ledger. Forensic resolution mandatory." 
+                      : lastSyncTimestamp 
+                      ? `Forensic synchronization established at ${lastSyncTimestamp}. Ledger integrity verified.` 
+                      : "Forensic synchronization check is mandatory before dossier authorization."}
                   </AlertDescription>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <Button onClick={handleImportFromRegistry} disabled={isSyncingRegistry || isVerified} variant="outline" className="rounded-none h-12 px-6 border-accent/10 text-accent uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-sm transition-none">
-                  <Download className="h-4 w-4" /> Import Registry
+              <div className="flex gap-4 shrink-0">
+                <Button onClick={handleImportFromRegistry} disabled={isSyncingRegistry || isVerified} variant="outline" className="rounded-none h-14 px-8 border-accent/10 text-accent uppercase tracking-widest text-[10px] font-bold flex gap-3 hover:bg-accent hover:text-white transition-all shadow-sm">
+                  <Download className="h-4 w-4" /> Import Ledger
                 </Button>
-                <Button onClick={handleRunSyncCheck} disabled={isSyncingRegistry || isVerified} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl border-none transition-none">
-                  {isSyncingRegistry ? <><Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...</> : <><RefreshCcw className="h-4 w-4" /> Execute Sync Check</>}
+                <Button onClick={handleRunSyncCheck} disabled={isSyncingRegistry || isVerified} className="rounded-none h-14 px-10 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl border-none transition-all hover:tracking-[0.2em]">
+                  {isSyncingRegistry ? <Loader2 className="h-4 w-4 animate-spin" /> : <><RefreshCcw className="h-4 w-4" /> Execute Sync Check</>}
                 </Button>
               </div>
             </Alert>
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            <div className="lg:col-span-8 space-y-12">
+            <div className="lg:col-span-8 space-y-16">
+              {/* INCOMING FUNDS SECTION */}
               <div className="space-y-8">
-                <div className="flex items-center justify-between border-b border-accent/5 pb-4">
+                <div className="flex items-center justify-between border-b border-accent/5 pb-6">
                   <div className="flex items-center gap-4">
                     <TrendingUp className="h-5 w-5 text-accent/40" />
-                    <h2 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Verified Incoming Capital</h2>
+                    <h2 className="text-[12px] font-bold uppercase tracking-[0.5em] text-accent">Verified Incoming Capital</h2>
                   </div>
                   {!isVerified && (
-                    <Button onClick={handleAddIncoming} variant="ghost" size="sm" className="rounded-none text-accent/40 hover:text-accent uppercase tracking-widest text-[10px] font-bold gap-2 px-4 h-10 transition-none">
-                      <Plus className="h-3.5 w-3.5" /> Log Entry
+                    <Button onClick={handleAddIncoming} variant="ghost" size="sm" className="rounded-none text-accent/40 hover:text-accent uppercase tracking-widest text-[10px] font-bold gap-2 px-6 h-10 transition-none border border-transparent hover:border-accent/10">
+                      <Plus className="h-3.5 w-3.5" /> Append Entry
                     </Button>
                   )}
                 </div>
                 <div className="space-y-4">
                   {incomingFunds.map((entry) => (
-                    <Card key={entry.id} className={cn("rounded-none border transition-all", entry.isVerified ? "border-green-600/30 bg-green-600/[0.02]" : "border-accent/10 bg-white shadow-sm")}>
-                      <CardContent className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Designation</Label><Input value={entry.label} onChange={(e) => updateIncoming(entry.id, 'label', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-10 text-xs font-bold uppercase border-accent/10" /></div>
-                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Capital (KES)</Label><Input type="number" value={entry.amount} onChange={(e) => updateIncoming(entry.id, 'amount', Number(e.target.value))} readOnly={isVerified || entry.isVerified} className="rounded-none h-10 text-sm font-headline italic border-accent/10" /></div>
-                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Sync Code</Label><Input value={entry.reference} onChange={(e) => updateIncoming(entry.id, 'reference', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-10 text-xs font-mono border-accent/10" /></div>
-                          <div className="md:col-span-3 flex gap-2">
-                            <Button variant={entry.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyIncoming(entry.id)} className={cn("h-10 flex-1 rounded-none uppercase tracking-widest text-[9px] font-bold border-none transition-none", entry.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white")}>{entry.isVerified ? "Certified" : "Certify"}</Button>
-                            {!isVerified && !entry.isVerified && <Button variant="ghost" size="icon" onClick={() => handleRemoveIncoming(entry.id)} className="h-10 w-10 text-destructive/40 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>}
+                    <Card key={entry.id} className={cn(
+                      "rounded-none border transition-all shadow-sm", 
+                      entry.isVerified ? "border-green-600/30 bg-green-600/[0.01]" : "border-accent/5 bg-white"
+                    )}>
+                      <CardContent className="p-8">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-end">
+                          <div className="md:col-span-3 space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-accent/40 tracking-widest">Designation</Label>
+                            <Input value={entry.label} onChange={(e) => updateIncoming(entry.id, 'label', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-12 text-[13px] font-bold uppercase border-accent/10 focus:ring-accent" />
+                          </div>
+                          <div className="md:col-span-3 space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-accent/40 tracking-widest">Capital (KES)</Label>
+                            <Input type="number" value={entry.amount} onChange={(e) => updateIncoming(entry.id, 'amount', Number(e.target.value))} readOnly={isVerified || entry.isVerified} className="rounded-none h-12 text-lg font-headline italic border-accent/10 focus:ring-accent" />
+                          </div>
+                          <div className="md:col-span-3 space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-accent/40 tracking-widest">Sync Code</Label>
+                            <Input value={entry.reference} onChange={(e) => updateIncoming(entry.id, 'reference', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-12 text-[13px] font-mono border-accent/10 focus:ring-accent uppercase tracking-widest" />
+                          </div>
+                          <div className="md:col-span-3 flex gap-3">
+                            <Button 
+                              variant={entry.isVerified ? "default" : "outline"} 
+                              disabled={isVerified} 
+                              onClick={() => handleToggleVerifyIncoming(entry.id)} 
+                              className={cn(
+                                "h-12 flex-1 rounded-none uppercase tracking-[0.2em] text-[9px] font-bold border-none transition-all shadow-sm", 
+                                entry.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white"
+                              )}
+                            >
+                              {entry.isVerified ? <Check className="h-3.5 w-3.5 mr-2" /> : null}
+                              {entry.isVerified ? "Certified" : "Certify"}
+                            </Button>
+                            {!isVerified && !entry.isVerified && (
+                              <Button variant="ghost" size="icon" onClick={() => handleRemoveIncoming(entry.id)} className="h-12 w-12 text-destructive/20 hover:text-destructive transition-colors">
+                                <Trash2 className="h-4.5 w-4.5" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -587,29 +623,57 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                 </div>
               </div>
 
+              {/* ALLOCATIONS SECTION */}
               <div className="space-y-8">
-                <div className="flex items-center justify-between border-b border-accent/5 pb-4">
+                <div className="flex items-center justify-between border-b border-accent/5 pb-6">
                   <div className="flex items-center gap-4">
                     <TrendingDown className="h-5 w-5 text-accent/40" />
-                    <h2 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Capital Allocations</h2>
+                    <h2 className="text-[12px] font-bold uppercase tracking-[0.5em] text-accent">Capital Allocations</h2>
                   </div>
                   {!isVerified && (
-                    <Button onClick={handleAddAllocation} variant="ghost" size="sm" className="rounded-none text-accent/40 hover:text-accent uppercase tracking-widest text-[10px] font-bold gap-2 px-4 h-10 transition-none">
+                    <Button onClick={handleAddAllocation} variant="ghost" size="sm" className="rounded-none text-accent/40 hover:text-accent uppercase tracking-widest text-[10px] font-bold gap-2 px-6 h-10 transition-none border border-transparent hover:border-accent/10">
                       <Plus className="h-3.5 w-3.5" /> Log Allocation
                     </Button>
                   )}
                 </div>
                 <div className="space-y-4">
                   {allocations.map((alloc) => (
-                    <Card key={alloc.id} className={cn("rounded-none border transition-all", alloc.isVerified ? "border-green-600/30 bg-green-600/[0.02]" : "border-accent/10 bg-white shadow-sm")}>
-                      <CardContent className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Classification</Label><Input value={alloc.category} onChange={(e) => updateAllocation(alloc.id, 'category', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-10 text-xs font-bold uppercase border-accent/10" /></div>
-                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Capital (KES)</Label><Input type="number" value={alloc.amount} onChange={(e) => updateAllocation(alloc.id, 'amount', Number(e.target.value))} readOnly={isVerified || alloc.isVerified} className="rounded-none h-10 text-sm font-headline italic border-accent/10" /></div>
-                          <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Description</Label><Input value={alloc.description} onChange={(e) => updateAllocation(alloc.id, 'description', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-10 text-xs font-light italic border-accent/10" /></div>
-                          <div className="md:col-span-3 flex gap-2">
-                            <Button variant={alloc.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyAllocation(alloc.id)} className={cn("h-10 flex-1 rounded-none uppercase tracking-widest text-[9px] font-bold border-none transition-none", alloc.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white")}>{alloc.isVerified ? "Certified" : "Certify"}</Button>
-                            {!isVerified && !alloc.isVerified && <Button variant="ghost" size="icon" onClick={() => handleRemoveAllocation(alloc.id)} className="h-10 w-10 text-destructive/40 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>}
+                    <Card key={alloc.id} className={cn(
+                      "rounded-none border transition-all shadow-sm", 
+                      alloc.isVerified ? "border-green-600/30 bg-green-600/[0.01]" : "border-accent/5 bg-white"
+                    )}>
+                      <CardContent className="p-8">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-end">
+                          <div className="md:col-span-3 space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-accent/40 tracking-widest">Classification</Label>
+                            <Input value={alloc.category} onChange={(e) => updateAllocation(alloc.id, 'category', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-12 text-[13px] font-bold uppercase border-accent/10 focus:ring-accent" />
+                          </div>
+                          <div className="md:col-span-3 space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-accent/40 tracking-widest">Capital (KES)</Label>
+                            <Input type="number" value={alloc.amount} onChange={(e) => updateAllocation(alloc.id, 'amount', Number(e.target.value))} readOnly={isVerified || alloc.isVerified} className="rounded-none h-12 text-lg font-headline italic border-accent/10 focus:ring-accent" />
+                          </div>
+                          <div className="md:col-span-3 space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-accent/40 tracking-widest">Description</Label>
+                            <Input value={alloc.description} onChange={(e) => updateAllocation(alloc.id, 'description', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-12 text-[13px] font-light italic border-accent/10 focus:ring-accent" />
+                          </div>
+                          <div className="md:col-span-3 flex gap-3">
+                            <Button 
+                              variant={alloc.isVerified ? "default" : "outline"} 
+                              disabled={isVerified} 
+                              onClick={() => handleToggleVerifyAllocation(alloc.id)} 
+                              className={cn(
+                                "h-12 flex-1 rounded-none uppercase tracking-[0.2em] text-[9px] font-bold border-none transition-all shadow-sm", 
+                                alloc.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white"
+                              )}
+                            >
+                              {alloc.isVerified ? <Check className="h-3.5 w-3.5 mr-2" /> : null}
+                              {alloc.isVerified ? "Certified" : "Certify"}
+                            </Button>
+                            {!isVerified && !alloc.isVerified && (
+                              <Button variant="ghost" size="icon" onClick={() => handleRemoveAllocation(alloc.id)} className="h-12 w-12 text-destructive/20 hover:text-destructive transition-colors">
+                                <Trash2 className="h-4.5 w-4.5" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -618,37 +682,70 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                 </div>
               </div>
 
-              <div className="space-y-4 pt-8">
-                <Label className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Stewardship findings & resolution</Label>
-                <Textarea value={stewardComments} onChange={(e) => setStewardComments(e.target.value)} readOnly={isVerified} placeholder="Forensic fiscal summary..." className="min-h-[180px] rounded-none border-accent/10 p-8 font-light italic text-lg focus:ring-accent bg-white shadow-xl" />
+              {/* STEWARD COMMENTS */}
+              <div className="space-y-6 pt-12 border-t border-accent/5">
+                <div className="flex items-center gap-4">
+                  <MessageSquare className="h-5 w-5 text-accent/40" />
+                  <Label className="text-[12px] font-bold uppercase tracking-[0.5em] text-accent">Stewardship findings & resolution</Label>
+                </div>
+                <Textarea value={stewardComments} onChange={(e) => setStewardComments(e.target.value)} readOnly={isVerified} placeholder="Detailed forensic fiscal summary for senior partners..." className="min-h-[220px] rounded-none border-accent/10 p-10 font-light italic text-xl leading-relaxed focus:ring-accent bg-white shadow-2xl transition-all" />
               </div>
             </div>
 
-            <div className="space-y-8">
-              <Card className="rounded-none border-accent/20 bg-accent p-10 text-white space-y-10 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><ScaleIcon className="h-32 w-32" /></div>
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.5em] text-white/40 relative z-10">Forensic Index</h3>
-                <div className="space-y-8 relative z-10">
-                  <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Incoming Capital</p><p className="text-3xl font-headline italic text-green-400">KES {totalIncomingLogged.toLocaleString()}</p></div>
-                  <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Allocations</p><p className="text-3xl font-headline italic text-orange-400">KES {totalAllocated.toLocaleString()}</p></div>
-                  <div className="pt-8 border-t border-white/10 space-y-4">
-                    <div className="space-y-2"><p className="text-[10px] uppercase tracking-widest font-bold text-white/40">Authorized Refund</p><Input type="number" value={refundAmount} onChange={(e) => setRefundAmount(Number(e.target.value))} readOnly={isVerified} className="bg-white/5 border-white/20 text-2xl font-headline italic text-white rounded-none h-14 focus:ring-white/20" /></div>
-                    <div className="pt-4 flex justify-between items-center border-t border-white/5"><span className="text-[10px] uppercase tracking-widest font-bold text-white/40">Net Escrow</span><span className={cn("text-xl font-headline italic", hasDiscrepancy ? "text-red-400" : "text-white")}>KES {remainingBalance.toLocaleString()}</span></div>
+            {/* SIDEBAR SUMMARY SECTION */}
+            <div className="lg:col-span-4 space-y-10">
+              <Card className="rounded-none border-accent/20 bg-accent p-12 text-white space-y-12 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10"><ScaleIcon className="h-40 w-40" /></div>
+                <div className="space-y-4 relative z-10">
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="h-px w-8 bg-white/20" />
+                    <h3 className="text-[11px] font-bold uppercase tracking-[0.6em] text-white/40">Forensic Index</h3>
+                  </div>
+                  <div className="space-y-10">
+                    <div className="space-y-2">
+                      <p className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Incoming Capital</p>
+                      <p className="text-4xl font-headline italic text-green-400">KES {totalIncomingLogged.toLocaleString()}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Total Allocations</p>
+                      <p className="text-4xl font-headline italic text-orange-400">KES {totalAllocated.toLocaleString()}</p>
+                    </div>
+                    <div className="pt-10 border-t border-white/10 space-y-8">
+                      <div className="space-y-3">
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-white/40">Authorized Refund</p>
+                        <Input 
+                          type="number" 
+                          value={refundAmount} 
+                          onChange={(e) => setRefundAmount(Number(e.target.value))} 
+                          readOnly={isVerified} 
+                          className="bg-white/5 border-white/20 text-3xl font-headline italic text-white rounded-none h-16 focus:ring-white/20 text-center transition-none" 
+                        />
+                      </div>
+                      <div className={cn(
+                        "p-6 border flex flex-col items-center justify-center gap-2 transition-all",
+                        hasDiscrepancy ? "bg-red-500/10 border-red-500/40" : "bg-white/5 border-white/10"
+                      )}>
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-white/40">Net Escrow Position</span>
+                        <span className={cn("text-3xl font-headline italic leading-none", hasDiscrepancy ? "text-red-400" : "text-white")}>KES {remainingBalance.toLocaleString()}</span>
+                        {hasDiscrepancy && <p className="text-[8px] font-black uppercase text-red-400 tracking-widest mt-2 animate-pulse">Discrepancy Alert</p>}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 {!isVerified && (
                   <Button 
                     onClick={handleAuthorizeAudit} 
                     disabled={isSubmitting || totalIncomingLogged === 0 || !lastSyncTimestamp || hasDiscrepancy || hasSyncDiscrepancy || !allFundsVerified || !allAllocationsVerified} 
-                    className="w-full h-16 rounded-none bg-white text-accent hover:bg-white/90 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-3 items-center justify-center hover:tracking-[0.2em] border-none transition-none"
+                    className="w-full h-20 rounded-none bg-white text-accent hover:bg-white/90 uppercase tracking-[0.3em] text-[12px] font-bold shadow-2xl transition-all flex gap-4 items-center justify-center hover:tracking-[0.4em] border-none"
                   >
-                    {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Transmitting...</> : <><ShieldCheck className="h-5 w-5" /> Authorize & Transmit</>}
+                    {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <><ShieldCheck className="h-6 w-6" /> Authorize & Transmit</>}
                   </Button>
                 )}
               </Card>
-              <div className="p-8 border border-dashed border-accent/20 text-center bg-secondary/10">
-                <p className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 italic leading-relaxed">
-                  Dossiers transmitted to Admin are digitally locked for verification. Discrepancy checks are mandatory.
+              <div className="p-10 border border-dashed border-accent/20 text-center bg-secondary/10 space-y-6">
+                <div className="flex justify-center"><ShieldAlert className="h-8 w-8 text-accent/20" /></div>
+                <p className="text-[11px] uppercase tracking-[0.5em] text-accent/40 font-bold italic leading-relaxed">
+                  "Audited dossiers are immutable records of the studio's financial sovereignty. verify all entries against bank references."
                 </p>
               </div>
             </div>
@@ -667,7 +764,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
           </div>
           <div className="space-y-6">
             {(project.stewardLogs || []).map((log, index) => (
-              <motion.div key={log.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
+              <motion.div key={log.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
                 <Card className="rounded-none border-accent/5 bg-white group shadow-sm hover:shadow-md transition-all overflow-hidden">
                   <div className="flex flex-col md:flex-row h-full">
                     <div className={cn("w-1.5 shrink-0", log.urgency === 'Flagged' ? 'bg-red-600' : log.urgency === 'Attention' ? 'bg-orange-500' : 'bg-accent/40')} />

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -422,9 +421,9 @@ export default function ProjectClosingPage() {
       </Dialog>
 
       <Dialog open={!!reviewingAuditProject} onOpenChange={(open) => !open && setReviewingAuditProject(null)}>
-        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-4xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-4xl p-0 overflow-hidden max-h-[90vh] flex flex-col shadow-2xl">
           <div className="bg-accent h-1.5 w-full" />
-          <div className="p-12 space-y-10 overflow-y-auto custom-scrollbar flex-1">
+          <div className="p-12 space-y-12 overflow-y-auto custom-scrollbar flex-1">
             <DialogHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <FileSearch className="h-5 w-5 text-accent" />
@@ -437,58 +436,67 @@ export default function ProjectClosingPage() {
             </DialogHeader>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="p-8 bg-green-50 border border-green-100 space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-green-600/60">Verified Incoming</p>
-                <p className="text-2xl font-headline italic text-green-700">KES {reviewingAuditProject?.auditDetails?.totalReceived.toLocaleString()}</p>
+              <div className="p-10 border border-green-600/20 bg-green-600/[0.02] space-y-3 relative overflow-hidden shadow-sm">
+                <TrendingUp className="h-12 w-12 absolute -top-2 -right-2 text-green-600 opacity-5" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-green-600/60">Verified Incoming</p>
+                <p className="text-3xl font-headline italic text-green-700">KES {reviewingAuditProject?.auditDetails?.totalReceived.toLocaleString()}</p>
               </div>
-              <div className="p-8 bg-orange-50 border border-orange-100 space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/60">Verified Outgoing</p>
-                <p className="text-2xl font-headline italic text-orange-700">KES {reviewingAuditProject?.auditDetails?.allocations.reduce((sum, a) => sum + a.amount, 0).toLocaleString()}</p>
+              <div className="p-10 border border-orange-500/20 bg-orange-50/30 space-y-3 relative overflow-hidden shadow-sm">
+                <TrendingDown className="h-12 w-12 absolute -top-2 -right-2 text-orange-600 opacity-5" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-orange-600/60">Verified Outgoing</p>
+                <p className="text-3xl font-headline italic text-orange-700">KES {reviewingAuditProject?.auditDetails?.allocations.reduce((sum, a) => sum + a.amount, 0).toLocaleString()}</p>
               </div>
-              <div className="p-8 bg-accent/[0.02] border border-accent/10 space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Agreed Refund</p>
-                <p className="text-2xl font-headline italic text-accent">KES {reviewingAuditProject?.auditDetails?.refundAmount.toLocaleString()}</p>
+              <div className="p-10 border border-accent/10 bg-accent/[0.02] space-y-3 relative overflow-hidden shadow-sm">
+                <ScaleIcon className="h-12 w-12 absolute -top-2 -right-2 text-accent opacity-5" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">Agreed Refund</p>
+                <p className="text-3xl font-headline italic text-accent">KES {reviewingAuditProject?.auditDetails?.refundAmount.toLocaleString()}</p>
               </div>
             </div>
 
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <h4 className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Steward Observations</h4>
-                <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">
+            <div className="space-y-10">
+              <div className="space-y-6">
+                <h4 className="text-[11px] font-bold uppercase tracking-[0.5em] text-accent/40 flex items-center gap-3"><MessageSquare className="h-4 w-4" /> Steward Observations</h4>
+                <p className="text-xl font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-10">
                   "{reviewingAuditProject?.auditDetails?.stewardComments || "No professional comments documented."}"
                 </p>
               </div>
 
-              <div className="space-y-6 pt-8 border-t border-accent/5">
-                <h4 className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Line Item Verification</h4>
-                <div className="space-y-3">
+              <div className="space-y-8 pt-10 border-t border-accent/5">
+                <h4 className="text-[11px] font-bold uppercase tracking-[0.5em] text-accent/40 flex items-center gap-3"><LayoutList className="h-4 w-4" /> Line Item Verification</h4>
+                <div className="space-y-4">
                   {reviewingAuditProject?.auditDetails?.incomingFunds?.map((f, i) => (
-                    <div key={i} className="flex justify-between items-center p-4 border border-accent/5 bg-secondary/5">
-                      <div className="flex items-center gap-4">
-                        <TrendingUp className="h-3.5 w-3.5 text-green-600" />
-                        <span className="text-[11px] font-bold uppercase tracking-widest">{f.label}</span>
+                    <div key={i} className="flex justify-between items-center p-6 border border-accent/5 bg-secondary/5">
+                      <div className="flex items-center gap-6">
+                        <div className="h-10 w-10 bg-green-50 flex items-center justify-center text-green-600"><TrendingUp className="h-4 w-4" /></div>
+                        <div className="space-y-0.5">
+                          <span className="text-[11px] font-bold uppercase tracking-[0.2em]">{f.label}</span>
+                          <p className="text-[9px] font-mono text-muted-foreground uppercase">Ref: {f.reference}</p>
+                        </div>
                       </div>
-                      <span className="text-sm font-headline italic">KES {f.amount.toLocaleString()}</span>
+                      <span className="text-xl font-headline italic text-green-700">KES {f.amount.toLocaleString()}</span>
                     </div>
                   ))}
                   {reviewingAuditProject?.auditDetails?.allocations.map((a, i) => (
-                    <div key={i} className="flex justify-between items-center p-4 border border-accent/5 bg-white">
-                      <div className="flex items-center gap-4">
-                        <TrendingDown className="h-3.5 w-3.5 text-orange-600" />
-                        <span className="text-[11px] font-bold uppercase tracking-widest">{a.category}</span>
+                    <div key={i} className="flex justify-between items-center p-6 border border-accent/5 bg-white">
+                      <div className="flex items-center gap-6">
+                        <div className="h-10 w-10 bg-orange-50 flex items-center justify-center text-orange-600"><TrendingDown className="h-4 w-4" /></div>
+                        <div className="space-y-0.5">
+                          <span className="text-[11px] font-bold uppercase tracking-[0.2em]">{a.category}</span>
+                          <p className="text-[10px] font-light italic text-muted-foreground truncate max-w-sm">{a.description}</p>
+                        </div>
                       </div>
-                      <span className="text-sm font-headline italic">KES {a.amount.toLocaleString()}</span>
+                      <span className="text-xl font-headline italic text-orange-700">KES {a.amount.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-          <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between">
+          <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between gap-6">
             <Button variant="ghost" onClick={() => setReviewingAuditProject(null)} className="rounded-none h-16 px-10 text-[11px] font-bold uppercase tracking-widest bg-transparent border-none transition-none shadow-none">Abort Authorization</Button>
             <Button 
               onClick={() => handleVerifyReport(reviewingAuditProject!.id)} 
-              className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl flex gap-4 transition-all hover:tracking-[0.2em]"
+              className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl flex gap-4 transition-all hover:tracking-[0.2em] border-none"
             >
               <ShieldCheck className="h-5 w-5" /> Authorize & Finalize Dossier
             </Button>

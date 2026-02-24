@@ -489,7 +489,7 @@ export default function NetworkEcosystemPage() {
                     value={editFormData.status} 
                     onValueChange={(v: any) => setEditFormData({...editFormData, status: v})}
                   >
-                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-[0.2em] text-[10px] font-bold shadow-none bg-transparent">
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-[0.2em] text-[10px] font-bold shadow-none bg-transparent transition-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -502,7 +502,7 @@ export default function NetworkEcosystemPage() {
                 <div className="space-y-3">
                   <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Integrity Score</Label>
                   <Select value={editFormData.rating} onValueChange={(v) => setEditFormData({...editFormData, rating: v})}>
-                    <SelectTrigger className="rounded-none border-accent/10 h-12 text-[10px] font-bold uppercase tracking-[0.2em] shadow-none">
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 text-[10px] font-bold uppercase tracking-[0.2em] shadow-none transition-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -520,7 +520,7 @@ export default function NetworkEcosystemPage() {
                 <Input 
                   value={editFormData.name}
                   onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
-                  className="rounded-none border-accent/20 h-14 text-xl font-headline italic focus:ring-accent"
+                  className="rounded-none border-accent/20 h-14 text-xl font-headline italic focus:ring-accent transition-none shadow-none"
                 />
               </div>
 
@@ -530,7 +530,7 @@ export default function NetworkEcosystemPage() {
                   <Input 
                     value={editFormData.specialty}
                     onChange={(e) => setEditFormData({...editFormData, specialty: e.target.value})}
-                    className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase tracking-[0.2em]"
+                    className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase tracking-[0.2em] transition-none shadow-none"
                   />
                 </div>
                 <div className="space-y-3">
@@ -538,7 +538,7 @@ export default function NetworkEcosystemPage() {
                   <Input 
                     value={editFormData.type}
                     onChange={(e) => setEditFormData({...editFormData, type: e.target.value})}
-                    className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase tracking-[0.2em]"
+                    className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase tracking-[0.2em] transition-none shadow-none"
                   />
                 </div>
               </div>
@@ -549,7 +549,7 @@ export default function NetworkEcosystemPage() {
                   <Input 
                     value={editFormData.email}
                     onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
-                    className="rounded-none border-accent/20 h-12 text-sm"
+                    className="rounded-none border-accent/20 h-12 text-sm transition-none shadow-none"
                   />
                 </div>
                 <div className="space-y-3">
@@ -557,7 +557,7 @@ export default function NetworkEcosystemPage() {
                   <Input 
                     value={editFormData.contact}
                     onChange={(e) => setEditFormData({...editFormData, contact: e.target.value})}
-                    className="rounded-none border-accent/20 h-12 text-sm"
+                    className="rounded-none border-accent/20 h-12 text-sm transition-none shadow-none"
                   />
                 </div>
               </div>
