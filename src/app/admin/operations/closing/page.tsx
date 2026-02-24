@@ -30,12 +30,15 @@ import {
   PencilRuler,
   AlertCircle,
   FileClock,
-  RotateCcw
+  RotateCcw,
+  FileSearch,
+  TrendingUp,
+  TrendingDown
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useWhyteStore } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject } from "@/store/use-whyte-store";
 import { 
   Dialog, 
   DialogContent, 
@@ -70,6 +73,8 @@ export default function ProjectClosingPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [returningProjectId, setReturningProjectId] = useState<string | null>(null);
+  
+  const [reviewingAuditProject, setReviewingAuditProject] = useState<ClientProject | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -97,7 +102,8 @@ export default function ProjectClosingPage() {
       financialReportStatus: 'Verified',
       lastActivity: "Financial Audit formally Authorized by Senior Partner"
     });
-    toast({ title: "Audit Authorized" });
+    toast({ title: "Audit Authorized", description: "Commission dossier transitioned to finalized state." });
+    setReviewingAuditProject(null);
   };
 
   const handleReturnToHandover = (projectId: string) => {
@@ -282,18 +288,18 @@ export default function ProjectClosingPage() {
                                 <TooltipTrigger asChild>
                                   <div className="inline-block">
                                     <Button 
-                                      onClick={() => handleVerifyReport(project.id)} 
-                                      disabled={isBlocked}
+                                      onClick={() => setReviewingAuditProject(project)} 
+                                      disabled={!hasStewardSync}
                                       className={cn(
                                         "h-16 w-full rounded-none flex gap-3 uppercase tracking-widest text-[11px] font-bold transition-all shadow-xl",
-                                        !isBlocked ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
+                                        hasStewardSync ? "bg-accent text-white hover:tracking-[0.2em]" : "bg-accent/10 text-accent/40 cursor-not-allowed border border-accent/10"
                                       )}
                                     >
-                                      <FileCheck className="h-5 w-5" /> Authorize Audit
+                                      <FileSearch className="h-5 w-5" /> Review & Authorize
                                     </Button>
                                   </div>
                                 </TooltipTrigger>
-                                {isBlocked && (
+                                {!hasStewardSync && (
                                   <TooltipContent className="rounded-none border-accent/20 bg-white p-4 shadow-2xl space-y-2">
                                     <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Gate Protocol Blocked:</p>
                                     <ul className="text-[10px] text-muted-foreground font-light italic list-disc pl-4">
@@ -301,7 +307,6 @@ export default function ProjectClosingPage() {
                                       {!allInstallmentsPaid && <li>Ledger Liquidation Required</li>}
                                       {hasPendingInquiries && <li>Resolution of Inquiries Required</li>}
                                       {!hasStewardSync && <li>Steward Audit Submission Required</li>}
-                                      {hasStewardSync && !isAwaitingAdmin && <li>Audit undergoing steward certification</li>}
                                     </ul>
                                   </TooltipContent>
                                 )}
@@ -399,7 +404,7 @@ export default function ProjectClosingPage() {
               <Input 
                 value={newStewardName} 
                 onChange={(e) => setNewStewardName(e.target.value)} 
-                className="rounded-none h-14 text-lg border-accent/20 focus:ring-accent" 
+                className="rounded-none h-14 text-lg border-accent/20 focus:ring-accent shadow-none transition-none" 
                 placeholder="E.g., Imani Financial Services"
               />
             </div>
@@ -416,6 +421,81 @@ export default function ProjectClosingPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!reviewingAuditProject} onOpenChange={(open) => !open && setReviewingAuditProject(null)}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-4xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="bg-accent h-1.5 w-full" />
+          <div className="p-12 space-y-10 overflow-y-auto custom-scrollbar flex-1">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <FileSearch className="h-5 w-5 text-accent" />
+                <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Forensic Dossier Review</span>
+              </div>
+              <DialogTitle className="text-4xl font-headline italic">Authorize Audit Report</DialogTitle>
+              <DialogDescription className="text-base font-light italic text-muted-foreground leading-relaxed">
+                Review the findings submitted by <strong>{financialSteward}</strong> for project <strong>{reviewingAuditProject?.id}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="p-8 bg-green-50 border border-green-100 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-green-600/60">Verified Incoming</p>
+                <p className="text-2xl font-headline italic text-green-700">KES {reviewingAuditProject?.auditDetails?.totalReceived.toLocaleString()}</p>
+              </div>
+              <div className="p-8 bg-orange-50 border border-orange-100 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/60">Verified Outgoing</p>
+                <p className="text-2xl font-headline italic text-orange-700">KES {reviewingAuditProject?.auditDetails?.allocations.reduce((sum, a) => sum + a.amount, 0).toLocaleString()}</p>
+              </div>
+              <div className="p-8 bg-accent/[0.02] border border-accent/10 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Agreed Refund</p>
+                <p className="text-2xl font-headline italic text-accent">KES {reviewingAuditProject?.auditDetails?.refundAmount.toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <h4 className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Steward Observations</h4>
+                <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/10 pl-8">
+                  "{reviewingAuditProject?.auditDetails?.stewardComments || "No professional comments documented."}"
+                </p>
+              </div>
+
+              <div className="space-y-6 pt-8 border-t border-accent/5">
+                <h4 className="text-[11px] font-bold uppercase tracking-[0.4em] text-accent/40">Line Item Verification</h4>
+                <div className="space-y-3">
+                  {reviewingAuditProject?.auditDetails?.incomingFunds?.map((f, i) => (
+                    <div key={i} className="flex justify-between items-center p-4 border border-accent/5 bg-secondary/5">
+                      <div className="flex items-center gap-4">
+                        <TrendingUp className="h-3.5 w-3.5 text-green-600" />
+                        <span className="text-[11px] font-bold uppercase tracking-widest">{f.label}</span>
+                      </div>
+                      <span className="text-sm font-headline italic">KES {f.amount.toLocaleString()}</span>
+                    </div>
+                  ))}
+                  {reviewingAuditProject?.auditDetails?.allocations.map((a, i) => (
+                    <div key={i} className="flex justify-between items-center p-4 border border-accent/5 bg-white">
+                      <div className="flex items-center gap-4">
+                        <TrendingDown className="h-3.5 w-3.5 text-orange-600" />
+                        <span className="text-[11px] font-bold uppercase tracking-widest">{a.category}</span>
+                      </div>
+                      <span className="text-sm font-headline italic">KES {a.amount.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between">
+            <Button variant="ghost" onClick={() => setReviewingAuditProject(null)} className="rounded-none h-16 px-10 text-[11px] font-bold uppercase tracking-widest bg-transparent border-none transition-none shadow-none">Abort Authorization</Button>
+            <Button 
+              onClick={() => handleVerifyReport(reviewingAuditProject!.id)} 
+              className="bg-accent text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl flex gap-4 transition-all hover:tracking-[0.2em]"
+            >
+              <ShieldCheck className="h-5 w-5" /> Authorize & Finalize Dossier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!returningProjectId} onOpenChange={(open) => !open && setReturningProjectId(null)}>
         <AlertDialogContent className="rounded-none border-accent/20 font-body p-10">
           <AlertDialogHeader className="space-y-6">
@@ -426,8 +506,8 @@ export default function ProjectClosingPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-10">
-            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-accent/10">Abort Protocol Reset</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmReturnToHandover} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 shadow-xl transition-all hover:tracking-widest">Authorize Reset</AlertDialogAction>
+            <AlertDialogCancel className="rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-8 border-accent/10 transition-none shadow-none">Abort Protocol Reset</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmReturnToHandover} className="bg-accent text-white rounded-none uppercase tracking-widest text-[12px] font-bold h-14 px-10 shadow-xl transition-all hover:tracking-widest border-none">Authorize Reset</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

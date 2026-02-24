@@ -73,7 +73,8 @@ import {
   PenTool,
   RotateCcw,
   Scale as ScaleIcon,
-  FileEdit
+  FileEdit,
+  Download
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -180,6 +181,21 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
         toast({ title: "Registry Sync Established" });
       }
     }, 1500);
+  };
+
+  const handleImportFromRegistry = () => {
+    if (isVerified) return;
+    const paidInstallments = project.installments.filter(i => i.status === 'Paid');
+    const newIncoming: AuditIncoming[] = paidInstallments.map(ins => ({
+      id: `INC-REG-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      label: ins.label,
+      amount: ins.amount,
+      reference: ins.transactionCode || "REGISTRY-SYNC",
+      date: ins.date || format(new Date(), "MMM dd, yyyy"),
+      isVerified: true
+    }));
+    setIncomingFunds([...incomingFunds, ...newIncoming]);
+    toast({ title: "Registry Entries Imported", description: `Synchronized ${newIncoming.length} liquidated installments.` });
   };
 
   const handleAddLog = () => {
@@ -317,6 +333,11 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
     setIncomingFunds(incomingFunds.map(f => f.id === id ? { ...f, isVerified: !f.isVerified } : f));
   };
 
+  const handleRemoveIncoming = (id: string) => {
+    if (isVerified) return;
+    setIncomingFunds(incomingFunds.filter(f => f.id !== id));
+  };
+
   const handleAddAllocation = () => {
     if (isVerified) return;
     setAllocations([...allocations, { id: `AL-${Math.random().toString(36).substr(2, 4).toUpperCase()}`, category: "", amount: 0, description: "", isVerified: false }]);
@@ -332,14 +353,22 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
     setAllocations(allocations.map(a => a.id === id ? { ...a, isVerified: !a.isVerified } : a));
   };
 
+  const handleRemoveAllocation = (id: string) => {
+    if (isVerified) return;
+    setAllocations(allocations.filter(a => a.id !== id));
+  };
+
   const handleAuthorizeAudit = () => {
-    if (isVerified || !lastSyncTimestamp || hasSyncDiscrepancy || !allFundsVerified || !allAllocationsVerified) return;
+    if (isVerified || !lastSyncTimestamp || hasSyncDiscrepancy || !allFundsVerified || !allAllocationsVerified) {
+      toast({ variant: "destructive", title: "Authorization Blocked", description: "Ledger sync discrepancies identified or entries unverified." });
+      return;
+    }
     setIsSubmitting(true);
     const finalAudit: FinancialAudit = { totalReceived: totalIncomingLogged, incomingFunds, allocations, refundAmount, stewardComments, isVerified: true, submissionDate: format(new Date(), "MMM dd, yyyy") };
     setTimeout(() => {
       updateClientProject(project.id, { financialReportStatus: 'Awaiting Admin', auditDetails: finalAudit, lastActivity: `Financial Audit Submitted by ${financialSteward}` });
       setIsSubmitting(false);
-      toast({ title: "Audit Transmitted" });
+      toast({ title: "Audit Transmitted", description: "Dossier submitted for Senior Partner authorization." });
     }, 1500);
   };
 
@@ -514,9 +543,14 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   </AlertDescription>
                 </div>
               </div>
-              <Button onClick={handleRunSyncCheck} disabled={isSyncingRegistry || isVerified} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl border-none transition-none">
-                {isSyncingRegistry ? <><Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...</> : <><RefreshCcw className="h-4 w-4" /> Execute Sync Check</>}
-              </Button>
+              <div className="flex gap-4">
+                <Button onClick={handleImportFromRegistry} disabled={isSyncingRegistry || isVerified} variant="outline" className="rounded-none h-12 px-6 border-accent/10 text-accent uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-sm transition-none">
+                  <Download className="h-4 w-4" /> Import Registry
+                </Button>
+                <Button onClick={handleRunSyncCheck} disabled={isSyncingRegistry || isVerified} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl border-none transition-none">
+                  {isSyncingRegistry ? <><Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...</> : <><RefreshCcw className="h-4 w-4" /> Execute Sync Check</>}
+                </Button>
+              </div>
             </Alert>
           )}
 
@@ -542,8 +576,9 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                           <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Designation</Label><Input value={entry.label} onChange={(e) => updateIncoming(entry.id, 'label', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-10 text-xs font-bold uppercase border-accent/10" /></div>
                           <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Capital (KES)</Label><Input type="number" value={entry.amount} onChange={(e) => updateIncoming(entry.id, 'amount', Number(e.target.value))} readOnly={isVerified || entry.isVerified} className="rounded-none h-10 text-sm font-headline italic border-accent/10" /></div>
                           <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Sync Code</Label><Input value={entry.reference} onChange={(e) => updateIncoming(entry.id, 'reference', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-10 text-xs font-mono border-accent/10" /></div>
-                          <div className="md:col-span-3">
-                            <Button variant={entry.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyIncoming(entry.id)} className={cn("h-10 w-full rounded-none uppercase tracking-widest text-[9px] font-bold border-none transition-none", entry.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white")}>{entry.isVerified ? "Certified" : "Certify"}</Button>
+                          <div className="md:col-span-3 flex gap-2">
+                            <Button variant={entry.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyIncoming(entry.id)} className={cn("h-10 flex-1 rounded-none uppercase tracking-widest text-[9px] font-bold border-none transition-none", entry.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white")}>{entry.isVerified ? "Certified" : "Certify"}</Button>
+                            {!isVerified && !entry.isVerified && <Button variant="ghost" size="icon" onClick={() => handleRemoveIncoming(entry.id)} className="h-10 w-10 text-destructive/40 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>}
                           </div>
                         </div>
                       </CardContent>
@@ -572,8 +607,9 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                           <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Classification</Label><Input value={alloc.category} onChange={(e) => updateAllocation(alloc.id, 'category', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-10 text-xs font-bold uppercase border-accent/10" /></div>
                           <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Capital (KES)</Label><Input type="number" value={alloc.amount} onChange={(e) => updateAllocation(alloc.id, 'amount', Number(e.target.value))} readOnly={isVerified || alloc.isVerified} className="rounded-none h-10 text-sm font-headline italic border-accent/10" /></div>
                           <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Description</Label><Input value={alloc.description} onChange={(e) => updateAllocation(alloc.id, 'description', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-10 text-xs font-light italic border-accent/10" /></div>
-                          <div className="md:col-span-3">
-                            <Button variant={alloc.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyAllocation(alloc.id)} className={cn("h-10 w-full rounded-none uppercase tracking-widest text-[9px] font-bold border-none transition-none", alloc.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white")}>{alloc.isVerified ? "Certified" : "Certify"}</Button>
+                          <div className="md:col-span-3 flex gap-2">
+                            <Button variant={alloc.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyAllocation(alloc.id)} className={cn("h-10 flex-1 rounded-none uppercase tracking-widest text-[9px] font-bold border-none transition-none", alloc.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white")}>{alloc.isVerified ? "Certified" : "Certify"}</Button>
+                            {!isVerified && !alloc.isVerified && <Button variant="ghost" size="icon" onClick={() => handleRemoveAllocation(alloc.id)} className="h-10 w-10 text-destructive/40 hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>}
                           </div>
                         </div>
                       </CardContent>
@@ -596,7 +632,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Incoming Capital</p><p className="text-3xl font-headline italic text-green-400">KES {totalIncomingLogged.toLocaleString()}</p></div>
                   <div className="space-y-1"><p className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Allocations</p><p className="text-3xl font-headline italic text-orange-400">KES {totalAllocated.toLocaleString()}</p></div>
                   <div className="pt-8 border-t border-white/10 space-y-4">
-                    <div className="space-y-2"><p className="text-[10px] uppercase tracking-widest font-bold text-white/40">Authorized Refund</p><Input type="number" value={refundAmount} onChange={(e) => setRefundAmount(Number(e.target.value))} readOnly={isVerified} className="bg-white/5 border-white/20 text-2xl font-headline italic text-white rounded-none h-14" /></div>
+                    <div className="space-y-2"><p className="text-[10px] uppercase tracking-widest font-bold text-white/40">Authorized Refund</p><Input type="number" value={refundAmount} onChange={(e) => setRefundAmount(Number(e.target.value))} readOnly={isVerified} className="bg-white/5 border-white/20 text-2xl font-headline italic text-white rounded-none h-14 focus:ring-white/20" /></div>
                     <div className="pt-4 flex justify-between items-center border-t border-white/5"><span className="text-[10px] uppercase tracking-widest font-bold text-white/40">Net Escrow</span><span className={cn("text-xl font-headline italic", hasDiscrepancy ? "text-red-400" : "text-white")}>KES {remainingBalance.toLocaleString()}</span></div>
                   </div>
                 </div>
@@ -612,7 +648,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               </Card>
               <div className="p-8 border border-dashed border-accent/20 text-center bg-secondary/10">
                 <p className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 italic leading-relaxed">
-                  Dossiers transmitted to Admin are digitally locked for verification.
+                  Dossiers transmitted to Admin are digitally locked for verification. Discrepancy checks are mandatory.
                 </p>
               </div>
             </div>
@@ -699,7 +735,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Findings</Label>
-                <Textarea value={newLog.content} onChange={(e) => setNewLog({...newLog, content: e.target.value})} placeholder="Professional forensic details..." className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic text-base bg-secondary/5 leading-relaxed transition-none" />
+                <Textarea value={newLog.content} onChange={(e) => setNewLog({...newLog, content: e.target.value})} placeholder="Professional forensic details..." className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic text-base bg-secondary/5 leading-relaxed transition-none shadow-none" />
               </div>
             </div>
             <DialogFooter><Button onClick={handleAddLog} disabled={!newLog.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl border-none transition-none">Transmit to Registry</Button></DialogFooter>
@@ -763,7 +799,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                         value={witnessTxCode} 
                         onChange={(e) => setWitnessTxCode(e.target.value)} 
                         placeholder="TRX-XXXX-SYNC"
-                        className="rounded-none h-12 border-orange-200 font-mono tracking-widest uppercase font-bold bg-white"
+                        className="rounded-none h-12 border-orange-200 font-mono tracking-widest uppercase font-bold bg-white focus:ring-orange-600 shadow-none transition-none"
                       />
                     </div>
                     <div className="space-y-2">
@@ -854,11 +890,11 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Certified Capital (KES)</Label>
-                  <Input type="number" className="rounded-none border-accent/10 h-12 text-2xl font-headline italic focus:ring-orange-600 transition-none" value={activationAmount} onChange={(e) => setActivationAmount(Number(e.target.value))} />
+                  <Input type="number" className="rounded-none border-accent/10 h-12 text-2xl font-headline italic focus:ring-orange-600 transition-none shadow-none" value={activationAmount} onChange={(e) => setActivationAmount(Number(e.target.value))} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Verified Code</Label>
-                  <Input className="rounded-none border-accent/10 h-12 text-lg tracking-widest font-bold focus:ring-orange-600 uppercase transition-none" value={activationCode} onChange={(e) => setActivationCode(e.target.value)} />
+                  <Input className="rounded-none border-accent/10 h-12 text-lg tracking-widest font-bold focus:ring-orange-600 uppercase transition-none shadow-none" value={activationCode} onChange={(e) => setActivationCode(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Certification Date</Label>
