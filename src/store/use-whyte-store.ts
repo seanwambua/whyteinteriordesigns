@@ -119,15 +119,22 @@ export interface ReimbursementClaim {
   rationale: string;
 }
 
+export interface StudioClaim {
+  type: 'Material Procurement' | 'Project Expense' | 'Service Scope Adjustment';
+  amount: number;
+  rationale: string;
+}
+
 export interface ReorganizationDetails {
   status: 'Requested' | 'Pending_Agreement' | 'Authorized' | 'Inactive';
-  requestedBy: 'Client' | 'Admin';
+  requestedBy: 'Client' | 'Admin' | 'Designer';
   terms: string;
   proposedInstallments: Installment[];
   clientAgreed: boolean;
   stewardWitnessed: boolean;
   finalizedDate?: string;
   reimbursement?: ReimbursementClaim;
+  studioClaim?: StudioClaim;
 }
 
 export interface Designer {

@@ -42,7 +42,8 @@ import {
   FileSearch,
   LayoutGrid,
   ChevronDown,
-  RotateCcw
+  RotateCcw,
+  TrendingUp
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
@@ -252,7 +253,7 @@ export default function ClientDashboardPage() {
                   <div className="flex items-center gap-3"><PenTool className="h-6 w-6 text-orange-600" /><h3 className="text-2xl font-headline italic text-orange-600">Financing Protocol Review Required</h3></div>
                   <p className="text-base font-light italic text-orange-600/80 leading-relaxed max-w-2xl">A new custom payout plan has been proposed for **{activeProject.project}**. Review and digital authorization are required.</p>
                 </div>
-                <Button onClick={() => setIsReviewingReorg(true)} className="bg-orange-600 text-white rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl flex gap-3"><FileSearch className="h-4 w-4" /> Review Terms</Button>
+                <Button onClick={() => setIsReviewingReorg(true)} className="bg-orange-600 text-white rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl flex gap-3 transition-none"><FileSearch className="h-4 w-4" /> Review Terms</Button>
               </div>
             </Alert>
           </motion.div>
@@ -266,7 +267,7 @@ export default function ClientDashboardPage() {
                   <div className="flex items-center gap-3"><ShieldAlert className="h-6 w-6 text-destructive" /><h3 className="text-2xl font-headline italic text-destructive">Dissolution Protocol Active</h3></div>
                   <p className="text-base font-light italic text-destructive/80 leading-relaxed max-w-2xl">Forensic verification and mutual resolution terms are being synchronized for the termination of **{activeProject.project}**.</p>
                 </div>
-                <Button onClick={() => openSupport("termination_request")} variant="outline" className="border-destructive text-destructive rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl">View Exit Dossier</Button>
+                <Button onClick={() => openSupport("termination_request")} variant="outline" className="border-destructive text-destructive rounded-none h-16 px-12 uppercase tracking-widest text-[11px] font-bold shadow-xl transition-none">View Exit Dossier</Button>
               </div>
             </Alert>
           </motion.div>
@@ -377,14 +378,14 @@ export default function ClientDashboardPage() {
             )}
             {!activeProject.isArchived && activeProject.status !== 'Terminated' && (
               <div className="pt-6 border-t border-accent/5 space-y-4">
-                <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent uppercase tracking-widest text-[9px] font-bold">Raise Studio Inquiry</Button>
+                <Button onClick={() => openSupport("project_support")} variant="outline" className="w-full h-14 rounded-none border-accent/20 text-accent uppercase tracking-widest text-[9px] font-bold transition-none">Raise Studio Inquiry</Button>
               </div>
             )}
           </Card>
 
           {allMyProjects.length > 1 && (
             <div className="space-y-6">
-              <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><LayoutGrid className="h-3 w-3" /> Portfolio Matrix</h4>
+              <h4 className="text-[10px] uppercase tracking-[0.4em] font-bold text-accent/40 flex items-center gap-2"><LayoutGrid className="h-3" /> Portfolio Matrix</h4>
               <div className="space-y-3">
                 {allMyProjects.map(p => (
                   <div key={p.id} onClick={() => handleSwitchProject(p.id)} className={cn(
@@ -395,7 +396,7 @@ export default function ClientDashboardPage() {
                       <span className="text-[8px] font-bold uppercase tracking-widest opacity-40">{p.id}</span>
                       <Badge variant="ghost" className="p-0 text-[8px] uppercase tracking-widest text-accent/60">{p.status}</Badge>
                     </div>
-                    <p className="text-sm font-bold uppercase tracking-widest text-accent/80 truncate">{p.project}</p>
+                    <p className="text-sm font-headline italic text-accent/80 truncate">{p.project}</p>
                     <div className="flex items-center gap-3">
                       <Progress value={p.progress} className="h-0.5 bg-accent/5 flex-1" />
                       <span className="text-[8px] font-bold text-accent/40">{p.progress}%</span>
@@ -434,28 +435,35 @@ export default function ClientDashboardPage() {
               <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-accent/20 pl-8">"{activeProject.reorganization?.terms}"</p>
             </div>
 
-            {activeProject.reorganization?.reimbursement && (
-              <div className="p-10 border border-orange-500/20 bg-orange-50/30 space-y-6">
-                <div className="flex items-center gap-4">
-                  <RotateCcw className="h-5 w-5 text-orange-600" />
-                  <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Reimbursement Protocol Attachment</h4>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-orange-500/10 pt-6">
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase font-bold opacity-40">Claim Type</p>
-                    <p className="text-lg font-headline italic">{activeProject.reorganization.reimbursement.type}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {activeProject.reorganization?.studioClaim && (
+                <div className="p-10 border border-orange-500/20 bg-orange-50/30 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <TrendingUp className="h-5 w-5 text-orange-600" />
+                    <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Studio Claim Attachment</h4>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase font-bold opacity-40">Authorized Capital Return</p>
-                    <p className="text-2xl font-headline italic text-orange-600">KES {activeProject.reorganization.reimbursement.amount.toLocaleString()}</p>
+                  <div className="space-y-4 pt-4 border-t border-orange-500/10">
+                    <p className="text-[9px] uppercase font-bold opacity-40">Reasoning</p>
+                    <p className="text-base font-light italic text-accent/80">"{activeProject.reorganization.studioClaim.rationale}"</p>
+                    <p className="text-2xl font-headline italic text-orange-600">+ KES {activeProject.reorganization.studioClaim.amount.toLocaleString()}</p>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] uppercase font-bold opacity-40">Forensic Justification</p>
-                  <p className="text-base font-light italic text-accent/70 leading-relaxed border-l-2 border-orange-500/20 pl-6">"{activeProject.reorganization.reimbursement.rationale}"</p>
+              )}
+
+              {activeProject.reorganization?.reimbursement && (
+                <div className="p-10 border border-accent/10 bg-accent/[0.02] space-y-6">
+                  <div className="flex items-center gap-4">
+                    <RotateCcw className="h-5 w-5 text-accent" />
+                    <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent">Reimbursement Protocol</h4>
+                  </div>
+                  <div className="space-y-4 pt-4 border-t border-accent/10">
+                    <p className="text-[9px] uppercase font-bold opacity-40">Justification</p>
+                    <p className="text-base font-light italic text-accent/80">"{activeProject.reorganization.reimbursement.rationale}"</p>
+                    <p className="text-2xl font-headline italic text-accent">- KES {activeProject.reorganization.reimbursement.amount.toLocaleString()}</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="space-y-6">
               <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Proposed Installment Schedule</h4>
@@ -473,8 +481,8 @@ export default function ClientDashboardPage() {
             </div>
           </div>
           <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between gap-6">
-            <Button onClick={() => setIsReviewingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest">Abort Protocol Sync</Button>
-            <Button onClick={handleAgreeToReorg} disabled={isSigningReorg} className="bg-orange-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-4">
+            <Button onClick={() => setIsReviewingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest transition-none">Abort Protocol Sync</Button>
+            <Button onClick={handleAgreeToReorg} disabled={isSigningReorg} className="bg-orange-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-none flex gap-4">
               {isSigningReorg ? <><Loader2 className="h-5 w-5 animate-spin" /> Digitally Signing...</> : <><PenTool className="h-5 w-5" /> Authorize & Sign Terms</>}
             </Button>
           </DialogFooter>

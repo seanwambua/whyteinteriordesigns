@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, ProjectTask, SubTask, Inquiry, SiteReport, Installment, ReorganizationDetails, Milestone, VendorAllocation, ReimbursementClaim } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SubTask, Inquiry, SiteReport, Installment, ReorganizationDetails, Milestone, VendorAllocation, ReimbursementClaim, StudioClaim } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -183,6 +183,7 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const [tempInstallments, setTempInstallments] = useState<Installment[]>([]);
   const [reorgTerms, setReorgTerms] = useState("");
   const [reimbursement, setReimbursement] = useState<ReimbursementClaim | null>(null);
+  const [studioClaim, setStudioClaim] = useState<StudioClaim | null>(null);
 
   const [isMasterEditing, setIsMasterEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<ClientProject>>({});
@@ -222,10 +223,12 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
         setTempInstallments(reorg.proposedInstallments.length > 0 ? [...reorg.proposedInstallments] : [...project.installments]);
         setReorgTerms(reorg.terms || "");
         setReimbursement(reorg.reimbursement || null);
+        setStudioClaim(reorg.studioClaim || null);
       } else {
         setTempInstallments([...project.installments]);
         setReorgTerms("");
         setReimbursement(null);
+        setStudioClaim(null);
       }
     }
   }, [isReorganizingPlan, project]);
@@ -298,8 +301,13 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const handleUpdateTempInstallment = (idx: number, field: keyof Installment, value: any) => {
     const updated = [...tempInstallments];
     updated[idx] = { ...updated[idx], [field]: value };
+    
+    const studioClaimAmt = studioClaim?.amount || 0;
+    const reimbursementAmt = reimbursement?.amount || 0;
+    const targetTotal = project.totalBudget + studioClaimAmt - reimbursementAmt;
+
     if (field === 'amount') {
-      const budget = project.totalBudget || 1;
+      const budget = targetTotal || 1;
       updated[idx].percentage = Math.round((Number(value) / budget) * 100);
     }
     setTempInstallments(updated);
@@ -307,15 +315,18 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   const handleSyncFinalToBalance = (idx: number) => {
     const otherAllocations = tempInstallments.reduce((sum, ins, i) => i === idx ? sum : sum + ins.amount, 0);
+    const studioClaimAmt = studioClaim?.amount || 0;
     const reimbursementAmt = reimbursement?.amount || 0;
-    const balanceNeeded = Math.max(0, project.totalBudget - otherAllocations + reimbursementAmt);
-    const budget = project.totalBudget || 1;
+    
+    // Target = original + studio claim - reimbursement
+    const targetTotal = project.totalBudget + studioClaimAmt - reimbursementAmt;
+    const balanceNeeded = Math.max(0, targetTotal - otherAllocations);
     
     const updated = [...tempInstallments];
     updated[idx] = { 
       ...updated[idx], 
       amount: balanceNeeded,
-      percentage: Math.round((balanceNeeded / budget) * 100)
+      percentage: Math.round((balanceNeeded / (targetTotal || 1)) * 100)
     };
     setTempInstallments(updated);
     toast({ title: "Reconciliation Balance Established" });
@@ -324,12 +335,13 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   const handleProposeReorganization = () => {
     const reorg: ReorganizationDetails = {
       status: 'Pending_Agreement',
-      requestedBy: project.reorganization?.status === 'Requested' ? 'Client' : 'Admin',
+      requestedBy: project.reorganization?.status === 'Requested' ? project.reorganization.requestedBy : 'Admin',
       terms: reorgTerms,
       proposedInstallments: tempInstallments,
       clientAgreed: false,
       stewardWitnessed: false,
-      reimbursement: reimbursement || undefined
+      reimbursement: reimbursement || undefined,
+      studioClaim: studioClaim || undefined
     };
     
     updateClientProject(project.id, { 
@@ -341,11 +353,11 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
   };
 
   const handleAddReimbursement = () => {
-    setReimbursement({
-      type: 'Overpayment Return',
-      amount: 0,
-      rationale: ""
-    });
+    setReimbursement({ type: 'Overpayment Return', amount: 0, rationale: "" });
+  };
+
+  const handleAddStudioClaim = () => {
+    setStudioClaim({ type: 'Project Expense', amount: 0, rationale: "" });
   };
 
   const totalPaid = project.installments.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.amount, 0);
@@ -372,9 +384,11 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
 
   const tempTotalAssigned = tempInstallments.reduce((sum, i) => sum + i.amount, 0);
   const tempReimbursementAmt = reimbursement?.amount || 0;
-  // Variance check: (Total Budget + Reimbursement) should equal Total Proposed Installments
-  // Actually simpler: Total Proposed Installments - Reimbursement = Total Budget
-  const tempVariance = (tempTotalAssigned - tempReimbursementAmt) - project.totalBudget;
+  const tempStudioClaimAmt = studioClaim?.amount || 0;
+  
+  // Variance check: Total Proposed Installments should equal (Total Budget + Studio Claim - Reimbursement)
+  const targetTotal = project.totalBudget + tempStudioClaimAmt - tempReimbursementAmt;
+  const tempVariance = tempTotalAssigned - targetTotal;
 
   const handleUpdateTask = (taskId: string, updates: Partial<ProjectTask>) => {
     if (isReadOnly) return;
@@ -479,7 +493,9 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 w-full ml-4">
               <div className="space-y-1">
                 <AlertTitle className="text-[12px] font-bold uppercase tracking-widest text-orange-600">Financing Protocol Review Requested</AlertTitle>
-                <AlertDescription className="text-[13px] font-light italic text-orange-600/80">The client has requested a formal review of the current payout schedule. Open the Financing Protocol Workbench to initialize a new proposal.</AlertDescription>
+                <AlertDescription className="text-[13px] font-light italic text-orange-600/80">
+                  {project.reorganization.requestedBy === 'Designer' ? "The Creative Lead has documented incurring site costs on the client's behalf." : "The client has requested a formal review of the current payout schedule."} Open the Financing Protocol Workbench to initialize a new proposal.
+                </AlertDescription>
               </div>
               <Button onClick={() => setIsReorganizingPlan(true)} className="bg-orange-600 text-white rounded-none h-12 px-8 uppercase tracking-widest text-[10px] font-bold shadow-lg flex gap-3 border-none transition-none"><FileEdit className="h-4 w-4" /> Initialize Review</Button>
             </div>
@@ -1005,34 +1021,74 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
               </Alert>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 p-8 bg-secondary/30 border border-accent/5">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 p-8 bg-secondary/30 border border-accent/5">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Commission Commitment</p>
-                <p className="text-2xl font-headline italic">KES {project.totalBudget.toLocaleString()}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Base commitment</p>
+                <p className="text-lg font-headline italic">KES {project.totalBudget.toLocaleString()}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Proposed Plan Total</p>
-                <p className="text-2xl font-headline italic">KES {tempTotalAssigned.toLocaleString()}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/60">Studio Claim (+)</p>
+                <p className="text-lg font-headline italic text-orange-600">KES {tempStudioClaimAmt.toLocaleString()}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/60">Authorized Reimbursement</p>
-                <p className="text-2xl font-headline italic text-orange-600">KES {tempReimbursementAmt.toLocaleString()}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Reimbursement (-)</p>
+                <p className="text-lg font-headline italic text-accent">KES {tempReimbursementAmt.toLocaleString()}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-accent/40">Target Total</p>
+                <p className="text-lg font-headline italic">KES {targetTotal.toLocaleString()}</p>
               </div>
               <div className="space-y-1">
                 <p className={cn("text-[10px] font-bold uppercase tracking-widest", tempVariance === 0 ? "text-green-600" : "text-orange-600")}>Plan Variance</p>
-                <p className={cn("text-2xl font-headline italic", tempVariance === 0 ? "text-green-600" : "text-orange-600")}>KES {Math.abs(tempVariance).toLocaleString()} {tempVariance > 0 ? '(Over)' : tempVariance < 0 ? '(Under)' : ''}</p>
+                <p className={cn("text-lg font-headline italic", tempVariance === 0 ? "text-green-600" : "text-orange-600")}>KES {Math.abs(tempVariance).toLocaleString()} {tempVariance > 0 ? '(Over)' : tempVariance < 0 ? '(Under)' : ''}</p>
               </div>
             </div>
 
             <div className="space-y-10">
+              {/* STUDIO CLAIM SECTION */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-accent/5 pb-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 flex items-center gap-3"><TrendingUp className="h-4 w-4" /> Studio Claim Protocol</h4>
+                  {!studioClaim && <Button onClick={handleAddStudioClaim} variant="outline" className="h-10 px-6 rounded-none text-[10px] uppercase font-bold tracking-widest border-accent/10 hover:bg-accent hover:text-white bg-transparent shadow-none transition-none">Raise Claim</Button>}
+                </div>
+                {studioClaim && (
+                  <div className="p-8 border border-orange-500/20 bg-orange-50/30 space-y-6 relative group">
+                    <Button onClick={() => setStudioClaim(null)} variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive rounded-none border-none transition-none"><Trash2 className="h-4 w-4" /></Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-3">
+                        <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Claim Classification</Label>
+                        <Select value={studioClaim.type} onValueChange={(v: any) => setStudioClaim({...studioClaim, type: v})}>
+                          <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold shadow-none bg-white transition-none">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-none">
+                            <SelectItem value="Material Procurement">Material Procurement</SelectItem>
+                            <SelectItem value="Project Expense">Project Expense</SelectItem>
+                            <SelectItem value="Service Scope Adjustment">Service Scope Adjustment</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Adjustment Value (KES)</Label>
+                        <Input type="number" value={studioClaim.amount} onChange={(e) => setStudioClaim({...studioClaim, amount: Number(e.target.value)})} className="rounded-none h-12 border-accent/10 text-xl font-headline italic bg-white" />
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Forensic Rationale</Label>
+                      <Textarea value={studioClaim.rationale} onChange={(e) => setStudioClaim({...studioClaim, rationale: e.target.value})} placeholder="Detail the technical or architectural justification for this price adjustment..." className="min-h-[100px] rounded-none border-accent/10 p-6 font-light italic text-base focus:ring-accent bg-white transition-none" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* REIMBURSEMENT SECTION */}
               <div className="space-y-6">
                 <div className="flex items-center justify-between border-b border-accent/5 pb-4">
                   <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40 flex items-center gap-3"><RotateCcw className="h-4 w-4" /> Reimbursement Protocol</h4>
-                  {!reimbursement && <Button onClick={handleAddReimbursement} variant="outline" className="h-10 px-6 rounded-none text-[10px] uppercase font-bold tracking-widest border-accent/10 hover:bg-accent hover:text-white bg-transparent shadow-none transition-none">Add Claim</Button>}
+                  {!reimbursement && <Button onClick={handleAddReimbursement} variant="outline" className="h-10 px-6 rounded-none text-[10px] uppercase font-bold tracking-widest border-accent/10 hover:bg-accent hover:text-white bg-transparent shadow-none transition-none">Add Return</Button>}
                 </div>
                 {reimbursement && (
-                  <div className="p-8 border border-orange-500/20 bg-orange-50/30 space-y-6 relative group">
+                  <div className="p-8 border border-accent/5 bg-secondary/5 space-y-6 relative group">
                     <Button onClick={() => setReimbursement(null)} variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-destructive/40 hover:text-destructive rounded-none border-none transition-none"><Trash2 className="h-4 w-4" /></Button>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-3">
@@ -1049,13 +1105,13 @@ export default function ProjectMasterTerminal({ params }: { params: Promise<{ id
                         </Select>
                       </div>
                       <div className="space-y-3">
-                        <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Reimbursement Value (KES)</Label>
+                        <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Return Value (KES)</Label>
                         <Input type="number" value={reimbursement.amount} onChange={(e) => setReimbursement({...reimbursement, amount: Number(e.target.value)})} className="rounded-none h-12 border-accent/10 text-xl font-headline italic bg-white" />
                       </div>
                     </div>
                     <div className="space-y-3">
                       <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Forensic Rationale</Label>
-                      <Textarea value={reimbursement.rationale} onChange={(e) => setReimbursement({...reimbursement, rationale: e.target.value})} placeholder="Detail the technical or financial justification for this claim..." className="min-h-[100px] rounded-none border-accent/10 p-6 font-light italic text-base focus:ring-accent bg-white transition-none" />
+                      <Textarea value={reimbursement.rationale} onChange={(e) => setReimbursement({...reimbursement, rationale: e.target.value})} placeholder="Detail the technical or financial justification for this return..." className="min-h-[100px] rounded-none border-accent/10 p-6 font-light italic text-base focus:ring-accent bg-white transition-none" />
                     </div>
                   </div>
                 )}

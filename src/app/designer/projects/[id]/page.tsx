@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWhyteStore, ClientProject, ProjectTask, SiteReport, SubTask, Inquiry } from "@/store/use-whyte-store";
+import { useWhyteStore, ClientProject, ProjectTask, SiteReport, SubTask, Inquiry, ReorganizationDetails, StudioClaim } from "@/store/use-whyte-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,7 +47,9 @@ import {
   UserCheck,
   ShieldAlert,
   Compass,
-  FileText
+  FileText,
+  RotateCcw,
+  Scale
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -158,10 +160,11 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
   const [activeDesignerId, setActiveDesignerId] = useState<string | null>(null);
   
-  const [newReport, setNewReport] = useState<Partial<SiteReport>>({
-    type: 'Progress',
-    content: '',
-    urgency: 'Normal'
+  const [isRaisingClaim, setIsAddingClaim] = useState(false);
+  const [newClaim, setNewClaim] = useState<Partial<StudioClaim>>({
+    type: 'Material Procurement',
+    amount: 0,
+    rationale: ''
   });
 
   const project = clientProjects.find(p => p.id === id);
@@ -305,6 +308,33 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
     toast({ title: "Site Log Transmitted" });
   };
 
+  const handleRaiseClaim = () => {
+    if (!newClaim.rationale || !newClaim.amount || isReadOnly) return;
+    
+    const claim: StudioClaim = {
+      type: newClaim.type as StudioClaim['type'],
+      amount: newClaim.amount,
+      rationale: newClaim.rationale
+    };
+
+    updateClientProject(project.id, {
+      reorganization: {
+        status: 'Requested',
+        requestedBy: 'Designer',
+        terms: `Designer-Led Fiscal Claim: ${claim.type}. Rationale: ${claim.rationale}`,
+        proposedInstallments: [],
+        clientAgreed: false,
+        stewardWitnessed: false,
+        studioClaim: claim
+      },
+      lastActivity: `Fiscal Claim Raised by Creative Lead: KES ${claim.amount.toLocaleString()}`
+    });
+
+    setIsAddingClaim(false);
+    setNewClaim({ type: 'Material Procurement', amount: 0, rationale: '' });
+    toast({ title: "Fiscal Claim Transmitted", description: "Awaiting Admin formalization of financing reorganization." });
+  };
+
   const handleInitiateHandover = () => {
     if (isReadOnly || !allTasksDone) return;
     setIsHandoverSyncing(true);
@@ -414,6 +444,11 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
               </div>
             )}
             <div className="flex gap-4">
+              {!isReadOnly && (
+                <Button onClick={() => setIsAddingClaim(true)} variant="outline" className="rounded-none h-12 px-6 uppercase tracking-widest text-[10px] font-bold border-orange-500/20 text-orange-600 bg-orange-50/50 hover:bg-orange-600 hover:text-white transition-none shadow-sm flex gap-2">
+                  <Scale className="h-4 w-4" /> Raise Fiscal Claim
+                </Button>
+              )}
               <Badge className={cn(
                 "rounded-none uppercase tracking-[0.3em] text-[11px] font-bold py-2 px-6 shadow-xl",
                 project.isArchived ? "bg-neutral-400 text-white" : project.handoverStatus === 'Pending' ? "bg-accent/40 text-white" : "bg-accent text-white"
@@ -686,6 +721,45 @@ export default function DesignerProjectWorkbench({ params }: { params: Promise<{
               </div>
             </div>
             <DialogFooter><Button onClick={handleAddReport} disabled={!newReport.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl">Transmit to Registry</Button></DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isRaisingClaim} onOpenChange={setIsAddingClaim}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg p-0 overflow-hidden bg-white">
+          <div className="bg-orange-600 h-1.5 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3"><Scale className="h-5 w-5 text-orange-600" /><span className="text-orange-600 text-[12px] font-bold uppercase tracking-[0.4em]">Fiscal Claim Initiation</span></div>
+              <DialogTitle className="text-3xl font-headline italic">Raise Studio Claim</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-sm">Document site-incurred costs or material procurement for senior partner formalization.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Claim Classification</Label>
+                  <Select value={newClaim.type} onValueChange={(v: any) => setNewClaim({...newClaim, type: v})}>
+                    <SelectTrigger className="rounded-none border-neutral-200 h-12 uppercase tracking-widest text-[10px] font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="Material Procurement">Material Procurement</SelectItem>
+                      <SelectItem value="Project Expense">Project Expense</SelectItem>
+                      <SelectItem value="Service Scope Adjustment">Service Scope Adjustment</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Adjustment Value (KES)</Label>
+                  <Input type="number" value={newClaim.amount} onChange={(e) => setNewClaim({...newClaim, amount: Number(e.target.value)})} className="rounded-none h-12 border-neutral-200 text-xl font-headline italic focus:ring-orange-600" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Forensic Rationale</Label>
+                <Textarea value={newClaim.rationale} onChange={(e) => setNewClaim({...newClaim, rationale: e.target.value})} placeholder="Detailed technical justification..." className="min-h-[120px] rounded-none border-neutral-200 p-6 font-light italic text-base leading-relaxed focus:ring-orange-600 bg-orange-50/10" />
+              </div>
+            </div>
+            <DialogFooter><Button onClick={handleRaiseClaim} disabled={!newClaim.rationale || !newClaim.amount} className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl">Transmit Claim to Admin</Button></DialogFooter>
           </div>
         </DialogContent>
       </Dialog>

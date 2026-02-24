@@ -301,7 +301,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   Forensic certification of the initial deposit is mandatory to unlock the Execution phase.
                 </AlertDescription>
               </div>
-              <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl hover:bg-orange-700 transition-all flex gap-3">
+              <Button onClick={() => setIsVerifyingActivation(true)} className="bg-orange-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl hover:bg-orange-700 transition-all flex gap-3 border-none transition-none">
                 <Banknote className="h-4 w-4" /> Certify Activation
               </Button>
             </div>
@@ -318,7 +318,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   The client has authorized a new financing framework. Professional witness signature is required to synchronize the master ledger.
                 </AlertDescription>
               </div>
-              <Button onClick={() => setIsWitnessingReorg(true)} className="bg-blue-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl hover:bg-blue-700 transition-all flex gap-3">
+              <Button onClick={() => setIsWitnessingReorg(true)} className="bg-blue-600 text-white rounded-none h-14 px-10 uppercase tracking-widest text-[11px] font-bold shadow-xl hover:bg-blue-700 transition-all flex gap-3 border-none transition-none">
                 <PenTool className="h-4 w-4" /> Witness Agreement
               </Button>
             </div>
@@ -420,7 +420,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   </AlertDescription>
                 </div>
               </div>
-              <Button onClick={handleRunSyncCheck} disabled={isSyncingRegistry || isVerified} className="rounded-none h-12 px-8 bg-accent text-white hover:tracking-[0.2em] uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl transition-all">
+              <Button onClick={handleRunSyncCheck} disabled={isSyncingRegistry || isVerified} className="rounded-none h-12 px-8 bg-accent text-white hover:tracking-[0.2em] uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl transition-all border-none transition-none">
                 {isSyncingRegistry ? <><Loader2 className="h-4 w-4 animate-spin" /> Synchronizing...</> : <><RefreshCcw className="h-4 w-4" /> Execute Sync Check</>}
               </Button>
             </Alert>
@@ -435,7 +435,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                     <h2 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Verified Incoming Capital</h2>
                   </div>
                   {!isVerified && (
-                    <Button onClick={handleAddIncoming} variant="ghost" size="sm" className="rounded-none text-accent/40 hover:text-accent uppercase tracking-widest text-[10px] font-bold gap-2 px-4 h-10 transition-all">
+                    <Button onClick={handleAddIncoming} variant="ghost" size="sm" className="rounded-none text-accent/40 hover:text-accent uppercase tracking-widest text-[10px] font-bold gap-2 px-4 h-10 transition-none">
                       <Plus className="h-3.5 w-3.5" /> Log Entry
                     </Button>
                   )}
@@ -449,7 +449,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                           <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Capital (KES)</Label><Input type="number" value={entry.amount} onChange={(e) => updateIncoming(entry.id, 'amount', Number(e.target.value))} readOnly={isVerified || entry.isVerified} className="rounded-none h-10 text-sm font-headline italic border-accent/10" /></div>
                           <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Sync Code</Label><Input value={entry.reference} onChange={(e) => updateIncoming(entry.id, 'reference', e.target.value)} readOnly={isVerified || entry.isVerified} className="rounded-none h-10 text-xs font-mono border-accent/10" /></div>
                           <div className="md:col-span-3">
-                            <Button variant={entry.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyIncoming(entry.id)} className={cn("h-10 w-full rounded-none uppercase tracking-widest text-[9px] font-bold", entry.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white")}>{entry.isVerified ? "Certified" : "Certify"}</Button>
+                            <Button variant={entry.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyIncoming(entry.id)} className={cn("h-10 w-full rounded-none uppercase tracking-widest text-[9px] font-bold border-none transition-none", entry.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white")}>{entry.isVerified ? "Certified" : "Certify"}</Button>
                           </div>
                         </div>
                       </CardContent>
@@ -465,7 +465,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                     <h2 className="text-[12px] font-bold uppercase tracking-[0.4em] text-accent">Capital Allocations</h2>
                   </div>
                   {!isVerified && (
-                    <Button onClick={handleAddAllocation} variant="ghost" size="sm" className="rounded-none text-accent/40 hover:text-accent uppercase tracking-widest text-[10px] font-bold gap-2 px-4 h-10 transition-all">
+                    <Button onClick={handleAddAllocation} variant="ghost" size="sm" className="rounded-none text-accent/40 hover:text-accent uppercase tracking-widest text-[10px] font-bold gap-2 px-4 h-10 transition-none">
                       <Plus className="h-3.5 w-3.5" /> Log Allocation
                     </Button>
                   )}
@@ -479,7 +479,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                           <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Capital (KES)</Label><Input type="number" value={alloc.amount} onChange={(e) => updateAllocation(alloc.id, 'amount', Number(e.target.value))} readOnly={isVerified || alloc.isVerified} className="rounded-none h-10 text-sm font-headline italic border-accent/10" /></div>
                           <div className="md:col-span-3 space-y-2"><Label className="text-[10px] uppercase font-bold text-accent/40">Description</Label><Input value={alloc.description} onChange={(e) => updateAllocation(alloc.id, 'description', e.target.value)} readOnly={isVerified || alloc.isVerified} className="rounded-none h-10 text-xs font-light italic border-accent/10" /></div>
                           <div className="md:col-span-3">
-                            <Button variant={alloc.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyAllocation(alloc.id)} className={cn("h-10 w-full rounded-none uppercase tracking-widest text-[9px] font-bold", alloc.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white")}>{alloc.isVerified ? "Certified" : "Certify"}</Button>
+                            <Button variant={alloc.isVerified ? "default" : "outline"} disabled={isVerified} onClick={() => handleToggleVerifyAllocation(alloc.id)} className={cn("h-10 w-full rounded-none uppercase tracking-widest text-[9px] font-bold border-none transition-none", alloc.isVerified ? "bg-green-600 text-white" : "border-accent/10 text-accent/40 hover:bg-accent hover:text-white")}>{alloc.isVerified ? "Certified" : "Certify"}</Button>
                           </div>
                         </div>
                       </CardContent>
@@ -510,7 +510,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   <Button 
                     onClick={handleAuthorizeAudit} 
                     disabled={isSubmitting || totalIncomingLogged === 0 || !lastSyncTimestamp || hasDiscrepancy || hasSyncDiscrepancy || !allFundsVerified || !allAllocationsVerified} 
-                    className="w-full h-16 rounded-none bg-white text-accent hover:bg-white/90 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-3 items-center justify-center hover:tracking-[0.2em]"
+                    className="w-full h-16 rounded-none bg-white text-accent hover:bg-white/90 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-3 items-center justify-center hover:tracking-[0.2em] border-none transition-none"
                   >
                     {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Transmitting...</> : <><ShieldCheck className="h-5 w-5" /> Authorize & Transmit</>}
                   </Button>
@@ -531,7 +531,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               <ClipboardList className="h-5 w-5 text-accent/40" />
               <h2 className="text-[13px] font-bold uppercase tracking-[0.4em] text-accent">Operation Registry</h2>
             </div>
-            <Button onClick={() => setIsAddingLog(true)} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl transition-all">
+            <Button onClick={() => setIsAddingLog(true)} className="rounded-none h-12 px-8 bg-accent text-white uppercase tracking-widest text-[10px] font-bold flex gap-3 shadow-xl border-none transition-none">
               <Plus className="h-4 w-4" /> New Operation
             </Button>
           </div>
@@ -608,7 +608,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                 <Textarea value={newLog.content} onChange={(e) => setNewLog({...newLog, content: e.target.value})} placeholder="Professional forensic details..." className="min-h-[150px] rounded-none border-accent/10 p-6 font-light italic text-base bg-secondary/5 leading-relaxed" />
               </div>
             </div>
-            <DialogFooter><Button onClick={handleAddLog} disabled={!newLog.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all">Transmit to Registry</Button></DialogFooter>
+            <DialogFooter><Button onClick={handleAddLog} disabled={!newLog.content} className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl border-none transition-none">Transmit to Registry</Button></DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
@@ -628,28 +628,35 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               <p className="text-lg font-light italic leading-relaxed text-accent/80 border-l-2 border-blue-600/20 pl-8">"{project.reorganization?.terms}"</p>
             </div>
 
-            {project.reorganization?.reimbursement && (
-              <div className="p-10 border border-orange-500/20 bg-orange-50/30 space-y-6">
-                <div className="flex items-center gap-4">
-                  <RotateCcw className="h-5 w-5 text-orange-600" />
-                  <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Authorized Reimbursement Component</h4>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase font-bold opacity-40">Classification</p>
-                    <p className="text-lg font-headline italic">{project.reorganization.reimbursement.type}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {project.reorganization?.studioClaim && (
+                <div className="p-10 border border-orange-500/20 bg-orange-50/30 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <TrendingUp className="h-5 w-5 text-orange-600" />
+                    <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Studio Claim Module</h4>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase font-bold opacity-40">Forensic Amount</p>
-                    <p className="text-2xl font-headline italic text-orange-600">KES {project.reorganization.reimbursement.amount.toLocaleString()}</p>
+                  <div className="space-y-4 pt-4 border-t border-orange-500/10">
+                    <p className="text-[9px] uppercase font-bold opacity-40">Classification</p>
+                    <p className="text-base font-headline italic text-accent">{project.reorganization.studioClaim.type}</p>
+                    <p className="text-2xl font-headline italic text-orange-600">+ KES {project.reorganization.studioClaim.amount.toLocaleString()}</p>
                   </div>
                 </div>
-                <div className="space-y-2 border-t border-orange-500/10 pt-6">
-                  <p className="text-[10px] uppercase font-bold opacity-40">Rationale</p>
-                  <p className="text-base font-light italic text-accent/70 leading-relaxed pl-6 border-l-2 border-orange-500/20">"{project.reorganization.reimbursement.rationale}"</p>
+              )}
+
+              {project.reorganization?.reimbursement && (
+                <div className="p-10 border border-accent/10 bg-accent/[0.02] space-y-6">
+                  <div className="flex items-center gap-4">
+                    <RotateCcw className="h-5 w-5 text-accent" />
+                    <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent">Authorized Return</h4>
+                  </div>
+                  <div className="space-y-4 pt-4 border-t border-accent/10">
+                    <p className="text-[9px] uppercase font-bold opacity-40">Classification</p>
+                    <p className="text-base font-headline italic text-accent">{project.reorganization.reimbursement.type}</p>
+                    <p className="text-2xl font-headline italic text-accent">- KES {project.reorganization.reimbursement.amount.toLocaleString()}</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="space-y-6">
               <h4 className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent/40">Synchronized Installment Schedule</h4>
@@ -667,8 +674,8 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
             </div>
           </div>
           <DialogFooter className="p-12 border-t border-accent/5 bg-secondary/5 flex justify-between gap-6">
-            <Button onClick={() => setIsWitnessingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest">Abort Sync</Button>
-            <Button onClick={handleWitnessReorg} disabled={isSyncingWitness} className="bg-blue-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-4">
+            <Button onClick={() => setIsWitnessingReorg(false)} variant="ghost" className="rounded-none h-16 px-8 text-[11px] font-bold uppercase tracking-widest border-none transition-none">Abort Sync</Button>
+            <Button onClick={handleWitnessReorg} disabled={isSyncingWitness} className="bg-blue-600 text-white rounded-none h-16 px-16 uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all flex gap-4 border-none transition-none">
               {isSyncingWitness ? <><Loader2 className="h-5 w-5 animate-spin" /> Certifying Agreement...</> : <><Signature className="h-5 w-5" /> Witness & Authorize Protocol</>}
             </Button>
           </DialogFooter>
@@ -710,7 +717,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
                   <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Certification Date</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[12px] border-accent/10 font-bold uppercase tracking-widest focus:ring-orange-600">
+                      <Button variant="outline" className="w-full h-12 rounded-none justify-start text-[12px] border-accent/10 font-bold uppercase tracking-widest focus:ring-orange-600 shadow-none bg-transparent transition-none">
                         <CalendarIcon className="mr-3 h-4 w-4 text-accent/40" />
                         {format(activationDate, "MMM dd, yyyy")}
                       </Button>
@@ -721,7 +728,7 @@ export default function StewardAuditWorkbench({ params }: { params: Promise<{ id
               </div>
             </div>
             <DialogFooter className="pt-4">
-              <Button className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all" onClick={handleVerifyActivation} disabled={isSyncingActivation || !activationCode || activationAmount <= 0}>
+              <Button className="w-full bg-orange-600 text-white h-16 rounded-none uppercase tracking-widest text-[11px] font-bold shadow-2xl transition-all border-none transition-none" onClick={handleVerifyActivation} disabled={isSyncingActivation || !activationCode || activationAmount <= 0}>
                 {isSyncingActivation ? <span className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin" /> Certifying...</span> : "Authorize Activation"}
               </Button>
             </DialogFooter>
