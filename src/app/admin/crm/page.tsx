@@ -26,7 +26,9 @@ import {
   RefreshCcw,
   Loader2,
   Trash2,
-  Settings2
+  Settings2,
+  Edit3,
+  BadgeCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +48,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type UniqueClient = {
   name: string;
@@ -56,18 +59,30 @@ type UniqueClient = {
 };
 
 export default function RelationshipIntelligencePage() {
-  const { clientProjects, inquiries, collaborators, updateClientProject } = useWhyteStore();
+  const { clientProjects, inquiries, collaborators, updateClientProject, updateCollaborator } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("pipeline");
 
   const [editingClient, setEditingClient] = useState<UniqueClient | null>(null);
+  const [editingCollaborator, setEditingCollaborator] = useState<Collaborator | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+
   const [editFormData, setEditFormData] = useState({
     name: "",
     email: "",
     accessCode: ""
+  });
+
+  const [editColFormData, setEditColFormData] = useState({
+    name: "",
+    email: "",
+    contact: "",
+    specialty: "",
+    rating: "5.0",
+    status: "active" as Collaborator['status'],
+    type: ""
   });
 
   useEffect(() => {
@@ -101,12 +116,32 @@ export default function RelationshipIntelligencePage() {
     );
   }, [uniqueClients, search]);
 
+  const filteredCollaborators = useMemo(() => {
+    return collaborators.filter(c => 
+      c.name.toLowerCase().includes(search.toLowerCase()) || 
+      c.specialty.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [collaborators, search]);
+
   const handleOpenEdit = (client: UniqueClient) => {
     setEditingClient(client);
     setEditFormData({
       name: client.name,
       email: client.email,
       accessCode: client.accessCode
+    });
+  };
+
+  const handleOpenColEdit = (col: Collaborator) => {
+    setEditingCollaborator(col);
+    setEditColFormData({
+      name: col.name,
+      email: col.email,
+      contact: col.contact,
+      specialty: col.specialty,
+      rating: col.rating.toString(),
+      status: col.status,
+      type: col.type
     });
   };
 
@@ -132,6 +167,30 @@ export default function RelationshipIntelligencePage() {
       toast({ 
         title: "Identity Synchronized", 
         description: `Successfully updated ${associatedProjects.length} linked dossiers for this identity.` 
+      });
+    }, 1200);
+  };
+
+  const handleUpdateCollaboratorIdentity = () => {
+    if (!editingCollaborator) return;
+    setIsSyncing(true);
+
+    setTimeout(() => {
+      updateCollaborator(editingCollaborator.id, {
+        name: editColFormData.name,
+        email: editColFormData.email,
+        contact: editColFormData.contact,
+        specialty: editColFormData.specialty,
+        rating: parseFloat(editColFormData.rating),
+        status: editColFormData.status,
+        type: editColFormData.type
+      });
+
+      setIsSyncing(false);
+      setEditingCollaborator(null);
+      toast({ 
+        title: "Matrix Synchronized", 
+        description: `Profile for ${editColFormData.name} has been updated across the ecosystem.` 
       });
     }, 1200);
   };
@@ -340,7 +399,7 @@ export default function RelationshipIntelligencePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-accent/5">
-                {collaborators.map((res) => (
+                {filteredCollaborators.map((res) => (
                   <tr key={res.id} className="group hover:bg-accent/[0.02] transition-colors">
                     <td className="p-6">
                       <div className="space-y-1">
@@ -358,14 +417,22 @@ export default function RelationshipIntelligencePage() {
                       </div>
                     </td>
                     <td className="p-6">
-                      <Badge variant="outline" className="rounded-none text-[10px] uppercase tracking-widest font-bold border-accent/10 text-accent">
+                      <Badge variant="outline" className={cn(
+                        "rounded-none text-[10px] uppercase tracking-widest font-bold px-3 py-1",
+                        res.status === 'active' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'
+                      )}>
                         {res.status}
                       </Badge>
                     </td>
                     <td className="p-6 text-right">
-                      <Button asChild variant="ghost" size="icon" className="rounded-full hover:bg-accent hover:text-white transition-all">
-                        <Link href="/admin/hr"><ChevronRight className="h-5 w-5" /></Link>
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button onClick={() => handleOpenColEdit(res)} variant="ghost" size="icon" className="rounded-full hover:bg-accent hover:text-white transition-all">
+                          <Edit3 className="h-4.5 w-4.5" />
+                        </Button>
+                        <Button asChild variant="ghost" size="icon" className="rounded-full hover:bg-accent hover:text-white transition-all">
+                          <Link href="/admin/hr"><ChevronRight className="h-5 w-5" /></Link>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -375,6 +442,7 @@ export default function RelationshipIntelligencePage() {
         </TabsContent>
       </Tabs>
 
+      {/* CLIENT EDIT DIALOG */}
       <Dialog open={editingClient !== null} onOpenChange={(open) => !open && setEditingClient(null)}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg p-0 overflow-hidden bg-white">
           <div className="bg-accent h-1.5 w-full" />
@@ -433,6 +501,122 @@ export default function RelationshipIntelligencePage() {
                 {isSyncing ? (
                   <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing Registry...</span>
                 ) : "Authorize Profile Update"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* COLLABORATOR EDIT DIALOG */}
+      <Dialog open={editingCollaborator !== null} onOpenChange={(open) => !open && setEditingCollaborator(null)}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg p-0 overflow-hidden bg-white">
+          <div className="bg-accent h-1.5 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <HeartHandshake className="h-5 w-5 text-accent" />
+                <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Resource Calibration</span>
+              </div>
+              <DialogTitle className="text-4xl font-headline italic">Edit Network Profile</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-base">
+                Update trade partner identity and integrity protocols.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Status Protocol</Label>
+                  <Select 
+                    value={editColFormData.status} 
+                    onValueChange={(v: any) => setEditColFormData({...editColFormData, status: v})}
+                  >
+                    <SelectTrigger className="rounded-none border-accent/20 h-12 text-xs font-bold uppercase">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="active">Active Integrity</SelectItem>
+                      <SelectItem value="on_hold">On Hold / Audit</SelectItem>
+                      <SelectItem value="blacklisted" className="text-destructive">Blacklisted</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Integrity Score</Label>
+                  <Select 
+                    value={editColFormData.rating} 
+                    onValueChange={(v) => setEditColFormData({...editColFormData, rating: v})}
+                  >
+                    <SelectTrigger className="rounded-none border-accent/20 h-12 text-xs font-bold uppercase">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="5.0">5.0 — Elite</SelectItem>
+                      <SelectItem value="4.5">4.5 — High</SelectItem>
+                      <SelectItem value="4.0">4.0 — Standard</SelectItem>
+                      <SelectItem value="3.0">3.0 — Audit Req</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Entity Identity</Label>
+                <Input 
+                  value={editColFormData.name}
+                  onChange={(e) => setEditColFormData({...editColFormData, name: e.target.value})}
+                  className="rounded-none h-14 text-lg border-accent/20 focus:ring-accent"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Professional Specialty</Label>
+                  <Input 
+                    value={editColFormData.specialty}
+                    onChange={(e) => setEditColFormData({...editColFormData, specialty: e.target.value})}
+                    className="rounded-none h-12 text-sm border-accent/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Capacity Model</Label>
+                  <Input 
+                    value={editColFormData.type}
+                    onChange={(e) => setEditColFormData({...editColFormData, type: e.target.value})}
+                    className="rounded-none h-12 text-sm border-accent/20"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Communication Email</Label>
+                  <Input 
+                    value={editColFormData.email}
+                    onChange={(e) => setEditColFormData({...editColFormData, email: e.target.value})}
+                    className="rounded-none h-12 text-sm border-accent/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Direct Contact</Label>
+                  <Input 
+                    value={editColFormData.contact}
+                    onChange={(e) => setEditColFormData({...editColFormData, contact: e.target.value})}
+                    className="rounded-none h-12 text-sm border-accent/20"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button 
+                className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all hover:tracking-[0.25em]"
+                onClick={handleUpdateCollaboratorIdentity}
+                disabled={isSyncing || !editColFormData.name || !editColFormData.specialty}
+              >
+                {isSyncing ? (
+                  <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing Matrix...</span>
+                ) : "Authorize Matrix Update"}
               </Button>
             </DialogFooter>
           </div>

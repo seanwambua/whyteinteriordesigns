@@ -314,6 +314,7 @@ interface WhyteState {
   removeFeedback: (id: string) => void;
   
   addCollaborator: (collaborator: Collaborator) => void;
+  updateCollaborator: (id: string, updates: Partial<Collaborator>) => void;
   removeCollaborator: (id: string) => void;
   
   setFinancialSteward: (steward: string) => void;
@@ -521,6 +522,9 @@ export const useWhyteStore = create<WhyteState>()(
       removeFeedback: (id) => set((state) => ({ feedback: state.feedback.filter(fb => fb.id !== id) })),
 
       addCollaborator: (col) => set((state) => ({ collaborators: [...state.collaborators, col] })),
+      updateCollaborator: (id, updates) => set((state) => ({
+        collaborators: state.collaborators.map(c => c.id === id ? { ...c, ...updates } : c)
+      })),
       removeCollaborator: (id) => set((state) => ({ collaborators: state.collaborators.filter(c => c.id !== id) })),
 
       setFinancialSteward: (steward) => set({ financialSteward: steward }),
