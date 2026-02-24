@@ -13,18 +13,16 @@ import {
   Mail, 
   Phone, 
   ShieldCheck, 
-  MoreVertical, 
+  Edit3, 
   Trash2, 
-  Filter,
   BadgeCheck,
   Building2,
-  Globe,
   Loader2,
-  ChevronRight,
   Activity,
   UserPlus,
-  ShieldAlert,
-  Zap
+  Zap,
+  Settings2,
+  HeartHandshake
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -45,11 +43,12 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 export default function NetworkEcosystemPage() {
-  const { collaborators, addCollaborator, removeCollaborator } = useWhyteStore();
+  const { collaborators, addCollaborator, updateCollaborator, removeCollaborator } = useWhyteStore();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [search, setSearch] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingResource, setEditingResource] = useState<Collaborator | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
 
@@ -63,6 +62,17 @@ export default function NetworkEcosystemPage() {
     status: "active" as Collaborator['status'],
     type: "Individual Artisan",
     subType: "Local"
+  });
+
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    category: "Collaborator" as Collaborator['category'],
+    specialty: "",
+    contact: "",
+    email: "",
+    rating: "5.0",
+    status: "active" as Collaborator['status'],
+    type: ""
   });
 
   useEffect(() => {
@@ -88,6 +98,41 @@ export default function NetworkEcosystemPage() {
                            (activeCategory === 'trades' && c.category === 'Vendor');
     return matchesSearch && matchesCategory;
   });
+
+  const handleOpenEdit = (res: Collaborator) => {
+    setEditingResource(res);
+    setEditFormData({
+      name: res.name,
+      category: res.category,
+      specialty: res.specialty,
+      contact: res.contact,
+      email: res.email,
+      rating: res.rating.toString(),
+      status: res.status,
+      type: res.type
+    });
+  };
+
+  const handleUpdateResource = () => {
+    if (!editingResource) return;
+    setIsSubmitting(true);
+    
+    setTimeout(() => {
+      updateCollaborator(editingResource.id, {
+        name: editFormData.name,
+        category: editFormData.category,
+        specialty: editFormData.specialty,
+        contact: editFormData.contact,
+        email: editFormData.email,
+        rating: parseFloat(editFormData.rating),
+        status: editFormData.status,
+        type: editFormData.type
+      });
+      setIsSubmitting(false);
+      setEditingResource(null);
+      toast({ title: "Identity Synchronized", description: `${editFormData.name} profile has been updated.` });
+    }, 1200);
+  };
 
   const handleAddResource = () => {
     if (!formData.name || !formData.specialty || !formData.email) return;
@@ -120,7 +165,7 @@ export default function NetworkEcosystemPage() {
         type: "Individual Artisan", 
         subType: "Local" 
       });
-      toast({ title: "Resource Synchronized", description: `${newResource.name} authorized in network ecosystem.` });
+      toast({ title: "Resource Authorized", description: `${newResource.name} registered in matrix.` });
     }, 1200);
   };
 
@@ -147,10 +192,10 @@ export default function NetworkEcosystemPage() {
       >
         <div className="space-y-2">
           <div className="flex items-center gap-4">
-            <div className="h-px w-8 bg-accent" />
-            <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Resource Matrix</span>
+            <div className="h-px w-12 bg-accent" />
+            <span className="text-accent text-[13px] font-bold uppercase tracking-[0.5em]">Resource Matrix</span>
           </div>
-          <h1 className="text-5xl font-headline italic">Network <span className="not-italic">Ecosystem.</span></h1>
+          <h1 className="text-6xl font-headline italic">Network <span className="not-italic">Ecosystem.</span></h1>
         </div>
         
         <div className="flex flex-wrap gap-4">
@@ -158,14 +203,14 @@ export default function NetworkEcosystemPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-accent/30" />
             <input 
               placeholder="Filter by name or specialty..." 
-              className="pl-11 pr-4 h-14 bg-white border border-accent/10 w-80 text-[12px] uppercase tracking-widest focus:outline-none focus:border-accent/40 shadow-xl transition-all"
+              className="pl-11 pr-4 h-14 bg-white border border-accent/10 w-80 text-[12px] uppercase tracking-[0.2em] focus:outline-none focus:border-accent/40 shadow-xl transition-all"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <Button 
             onClick={() => setIsAddDialogOpen(true)}
-            className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-[0.2em] text-[11px] font-bold flex gap-3 shadow-2xl hover:bg-accent/90 transition-none"
+            className="bg-accent text-white rounded-none h-14 px-10 uppercase tracking-[0.3em] text-[11px] font-bold flex gap-3 shadow-2xl hover:bg-accent/90 transition-none"
           >
             <Plus className="h-4 w-4" /> Add Resource
           </Button>
@@ -180,10 +225,10 @@ export default function NetworkEcosystemPage() {
               <CardContent className="p-8 space-y-4">
                 <div className="flex items-center justify-between">
                   <stat.icon className="h-5 w-5 text-accent opacity-20 group-hover:opacity-100 transition-opacity" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/40">{stat.label}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent/40">{stat.label}</span>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-4xl font-headline italic text-accent">{stat.value}</p>
+                  <p className="text-4xl font-headline italic text-accent leading-none">{stat.value}</p>
                 </div>
               </CardContent>
             </Card>
@@ -193,9 +238,9 @@ export default function NetworkEcosystemPage() {
 
       <Tabs value={activeCategory} onValueChange={setActiveCategory} className="space-y-10">
         <TabsList className="bg-transparent border-b border-accent/5 w-full justify-start rounded-none h-auto p-0 gap-12 overflow-x-auto custom-scrollbar">
-          <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0">Unified Registry ({collaborators.length})</TabsTrigger>
-          <TabsTrigger value="partners" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-2"><Compass className="h-4 w-4" /> Business Partners</TabsTrigger>
-          <TabsTrigger value="trades" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.3em] text-[13px] font-bold pb-5 px-0 flex gap-2"><HardHat className="h-4 w-4" /> Site Trades</TabsTrigger>
+          <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.4em] text-[13px] font-bold pb-5 px-0">Unified Registry ({collaborators.length})</TabsTrigger>
+          <TabsTrigger value="partners" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.4em] text-[13px] font-bold pb-5 px-0 flex gap-2"><Compass className="h-4 w-4" /> Business Partners</TabsTrigger>
+          <TabsTrigger value="trades" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent uppercase tracking-[0.4em] text-[13px] font-bold pb-5 px-0 flex gap-2"><HardHat className="h-4 w-4" /> Site Trades</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeCategory} className="m-0">
@@ -210,22 +255,22 @@ export default function NetworkEcosystemPage() {
                     exit={{ opacity: 0 }}
                     className="p-8 hover:bg-accent/[0.01] transition-none flex flex-col lg:flex-row lg:items-center justify-between gap-8 group"
                   >
-                    <div className="flex items-center gap-8 flex-1">
+                    <div className="flex items-center gap-10 flex-1">
                       <div className={cn(
                         "h-16 w-16 rounded-none flex flex-col items-center justify-center shrink-0 border border-accent/5 transition-all shadow-lg",
                         res.category === 'Collaborator' ? 'bg-accent text-white' : 'bg-secondary text-accent/40'
                       )}>
                          {res.category === 'Collaborator' ? <Compass className="h-6 w-6" /> : <HardHat className="h-6 w-6" />}
-                         <span className="text-[8px] font-black uppercase mt-1">{res.category === 'Collaborator' ? 'PART' : 'TRAD'}</span>
+                         <span className="text-[8px] font-black uppercase mt-1 tracking-widest">{res.category === 'Collaborator' ? 'PART' : 'TRAD'}</span>
                       </div>
                       
                       <div className="space-y-2">
-                        <div className="flex items-center gap-4">
-                          <span className="text-[11px] font-bold text-accent/40 uppercase tracking-[0.4em]">{res.id}</span>
-                          <h3 className="text-2xl font-headline italic text-accent">{res.name}</h3>
+                        <div className="flex items-center gap-6">
+                          <span className="text-[11px] font-bold text-accent/40 uppercase tracking-[0.5em]">{res.id}</span>
+                          <h3 className="text-3xl font-headline italic text-accent leading-tight">{res.name}</h3>
                           {res.rating >= 4.8 && <BadgeCheck className="h-4 w-4 text-accent" />}
                         </div>
-                        <div className="flex flex-wrap items-center gap-6 text-[12px] text-muted-foreground uppercase tracking-widest font-bold">
+                        <div className="flex flex-wrap items-center gap-8 text-[12px] text-muted-foreground uppercase tracking-[0.3em] font-bold">
                           <span className="text-accent/60">{res.specialty}</span>
                           <div className="h-1 w-1 bg-accent/20 rounded-full" />
                           <span className="opacity-40">{res.type}</span>
@@ -233,27 +278,32 @@ export default function NetworkEcosystemPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-12 justify-between lg:justify-end">
-                      <div className="flex flex-col lg:items-end gap-2 text-[11px] uppercase tracking-widest font-bold text-muted-foreground/60">
-                        <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 opacity-40" /> {res.contact}</div>
-                        <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 opacity-40" /> {res.email}</div>
+                    <div className="flex items-center gap-16 justify-between lg:justify-end">
+                      <div className="flex flex-col lg:items-end gap-3 text-[12px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60">
+                        <div className="flex items-center gap-3"><Phone className="h-3.5 w-3.5 opacity-40" /> {res.contact}</div>
+                        <div className="flex items-center gap-3"><Mail className="h-3.5 w-3.5 opacity-40" /> {res.email}</div>
                       </div>
 
-                      <div className="text-right min-w-[100px] px-8 border-x border-accent/5">
-                         <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/30 block mb-1">Integrity Score</span>
-                         <div className="flex items-center gap-2 justify-end">
+                      <div className="text-right min-w-[120px] px-10 border-x border-accent/5">
+                         <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-accent/30 block mb-2">Integrity Score</span>
+                         <div className="flex items-center gap-3 justify-end">
                            <Star className="h-4 w-4 fill-accent text-accent" />
-                           <span className="text-2xl font-headline italic text-accent">{res.rating.toFixed(1)}</span>
+                           <span className="text-3xl font-headline italic text-accent leading-none">{res.rating.toFixed(1)}</span>
                          </div>
                       </div>
 
-                      <div className="flex items-center gap-6 pl-4">
-                        <Badge variant="outline" className={cn("rounded-none uppercase tracking-widest text-[9px] font-bold px-4 py-1.5 transition-all shadow-sm", getStatusBadge(res.status))}>
+                      <div className="flex items-center gap-8 pl-4">
+                        <Badge variant="outline" className={cn("rounded-none uppercase tracking-[0.3em] text-[9px] font-bold px-5 py-2 transition-all shadow-sm", getStatusBadge(res.status))}>
                           {res.status}
                         </Badge>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 text-accent/20 hover:text-destructive transition-colors" onClick={() => handleRemove(res.id)}>
-                          <Trash2 className="h-4.5 w-4.5" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="icon" className="h-12 w-12 text-accent/20 hover:text-accent transition-colors" onClick={() => handleOpenEdit(res)}>
+                            <Edit3 className="h-5 w-5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-12 w-12 text-accent/20 hover:text-destructive transition-colors" onClick={() => handleRemove(res.id)}>
+                            <Trash2 className="h-5 w-5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -262,7 +312,7 @@ export default function NetworkEcosystemPage() {
             </div>
             
             {filteredResources.length === 0 && (
-              <div className="text-center py-40 bg-secondary/5 italic text-[13px] uppercase tracking-[0.4em] font-light text-accent/30">
+              <div className="text-center py-48 bg-secondary/5 italic text-[13px] uppercase tracking-[0.5em] font-light text-accent/30">
                 No verified resources identified in current cycle
               </div>
             )}
@@ -270,21 +320,22 @@ export default function NetworkEcosystemPage() {
         </TabsContent>
       </Tabs>
 
-      <div className="p-12 border border-dashed border-accent/20 text-center bg-accent/[0.01] relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-5"><ShieldCheck className="h-32 w-32" /></div>
-        <p className="text-[11px] uppercase tracking-[0.5em] text-accent/30 font-bold italic leading-relaxed max-w-xl mx-auto relative z-10">
-          "The Network Ecosystem is strictly synchronized with studio integrity protocols. unauthorized extraction is logged."
+      <div className="p-16 border border-dashed border-accent/20 text-center bg-accent/[0.01] relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-5"><ShieldCheck className="h-48 w-48" /></div>
+        <p className="text-[11px] uppercase tracking-[0.6em] text-accent/30 font-bold italic leading-relaxed max-w-2xl mx-auto relative z-10">
+          "The Network Ecosystem is strictly synchronized with studio integrity protocols. unauthorized extraction is logged via master proxy."
         </p>
       </div>
 
+      {/* ADD DIALOG */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg p-0 overflow-hidden bg-white shadow-2xl">
           <div className="bg-accent h-1.5 w-full" />
-          <div className="p-10 space-y-10">
+          <div className="p-12 space-y-10">
             <DialogHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-accent" />
-                <span className="text-accent text-[12px] font-bold uppercase tracking-[0.4em]">Registration Protocol</span>
+                <span className="text-accent text-[12px] font-bold uppercase tracking-[0.5em]">Registration Protocol</span>
               </div>
               <DialogTitle className="text-4xl font-headline italic">Register Resource</DialogTitle>
               <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">
@@ -293,14 +344,14 @@ export default function NetworkEcosystemPage() {
             </DialogHeader>
             
             <div className="space-y-8">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Classification</Label>
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Classification</Label>
                   <Select 
                     value={formData.category} 
                     onValueChange={(v: any) => setFormData({...formData, category: v})}
                   >
-                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold shadow-none bg-transparent">
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-[0.2em] text-[10px] font-bold shadow-none bg-transparent">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -309,13 +360,13 @@ export default function NetworkEcosystemPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Status Protocol</Label>
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Status Protocol</Label>
                   <Select 
                     value={formData.status} 
                     onValueChange={(v: any) => setFormData({...formData, status: v})}
                   >
-                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-widest text-[10px] font-bold shadow-none bg-transparent">
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-[0.2em] text-[10px] font-bold shadow-none bg-transparent">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -328,7 +379,7 @@ export default function NetworkEcosystemPage() {
               </div>
 
               <div className="space-y-3">
-                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Entity Identity</Label>
+                <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Entity Identity</Label>
                 <Input 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -337,18 +388,18 @@ export default function NetworkEcosystemPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Core Specialty</Label>
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Core Specialty</Label>
                   <Input 
                     value={formData.specialty}
                     onChange={(e) => setFormData({...formData, specialty: e.target.value})}
                     placeholder="E.g., Structural Masonry"
-                    className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase tracking-widest transition-none"
+                    className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase tracking-[0.2em] transition-none"
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Direct Contact</Label>
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Direct Contact</Label>
                   <Input 
                     value={formData.contact}
                     onChange={(e) => setFormData({...formData, contact: e.target.value})}
@@ -359,7 +410,7 @@ export default function NetworkEcosystemPage() {
               </div>
 
               <div className="space-y-3">
-                <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Forensic Email Registry</Label>
+                <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Forensic Email Registry</Label>
                 <Input 
                   type="email"
                   value={formData.email}
@@ -369,11 +420,11 @@ export default function NetworkEcosystemPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Capacity Model</Label>
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Capacity Model</Label>
                   <Select value={formData.type} onValueChange={(v) => setFormData({...formData, type: v})}>
-                    <SelectTrigger className="rounded-none border-accent/10 h-12 text-[10px] font-bold uppercase tracking-widest shadow-none">
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 text-[10px] font-bold uppercase tracking-[0.2em] shadow-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -384,9 +435,9 @@ export default function NetworkEcosystemPage() {
                   </Select>
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-[11px] font-bold uppercase tracking-widest opacity-60">Integrity Score</Label>
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Integrity Score</Label>
                   <Select value={formData.rating} onValueChange={(v) => setFormData({...formData, rating: v})}>
-                    <SelectTrigger className="rounded-none border-accent/10 h-12 text-[10px] font-bold uppercase tracking-widest shadow-none">
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 text-[10px] font-bold uppercase tracking-[0.2em] shadow-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
@@ -401,13 +452,126 @@ export default function NetworkEcosystemPage() {
 
             <DialogFooter className="pt-6">
               <Button 
-                className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-widest text-[12px] font-bold shadow-2xl transition-all border-none"
+                className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-[0.3em] text-[12px] font-bold shadow-2xl transition-all border-none"
                 onClick={handleAddResource}
                 disabled={isSubmitting || !formData.name || !formData.specialty || !formData.email}
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin" /> Authorizing...</span>
                 ) : "Authorize Network Entry"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* EDIT DIALOG */}
+      <Dialog open={editingResource !== null} onOpenChange={(open) => !open && setEditingResource(null)}>
+        <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg p-0 overflow-hidden bg-white shadow-2xl">
+          <div className="bg-accent h-1.5 w-full" />
+          <div className="p-12 space-y-10">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Settings2 className="h-5 w-5 text-accent" />
+                <span className="text-accent text-[12px] font-bold uppercase tracking-[0.5em]">Profile Calibration</span>
+              </div>
+              <DialogTitle className="text-4xl font-headline italic">Edit Resource</DialogTitle>
+              <DialogDescription className="font-light italic text-muted-foreground text-base leading-relaxed">
+                Calibrate trade partner credentials and professional integrity protocols.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-8">
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Registry Status</Label>
+                  <Select 
+                    value={editFormData.status} 
+                    onValueChange={(v: any) => setEditFormData({...editFormData, status: v})}
+                  >
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 uppercase tracking-[0.2em] text-[10px] font-bold shadow-none bg-transparent">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="active">Active Integrity</SelectItem>
+                      <SelectItem value="on_hold">On Hold / Audit</SelectItem>
+                      <SelectItem value="blacklisted" className="text-destructive">Blacklisted</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Integrity Score</Label>
+                  <Select value={editFormData.rating} onValueChange={(v) => setEditFormData({...editFormData, rating: v})}>
+                    <SelectTrigger className="rounded-none border-accent/10 h-12 text-[10px] font-bold uppercase tracking-[0.2em] shadow-none">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="5.0">5.0 — Elite</SelectItem>
+                      <SelectItem value="4.5">4.5 — High</SelectItem>
+                      <SelectItem value="4.0">4.0 — Standard</SelectItem>
+                      <SelectItem value="3.0">3.0 — Audit Required</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Entity Identity</Label>
+                <Input 
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                  className="rounded-none border-accent/20 h-14 text-xl font-headline italic focus:ring-accent"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Professional Specialty</Label>
+                  <Input 
+                    value={editFormData.specialty}
+                    onChange={(e) => setEditFormData({...editFormData, specialty: e.target.value})}
+                    className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase tracking-[0.2em]"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Capacity Model</Label>
+                  <Input 
+                    value={editFormData.type}
+                    onChange={(e) => setEditFormData({...editFormData, type: e.target.value})}
+                    className="rounded-none border-accent/20 h-12 text-sm font-bold uppercase tracking-[0.2em]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Communication Protocol</Label>
+                  <Input 
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                    className="rounded-none border-accent/20 h-12 text-sm"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.3em] opacity-60">Direct Contact</Label>
+                  <Input 
+                    value={editFormData.contact}
+                    onChange={(e) => setEditFormData({...editFormData, contact: e.target.value})}
+                    className="rounded-none border-accent/20 h-12 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="pt-6">
+              <Button 
+                className="w-full bg-accent text-white h-16 rounded-none uppercase tracking-[0.3em] text-[12px] font-bold shadow-2xl transition-all border-none"
+                onClick={handleUpdateResource}
+                disabled={isSubmitting || !editFormData.name}
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-3"><Loader2 className="h-5 w-5 animate-spin" /> Synchronizing...</span>
+                ) : "Authorize Calibration"}
               </Button>
             </DialogFooter>
           </div>
