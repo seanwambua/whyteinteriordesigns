@@ -48,6 +48,4 @@ A command center for senior partners to oversee the studio's creative and financ
 ### Operational Logic
 The application uses a "Strict Lifecycle" model. A project must be **Activated** via an initial deposit verification before site implementation tasks (Kanban) can be managed. Final reconciliation is only available after all site protocols are documented as complete.
 
----
 
-*Authored by the Senior Developer Panel — Whyte Interior Designs. All rights reserved.*
