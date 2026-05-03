@@ -47,7 +47,6 @@ export default function AdminPortfolioPage() {
           <Plus className="h-4 w-4" /> New Exhibition Project
         </Button>
       </motion.div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {projects.map((project, index) => (
           <motion.div
@@ -63,7 +62,10 @@ export default function AdminPortfolioPage() {
                   alt={project.title}
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-105"
-                />
+                  style={{
+                    maxWidth: "100%",
+                    height: "auto"
+                  }} />
                 <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center gap-4">
                    <Button variant="secondary" className="rounded-full h-12 w-12 p-0"><Edit2 className="h-4 w-4" /></Button>
                    <Button 

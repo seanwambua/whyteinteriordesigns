@@ -61,9 +61,9 @@ export function Contact() {
 
             <div className="space-y-6">
               {[
-                { icon: <Mail className="text-accent" />, label: "Email Us", value: "hello@whyteinteriors.com" },
-                { icon: <Phone className="text-accent" />, label: "Call Us", value: "+1 (555) 000-DESIGN" },
-                { icon: <MapPin className="text-accent" />, label: "Visit Our Studio", value: "42 Design Avenue, Chelsea, NY" },
+                { icon: <Mail className="text-accent" />, label: "Email Us", value: "official.whyteinteriors@gmail.com" },
+                { icon: <Phone className="text-accent" />, label: "Call Us", value: "+254 734 798 523" },
+                // { icon: <MapPin className="text-accent" />, label: "Visit Our Studio", value: "42 Design Avenue, Chelsea, NY" },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-4 group">
                   <div className="p-3 bg-secondary rounded-full group-hover:bg-primary transition-colors">
@@ -126,7 +126,7 @@ export function Contact() {
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="+1 (555) 000-0000" className="bg-secondary/20" {...field} />
+                          <Input placeholder="+254 734 798 523" className="bg-secondary/20" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

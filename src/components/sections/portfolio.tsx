@@ -86,13 +86,12 @@ export function Portfolio() {
                   <Image
                     src={imageData.imageUrl}
                     alt={project.title}
-                    fill
+                    fill={true}
                     className="object-cover transition-transform duration-1000 group-hover:scale-110"
                     data-ai-hint={imageData.imageHint}
-                  />
+                     />
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-500" />
                 </div>
-                
                 <div className="mt-8 space-y-2">
                   <div className="flex justify-between items-end">
                     <div>

@@ -194,7 +194,6 @@ export default function DesignerRegistryPage() {
           </Button>
         </div>
       </motion.div>
-
       <div className="grid grid-cols-1 gap-6">
         <AnimatePresence mode="popLayout">
           {filteredDesigners.map((designer, index) => {
@@ -367,7 +366,6 @@ export default function DesignerRegistryPage() {
           })}
         </AnimatePresence>
       </div>
-
       {/* DIALOGS REMAIN SAME */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-lg p-0 overflow-hidden bg-white">
@@ -439,7 +437,6 @@ export default function DesignerRegistryPage() {
           </div>
         </DialogContent>
       </Dialog>
-
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
         <DialogContent className="rounded-none border-accent/20 font-body sm:max-w-md p-0 overflow-hidden bg-white">
           <div className="bg-accent h-1.5 w-full" />

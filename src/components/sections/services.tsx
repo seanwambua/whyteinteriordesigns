@@ -87,9 +87,9 @@ export function Services() {
                 <Image
                   src={service.image.imageUrl}
                   alt={service.image.description}
-                  fill
                   className="object-cover transition-all duration-700 scale-110 group-hover:scale-100"
                   data-ai-hint={service.image.imageHint}
+                  fill={true}
                 />
                 <div className="absolute inset-0 bg-accent/10 group-hover:bg-transparent transition-colors duration-500" />
               </div>
@@ -138,7 +138,6 @@ export function Services() {
           </Button>
         </motion.div>
       </div>
-
       <ServiceInquiryDialog 
         isOpen={isInquiryOpen} 
         onClose={() => setIsInquiryOpen(false)} 

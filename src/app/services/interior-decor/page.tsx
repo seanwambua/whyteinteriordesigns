@@ -80,7 +80,10 @@ export default function InteriorDecorPage() {
               fill
               className="object-cover brightness-[0.4]"
               priority
-            />
+              style={{
+                maxWidth: "100%",
+                height: "auto"
+              }} />
           </motion.div>
           <div className="container relative z-10 mx-auto px-6">
             <motion.div
@@ -145,7 +148,10 @@ export default function InteriorDecorPage() {
                     alt="Aesthetic Curation"
                     fill
                     className="object-cover"
-                  />
+                    style={{
+                      maxWidth: "100%",
+                      height: "auto"
+                    }} />
                 </div>
                 <div className="absolute -bottom-10 -right-10 w-64 h-64 border border-accent/10 -z-10 hidden lg:block" />
               </div>
@@ -182,7 +188,10 @@ export default function InteriorDecorPage() {
                         alt={product.name}
                         fill
                         className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                      />
+                        style={{
+                          maxWidth: "100%",
+                          height: "auto"
+                        }} />
                       <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
                     <div className="space-y-1">

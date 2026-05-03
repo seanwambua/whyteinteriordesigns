@@ -51,10 +51,10 @@ export function Navbar() {
           
           <div className="h-4 w-px bg-accent/20 mx-2" />
           
-          <Link href="/dashboard" className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-accent hover:opacity-70 transition-opacity">
+          {/* <Link href="/dashboard" className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-accent hover:opacity-70 transition-opacity">
             <User className="h-3 w-3" />
             Client Portal
-          </Link>
+          </Link> */}
 
           <Button asChild variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-none h-10 px-6 uppercase tracking-widest text-[10px] font-bold">
             <Link href="/#contact">Book Consultation</Link>

@@ -49,7 +49,10 @@ export default function InteriorDesignPage() {
             fill
             className="object-cover brightness-[0.4]"
             priority
-          />
+            style={{
+              maxWidth: "100%",
+              height: "auto"
+            }} />
           <div className="container relative z-10 mx-auto px-6">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -108,7 +111,10 @@ export default function InteriorDesignPage() {
                   alt="Architectural Planning"
                   fill
                   className="object-cover"
-                />
+                  style={{
+                    maxWidth: "100%",
+                    height: "auto"
+                  }} />
               </div>
             </div>
 

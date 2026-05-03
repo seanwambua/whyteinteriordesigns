@@ -23,14 +23,13 @@ export function Hero() {
         <Image
           src={heroImage.imageUrl}
           alt={heroImage.description}
-          fill
           className="object-cover brightness-[0.65]"
           priority
+          fill
           data-ai-hint={heroImage.imageHint}
-        />
+          />
         <div className="absolute inset-0 bg-black/30" />
       </motion.div>
-
       <div className="container relative z-10 mx-auto px-6">
         <div className="max-w-3xl">
           <motion.div
@@ -81,7 +80,6 @@ export function Hero() {
           </motion.div>
         </div>
       </div>
-      
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
