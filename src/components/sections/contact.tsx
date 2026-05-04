@@ -80,11 +80,9 @@ export function Contact() {
             <div className="pt-8 border-t">
               <h4 className="font-bold mb-4">Follow Our Design Blog</h4>
               <div className="flex gap-4">
-                {["Instagram", "Pinterest", "LinkedIn"].map((social) => (
-                  <Button key={social} variant="outline" className="text-xs uppercase tracking-widest px-4 border-accent/20">
-                    {social}
+                <Button variant="outline" className="text-xs uppercase tracking-widest px-4 border-accent/20">
+                    <a href="https://www.instagram.com/whyte_interior_designs_ke/" target="_blank" rel="noopener noreferrer">Instagram</a>
                   </Button>
-                ))}
               </div>
             </div>
           </div>

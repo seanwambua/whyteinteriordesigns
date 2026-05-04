@@ -23,7 +23,7 @@ export function Navbar() {
 
   const navItems = [
     { name: "Services", href: "/#services" },
-    { name: "Portfolio", href: "/#portfolio" },
+    // { name: "Portfolio", href: "/#portfolio" },
     { name: "Investment", href: "/pricing" },
     { name: "Style Quiz", href: "/#quiz" },
   ];
