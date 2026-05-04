@@ -25,13 +25,13 @@ export default function PricingPage() {
       description: "The essential luxury experience. Focused on refined local curation and expert spatial planning.",
       installments: "50% / 30% / 20% Installments",
       isRestricted: true,
-      features: [
-        "Full architectural blueprints",
-        "Local artisanal procurement",
-        "On-site site management",
-        "Final project handover",
-        "3D spatial visualization"
-      ],
+      // features: [
+      //   "Full architectural blueprints",
+      //   "Local artisanal procurement",
+      //   "On-site site management",
+      //   "Final project handover",
+      //   "3D spatial visualization"
+      // ],
       cta: isExistingClient ? "View Active Project" : "Verify Studio ID",
       highlight: false
     },
@@ -41,14 +41,14 @@ export default function PricingPage() {
       description: "For those seeking global excellence. A comprehensive journey including international sourcing and custom fabrication.",
       installments: "60% / 20% / 20% Installments",
       isRestricted: true,
-      features: [
-        "Everything in Premium",
-        "Global material procurement",
-        "Bespoke furniture design",
-        "Advanced VR walkthroughs",
-        "Dedicated project architect",
-        "Custom textile layering"
-      ],
+      // features: [
+      //   "Everything in Premium",
+      //   "Global material procurement",
+      //   "Bespoke furniture design",
+      //   "Advanced VR walkthroughs",
+      //   "Dedicated project architect",
+      //   "Custom textile layering"
+      // ],
       cta: isExistingClient ? "Access Studio Archive" : "Verify Studio ID",
       highlight: true
     },
@@ -58,14 +58,14 @@ export default function PricingPage() {
       description: "The ultimate architectural journey. Unrestricted access to global archives and lifetime styling maintenance.",
       installments: "70% / 30% Installments",
       isRestricted: false,
-      features: [
-        "Everything in Deluxe",
-        "24/7 VIP studio access",
-        "White-glove global logistics",
-        "Art collection direction",
-        "Lifetime styling maintenance",
-        "Priority project timeline"
-      ],
+      // features: [
+      //   "Everything in Deluxe",
+      //   "24/7 VIP studio access",
+      //   "White-glove global logistics",
+      //   "Art collection direction",
+      //   "Lifetime styling maintenance",
+      //   "Priority project timeline"
+      // ],
       cta: isExistingClient ? "Welcome Back" : "Enter The Golden Circle",
       highlight: false
     }
@@ -151,14 +151,14 @@ export default function PricingPage() {
                     "{tier.description}"
                   </p>
                   
-                  <ul className="space-y-5 mb-16 border-t border-dashed border-current/10 pt-8">
+                  {/* <ul className="space-y-5 mb-16 border-t border-dashed border-current/10 pt-8">
                     {tier.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-3">
                         <Check className={`h-4 w-4 mt-0.5 shrink-0 ${tier.highlight ? 'text-white' : 'text-accent'}`} />
                         <span className={`text-[13px] font-light ${tier.highlight ? 'text-white/90' : 'text-foreground'}`}>{feature}</span>
                       </li>
                     ))}
-                  </ul>
+                  </ul> */}
                 </div>
                 
                 <Button 
