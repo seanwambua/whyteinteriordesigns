@@ -73,7 +73,7 @@ export function Navbar() {
               <SheetContent side="right" className="bg-white border-l border-accent/10 p-0">
                 <SheetHeader className="p-8 border-b border-accent/5">
                   <SheetTitle className="text-left text-sm uppercase tracking-[0.3em] font-bold text-accent">Studio Menu</SheetTitle>
-                  <SheetDescription className="text-left text-[10px] uppercase tracking-widest opacity-40">Access architectural modules</SheetDescription>
+                  <SheetDescription className="text-left text-[10px] uppercase tracking-widest opacity-40">Studio modules</SheetDescription>
                 </SheetHeader>
                 <div className="flex flex-col mt-4">
                   {navItems.map((item) => (

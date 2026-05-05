@@ -33,8 +33,8 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-white/60">
               <li><Link href="/services/interior-design" className="hover:text-primary transition-colors">Interior Design</Link></li>
               <li><Link href="/services/interior-decor" className="hover:text-primary transition-colors">Interior Decor</Link></li>
-              <li>Bespoke Curation</li>
-              <li>Commercial Projects</li>
+              {/* <li>Bespoke Curation</li> */}
+              {/* <li>Commercial Projects</li> */}
             </ul>
           </div>
 
@@ -43,8 +43,8 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-white/60">
               <li><Link href="/#contact" className="hover:text-primary transition-colors">Book Consultation</Link></li>
               <li><Link href="#" className="hover:text-primary transition-colors">Instagram</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">Pinterest</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">LinkedIn</Link></li>
+              {/* <li><Link href="#" className="hover:text-primary transition-colors">Pinterest</Link></li> */}
+              {/* <li><Link href="#" className="hover:text-primary transition-colors">LinkedIn</Link></li> */}
             </ul>
           </div>
         </div>
