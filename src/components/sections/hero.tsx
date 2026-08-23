@@ -60,7 +60,7 @@ export function Hero() {
             transition={{ duration: 1, delay: 1.2 }}
             className="text-xl md:text-2xl text-white/70 leading-relaxed max-w-xl mb-12 font-light"
           >
-            Elevating living through meticulous design and rare craftsmanship. Your vision, masterfully realized by Whyte Interior Designs.
+            Elevating living through design and craftsmanship. Your vision, masterfully realized by Whyte Interior Designs.
           </motion.p>
           
           <motion.div 

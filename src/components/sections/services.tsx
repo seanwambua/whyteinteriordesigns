@@ -3,7 +3,7 @@
 
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
-import { Sparkles, Hammer, ArrowRight, Layers } from "lucide-react";
+import { Hammer, ArrowRight, Layers, HomeIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -24,7 +24,7 @@ export function Services() {
       id: "design" as const,
       title: "Interior Design",
       href: "/services/interior-design",
-      description: "Comprehensive spatial planning and architectural structural changes to redefine the functionality and flow of your luxury environment.",
+      description: "Spatial planning and structural changes that redefine the functionality and flow of your luxury environment.",
       icon: <Hammer className="h-5 w-5" />,
       image: PlaceHolderImages.find(img => img.id === "service-build")!,
     },
@@ -32,8 +32,8 @@ export function Services() {
       id: "decor" as const,
       title: "Interior Decor",
       href: "/services/interior-decor",
-      description: "Masterful curation of high-end furniture, bespoke textiles, and artistic accents to manifest your unique visual identity.",
-      icon: <Sparkles className="h-5 w-5" />,
+      description: "Masterful curation of furniture, bespoke textiles, and artistic accents to manifest your unique visual identity.",
+      icon: <HomeIcon className="h-5 w-5" />,
       image: PlaceHolderImages.find(img => img.id === "service-refresh")!,
     },
   ];
@@ -58,7 +58,7 @@ export function Services() {
               viewport={{ once: true }}
               className="text-5xl md:text-6xl font-headline"
             >
-              The Pillars of <br /><span className="italic">Bespoke Design.</span>
+              Our Pillars of <br /><span className="italic">Design.</span>
             </motion.h2>
           </div>
           <motion.div 
