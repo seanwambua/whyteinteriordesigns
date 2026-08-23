@@ -21,7 +21,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
         <ClerkProvider>
-          <header className="flex justify-end items-center p-4 gap-4 h-16">
+          {/* <header className="flex justify-end items-center p-4 gap-4 h-16">
             <Show when="signed-out">
               <SignInButton />
               <SignUpButton>
@@ -33,7 +33,7 @@ export default function RootLayout({
             <Show when="signed-in">
               <UserButton />
             </Show>
-          </header>
+          </header> */}
           {children}
         </ClerkProvider>
       </body>

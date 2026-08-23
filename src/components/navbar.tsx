@@ -87,13 +87,13 @@ export function Navbar() {
                     </Link>
                   ))}
                   
-                  <Link 
+                  {/* <Link 
                     href="/dashboard" 
                     onClick={() => setIsOpen(false)}
                     className="text-[13px] font-bold uppercase tracking-[0.3em] text-accent px-8 py-8 flex items-center gap-3 bg-secondary/30"
                   >
                     <User className="h-4 w-4" /> Client Portal
-                  </Link>
+                  </Link> */}
 
                   <div className="p-8 mt-auto">
                     <Button asChild className="w-full rounded-none h-14 uppercase tracking-[0.2em] text-[11px] font-bold shadow-xl" onClick={() => setIsOpen(false)}>
