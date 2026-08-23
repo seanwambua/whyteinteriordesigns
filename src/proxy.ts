@@ -7,7 +7,8 @@ const PUBLIC_ROUTES = [
   '/pricing',
   '/feedback',
   '/terms',
-  '/services/',
+  '/services/interior-design',
+  '/services/interior-decor',
 ];
 
 export default clerkMiddleware(async (auth, req) => {
