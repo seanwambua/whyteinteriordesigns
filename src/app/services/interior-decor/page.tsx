@@ -160,7 +160,7 @@ export default function InteriorDecorPage() {
         </section>
 
         {/* Curated Collection Showcase */}
-        <section className="py-32 bg-secondary/10">
+        {/* <section className="py-32 bg-secondary/10">
           <div className="container mx-auto px-6">
             <div className="text-center max-w-2xl mx-auto mb-20">
               <span className="text-accent text-xs font-bold uppercase tracking-[0.4em] mb-4 block">The Showcase</span>
@@ -206,7 +206,7 @@ export default function InteriorDecorPage() {
               })}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Final CTA */}
         <section className="py-24 text-center">
